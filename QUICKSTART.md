@@ -14,6 +14,8 @@ make
 # Tekan Ctrl+Shift+B, pilih "Build Indonesiaku (C VM)"
 ```
 
+
+tes commit
 ### Menjalankan Program
 
 ```powershell
