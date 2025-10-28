@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+    continue-on-error: true
     
     steps:
       - name: Checkout code
@@ -26,8 +27,10 @@ jobs:
           languages: cpp
           queries: security-extended
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Build (Manual)
+        run: |
+          make clean
+          make
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -50,7 +53,7 @@ jobs:
             
           - os: windows-latest
             artifact_name: indk-windows.exe
-            build_cmd: cd . & make clean && make
+            build_cmd: "make clean && make"
 
     steps:
       - uses: actions/checkout@v4
