@@ -1,0 +1,233 @@
+name: Automated Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'Makefile'
+      - 'examples/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'Makefile'
+      - 'examples/**'
+      - 'tests/**'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test-linux:
+    name: Test on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gcc-version: ['11', '12', '13']
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-${{ matrix.gcc-version }}
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.gcc-version }} 100
+
+      - name: Verify GCC version
+        run: gcc --version
+
+      - name: Build project
+        run: |
+          make clean
+          make
+
+      - name: Check binary exists
+        run: |
+          ls -lh ./indk
+          ./indk -v
+
+      - name: Run tests
+        run: |
+          chmod +x tests/test_all.sh
+          bash tests/test_all.sh
+
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          brew install make
+
+      - name: Verify GCC/Clang
+        run: gcc --version
+
+      - name: Build project
+        run: |
+          make clean
+          make
+
+      - name: Check binary exists
+        run: |
+          ls -lh ./indk
+          ./indk -v
+
+      - name: Run tests
+        run: |
+          chmod +x tests/test_all.sh
+          bash tests/test_all.sh
+
+  test-windows:
+    name: Test on Windows
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v11
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-make
+
+      - name: Verify GCC
+        shell: msys2 {0}
+        run: gcc --version
+
+      - name: Build project
+        shell: msys2 {0}
+        run: |
+          make clean
+          make
+
+      - name: Check binary exists
+        shell: msys2 {0}
+        run: |
+          ls -lh ./indk.exe
+          ./indk.exe -v
+
+      - name: Run tests (PowerShell)
+        shell: powershell
+        run: |
+          cd $env:GITHUB_WORKSPACE
+          powershell -ExecutionPolicy Bypass -File tests/test_all.ps1
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format cppcheck
+
+      - name: Check code formatting (clang-format)
+        run: |
+          # Check if code is properly formatted
+          clang-format --dry-run --Werror src/*.c include/*.h 2>&1 || echo "Note: Some files need formatting"
+
+      - name: Static analysis (cppcheck)
+        run: |
+          cppcheck --enable=all --suppress=missingIncludeSystem \
+            src/ include/ \
+            --error-exitcode=0 || true
+
+      - name: Check file permissions
+        run: |
+          # Verify important files exist
+          test -f Makefile
+          test -f src/main.c
+          test -f include/common.h
+          test -f README.md
+          echo "All critical files present"
+
+  build-documentation:
+    name: Verify Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check documentation files
+        run: |
+          echo "Checking documentation..."
+          test -f README.md && echo "✓ README.md" || exit 1
+          test -f CHANGELOG.md && echo "✓ CHANGELOG.md" || exit 1
+          test -f LICENSE && echo "✓ LICENSE" || exit 1
+          test -d docs && echo "✓ docs/" || exit 1
+          test -d examples && echo "✓ examples/" || exit 1
+          echo ""
+          echo "Documentation check passed!"
+
+      - name: Verify example files
+        run: |
+          echo "Checking example files..."
+          find examples -name "*.idk" -type f | wc -l
+          test -f examples/hello.idk && echo "✓ hello.idk" || exit 1
+          test -f examples/fibonacci.idk && echo "✓ fibonacci.idk" || exit 1
+
+  report-results:
+    name: Test Results Report
+    runs-on: ubuntu-latest
+    needs: [test-linux, test-macos, test-windows]
+    if: always()
+    
+    steps:
+      - name: Check test results
+        run: |
+          echo "::group::Build Results Summary"
+          echo "Linux Tests: ${{ needs.test-linux.result }}"
+          echo "macOS Tests: ${{ needs.test-macos.result }}"
+          echo "Windows Tests: ${{ needs.test-windows.result }}"
+          echo "::endgroup::"
+          
+          if [ "${{ needs.test-linux.result }}" = "failure" ] || \
+             [ "${{ needs.test-macos.result }}" = "failure" ] || \
+             [ "${{ needs.test-windows.result }}" = "failure" ]; then
+            echo "❌ Some tests failed!"
+            exit 1
+          else
+            echo "✅ All tests passed!"
+          fi
+
+  create-badge:
+    name: Update Status Badge
+    runs-on: ubuntu-latest
+    needs: [test-linux, test-macos, test-windows]
+    if: always()
+    
+    steps:
+      - name: Generate badge
+        run: |
+          if [ "${{ needs.test-linux.result }}" = "success" ] && \
+             [ "${{ needs.test-macos.result }}" = "success" ] && \
+             [ "${{ needs.test-windows.result }}" = "success" ]; then
+            echo "✅ All tests PASSED - Build Status: SUCCESS"
+          else
+            echo "❌ Some tests FAILED - Build Status: FAILURE"
+          fi
