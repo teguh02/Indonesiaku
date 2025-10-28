@@ -7,6 +7,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  security-scan:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+          queries: security-extended
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "codeql-cpp-security"
+
   build-artifacts:
     name: Build Release Artifacts
     runs-on: ${{ matrix.os }}
