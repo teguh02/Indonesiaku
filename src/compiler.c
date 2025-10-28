@@ -612,11 +612,17 @@ static void forStatement() {
 static void ifStatement() {
     expression();
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah kondisi 'jika'.");
+    
+    // Emit conditional jump - jump if condition is false
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);  // Pop condition from stack if true
+    
     block();
-
+    
+    // Jump over else/jika_lain block if condition was true
     int elseJump = emitJump(OP_JUMP);
-    int thenJump = currentChunk()->count;
-    emitByte(OP_POP);
+    patchJump(thenJump);  // Patch the false condition jump
+    emitByte(OP_POP);  // Pop condition from stack if false
 
     if (match(TOKEN_JIKA_LAIN)) {
         ifStatement();
@@ -625,7 +631,7 @@ static void ifStatement() {
         block();
     }
 
-    patchJump(elseJump);
+    patchJump(elseJump);  // Patch the true path jump to skip else
 }
 
 static void printStatement() {

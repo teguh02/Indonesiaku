@@ -304,12 +304,17 @@ static InterpretResult run() {
                 frame->ip = newIp;
                 break;
             }
+            case OP_JUMP: {
+                uint16_t offset = READ_SHORT();
+                frame->ip += offset;
+                break;
+            }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
                 if (isFalsey(peek(0))) {
                     frame->ip += offset;
-                } else {
                 }
+                pop();
                 break;
             }
             case OP_CALL: {
