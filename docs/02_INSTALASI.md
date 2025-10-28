@@ -38,7 +38,41 @@ Pastikan komputer Anda terhubung ke internet untuk:
 
 ## Instalasi di Windows
 
-### Langkah 1: Install Git
+### 🚀 CARA MUDAH - Download Installer (Recommended!)
+
+**Untuk pengguna Windows yang ingin install dengan cepat dan mudah:**
+
+1. **Download Installer**
+   - Buka: https://github.com/teguh02/Indonesiaku/releases
+   - Download file: `Indonesiaku-Setup-v0.1.0.exe` (latest version)
+
+2. **Jalankan Installer**
+   - Double-click file `Indonesiaku-Setup-v0.1.0.exe`
+   - Ikuti wizard instalasi: Next → Next → Install → Finish
+   - Tunggu hingga instalasi selesai (± 1 menit)
+
+3. **Verifikasi Instalasi**
+   - Buka **PowerShell** atau **Command Prompt** yang BARU
+   - Ketik: `indonesiaku`
+   - Seharusnya melihat REPL prompt `> `
+
+4. **Done! ✅**
+   - Sekarang Anda bisa mulai programming dengan Bahasa Indonesiaku!
+
+**Keuntungan menggunakan installer:**
+- ✅ 1-click installation (sangat mudah)
+- ✅ Automatic PATH setup (tidak perlu manual config)
+- ✅ File association (.idk files bisa double-click)
+- ✅ Start Menu shortcuts
+- ✅ Easy uninstall
+
+---
+
+### 🔧 CARA MANUAL - Build dari Source
+
+**Untuk developer atau yang ingin build dari source code:**
+
+#### Langkah 1: Install Git
 
 **Opsi A - Menggunakan Official Installer:**
 
@@ -61,7 +95,7 @@ git --version
 # Output: git version 2.x.x...
 ```
 
-### Langkah 2: Install GCC (MinGW)
+#### Langkah 2: Install GCC (MinGW)
 
 **Opsi A - Menggunakan MinGW-w64 Installer:**
 
@@ -112,7 +146,7 @@ make --version
 # Output: GNU Make 4.x.x...
 ```
 
-### Langkah 3: Clone Repository Indonesiaku
+#### Langkah 3: Clone Repository Indonesiaku
 
 Pilih folder tempat Anda ingin menyimpan project:
 
@@ -121,7 +155,7 @@ Pilih folder tempat Anda ingin menyimpan project:
 cd C:\Users\YourName\Documents
 
 # Clone repository
-git clone https://github.com/teguhriyan/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku.git
 cd Indonesiaku
 ```
 
@@ -132,7 +166,7 @@ ls -la
 # Seharusnya melihat: src/, examples/, docs/, tests/, dll
 ```
 
-### Langkah 4: Build Project
+#### Langkah 4: Build Project
 
 **Opsi A - Menggunakan Make (Recommended):**
 
@@ -155,7 +189,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe `
 indk.exe  # Executable yang berhasil dibuild
 ```
 
-### Langkah 5: Test Installation
+#### Langkah 5: Test Installation
 
 ```powershell
 # Run REPL
@@ -169,7 +203,7 @@ cetak(x)
 # Exit dengan Ctrl+C
 ```
 
-### Langkah 6 (Opsional): Add ke PATH
+#### Langkah 6 (Opsional): Add ke PATH
 
 Agar bisa run `indk` dari mana saja:
 
