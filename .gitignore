@@ -31,7 +31,7 @@ dist/
 
 # Private/Development files
 prompts/
-admin/LOG_AKTIVITAS_*.md
+admin/
 
 # IDE
 .vscode/
