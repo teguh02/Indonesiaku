@@ -30,13 +30,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup MSYS2 (Windows)
+      - name: Setup MinGW (Windows)
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v11
-        with:
-          msystem: MINGW64
-          update: true
-          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-make
+        shell: powershell
+        run: |
+          choco install mingw make -y
+          refreshenv
+          gcc --version
+          make --version
+        continue-on-error: true
 
       - name: Build (Linux/macOS)
         if: runner.os != 'Windows'
@@ -44,7 +46,7 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        shell: msys2 {0}
+        shell: powershell
         run: ${{ matrix.build_cmd }}
 
       - name: Verify binary
@@ -61,7 +63,7 @@ jobs:
           Get-Item .\indk.exe
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: ./indk*
@@ -146,7 +148,7 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         continue-on-error: true
 
       - name: Create Release Notes
