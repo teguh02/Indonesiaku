@@ -8,11 +8,13 @@ Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem oper
 
 1. [Persiapan Umum](#persiapan-umum)
 2. [Instalasi di Windows](#instalasi-di-windows)
-3. [Instalasi di Linux](#instalasi-di-linux)
-4. [Instalasi di macOS](#instalasi-di-macos)
-5. [Verifikasi Instalasi](#verifikasi-instalasi)
-6. [Troubleshooting](#troubleshooting)
-7. [Build dari Source](#build-dari-source)
+3. [Instalasi dengan Docker](#-instalasi-dengan-docker)
+4. [Instalasi di Linux](#instalasi-di-linux)
+5. [Instalasi di macOS](#instalasi-di-macos)
+6. [Verifikasi Instalasi](#verifikasi-instalasi)
+7. [Troubleshooting](#troubleshooting)
+8. [Build dari Source](#build-dari-source)
+9. [Perbandingan Instalasi Methods](#perbandingan-instalasi-methods)
 
 ---
 
@@ -218,7 +220,301 @@ Agar bisa run `indk` dari mana saja:
 
 ---
 
-## Instalasi di Linux
+## 🐳 Instalasi dengan Docker
+
+### Persiapan
+
+Sebelum menggunakan Docker, pastikan:
+
+1. **Install Docker Desktop**
+   - Windows: https://www.docker.com/products/docker-desktop
+   - macOS: https://www.docker.com/products/docker-desktop
+   - Linux: `sudo apt install docker.io` (Ubuntu/Debian)
+
+2. **Verifikasi Docker Installation**
+   ```bash
+   docker --version
+   # Output: Docker version XX.XX.XX
+   ```
+
+### Langkah 1: Pull Docker Image
+
+Ambil image Indonesiaku dari Docker Hub:
+
+```bash
+docker pull teguh02/indonesiaku:latest
+```
+
+**Atau gunakan versi specific:**
+
+```bash
+docker pull teguh02/indonesiaku:v0.1.2
+```
+
+**Verifikasi image sudah di-pull:**
+
+```bash
+docker images
+# Output:
+# REPOSITORY                TAG       IMAGE ID      CREATED       SIZE
+# teguh02/indonesiaku       latest    abc123def456  2 weeks ago    95MB
+```
+
+### Langkah 2: Run Container - Interactive (REPL)
+
+**Opsi A - Run REPL dengan Interactive Mode:**
+
+```bash
+docker run -it teguh02/indonesiaku:latest
+```
+
+Sekarang Anda dalam container dan bisa langsung gunakan REPL:
+
+```
+> cetak("Halo dari Docker!")
+Halo dari Docker!
+> x = 10
+> cetak(x)
+10
+> exit()  # atau Ctrl+D
+```
+
+**Opsi B - Run dengan Custom Name:**
+
+```bash
+docker run -it --name indonesiaku-app teguh02/indonesiaku:latest
+```
+
+**Exit dari container:**
+
+```
+Ctrl+C atau Ctrl+D
+```
+
+### Langkah 3: Run Container - File Execution
+
+Untuk menjalankan file `.idk` dari host machine:
+
+**Opsi A - Mount Volume Lokal:**
+
+```bash
+# Buat folder project lokal
+mkdir -p ~/indonesiaku-projects
+cd ~/indonesiaku-projects
+
+# Buat file program
+cat > hello.idk << 'EOF'
+cetak("Halo dari file di host!")
+x = 100
+cetak("Nilai x:", x)
+EOF
+
+# Run file melalui Docker
+docker run -it -v $(pwd):/app teguh02/indonesiaku:latest /usr/local/bin/indk /app/hello.idk
+```
+
+**Output:**
+```
+Halo dari file di host!
+Nilai x: 100
+```
+
+**Opsi B - Windows PowerShell:**
+
+```powershell
+# Buat folder project
+New-Item -ItemType Directory -Path "$env:USERPROFILE\indonesiaku-projects" -Force
+cd "$env:USERPROFILE\indonesiaku-projects"
+
+# Buat file program
+@"
+cetak("Halo dari Windows Docker!")
+hasil = 5 + 10
+cetak(hasil)
+"@ | Out-File -Encoding UTF8 hello.idk
+
+# Run file
+docker run -it -v ${PWD}:/app teguh02/indonesiaku:latest /usr/local/bin/indk /app/hello.idk
+```
+
+### Langkah 4: Multiple Files
+
+Untuk menjalankan beberapa file program:
+
+```bash
+# Buat beberapa file
+cat > program1.idk << 'EOF'
+cetak("Program 1")
+EOF
+
+cat > program2.idk << 'EOF'
+cetak("Program 2")
+EOF
+
+# Run program 1
+docker run -it -v $(pwd):/app teguh02/indonesiaku:latest /usr/local/bin/indk /app/program1.idk
+
+# Run program 2
+docker run -it -v $(pwd):/app teguh02/indonesiaku:latest /usr/local/bin/indk /app/program2.idk
+```
+
+### Langkah 5: Persistent Container
+
+Untuk container yang dapat digunakan kembali:
+
+**Opsi A - Create Named Container:**
+
+```bash
+# Create container (tidak running)
+docker create -it --name my-indonesiaku -v $(pwd):/app teguh02/indonesiaku:latest
+
+# Start container untuk REPL
+docker start -i my-indonesiaku
+
+# Gunakan lagi nanti
+docker start -i my-indonesiaku
+```
+
+**Opsi B - Run Detached (Background):**
+
+```bash
+# Run di background
+docker run -d --name indonesiaku-bg -v $(pwd):/app teguh02/indonesiaku:latest sleep 1000
+
+# Execute command di container yang sudah running
+docker exec -it indonesiaku-bg /usr/local/bin/indk /app/hello.idk
+
+# Stop container
+docker stop indonesiaku-bg
+
+# Remove container
+docker rm indonesiaku-bg
+```
+
+### Langkah 6: Verifikasi Installation dalam Docker
+
+**Check binary version:**
+
+```bash
+docker run --rm teguh02/indonesiaku:latest indk -v
+# Output: Indonesiaku v0.1.2
+```
+
+**Check binary location:**
+
+```bash
+docker run --rm teguh02/indonesiaku:latest which indk
+# Output: /usr/local/bin/indk
+```
+
+**List available tools dalam image:**
+
+```bash
+docker run --rm teguh02/indonesiaku:latest apk list --installed
+# Menampilkan semua packages terinstall
+```
+
+---
+
+## Perbandingan Instalasi Methods
+
+| Method | Pros | Cons | Cocok untuk |
+|--------|------|------|-------------|
+| **Installer (Windows)** | Mudah, auto PATH, 1-click | Windows only | Pengguna casual |
+| **Build dari Source** | Full control, bisa customize | Butuh tools, lebih kompleks | Developer, contributor |
+| **Docker** | Isolated, portable, konsisten | Butuh Docker, sedikit overhead | Testing, CI/CD, cross-platform |
+
+---
+
+## Helpful Docker Commands
+
+```bash
+# List running containers
+docker ps
+
+# List all containers (including stopped)
+docker ps -a
+
+# View container logs
+docker logs <container_name>
+
+# Remove container
+docker rm <container_name>
+
+# Remove image
+docker rmi teguh02/indonesiaku:latest
+
+# View image info
+docker inspect teguh02/indonesiaku:latest
+
+# Tag image with custom name
+docker tag teguh02/indonesiaku:latest my-indonesiaku:custom
+
+# Save image to tar
+docker save teguh02/indonesiaku:latest > indonesiaku.tar
+
+# Load image from tar
+docker load < indonesiaku.tar
+
+# Export container as image
+docker commit <container_id> my-indonesiaku:snapshot
+```
+
+---
+
+## Docker Troubleshooting
+
+### Image Tidak Ketemu
+
+```bash
+# Search image
+docker search indonesiaku
+
+# Pull dengan tag spesifik
+docker pull teguh02/indonesiaku:v0.1.2
+
+# List local images
+docker images
+```
+
+### Permission Denied (Linux)
+
+```bash
+# Option 1: Use sudo
+sudo docker run -it teguh02/indonesiaku:latest
+
+# Option 2: Add user to docker group
+sudo usermod -aG docker $USER
+newgrp docker
+docker run -it teguh02/indonesiaku:latest  # Sekarang bisa tanpa sudo
+```
+
+### Container Cannot Access Host Files
+
+```bash
+# Pastikan volume mounting syntax benar
+docker run -it -v /host/path:/container/path teguh02/indonesiaku:latest
+
+# Windows: gunakan full path
+docker run -it -v C:\Users\YourName\projects:/app teguh02/indonesiaku:latest
+```
+
+### Image Too Large / Slow Download
+
+```bash
+# Check image size
+docker images
+
+# Gunakan lighter base image (sudah digunakan Alpine 3.20)
+# Alpine ~ 95MB, jauh lebih kecil dari Ubuntu ~1GB
+
+# Pull hanya specific layer
+docker pull --no-parallel teguh02/indonesiaku:latest
+```
+
+---
+
+
 
 ### Langkah 1: Install Build Tools
 
