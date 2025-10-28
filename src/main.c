@@ -62,6 +62,20 @@ static void runFile(const char* path) {
 }
 
 int main(int argc, const char* argv[]) {
+    // Handle simple CLI flags before initializing the VM
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0) {
+            printf("%s\n", INDK_VERSION);
+            return 0;
+        }
+        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            printf("Indonesiaku %s\n", INDK_VERSION);
+            printf("Usage: indk [path]\n");
+            printf("Options:\n  -v, --version   Show version\n  -h, --help      Show this help\n");
+            return 0;
+        }
+    }
+
     initVM();
 
     if (argc == 1) {
