@@ -1,0 +1,77 @@
+# oop_test_04_inheritance.idk
+# Test: Simulasi inheritance menggunakan function composition
+# Concept: Base class methods di-call dari derived class methods
+# Status: WORKS - v0.1 compatible
+
+# ========== Base class: Kendaraan ==========
+kendaraan_nama = kosong
+kendaraan_kecepatan = 0
+
+fungsi kendaraan_init(nama) {
+    kendaraan_nama = nama
+    kendaraan_kecepatan = 0
+}
+
+fungsi kendaraan_info() {
+    cetak("Kendaraan:", kendaraan_nama)
+    cetak("Kecepatan:", kendaraan_kecepatan)
+}
+
+fungsi kendaraan_percepat(delta) {
+    kendaraan_kecepatan = kendaraan_kecepatan + delta
+}
+
+# ========== Derived class: Mobil ==========
+# Inherits from Kendaraan
+mobil_roda = 4
+mobil_nama = kosong
+
+fungsi mobil_init(nama) {
+    kendaraan_init(nama)
+    mobil_nama = nama
+    mobil_roda = 4
+}
+
+fungsi mobil_info() {
+    kendaraan_info()
+    cetak("Roda:", mobil_roda)
+}
+
+fungsi mobil_percepat(delta) {
+    kendaraan_percepat(delta)
+    cetak("Mobil berakselerasi")
+}
+
+# ========== Derived class: Motor ==========
+motor_roda = 2
+motor_nama = kosong
+
+fungsi motor_init(nama) {
+    kendaraan_init(nama)
+    motor_nama = nama
+    motor_roda = 2
+}
+
+fungsi motor_info() {
+    kendaraan_info()
+    cetak("Roda:", motor_roda)
+}
+
+fungsi motor_percepat(delta) {
+    kendaraan_percepat(delta * 2)
+    cetak("Motor berakselerasi cepat")
+}
+
+# ========== Testing ==========
+cetak("=== Mobil ===")
+mobil_init("Avanza")
+mobil_info()
+mobil_percepat(20)
+mobil_info()
+
+cetak("")
+cetak("=== Motor ===")
+motor_init("Harley")
+motor_info()
+motor_percepat(10)
+motor_info()

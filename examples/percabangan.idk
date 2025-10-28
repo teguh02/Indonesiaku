@@ -1,0 +1,12 @@
+# Percabangan dengan brace blocks
+nilai = 85
+
+jika nilai >= 90 {
+    cetak("Nilai: A")
+}
+
+jika nilai >= 80 {
+    cetak("Nilai: B")
+}
+
+cetak("Selesai")

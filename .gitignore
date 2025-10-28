@@ -1,0 +1,47 @@
+# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+indk
+indk.exe
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# Build directories
+build/
+dist/
+
+# Private/Development files
+prompts/
+admin/LOG_AKTIVITAS_*.md
+
+# IDE
+.vscode/
+.idea/
+
+# Node/npm (if used in future)
+node_modules/
+package-lock.json
+
+# Python (if used in future)
+__pycache__/
+*.py[cod]
+*.egg-info/

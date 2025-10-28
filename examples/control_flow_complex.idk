@@ -1,0 +1,32 @@
+# Test: Complex control flow
+# Tujuan: Test kombinasi if/else dengan nested conditions
+
+cetak("=== Complex Conditional Logic ===")
+
+# Test 1: Grading system - simplified
+nilai = 85
+jika nilai >= 90 {
+    cetak("Nilai:", "A")
+}
+
+jika nilai >= 80 dan nilai < 90 {
+    cetak("Nilai:", "B")
+}
+
+# Test 2: Even/Odd check
+x = 42
+jika x % 2 == 0 {
+    cetak(x, "adalah genap")
+}
+
+jika x % 2 != 0 {
+    cetak(x, "adalah ganjil")
+}
+
+# Test 3: Multiple conditions
+y = 100
+jika y > 50 dan y < 150 {
+    cetak(y, "berada dalam range 50-150")
+}
+
+cetak("Selesai!")

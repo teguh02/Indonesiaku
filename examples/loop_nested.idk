@@ -1,0 +1,17 @@
+# Test: Nested loops dengan multiple variables
+# Tujuan: Test nested loop control flow dan variable management
+
+cetak("=== Multiplication Table ===")
+
+i = 1
+selagi i <= 5 {
+    j = 1
+    selagi j <= 5 {
+        hasil = i * j
+        cetak(i, "x", j, "=", hasil)
+        j = j + 1
+    }
+    i = i + 1
+}
+
+cetak("Selesai!")

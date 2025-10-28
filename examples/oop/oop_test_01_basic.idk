@@ -1,0 +1,22 @@
+# oop_test_01_basic.idk
+# Test: Coba syntax kelas sederhana
+# Expected: Error - kelas belum di-support di v0.1
+# Status: NOT IMPLEMENTED YET
+
+kelas Manusia {
+    nama = kosong
+    umur = kosong
+    
+    fungsi __init__(nama_baru, umur_baru) {
+        diri.nama = nama_baru
+        diri.umur = umur_baru
+    }
+    
+    fungsi sapa() {
+        cetak("Halo, saya adalah", diri.nama)
+        cetak("Umur saya:", diri.umur)
+    }
+}
+
+manusia1 = Manusia("Budi", 25)
+manusia1.sapa()

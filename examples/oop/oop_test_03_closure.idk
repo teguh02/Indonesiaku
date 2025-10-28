@@ -1,0 +1,57 @@
+# oop_test_03_closure.idk
+# Test: Simulasi closure-like behavior dengan nested functions
+# Status: WORKS - v0.1 compatible
+
+# Simulasi object counter dengan closure pattern
+# Menggunakan global variable sebagai "private" state
+
+counter_value = 0
+
+# "Constructor" function
+fungsi buat_counter() {
+    counter_value = 0
+}
+
+# "Get" method
+fungsi counter_get() {
+    kembalikan counter_value
+}
+
+# "Increment" method
+fungsi counter_increment() {
+    counter_value = counter_value + 1
+    kembalikan counter_value
+}
+
+# "Reset" method
+fungsi counter_reset() {
+    counter_value = 0
+}
+
+# ========== Test Counter 1 ==========
+cetak("=== Counter 1 ===")
+buat_counter()
+cetak("Initial:", counter_get())
+
+cetak("After increment:")
+counter_increment()
+cetak("Value:", counter_get())
+
+counter_increment()
+cetak("Value:", counter_get())
+
+counter_increment()
+cetak("Value:", counter_get())
+
+cetak("")
+cetak("Reset counter")
+counter_reset()
+cetak("Value after reset:", counter_get())
+
+# ========== Simulasi Multiple Counters ==========
+# (Limited - karena global variable shared)
+cetak("")
+cetak("=== Counter 2 (shares state) ===")
+cetak("Start with:", counter_get())
+counter_increment()
+cetak("After increment:", counter_get())

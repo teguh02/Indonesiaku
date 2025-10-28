@@ -1,0 +1,10 @@
+# Perulangan selagi dengan brace blocks
+hitungan = 5
+cetak("Hitungan mundur:")
+
+selagi hitungan > 0 {
+    cetak(hitungan)
+    hitungan = hitungan - 1
+}
+
+cetak("Selesai!")

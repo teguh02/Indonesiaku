@@ -1,0 +1,10 @@
+# Fibonacci dengan brace blocks
+fungsi fibonacci(n) {
+    jika n <= 1 {
+        kembalikan n
+    }
+    kembalikan fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+cetak("=== Fibonacci (5) ===")
+cetak(fibonacci(5))

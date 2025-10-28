@@ -1,0 +1,46 @@
+# Test: State management
+# Tujuan: Test global variables dan state modification across functions
+
+hitungan_call = 0
+total_sum = 0
+
+fungsi accumulate(value) {
+    hitungan_call = hitungan_call + 1
+    total_sum = total_sum + value
+    cetak("Call #", hitungan_call, ": added", value, ", total =", total_sum)
+}
+
+cetak("=== State Management ===")
+
+accumulate(10)
+accumulate(20)
+accumulate(30)
+accumulate(40)
+accumulate(50)
+
+cetak("Final: total calls =", hitungan_call)
+cetak("Final: total sum =", total_sum)
+
+# Reset for next test
+hitungan_call = 0
+total_sum = 0
+
+fungsi maybe_add(value, condition) {
+    jika condition {
+        total_sum = total_sum + value
+        hitungan_call = hitungan_call + 1
+    }
+}
+
+cetak("")
+cetak("Conditional additions:")
+
+maybe_add(5, benar)
+maybe_add(10, salah)
+maybe_add(15, benar)
+maybe_add(20, benar)
+
+cetak("Calls made:", hitungan_call)
+cetak("Final sum:", total_sum)
+
+cetak("Selesai!")

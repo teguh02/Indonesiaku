@@ -1,0 +1,13 @@
+# Test: Recursive function - Factorial
+# Tujuan: Test nested function calls dan stack management
+
+fungsi faktorial(n) {
+    jika n <= 1 {
+        kembalikan 1
+    }
+    
+    kembalikan n * faktorial(n - 1)
+}
+
+cetak("Faktorial(5) =", faktorial(5))
+cetak("Faktorial(10) =", faktorial(10))

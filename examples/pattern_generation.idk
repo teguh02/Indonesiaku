@@ -1,0 +1,19 @@
+# Test: Counting numbers with pattern
+# Tujuan: Test variable state tracking dan loop with conditions
+
+cetak("=== Pattern Generation ===")
+
+# Fibonacci sequence - simplified
+cetak("Fibonacci sequence (first 5):")
+a = 0
+b = 1
+counter = 0
+selagi counter < 5 {
+    cetak(a)
+    temp = a + b
+    a = b
+    b = temp
+    counter = counter + 1
+}
+
+cetak("Selesai!")

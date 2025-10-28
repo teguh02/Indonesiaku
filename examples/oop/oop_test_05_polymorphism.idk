@@ -1,0 +1,101 @@
+# oop_test_05_polymorphism.idk
+# Test: Simulasi polymorphism (duck typing)
+# Concept: Multiple objects dengan interface yang sama tapi behavior berbeda
+# Status: WORKS - v0.1 compatible
+
+# ========== Shape: Circle ==========
+circle_radius = 0
+
+fungsi circle_init(r) {
+    circle_radius = r
+}
+
+fungsi circle_area() {
+    kembalikan 3.14159 * circle_radius * circle_radius
+}
+
+fungsi circle_describe() {
+    cetak("Shape: Circle")
+    cetak("Radius:", circle_radius)
+    cetak("Area:", circle_area())
+}
+
+# ========== Shape: Rectangle ==========
+rect_panjang = 0
+rect_lebar = 0
+
+fungsi rect_init(p, l) {
+    rect_panjang = p
+    rect_lebar = l
+}
+
+fungsi rect_area() {
+    kembalikan rect_panjang * rect_lebar
+}
+
+fungsi rect_describe() {
+    cetak("Shape: Rectangle")
+    cetak("Panjang:", rect_panjang)
+    cetak("Lebar:", rect_lebar)
+    cetak("Area:", rect_area())
+}
+
+# ========== Shape: Triangle ==========
+tri_alas = 0
+tri_tinggi = 0
+
+fungsi tri_init(a, t) {
+    tri_alas = a
+    tri_tinggi = t
+}
+
+fungsi tri_area() {
+    kembalikan (tri_alas * tri_tinggi) / 2
+}
+
+fungsi tri_describe() {
+    cetak("Shape: Triangle")
+    cetak("Alas:", tri_alas)
+    cetak("Tinggi:", tri_tinggi)
+    cetak("Area:", tri_area())
+}
+
+# ========== Testing polymorphic behavior ==========
+cetak("=== Shape Collection ===")
+cetak("")
+
+cetak("--- Circle 1 ---")
+circle_init(5)
+circle_describe()
+
+cetak("")
+cetak("--- Rectangle 1 ---")
+rect_init(4, 6)
+rect_describe()
+
+cetak("")
+cetak("--- Triangle 1 ---")
+tri_init(8, 5)
+tri_describe()
+
+cetak("")
+cetak("--- Circle 2 ---")
+circle_init(3)
+circle_describe()
+
+cetak("")
+cetak("=== Total Areas ===")
+total = 0
+circle_init(5)
+total = total + circle_area()
+
+rect_init(4, 6)
+total = total + rect_area()
+
+tri_init(8, 5)
+total = total + tri_area()
+
+circle_init(3)
+total = total + circle_area()
+
+cetak("Total area of all shapes:", total)

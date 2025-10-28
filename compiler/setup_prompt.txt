@@ -1,0 +1,125 @@
+# 🧩 Prompt Setup Installer Bahasa Pemrograman Indonesiaku (menggunakan Inno Setup)
+
+## Tujuan
+Membuat **installer Windows (.exe)** untuk Bahasa Pemrograman **Indonesiaku**, sehingga pengguna hanya perlu klik dua kali → "Next Next Finish" → dan compiler langsung terpasang di `C:\Program Files\Indonesiaku\bin`, otomatis menambahkan PATH ke Windows.
+
+---
+
+## Langkah-langkah Pembuatan Setup Compiler (Inno Setup)
+
+### 1️⃣ Persiapan Struktur Folder
+Pastikan struktur folder projek `Indonesiaku` seperti berikut (contoh di dalam Visual Studio Code):
+
+```
+Indonesiaku/
+├─ src/
+├─ include/
+├─ examples/
+├─ docs/
+├─ compiler/
+│   ├─ indonesiaku_installer.iss    ← file script installer Inno Setup
+│   ├─ setup_prompt.txt             ← (file ini)
+│   └─ bin/
+│       └─ indonesiaku.exe
+```
+
+Folder `compiler/bin` harus berisi hasil build final (`indonesiaku.exe`).
+
+### 2️⃣ Build Compiler menjadi Binary Release
+Buka terminal di folder utama proyek lalu jalankan:
+
+```bash
+gcc -O2 -s -o compiler/bin/indonesiaku.exe src/*.c
+```
+
+Penjelasan:
+- `-O2` → Optimasi performa tinggi.
+- `-s` → Hilangkan simbol debug agar ukuran kecil.
+- Output `compiler/bin/indonesiaku.exe` akan digunakan installer.
+
+---
+
+### 3️⃣ Buat File Installer Script (indonesiaku_installer.iss)
+
+Buka Notepad atau VSCode, salin isi berikut, dan simpan sebagai:
+`compiler/indonesiaku_installer.iss`
+
+```ini
+[Setup]
+AppName=Bahasa Pemrograman Indonesiaku
+AppVersion=1.0.0
+DefaultDirName={pf}\Indonesiaku
+DefaultGroupName=Indonesiaku
+UninstallDisplayIcon={app}\bin\indonesiaku.exe
+OutputBaseFilename=Indonesiaku-Setup
+Compression=lzma
+SolidCompression=yes
+
+[Files]
+Source: "bin\indonesiaku.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "..\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs ignoreversion
+Source: "..\examples\*"; DestDir: "{app}\examples"; Flags: recursesubdirs ignoreversion
+
+[Icons]
+Name: "{group}\Bahasa Indonesiaku"; Filename: "{app}\bin\indonesiaku.exe"
+
+[Run]
+Filename: "{app}\bin\indonesiaku.exe"; Description: "Jalankan Bahasa Indonesiaku"; Flags: nowait postinstall skipifsilent
+
+[Registry]
+; Tambahkan PATH Windows
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}\bin"; Flags: preservestringtype
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"
+```
+
+---
+
+### 4️⃣ Jalankan Inno Setup Compiler
+
+1. Unduh **Inno Setup** dari:  
+   🔗 https://jrsoftware.org/isinfo.php
+
+2. Buka aplikasi **Inno Setup Compiler**.
+3. Pilih **File → Open** → buka `compiler/indonesiaku_installer.iss`.
+4. Klik **Compile** (ikon “Play” hijau).
+5. Hasil build:  
+   `compiler/Output/Indonesiaku-Setup.exe`
+
+---
+
+### 5️⃣ Uji Hasil Installer
+1. Jalankan `Indonesiaku-Setup.exe`.
+2. Klik **Next → Next → Finish**.
+3. Buka PowerShell dan cek apakah PATH sudah aktif:
+   ```bash
+   indonesiaku --version
+   ```
+4. Bahasa Indonesiaku siap digunakan di mana saja di sistem Windows.
+
+---
+
+### 6️⃣ (Opsional) Tambahkan Asosiasi File `.idk` atau `.indo`
+
+Jika ingin file program bisa dijalankan langsung dengan klik dua kali, tambahkan bagian ini di bawah `[Registry]` dalam `.iss`:
+
+```ini
+; Asosiasi file .idk
+Root: HKCR; Subkey: ".idk"; ValueType: string; ValueName: ""; ValueData: "IndonesiakuFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "IndonesiakuFile\shell\open\command"; ValueType: string; ValueData: "\""{app}\bin\indonesiaku.exe\" "%1""
+```
+
+Setelah compile ulang installer, klik dua kali file `.idk` akan otomatis dijalankan dengan `indonesiaku.exe`.
+
+---
+
+## 🚀 Hasil Akhir
+- Installer `.exe` profesional seperti software besar.
+- Otomatis menambah PATH.
+- Bisa dijalankan dari CMD/PowerShell langsung.
+- Mudah di-uninstall melalui Control Panel.
+
+---
+
+**Catatan:** Pastikan menjalankan Inno Setup sebagai Administrator agar registry PATH bisa ditulis tanpa error.

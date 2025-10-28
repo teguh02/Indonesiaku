@@ -1,0 +1,28 @@
+# Test: Mutual recursion
+# Tujuan: Test fungsi yang saling memanggil satu sama lain
+
+fungsi is_even(n) {
+    jika n == 0 {
+        kembalikan benar
+    }
+    else {
+        kembalikan is_odd(n - 1)
+    }
+}
+
+fungsi is_odd(n) {
+    jika n == 0 {
+        kembalikan salah
+    }
+    else {
+        kembalikan is_even(n - 1)
+    }
+}
+
+cetak("=== Mutual Recursion ===")
+cetak("is_even(10):", is_even(10))
+cetak("is_even(9):", is_even(9))
+cetak("is_odd(10):", is_odd(10))
+cetak("is_odd(9):", is_odd(9))
+
+cetak("Selesai!")

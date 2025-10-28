@@ -1,0 +1,8 @@
+# Contoh variabel dan operasi aritmatika
+x = 10
+y = 5
+cetak("x =", x)
+cetak("y =", y)
+
+jumlah = x + y
+cetak("x + y =", jumlah)

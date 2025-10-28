@@ -1,0 +1,53 @@
+# oop_test_02_simulasi.idk
+# Test: Simulasi OOP behavior menggunakan functions dan global variables
+# Concept: Membuat "object" dengan properties dan methods menggunakan namespacing
+# Status: WORKS - v0.1 compatible
+
+# Simulasi Class Manusia
+# Properties: manusia_nama, manusia_umur
+# Methods: manusia_init, manusia_sapa, manusia_ulang_tahun
+
+manusia_nama = kosong
+manusia_umur = kosong
+
+# Constructor - init object Manusia
+fungsi manusia_init(nama, umur) {
+    manusia_nama = nama
+    manusia_umur = umur
+}
+
+# Method - print greeting
+fungsi manusia_sapa() {
+    cetak("Halo, saya adalah", manusia_nama)
+    cetak("Umur saya:", manusia_umur)
+}
+
+# Method - celebrate birthday
+fungsi manusia_ulang_tahun() {
+    manusia_umur = manusia_umur + 1
+    cetak(manusia_nama, "sekarang berumur", manusia_umur)
+}
+
+# Method - get info
+fungsi manusia_info() {
+    cetak("Nama:", manusia_nama)
+    cetak("Umur:", manusia_umur)
+}
+
+# Create first object
+cetak("=== Object 1 ===")
+manusia_init("Budi", 25)
+manusia_sapa()
+manusia_info()
+
+cetak("")
+cetak("=== Object 1 - Birthday ===")
+manusia_ulang_tahun()
+manusia_info()
+
+# Create second object (overwrite properties)
+cetak("")
+cetak("=== Object 2 ===")
+manusia_init("Ani", 20)
+manusia_sapa()
+manusia_info()

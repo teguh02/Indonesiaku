@@ -1,0 +1,5 @@
+# Program Hello World dalam Bahasa Indonesiaku
+# File: hello.idk
+
+cetak("Halo, dunia!")
+cetak("Selamat datang di Bahasa Pemrograman Indonesiaku!")

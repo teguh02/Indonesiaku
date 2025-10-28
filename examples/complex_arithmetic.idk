@@ -1,0 +1,26 @@
+# Test: Complex arithmetic
+# Tujuan: Test operator precedence dan arithmetic operations
+
+cetak("=== Complex Arithmetic ===")
+
+# Basic operations
+a = 10
+b = 3
+c = 7
+
+cetak("a =", a, ", b =", b, ", c =", c)
+cetak("a + b * c =", a + b * c)
+cetak("(a + b) * c =", (a + b) * c)
+cetak("a - b + c =", a - b + c)
+cetak("a * b / c =", a * b / c)
+
+# Modulo operations
+cetak("10 % 3 =", 10 % 3)
+cetak("20 % 7 =", 20 % 7)
+cetak("100 % 10 =", 100 % 10)
+
+# Power-like operations (repeated multiplication)
+# Simplified version - skip for now due to local variable limitation
+# Will revisit when local variable assignment is implemented
+
+cetak("Selesai!")

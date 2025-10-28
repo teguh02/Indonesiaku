@@ -1,0 +1,20 @@
+# Fungsi sederhana
+fungsi sapa() {
+    cetak("Halo dari fungsi!")
+}
+
+sapa()
+
+# Fungsi dengan parameter
+fungsi sapa_nama(nama) {
+    cetak("Halo,", nama)
+}
+
+sapa_nama("Budi")
+
+# Fungsi dengan nilai kembalian
+fungsi tambah(a, b) {
+    kembalikan a + b
+}
+
+cetak("10 + 20 =", tambah(10, 20))

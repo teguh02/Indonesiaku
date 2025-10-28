@@ -1,0 +1,41 @@
+# Test: Function composition
+# Tujuan: Test multiple function calls dan return values
+
+fungsi tambah(a, b) {
+    kembalikan a + b
+}
+
+fungsi kuali(x) {
+    kembalikan x * x
+}
+
+fungsi kali_tiga(x) {
+    kembalikan x * 3
+}
+
+cetak("=== Function Composition ===")
+
+# Simple function chain
+hasil1 = tambah(5, 3)
+cetak("tambah(5, 3) =", hasil1)
+
+hasil2 = kuali(hasil1)
+cetak("kuali(8) =", hasil2)
+
+hasil3 = kali_tiga(hasil2)
+cetak("kali_tiga(64) =", hasil3)
+
+# Function with conditional
+fungsi absolute(n) {
+    jika n < 0 {
+        kembalikan n * -1
+    }
+    else {
+        kembalikan n
+    }
+}
+
+cetak("absolute(-42) =", absolute(-42))
+cetak("absolute(42) =", absolute(42))
+
+cetak("Selesai!")
