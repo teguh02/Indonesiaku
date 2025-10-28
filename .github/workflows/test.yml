@@ -190,9 +190,6 @@ jobs:
           echo "macOS Tests: ${{ needs.test-macos.result }}"
           echo "Windows Tests: ${{ needs.test-windows.result }}"
           echo "::endgroup::"
-          
-          # Print but don't fail on test errors
-          echo "Summary generated"
 
   create-badge:
     name: Update Status Badge
