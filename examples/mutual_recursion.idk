@@ -5,7 +5,7 @@ fungsi is_even(n) {
     jika n == 0 {
         kembalikan benar
     }
-    else {
+    selain {
         kembalikan is_odd(n - 1)
     }
 }
@@ -14,7 +14,7 @@ fungsi is_odd(n) {
     jika n == 0 {
         kembalikan salah
     }
-    else {
+    selain {
         kembalikan is_even(n - 1)
     }
 }

@@ -30,7 +30,7 @@ fungsi absolute(n) {
     jika n < 0 {
         kembalikan n * -1
     }
-    else {
+    selain {
         kembalikan n
     }
 }
