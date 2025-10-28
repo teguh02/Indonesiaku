@@ -8,7 +8,7 @@
 [Setup]
 ; Informasi aplikasi
 AppName=Bahasa Pemrograman Indonesiaku
-AppVersion=0.1.1
+AppVersion=0.1.2
 AppPublisher=Teguh Rijanandi
 AppPublisherURL=https://github.com/teguhriyan/Indonesiaku
 AppSupportURL=https://github.com/teguhriyan/Indonesiaku/issues
@@ -23,7 +23,7 @@ UninstallDisplayIcon={app}\bin\indonesiaku.exe
 ; Compression dan output
 Compression=lzma
 SolidCompression=yes
-OutputBaseFilename=Indonesiaku-Setup-v0.1.1
+OutputBaseFilename=Indonesiaku-Setup-v0.1.2
 OutputDir=..\dist
 
 ; Permissions
