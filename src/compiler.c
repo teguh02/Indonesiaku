@@ -8,10 +8,14 @@
 #include "scanner.h"
 #include "object.h"
 
-#define DEBUG_PRINT_CODE
+#if 0
+// Disable debug printing of compiled bytecode by default in release builds.
+// Define DEBUG_PRINT_CODE for local debugging when needed.
+// #define DEBUG_PRINT_CODE
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
+#endif
 #endif
 
 typedef struct {

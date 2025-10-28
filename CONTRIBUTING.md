@@ -305,7 +305,7 @@ Error: ...
 ## Informasi Sistem
 - OS: Windows 10
 - Compiler: GCC 11.2.0
-- Versi Indonesiaku: 0.1.0
+- Versi Indonesiaku: 0.1.1
 
 ## Kode yang Menyebabkan Bug
 ```python

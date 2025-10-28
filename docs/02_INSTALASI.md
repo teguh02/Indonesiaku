@@ -44,10 +44,10 @@ Pastikan komputer Anda terhubung ke internet untuk:
 
 1. **Download Installer**
    - Buka: https://github.com/teguh02/Indonesiaku/releases
-   - Download file: `Indonesiaku-Setup-v0.1.0.exe` (latest version)
+   - Download file: `Indonesiaku-Setup-v0.1.1.exe` (latest version)
 
 2. **Jalankan Installer**
-   - Double-click file `Indonesiaku-Setup-v0.1.0.exe`
+   - Double-click file `Indonesiaku-Setup-v0.1.1.exe`
    - Ikuti wizard instalasi: Next → Next → Install → Finish
    - Tunggu hingga instalasi selesai (± 1 menit)
 

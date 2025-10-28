@@ -21,7 +21,7 @@ Menjadi bahasa pemrograman pertama yang fully mendukung pemrograman dalam Bahasa
 
 ## Fitur Utama
 
-### ✅ v0.1.0 (Saat Ini)
+### ✅ v0.1.1 (Saat Ini)
 
 **Tipe Data**
 - ✅ Numbers (integer dan float)
@@ -241,6 +241,6 @@ Lihat file **KONTRIBUSI.md** untuk detail lengkap.
 ---
 
 **Status**: Aktif dikembangkan  
-**Latest Version**: v0.1.0  
+**Latest Version**: v0.1.1  
 **Release Date**: Oktober 2025  
 **Maintainer**: Teguh Rijanandi

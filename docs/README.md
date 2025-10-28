@@ -96,7 +96,7 @@ cetak("Hasil penjumlahan:", jumlah)
 
 | Aspek | Keterangan |
 |-------|-----------|
-| **Versi** | v0.1.0 |
+| **Versi** | v0.1.1 |
 | **Tipe** | Interpreted bytecode VM |
 | **Syntax** | C-style dengan keywords Indonesia |
 | **Tipe Data** | Number, Boolean, String, Null |

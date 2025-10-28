@@ -38,7 +38,7 @@ gcc -O2 -s -o compiler/bin/indonesiaku.exe src/*.c -lm
 
 - Klik tombol **Compile** (ikon Play hijau)
 - Atau Ctrl+F9
-- Output akan ada di: `dist/Indonesiaku-Setup-v0.1.0.exe`
+- Output akan ada di: `dist/Indonesiaku-Setup-v0.1.1.exe`
 
 ### 4. Test Installer
 
@@ -94,7 +94,7 @@ Features:
    → File: compiler/indonesiaku_installer.iss
    ↓
 4. Compile Installer (Ctrl+F9)
-   → Output: dist/Indonesiaku-Setup-v0.1.0.exe
+   → Output: dist/Indonesiaku-Setup-v0.1.1.exe
    ↓
 5. Test Installer (double-click .exe)
    → Verify install & PATH
@@ -111,7 +111,7 @@ Features:
 ```ini
 [Setup]
 AppName=Bahasa Pemrograman Indonesiaku
-AppVersion=0.1.0
+AppVersion=0.1.1
 DefaultDirName={pf}\Indonesiaku      ; C:\Program Files\Indonesiaku
 OutputBaseFilename=Indonesiaku-Setup-v0.1.0
 OutputDir=..\dist

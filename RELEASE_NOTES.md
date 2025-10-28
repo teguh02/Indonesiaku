@@ -1,8 +1,8 @@
-# Release Notes - Bahasa Pemrograman Indonesiaku v0.1.0
+# Release Notes - Bahasa Pemrograman Indonesiaku v0.1.1
 
-## 🎉 Rilis Pertama - Bahasa Pemrograman Indonesiaku v0.1.0
+## 🎉 Rilis - Bahasa Pemrograman Indonesiaku v0.1.1
 
-Kami dengan bangga mempersembahkan **Bahasa Pemrograman Indonesiaku v0.1.0**, bahasa pemrograman pertama di dunia yang menggunakan **Bahasa Indonesia** sebagai syntax utamanya!
+Kami dengan bangga mempersembahkan **Bahasa Pemrograman Indonesiaku v0.1.1**.
 
 ---
 
@@ -70,7 +70,7 @@ salam("Dunia")
 ## 🚀 Getting Started
 
 ### Windows (Recommended)
-1. Download: `Indonesiaku-Setup-v0.1.0.exe` dari https://github.com/teguh02/Indonesiaku/releases
+1. Download: `Indonesiaku-Setup-v0.1.1.exe` dari https://github.com/teguh02/Indonesiaku/releases
 2. Run installer → Next → Install → Finish
 3. Buka terminal baru dan jalankan: `indonesiaku`
 

@@ -46,7 +46,7 @@ Indonesiaku/
 │   ├── indonesiaku_installer.iss  ← Script installer (sudah dibuat)
 │   └── setup_prompt.txt           ← Dokumentasi original
 ├── dist/                           ← Output installer hasil compile
-│   └── Indonesiaku-Setup-v0.1.0.exe
+│   └── Indonesiaku-Setup-v0.1.1.exe
 ├── docs/                           ← Documentation
 ├── examples/                       ← Example programs
 ├── src/                            ← Source code
@@ -135,7 +135,7 @@ File `indonesiaku_installer.iss` sudah dibuat dengan:
 
 5. **Output file** akan tersimpan di:
    ```
-   Indonesiaku\dist\Indonesiaku-Setup-v0.1.0.exe
+   Indonesiaku\dist\Indonesiaku-Setup-v0.1.1.exe
    ```
 
 ### Method 2: Compile Manual (Command Line)
@@ -150,7 +150,7 @@ cd C:\Users\[YourName]\...\Indonesiaku\compiler
 "C:\Program Files (x86)\Inno Setup 6\iscc.exe" indonesiaku_installer.iss
 
 # Tunggu selesai...
-# Output: ..\dist\Indonesiaku-Setup-v0.1.0.exe
+# Output: ..\dist\Indonesiaku-Setup-v0.1.1.exe
 ```
 
 ---
@@ -164,7 +164,7 @@ cd C:\Users\[YourName]\...\Indonesiaku\compiler
 ls dist\
 
 # Seharusnya terlihat:
-# Indonesiaku-Setup-v0.1.0.exe
+# Indonesiaku-Setup-v0.1.1.exe
 ```
 
 ### ✅ Test 2: Run Installer
@@ -173,13 +173,13 @@ ls dist\
 
 ```powershell
 # Run dari PowerShell (as Administrator)
-& "dist\Indonesiaku-Setup-v0.1.0.exe"
+& "dist\Indonesiaku-Setup-v0.1.1.exe"
 ```
 
 **Method B - File Explorer:**
 1. Buka `File Explorer`
 2. Navigate ke `Indonesiaku\dist\`
-3. Double-click `Indonesiaku-Setup-v0.1.0.exe`
+3. Double-click `Indonesiaku-Setup-v0.1.1.exe`
 
 ### ✅ Test 3: Follow Installation Wizard
 
@@ -275,7 +275,7 @@ indonesiaku "C:\Program Files\Indonesiaku\examples\hello.idk"
 Setelah successful compile:
 
 ```
-dist/Indonesiaku-Setup-v0.1.0.exe
+dist/Indonesiaku-Setup-v0.1.1.exe
 ```
 
 File ini bisa didistribusikan:

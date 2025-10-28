@@ -13,6 +13,15 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - String concatenation dan operations
 - Operator assignment gabungan (+=, -=, *=, /=)
 
+## [0.1.1] - 2025-10-28
+
+### Changed
+
+- Bumped version to `0.1.1`.
+- Added CLI flags `-v/--version` and `-h/--help`.
+- Disabled compiler debug bytecode printing by default for release builds.
+- Updated installer metadata and documentation to reference `v0.1.1`.
+
 ## [0.1.0] - 2025-10-27
 
 ### Added
