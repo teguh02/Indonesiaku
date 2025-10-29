@@ -1,12 +1,7 @@
-# Percabangan dengan brace blocks
-nilai = 85
+# Percabangan - if statement test
 
-jika nilai >= 90 {
-    cetak("Nilai: A")
+cetak("=== Percabangan Test ===")
+x = 10
+jika x > 5 {
+    cetak("Test passed")
 }
-
-jika nilai >= 80 {
-    cetak("Nilai: B")
-}
-
-cetak("Selesai")

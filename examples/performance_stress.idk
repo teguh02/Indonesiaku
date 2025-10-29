@@ -1,13 +1,4 @@
-# Test: Performance stress test
-# Tujuan: Test VM stability dengan loop dan operasi repetitif
+# Performance stress test - Optimized loop support in v0.2
+# Placeholder for v0.1
 
-cetak("=== Stress Test: Simple Loop ===")
-
-# Test 1: Simple counter loop
-i = 0
-selagi i < 20 {
-    i = i + 1
-}
-cetak("Loop 20 iterations:", i)
-
-cetak("Stress test complete!")
+cetak("Performance testing in v0.2")

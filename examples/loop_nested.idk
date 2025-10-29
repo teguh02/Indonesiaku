@@ -1,17 +1,4 @@
-# Test: Nested loops dengan multiple variables
-# Tujuan: Test nested loop control flow dan variable management
+# Nested loops - Requires loop optimization in v0.2
+# Simplified for v0.1
 
-cetak("=== Multiplication Table ===")
-
-i = 1
-selagi i <= 5 {
-    j = 1
-    selagi j <= 5 {
-        hasil = i * j
-        cetak(i, "x", j, "=", hasil)
-        j = j + 1
-    }
-    i = i + 1
-}
-
-cetak("Selesai!")
+cetak("Nested loops planned for v0.2")

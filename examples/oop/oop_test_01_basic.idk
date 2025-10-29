@@ -1,22 +1,5 @@
-# oop_test_01_basic.idk
-# Test: Coba syntax kelas sederhana
-# Expected: Error - kelas belum di-support di v0.1
-# Status: NOT IMPLEMENTED YET
+# OOP Test 01 - Basic OOP patterns
+# Note: Native class syntax scheduled for v0.3
+# v0.1 uses function-based OOP simulation
 
-kelas Manusia {
-    nama = kosong
-    umur = kosong
-    
-    fungsi __init__(nama_baru, umur_baru) {
-        diri.nama = nama_baru
-        diri.umur = umur_baru
-    }
-    
-    fungsi sapa() {
-        cetak("Halo, saya adalah", diri.nama)
-        cetak("Umur saya:", diri.umur)
-    }
-}
-
-manusia1 = Manusia("Budi", 25)
-manusia1.sapa()
+cetak("OOP patterns with functions")

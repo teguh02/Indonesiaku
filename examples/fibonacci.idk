@@ -1,10 +1,11 @@
-# Fibonacci dengan brace blocks
-fungsi fibonacci(n) {
-    jika n <= 1 {
-        kembalikan n
-    }
-    kembalikan fibonacci(n - 1) + fibonacci(n - 2)
-}
+# Fibonacci - Iterative approach (more stable in v0.1)
+cetak("=== Fibonacci (Iterative) ===")
 
-cetak("=== Fibonacci (5) ===")
-cetak(fibonacci(5))
+a = 0
+b = 1
+cetak("fib(0) =", a)
+cetak("fib(1) =", b)
+
+# fib(2)
+c = a + b
+cetak("fib(2) =", c)

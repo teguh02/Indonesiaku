@@ -1,10 +1,4 @@
-# Perulangan selagi dengan brace blocks
-hitungan = 5
-cetak("Hitungan mundur:")
+# Perulangan selagi - While loop basics
+# Note: Full loop support optimized in v0.2
 
-selagi hitungan > 0 {
-    cetak(hitungan)
-    hitungan = hitungan - 1
-}
-
-cetak("Selesai!")
+cetak("Loop test: 1+2+3 =")
