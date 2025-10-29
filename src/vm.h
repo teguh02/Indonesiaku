@@ -8,6 +8,32 @@
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
+// Stack protection checks
+#define STACK_UNDERFLOW_CHECK(count) \
+    do { \
+        if (vm.stackTop - vm.stack < (count)) { \
+            runtimeError("Stack underflow: attempted to pop %d values but only %td available", \
+                        (count), (vm.stackTop - vm.stack)); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+    } while (false)
+
+#define STACK_OVERFLOW_CHECK() \
+    do { \
+        if (vm.stackTop >= vm.stack + STACK_MAX) { \
+            runtimeError("Stack overflow: maximum stack depth %d exceeded", STACK_MAX); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+    } while (false)
+
+#define FRAME_OVERFLOW_CHECK() \
+    do { \
+        if (vm.frameCount >= FRAMES_MAX) { \
+            runtimeError("Frame overflow: maximum call depth %d exceeded", FRAMES_MAX); \
+            return INTERPRET_RUNTIME_ERROR; \
+        } \
+    } while (false)
+
 typedef struct {
     ObjFunction* function;
     uint8_t* ip;

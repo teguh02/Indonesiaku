@@ -1,0 +1,40 @@
+# Testing Compound Assignment Operators (v0.2)
+# +=, -=, *=, /=, %=, **=
+
+# Addition assignment
+x = 10
+x += 5
+cetak(x)  # Should print 15
+
+# Subtraction assignment
+y = 20
+y -= 8
+cetak(y)  # Should print 12
+
+# Multiplication assignment
+z = 3
+z *= 4
+cetak(z)  # Should print 12
+
+# Division assignment
+a = 30
+a /= 5
+cetak(a)  # Should print 6
+
+# Modulo assignment
+b = 17
+b %= 5
+cetak(b)  # Should print 2
+
+# Power assignment
+c = 2
+c **= 3
+cetak(c)  # Should print 8
+
+# Chained operations
+d = 100
+d += 50
+d /= 3
+cetak(d)  # Should print 50 (150/3=50)
+
+cetak("Semua operator gabungan berfungsi dengan baik!")

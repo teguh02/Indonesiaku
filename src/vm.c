@@ -71,16 +71,19 @@ void freeVM() {
 }
 
 void push(Value value) {
-    int stackSize = (int)(vm.stackTop - vm.stack);
-    if (stackSize >= STACK_MAX - 10) {
-        // Stack is getting close to full - keep warning but don't spam
+    if (vm.stackTop >= vm.stack + STACK_MAX) {
+        runtimeError("Stack overflow: maksimum kedalaman stack %d terlampaui", STACK_MAX);
+        return;
     }
-    
     *vm.stackTop = value;
     vm.stackTop++;
 }
 
 Value pop() {
+    if (vm.stackTop <= vm.stack) {
+        runtimeError("Stack underflow: mencoba mengambil nilai dari stack kosong");
+        return KOSONG_VAL;
+    }
     vm.stackTop--;
     Value result = *vm.stackTop;
     return result;
@@ -97,8 +100,8 @@ static bool call(ObjFunction* function, int argCount) {
         return false;
     }
 
-    if (vm.frameCount == FRAMES_MAX) {
-        runtimeError("Stack overflow.");
+    if (vm.frameCount >= FRAMES_MAX) {
+        runtimeError("Call stack overflow: kedalaman maksimal panggilan fungsi %d terlampaui. Kemungkinan rekursi tak terbatas?", FRAMES_MAX);
         return false;
     }
 
@@ -205,6 +208,7 @@ static InterpretResult run() {
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 frame->slots[slot] = peek(0);
+                // Don't pop - leave value on stack (assignment is an expression)
                 break;
             }
             case OP_GET_GLOBAL: {
@@ -219,8 +223,9 @@ static InterpretResult run() {
             }
             case OP_DEFINE_GLOBAL: {
                 ObjString* name = READ_STRING();
-                tableSet(&vm.globals, name, peek(0));
-                pop();
+                Value value = peek(0);
+                tableSet(&vm.globals, name, value);
+                // Don't pop - leave value on stack (assignment is an expression)
                 break;
             }
             case OP_SET_GLOBAL: {
@@ -230,6 +235,7 @@ static InterpretResult run() {
                     runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                // Don't pop - leave value on stack (assignment is an expression)
                 break;
             }
             case OP_EQUAL: {

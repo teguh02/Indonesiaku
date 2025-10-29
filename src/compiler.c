@@ -423,7 +423,7 @@ static void namedVariable(Token name, bool canAssign) {
     }
 
     if (canAssign && match(TOKEN_EQUAL)) {
-        expression();
+        parsePrecedence(PREC_ASSIGNMENT);
         // Jika assignment terjadi pada scope global (top-level),
         // perlakukan sebagai deklarasi/immediate definition.
         // Ini memungkinkan penulisan: x = 10 tanpa kata kunci 'variabel'.
@@ -432,6 +432,42 @@ static void namedVariable(Token name, bool canAssign) {
         } else {
             emitBytes(setOp, (uint8_t)arg);
         }
+    } else if (canAssign && match(TOKEN_PLUS_EQUAL)) {
+        // x += 5 becomes x = x + 5
+        emitBytes(getOp, (uint8_t)arg);
+        parsePrecedence(PREC_TERM);
+        emitByte(OP_ADD);
+        emitBytes(setOp, (uint8_t)arg);
+    } else if (canAssign && match(TOKEN_MINUS_EQUAL)) {
+        // x -= 5 becomes x = x - 5
+        emitBytes(getOp, (uint8_t)arg);
+        parsePrecedence(PREC_TERM);
+        emitByte(OP_SUBTRACT);
+        emitBytes(setOp, (uint8_t)arg);
+    } else if (canAssign && match(TOKEN_STAR_EQUAL)) {
+        // x *= 5 becomes x = x * 5
+        emitBytes(getOp, (uint8_t)arg);
+        parsePrecedence(PREC_FACTOR);
+        emitByte(OP_MULTIPLY);
+        emitBytes(setOp, (uint8_t)arg);
+    } else if (canAssign && match(TOKEN_SLASH_EQUAL)) {
+        // x /= 5 becomes x = x / 5
+        emitBytes(getOp, (uint8_t)arg);
+        parsePrecedence(PREC_FACTOR);
+        emitByte(OP_DIVIDE);
+        emitBytes(setOp, (uint8_t)arg);
+    } else if (canAssign && match(TOKEN_PERCENT_EQUAL)) {
+        // x %= 5 becomes x = x % 5
+        emitBytes(getOp, (uint8_t)arg);
+        parsePrecedence(PREC_FACTOR);
+        emitByte(OP_MODULO);
+        emitBytes(setOp, (uint8_t)arg);
+    } else if (canAssign && match(TOKEN_POWER_EQUAL)) {
+        // x **= 5 becomes x = x ** 5
+        emitBytes(getOp, (uint8_t)arg);
+        parsePrecedence(PREC_POWER);
+        emitByte(OP_POWER);
+        emitBytes(setOp, (uint8_t)arg);
     } else {
         emitBytes(getOp, (uint8_t)arg);
     }
@@ -501,6 +537,14 @@ ParseRule rules[] = {
   [TOKEN_VARIABEL]      = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SELAGI]        = {NULL,     NULL,   PREC_NONE},
   [TOKEN_TIDAK]         = {unary,    NULL,   PREC_NONE},
+  [TOKEN_NEWLINE]       = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_MINUS_EQUAL]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_STAR_EQUAL]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SLASH_EQUAL]   = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_PERCENT_EQUAL] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_POWER_EQUAL]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
 };static void parsePrecedence(Precedence precedence) {

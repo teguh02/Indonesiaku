@@ -45,3 +45,7 @@ package-lock.json
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# Testing files
+test_*.idk
+*_test.idk

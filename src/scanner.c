@@ -285,12 +285,15 @@ Token scanToken() {
             return makeToken(TOKEN_SLASH);
         case '*':
             if (match('*')) {
-                return makeToken(TOKEN_POWER);
+                return makeToken(
+                    match('=') ? TOKEN_POWER_EQUAL : TOKEN_POWER);
             } else if (match('=')) {
                 return makeToken(TOKEN_STAR_EQUAL);
             }
             return makeToken(TOKEN_STAR);
-        case '%': return makeToken(TOKEN_PERCENT);
+        case '%':
+            return makeToken(
+                match('=') ? TOKEN_PERCENT_EQUAL : TOKEN_PERCENT);
         case '!':
             return makeToken(
                 match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
