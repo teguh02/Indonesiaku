@@ -12,6 +12,6 @@
 #define UINT8_COUNT (UINT8_MAX + 1)
 
 // Application version
-#define INDK_VERSION "0.1.3"
+#define INDK_VERSION "0.1.4"
 
 #endif
