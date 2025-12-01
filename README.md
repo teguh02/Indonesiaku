@@ -405,7 +405,7 @@ Indonesiaku/
 
 ## 🤝 Kontribusi
 
-Kontribusi sangat diterima! Silakan baca panduan lengkap di **[docs/03_KONTRIBUSI.md](docs/03_KONTRIBUSI.md)**.
+Kontribusi sangat diterima! Silakan baca panduan lengkap di **[docs/04_KONTRIBUSI.md](docs/04_KONTRIBUSI.md)**.
 
 Beberapa area yang bisa dikontribusikan:
 
@@ -435,7 +435,7 @@ git checkout -b feature/nama-fitur
 # 5. Buat perubahan, commit, dan submit PR
 ```
 
-Untuk detail lengkap, baca **[docs/03_KONTRIBUSI.md](docs/03_KONTRIBUSI.md)**.
+Untuk detail lengkap, baca **[docs/04_KONTRIBUSI.md](docs/04_KONTRIBUSI.md)**.
 
 ## 📝 Lisensi
 
