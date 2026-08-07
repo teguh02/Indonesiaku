@@ -1,0 +1,281 @@
+# pustaka/json.idk - Serialisasi & parsing JSON (ditulis dalam Indonesiaku).
+# Impor: impor "pustaka/json.idk"
+# Bergantung pada builtin: jenis, kunci, panjang, karakter/teks[i], potong,
+#   ke_teks, ke_angka, ord, chr.
+#
+# API utama:
+#   json_teks(nilai)      -> string JSON (kompak)
+#   json_urai(teks)       -> nilai Indonesiaku (kamus/list/angka/string/bool/kosong)
+
+# ---------------------------------------------------------------------------
+# SERIALISASI: nilai -> teks JSON
+# ---------------------------------------------------------------------------
+
+# Escape sebuah string menjadi literal JSON (termasuk tanda kutip).
+fungsi json_escape(s) {
+    variabel hasil = "\""
+    variabel i = 0
+    selagi i < panjang(s) {
+        variabel c = s[i]
+        jika c == "\"" {
+            hasil = hasil + "\\\""
+        } jika_lain c == "\\" {
+            hasil = hasil + "\\\\"
+        } jika_lain c == "\n" {
+            hasil = hasil + "\\n"
+        } jika_lain c == "\t" {
+            hasil = hasil + "\\t"
+        } jika_lain c == "\r" {
+            hasil = hasil + "\\r"
+        } selain {
+            hasil = hasil + c
+        }
+        i = i + 1
+    }
+    kembalikan hasil + "\""
+}
+
+fungsi json_teks(nilai) {
+    variabel t = jenis(nilai)
+    jika t == "kosong" {
+        kembalikan "null"
+    }
+    jika t == "boolean" {
+        jika nilai {
+            kembalikan "true"
+        }
+        kembalikan "false"
+    }
+    jika t == "angka" {
+        kembalikan ke_teks(nilai)
+    }
+    jika t == "string" {
+        kembalikan json_escape(nilai)
+    }
+    jika t == "list" {
+        variabel hasil = "["
+        variabel i = 0
+        selagi i < panjang(nilai) {
+            jika i > 0 {
+                hasil = hasil + ","
+            }
+            hasil = hasil + json_teks(nilai[i])
+            i = i + 1
+        }
+        kembalikan hasil + "]"
+    }
+    jika t == "kamus" {
+        variabel hasil = "{"
+        variabel daftar_kunci = kunci(nilai)
+        variabel i = 0
+        selagi i < panjang(daftar_kunci) {
+            jika i > 0 {
+                hasil = hasil + ","
+            }
+            variabel k = daftar_kunci[i]
+            hasil = hasil + json_escape(k) + ":" + json_teks(nilai[k])
+            i = i + 1
+        }
+        kembalikan hasil + "}"
+    }
+    # tipe lain (objek/kelas/berkas) tidak didukung
+    naikkan "json_teks: tipe tidak didukung: " + t
+}
+
+# ---------------------------------------------------------------------------
+# PARSING: teks JSON -> nilai
+# Memakai kursor global _json_pos di atas string global _json_src.
+# ---------------------------------------------------------------------------
+
+_json_src = ""
+_json_pos = 0
+
+fungsi _json_di_akhir() {
+    kembalikan _json_pos >= panjang(_json_src)
+}
+
+fungsi _json_intip() {
+    jika _json_di_akhir() {
+        kembalikan ""
+    }
+    kembalikan _json_src[_json_pos]
+}
+
+fungsi _json_maju() {
+    variabel c = _json_intip()
+    _json_pos = _json_pos + 1
+    kembalikan c
+}
+
+fungsi _json_lewati_spasi() {
+    selagi tidak _json_di_akhir() {
+        variabel c = _json_intip()
+        jika c == " " atau c == "\t" atau c == "\n" atau c == "\r" {
+            _json_pos = _json_pos + 1
+        } selain {
+            hentikan
+        }
+    }
+}
+
+fungsi _json_adalah_digit(c) {
+    jika c == "" {
+        kembalikan salah
+    }
+    variabel k = ord(c)
+    kembalikan k >= 48 dan k <= 57
+}
+
+fungsi _json_urai_string() {
+    # mengonsumsi tanda kutip pembuka
+    _json_maju()
+    variabel hasil = ""
+    selagi tidak _json_di_akhir() {
+        variabel c = _json_maju()
+        jika c == "\"" {
+            kembalikan hasil
+        }
+        jika c == "\\" {
+            variabel e = _json_maju()
+            jika e == "n" {
+                hasil = hasil + "\n"
+            } jika_lain e == "t" {
+                hasil = hasil + "\t"
+            } jika_lain e == "r" {
+                hasil = hasil + "\r"
+            } jika_lain e == "\"" {
+                hasil = hasil + "\""
+            } jika_lain e == "\\" {
+                hasil = hasil + "\\"
+            } jika_lain e == "/" {
+                hasil = hasil + "/"
+            } selain {
+                hasil = hasil + e
+            }
+        } selain {
+            hasil = hasil + c
+        }
+    }
+    naikkan "json_urai: string tidak ditutup"
+}
+
+fungsi _json_urai_angka() {
+    variabel mulai = _json_pos
+    jika _json_intip() == "-" {
+        _json_pos = _json_pos + 1
+    }
+    selagi _json_adalah_digit(_json_intip()) {
+        _json_pos = _json_pos + 1
+    }
+    jika _json_intip() == "." {
+        _json_pos = _json_pos + 1
+        selagi _json_adalah_digit(_json_intip()) {
+            _json_pos = _json_pos + 1
+        }
+    }
+    # notasi eksponen (e/E)
+    variabel ce = _json_intip()
+    jika ce == "e" atau ce == "E" {
+        _json_pos = _json_pos + 1
+        variabel cs = _json_intip()
+        jika cs == "+" atau cs == "-" {
+            _json_pos = _json_pos + 1
+        }
+        selagi _json_adalah_digit(_json_intip()) {
+            _json_pos = _json_pos + 1
+        }
+    }
+    kembalikan ke_angka(potong(_json_src, mulai, _json_pos - mulai))
+}
+
+fungsi _json_cocok_literal(kata) {
+    variabel n = panjang(kata)
+    jika potong(_json_src, _json_pos, n) == kata {
+        _json_pos = _json_pos + n
+        kembalikan benar
+    }
+    kembalikan salah
+}
+
+fungsi _json_urai_nilai() {
+    _json_lewati_spasi()
+    variabel c = _json_intip()
+    jika c == "\"" {
+        kembalikan _json_urai_string()
+    }
+    jika c == "{" {
+        kembalikan _json_urai_objek()
+    }
+    jika c == "[" {
+        kembalikan _json_urai_larik()
+    }
+    jika c == "-" atau _json_adalah_digit(c) {
+        kembalikan _json_urai_angka()
+    }
+    jika _json_cocok_literal("true") {
+        kembalikan benar
+    }
+    jika _json_cocok_literal("false") {
+        kembalikan salah
+    }
+    jika _json_cocok_literal("null") {
+        kembalikan kosong
+    }
+    naikkan "json_urai: karakter tak terduga pada posisi " + ke_teks(_json_pos)
+}
+
+fungsi _json_urai_objek() {
+    _json_maju()   # konsumsi '{'
+    variabel hasil = kamus()
+    _json_lewati_spasi()
+    jika _json_intip() == "}" {
+        _json_maju()
+        kembalikan hasil
+    }
+    selagi benar {
+        _json_lewati_spasi()
+        variabel k = _json_urai_string()
+        _json_lewati_spasi()
+        jika _json_maju() != ":" {
+            naikkan "json_urai: harapkan ':' dalam objek"
+        }
+        hasil[k] = _json_urai_nilai()
+        _json_lewati_spasi()
+        variabel c = _json_maju()
+        jika c == "}" {
+            kembalikan hasil
+        }
+        jika c != "," {
+            naikkan "json_urai: harapkan ',' atau '}' dalam objek"
+        }
+    }
+}
+
+fungsi _json_urai_larik() {
+    _json_maju()   # konsumsi '['
+    variabel hasil = []
+    _json_lewati_spasi()
+    jika _json_intip() == "]" {
+        _json_maju()
+        kembalikan hasil
+    }
+    selagi benar {
+        tambah(hasil, _json_urai_nilai())
+        _json_lewati_spasi()
+        variabel c = _json_maju()
+        jika c == "]" {
+            kembalikan hasil
+        }
+        jika c != "," {
+            naikkan "json_urai: harapkan ',' atau ']' dalam larik"
+        }
+    }
+}
+
+fungsi json_urai(teks) {
+    _json_src = teks
+    _json_pos = 0
+    variabel hasil = _json_urai_nilai()
+    _json_lewati_spasi()
+    kembalikan hasil
+}

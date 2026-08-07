@@ -1,0 +1,34 @@
+=== serialisasi nilai sederhana ===
+42
+-7
+3.5
+true
+false
+null
+"halo dunia"
+=== serialisasi list (urutan stabil) ===
+[1,2,3]
+["a","b","c"]
+[true,false,null]
+[[1,2],[3,4]]
+[]
+=== escape ===
+"baris\nbaru"
+"kutip \"di dalam\""
+=== parsing ===
+123
+-4.5
+benar
+kosong
+teks
+[10, 20, 30]
+=== parsing objek (akses per-kunci) ===
+Ani
+30
+benar
+=== bersarang ===
+2
+1
+2
+=== round-trip list ===
+benar

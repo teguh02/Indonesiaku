@@ -440,6 +440,23 @@ cetak(d["a"])                            # 1
 
 Primitif teks bawaan yang mendasari pustaka: `karakter(teks, i)`, `potong(teks, mulai, jumlah)`.
 
+### Contoh Aplikasi: Todo-list JSON DB
+
+`examples/todo_cli.idk` adalah aplikasi CRUD Todo-list yang menyimpan data di
+berkas JSON, memetakan operasi REST ke perintah command-line:
+
+```bash
+indk examples/todo_cli.idk tambah "beli susu"     # POST  (buat)
+indk examples/todo_cli.idk daftar                 # GET   (semua)
+indk examples/todo_cli.idk lihat 1                # GET   (satu)
+indk examples/todo_cli.idk selesai 1              # PUT   (tandai selesai)
+indk examples/todo_cli.idk ubah 1 "beli roti"     # PUT   (ubah teks)
+indk examples/todo_cli.idk hapus 1                # DELETE
+```
+
+Dibangun di atas `pustaka/json.idk` (serialisasi/parsing JSON yang ditulis
+dalam Indonesiaku sendiri) dan fungsi berkas bawaan.
+
 ## 🔤 Kata Kunci
 
 ### Tabel Pemetaan (Python → Indonesiaku)

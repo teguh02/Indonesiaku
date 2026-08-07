@@ -56,3 +56,5 @@ test_*.idk
 
 # Temp files created by file-I/O example runs
 _contoh_berkas_sementara.txt
+_todo_demo_sementara.json
+data_todo.json

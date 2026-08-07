@@ -1,0 +1,48 @@
+# Contoh penggunaan pustaka JSON (serialisasi & parsing).
+# Untuk keluaran deterministik, serialisasi kamus multi-kunci dihindari
+# (urutan kunci kamus internal tidak dijamin); akses dilakukan per-kunci.
+impor "pustaka/json.idk"
+
+cetak("=== serialisasi nilai sederhana ===")
+cetak(json_teks(42))
+cetak(json_teks(0 - 7))
+cetak(json_teks(3.5))
+cetak(json_teks(benar))
+cetak(json_teks(salah))
+cetak(json_teks(kosong))
+cetak(json_teks("halo dunia"))
+
+cetak("=== serialisasi list (urutan stabil) ===")
+cetak(json_teks([1, 2, 3]))
+cetak(json_teks(["a", "b", "c"]))
+cetak(json_teks([benar, salah, kosong]))
+cetak(json_teks([[1, 2], [3, 4]]))
+cetak(json_teks([]))
+
+cetak("=== escape ===")
+cetak(json_teks("baris\nbaru"))
+cetak(json_teks("kutip \"di dalam\""))
+
+cetak("=== parsing ===")
+cetak(json_urai("123"))
+cetak(json_urai("  -4.5  "))
+cetak(json_urai("true"))
+cetak(json_urai("null"))
+cetak(json_urai("\"teks\""))
+cetak(json_urai("[10, 20, 30]"))
+
+cetak("=== parsing objek (akses per-kunci) ===")
+obj = json_urai("{\"nama\": \"Ani\", \"umur\": 30, \"aktif\": true}")
+cetak(obj["nama"])
+cetak(obj["umur"])
+cetak(obj["aktif"])
+
+cetak("=== bersarang ===")
+data = json_urai("{\"items\": [{\"id\": 1}, {\"id\": 2}], \"total\": 2}")
+cetak(data["total"])
+cetak(data["items"][0]["id"])
+cetak(data["items"][1]["id"])
+
+cetak("=== round-trip list ===")
+asli = [1, "dua", benar, [3, 4]]
+cetak(json_teks(json_urai(json_teks(asli))) == json_teks(asli))

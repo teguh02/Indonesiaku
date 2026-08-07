@@ -1,0 +1,176 @@
+# Todo-list JSON DB - Aplikasi CRUD berbasis command-line.
+#
+# Database: sebuah berkas JSON (bawaan "data_todo.json").
+# Struktur: { "todos": [ {"id":N, "teks":"...", "selesai":false}, ... ],
+#             "id_berikut": N }
+#
+# Penggunaan (memetakan operasi REST):
+#   indk examples/todo_cli.idk tambah "beli susu"     # POST
+#   indk examples/todo_cli.idk daftar                 # GET semua
+#   indk examples/todo_cli.idk lihat 1                # GET satu
+#   indk examples/todo_cli.idk selesai 1              # PUT (tandai selesai)
+#   indk examples/todo_cli.idk ubah 1 "beli roti"     # PUT (ubah teks)
+#   indk examples/todo_cli.idk hapus 1                # DELETE
+#
+# Fungsi CRUD di bawah menerima 'db' (kamus) dan mengembalikannya, agar mudah
+# diuji secara deterministik tanpa berkas.
+
+impor "pustaka/json.idk"
+
+DB_PATH = "data_todo.json"
+
+# --- Lapisan penyimpanan (JSON file) ---------------------------------------
+
+fungsi db_baru() {
+    variabel db = kamus()
+    db["todos"] = []
+    db["id_berikut"] = 1
+    kembalikan db
+}
+
+fungsi db_muat(path) {
+    jika tidak ada_berkas(path) {
+        kembalikan db_baru()
+    }
+    variabel isi = baca_semua(path)
+    jika teks_kosong(isi) {
+        kembalikan db_baru()
+    }
+    kembalikan json_urai(isi)
+}
+
+fungsi db_simpan(path, db) {
+    tulis_semua(path, json_teks(db))
+}
+
+fungsi teks_kosong(s) {
+    kembalikan panjang(s) == 0
+}
+
+# --- Operasi CRUD (murni: db masuk, db keluar) -----------------------------
+
+# CREATE: tambah todo baru, kembalikan db.
+fungsi todo_tambah(db, teks) {
+    variabel item = kamus()
+    item["id"] = db["id_berikut"]
+    item["teks"] = teks
+    item["selesai"] = salah
+    tambah(db["todos"], item)
+    db["id_berikut"] = db["id_berikut"] + 1
+    kembalikan db
+}
+
+# READ: cari indeks todo berdasarkan id, atau -1.
+fungsi todo_indeks(db, id) {
+    variabel daftar = db["todos"]
+    variabel i = 0
+    selagi i < panjang(daftar) {
+        jika daftar[i]["id"] == id {
+            kembalikan i
+        }
+        i = i + 1
+    }
+    kembalikan 0 - 1
+}
+
+# UPDATE: tandai selesai berdasarkan id.
+fungsi todo_selesai(db, id) {
+    variabel idx = todo_indeks(db, id)
+    jika idx == 0 - 1 {
+        naikkan "todo dengan id " + ke_teks(id) + " tidak ditemukan"
+    }
+    db["todos"][idx]["selesai"] = benar
+    kembalikan db
+}
+
+# UPDATE: ubah teks berdasarkan id.
+fungsi todo_ubah(db, id, teks_baru) {
+    variabel idx = todo_indeks(db, id)
+    jika idx == 0 - 1 {
+        naikkan "todo dengan id " + ke_teks(id) + " tidak ditemukan"
+    }
+    db["todos"][idx]["teks"] = teks_baru
+    kembalikan db
+}
+
+# DELETE: hapus todo berdasarkan id.
+fungsi todo_hapus(db, id) {
+    variabel idx = todo_indeks(db, id)
+    jika idx == 0 - 1 {
+        naikkan "todo dengan id " + ke_teks(id) + " tidak ditemukan"
+    }
+    hapus_pada(db["todos"], idx)
+    kembalikan db
+}
+
+# --- Tampilan --------------------------------------------------------------
+
+fungsi tanda_status(selesai) {
+    jika selesai {
+        kembalikan "[x]"
+    }
+    kembalikan "[ ]"
+}
+
+fungsi todo_tampil_satu(item) {
+    cetak(format("{} #{} {}", tanda_status(item["selesai"]), item["id"], item["teks"]))
+}
+
+fungsi todo_daftar(db) {
+    variabel daftar = db["todos"]
+    jika panjang(daftar) == 0 {
+        cetak("(belum ada todo)")
+        kembalikan kosong
+    }
+    untuk item dalam daftar {
+        todo_tampil_satu(item)
+    }
+}
+
+# --- Dispatch command-line -------------------------------------------------
+
+fungsi jalankan(argumen_masuk) {
+    jika panjang(argumen_masuk) == 0 {
+        cetak("Perintah: tambah | daftar | lihat | selesai | ubah | hapus")
+        kembalikan kosong
+    }
+
+    variabel perintah = argumen_masuk[0]
+    variabel db = db_muat(DB_PATH)
+
+    coba {
+        jika perintah == "tambah" {
+            db = todo_tambah(db, argumen_masuk[1])
+            db_simpan(DB_PATH, db)
+            cetak("Ditambahkan.")
+        } jika_lain perintah == "daftar" {
+            todo_daftar(db)
+        } jika_lain perintah == "lihat" {
+            variabel id = ke_angka(argumen_masuk[1])
+            variabel idx = todo_indeks(db, id)
+            jika idx == 0 - 1 {
+                cetak("Tidak ditemukan.")
+            } selain {
+                todo_tampil_satu(db["todos"][idx])
+            }
+        } jika_lain perintah == "selesai" {
+            db = todo_selesai(db, ke_angka(argumen_masuk[1]))
+            db_simpan(DB_PATH, db)
+            cetak("Ditandai selesai.")
+        } jika_lain perintah == "ubah" {
+            db = todo_ubah(db, ke_angka(argumen_masuk[1]), argumen_masuk[2])
+            db_simpan(DB_PATH, db)
+            cetak("Diubah.")
+        } jika_lain perintah == "hapus" {
+            db = todo_hapus(db, ke_angka(argumen_masuk[1]))
+            db_simpan(DB_PATH, db)
+            cetak("Dihapus.")
+        } selain {
+            cetak("Perintah tidak dikenal:", perintah)
+        }
+    } kecuali e {
+        cetak("Kesalahan:", e)
+    }
+}
+
+jalankan(argumen)

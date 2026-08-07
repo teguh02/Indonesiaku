@@ -947,3 +947,94 @@ Value nativeFnPotong(int argCount, Value* args) {
     if (start + count > s->length) count = s->length - start;
     return OBJ_VAL(copyString(s->chars + start, count));
 }
+
+// ============================================================================
+// PRIMITIF KARAKTER & LIST TAMBAHAN
+// ============================================================================
+
+// ord(karakter) - Kode byte (0-255) dari string 1 karakter.
+Value nativeFnOrd(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("ord() memerlukan 1 argumen (karakter)");
+        return NUMBER_VAL(0);
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaise("ord() hanya menerima string");
+        return NUMBER_VAL(0);
+    }
+    ObjString* s = AS_STRING(args[0]);
+    if (s->length != 1) {
+        nativeRaise("ord() memerlukan string tepat 1 karakter (panjang %d)", s->length);
+        return NUMBER_VAL(0);
+    }
+    return NUMBER_VAL((double)(unsigned char)s->chars[0]);
+}
+
+// chr(kode) - Karakter (string 1 byte) dari kode 0-255.
+Value nativeFnChr(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("chr() memerlukan 1 argumen (kode)");
+        return KOSONG_VAL;
+    }
+    if (!IS_NUMBER(args[0])) {
+        nativeRaise("chr() hanya menerima angka");
+        return KOSONG_VAL;
+    }
+    int code = (int)AS_NUMBER(args[0]);
+    if (code < 0 || code > 255) {
+        nativeRaise("chr() kode di luar jangkauan 0-255 (%d)", code);
+        return KOSONG_VAL;
+    }
+    char c = (char)code;
+    return OBJ_VAL(copyString(&c, 1));
+}
+
+// hapus_pada(list, i) - Hapus & kembalikan elemen pada indeks i, geser sisanya.
+Value nativeFnHapusPada(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("hapus_pada() memerlukan 2 argumen (list, indeks)");
+        return KOSONG_VAL;
+    }
+    if (!IS_LIST(args[0]) || !IS_NUMBER(args[1])) {
+        nativeRaise("hapus_pada() memerlukan (list, angka)");
+        return KOSONG_VAL;
+    }
+    ObjList* list = AS_LIST(args[0]);
+    int i = (int)AS_NUMBER(args[1]);
+    if (i < 0 || i >= list->items.count) {
+        nativeRaise("hapus_pada() indeks di luar jangkauan (indeks %d, panjang %d)", i, list->items.count);
+        return KOSONG_VAL;
+    }
+    Value removed = list->items.values[i];
+    for (int j = i; j < list->items.count - 1; j++) {
+        list->items.values[j] = list->items.values[j + 1];
+    }
+    list->items.count--;
+    return removed;
+}
+
+// sisip(list, i, nilai) - Sisipkan nilai pada indeks i (i == panjang -> append).
+Value nativeFnSisip(int argCount, Value* args) {
+    if (argCount != 3) {
+        nativeRaise("sisip() memerlukan 3 argumen (list, indeks, nilai)");
+        return KOSONG_VAL;
+    }
+    if (!IS_LIST(args[0]) || !IS_NUMBER(args[1])) {
+        nativeRaise("sisip() memerlukan (list, angka, nilai)");
+        return KOSONG_VAL;
+    }
+    ObjList* list = AS_LIST(args[0]);
+    int i = (int)AS_NUMBER(args[1]);
+    if (i < 0 || i > list->items.count) {
+        nativeRaise("sisip() indeks di luar jangkauan (indeks %d, panjang %d)", i, list->items.count);
+        return KOSONG_VAL;
+    }
+    // Grow by appending a placeholder (writeValueArray handles capacity + GC),
+    // then shift elements right to open a slot at i.
+    writeValueArray(&list->items, KOSONG_VAL);
+    for (int j = list->items.count - 1; j > i; j--) {
+        list->items.values[j] = list->items.values[j - 1];
+    }
+    list->items.values[i] = args[2];
+    return args[0];
+}

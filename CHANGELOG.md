@@ -7,6 +7,25 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- 📇 **JSON** — `pustaka/json.idk` (`json_teks` serialize, `json_urai` parse),
+  ditulis dalam Indonesiaku sendiri.
+- ✅ **Aplikasi contoh Todo-list JSON DB** — `examples/todo_cli.idk` (CRUD
+  berbasis command-line dengan berkas JSON, memetakan operasi REST) +
+  `examples/todo_demo.idk`. Diuji di CI (job `todo-crud` + golden).
+- 🔡 **Native tambahan** — `ord(karakter)`, `chr(kode)`, `hapus_pada(list, i)`,
+  `sisip(list, i, nilai)`.
+
+### Fixed
+- 🐛 **Regresi assignment implisit di dalam blok**: setelah badan `jika`/
+  `selagi`/`untuk` diberi scope (v0.3.0), `x = 10` di dalam blok gagal
+  ("Variabel tidak terdefinisi"). Kini assignment ke nama global memakai
+  semantik definisi (create-or-update) di kedalaman scope mana pun.
+- 🐛 **Korupsi nilai kamus saat GC**: `OP_INDEX_SET` untuk kamus mem-pop
+  operand sebelum `tableSet`, sehingga GC selama pertumbuhan tabel bisa
+  membebaskan dict/kunci/nilai. Kini operand ditahan di stack (peek) sampai
+  selesai. Ditemukan lewat parser JSON di bawah stress-GC.
+
 ## [0.3.0] - 2026-08-07
 
 Rilis pustaka standar: fungsi bawaan untuk berkas, waktu, konversi, plus

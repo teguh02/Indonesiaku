@@ -1,0 +1,89 @@
+# Demo Todo-list JSON DB (deterministik, untuk pengujian).
+# Menjalankan urutan CRUD tetap pada berkas JSON sementara, lalu menghapusnya.
+# Ini menunjukkan alur lengkap: simpan ke JSON -> muat -> ubah -> simpan.
+impor "pustaka/json.idk"
+
+BERKAS = "_todo_demo_sementara.json"
+
+fungsi db_baru() {
+    variabel db = kamus()
+    db["todos"] = []
+    db["id_berikut"] = 1
+    kembalikan db
+}
+
+fungsi todo_tambah(db, teks) {
+    variabel item = kamus()
+    item["id"] = db["id_berikut"]
+    item["teks"] = teks
+    item["selesai"] = salah
+    tambah(db["todos"], item)
+    db["id_berikut"] = db["id_berikut"] + 1
+    kembalikan db
+}
+
+fungsi todo_indeks(db, id) {
+    variabel daftar = db["todos"]
+    variabel i = 0
+    selagi i < panjang(daftar) {
+        jika daftar[i]["id"] == id {
+            kembalikan i
+        }
+        i = i + 1
+    }
+    kembalikan 0 - 1
+}
+
+fungsi todo_selesai(db, id) {
+    db["todos"][todo_indeks(db, id)]["selesai"] = benar
+    kembalikan db
+}
+
+fungsi todo_hapus(db, id) {
+    hapus_pada(db["todos"], todo_indeks(db, id))
+    kembalikan db
+}
+
+fungsi tampil(db) {
+    untuk item dalam db["todos"] {
+        variabel tanda = "[ ]"
+        jika item["selesai"] {
+            tanda = "[x]"
+        }
+        cetak(format("{} #{} {}", tanda, item["id"], item["teks"]))
+    }
+}
+
+# --- Skenario ---------------------------------------------------------------
+
+cetak("=== CREATE (tambah 3 todo) ===")
+db = db_baru()
+db = todo_tambah(db, "Beli susu")
+db = todo_tambah(db, "Cuci baju")
+db = todo_tambah(db, "Belajar Indonesiaku")
+tampil(db)
+
+cetak("=== SIMPAN ke JSON & MUAT kembali ===")
+tulis_semua(BERKAS, json_teks(db))
+db = json_urai(baca_semua(BERKAS))
+cetak("jumlah todo setelah muat:", panjang(db["todos"]))
+cetak("id_berikut:", db["id_berikut"])
+
+cetak("=== UPDATE (tandai #2 selesai) ===")
+db = todo_selesai(db, 2)
+tampil(db)
+
+cetak("=== DELETE (hapus #1) ===")
+db = todo_hapus(db, 1)
+tampil(db)
+
+cetak("=== SIMPAN akhir & verifikasi persistensi ===")
+tulis_semua(BERKAS, json_teks(db))
+db2 = json_urai(baca_semua(BERKAS))
+cetak("sisa todo:", panjang(db2["todos"]))
+cetak("todo tersisa id:", db2["todos"][0]["id"])
+cetak("todo tersisa selesai:", db2["todos"][0]["selesai"])
+
+# bersihkan berkas sementara
+hapus_berkas(BERKAS)
+cetak("berkas dibersihkan:", tidak ada_berkas(BERKAS))

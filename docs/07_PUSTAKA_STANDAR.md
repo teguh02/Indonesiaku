@@ -37,6 +37,8 @@ luar jangkauan.
 | `ganti(teks, cari, ganti)` | Ganti semua kemunculan substring |
 | `karakter(teks, i)` | Karakter (string 1 huruf) pada indeks `i` |
 | `potong(teks, mulai, jumlah)` | Substring mulai dari `mulai` sepanjang `jumlah` |
+| `ord(karakter)` | Kode byte (0-255) dari karakter |
+| `chr(kode)` | Karakter dari kode byte (0-255) |
 
 Pengindeksan string juga tersedia: `teks[i]` mengembalikan karakter ke-`i`
 (string bersifat immutable — tidak dapat diubah lewat indeks).
@@ -47,6 +49,8 @@ Pengindeksan string juga tersedia: `teks[i]` mengembalikan karakter ke-`i`
 |--------|-----------|
 | `tambah(list, nilai)` | Tambah elemen ke akhir list |
 | `hapus(list)` | Hapus & kembalikan elemen terakhir |
+| `hapus_pada(list, i)` | Hapus & kembalikan elemen pada indeks `i` (geser sisanya) |
+| `sisip(list, i, nilai)` | Sisipkan `nilai` pada indeks `i` |
 | `panjang(list)` | Jumlah elemen |
 
 Literal: `[1, 2, 3]`. Indeks baca/tulis: `list[i]`, `list[i] = x`.
@@ -181,7 +185,30 @@ impor "pustaka/kamus.idk"
 | `kamus_salin(k)` | Salinan dangkal |
 | `kamus_ambil(k, kunci, bawaan)` | Nilai jika ada, jika tidak `bawaan` |
 
+### 2.5 `pustaka/json.idk`
+
+```python
+impor "pustaka/json.idk"
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `json_teks(nilai)` | Serialisasi kamus/list/angka/string/boolean/kosong → string JSON |
+| `json_urai(teks)` | Parsing string JSON → nilai Indonesiaku (kesalahan dapat ditangkap) |
+
+Contoh:
+```python
+db = kamus()
+db["todos"] = [kamus()]
+teks = json_teks(db)          # {"todos":[{}]}
+kembali = json_urai(teks)     # kamus dengan list
+```
+
+Digunakan oleh aplikasi contoh `examples/todo_cli.idk` (CRUD Todo-list
+berbasis berkas JSON) dan `examples/todo_demo.idk`.
+
 ---
 
 Lihat contoh lengkap di folder `examples/` (mis. `pustaka_teks.idk`,
-`pustaka_daftar.idk`, `berkas.idk`, `konversi.idk`).
+`pustaka_daftar.idk`, `berkas.idk`, `konversi.idk`, `json_pakai.idk`,
+`todo_demo.idk`).

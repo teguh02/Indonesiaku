@@ -141,5 +141,9 @@ Value nativeFnFormatTanggal(int argCount, Value* args);  // format_tanggal(pola)
 
 Value nativeFnKarakter(int argCount, Value* args);  // karakter(teks, i)
 Value nativeFnPotong(int argCount, Value* args);    // potong(teks, mulai, jumlah)
+Value nativeFnOrd(int argCount, Value* args);       // ord(karakter)
+Value nativeFnChr(int argCount, Value* args);       // chr(kode)
+Value nativeFnHapusPada(int argCount, Value* args); // hapus_pada(list, i)
+Value nativeFnSisip(int argCount, Value* args);     // sisip(list, i, nilai)
 
 #endif

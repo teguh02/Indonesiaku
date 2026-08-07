@@ -150,6 +150,10 @@ void initVM() {
 
     defineNative("karakter", nativeFnKarakter);
     defineNative("potong", nativeFnPotong);
+    defineNative("ord", nativeFnOrd);
+    defineNative("chr", nativeFnChr);
+    defineNative("hapus_pada", nativeFnHapusPada);
+    defineNative("sisip", nativeFnSisip);
 }
 
 void freeVM() {
@@ -751,10 +755,16 @@ static InterpretResult run() {
                     list->items.values[index] = value;
                     push(value);
                 } else if (IS_DICT(peek(2)) && IS_STRING(peek(1))) {
-                    Value value = pop();
-                    ObjString* key = AS_STRING(pop());
-                    ObjDict* dict = AS_DICT(pop());
+                    // Keep operands on the stack while tableSet runs — it can
+                    // grow the table and trigger a GC that would otherwise
+                    // free the dict/key/value.
+                    ObjDict* dict = AS_DICT(peek(2));
+                    ObjString* key = AS_STRING(peek(1));
+                    Value value = peek(0);
                     tableSet(&dict->table, key, value);
+                    pop();  // value
+                    pop();  // key
+                    pop();  // dict
                     push(value);
                 } else {
                     if (IS_STRING(peek(2))) {

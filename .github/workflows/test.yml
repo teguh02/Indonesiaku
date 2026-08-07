@@ -53,6 +53,27 @@ jobs:
           chmod +x tests/test_all.sh
           bash tests/test_all.sh
 
+  todo-crud:
+    name: Todo-list JSON DB (CLI CRUD)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GCC
+        run: sudo apt-get update && sudo apt-get install -y gcc make
+
+      - name: Build
+        run: |
+          make clean
+          make
+
+      - name: Todo CLI CRUD integration test
+        run: |
+          chmod +x tests/test_todo_cli.sh
+          bash tests/test_todo_cli.sh
+
   sanitizers:
     name: ASan + UBSan (stress GC)
     runs-on: ubuntu-latest

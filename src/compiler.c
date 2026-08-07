@@ -617,12 +617,14 @@ static void namedVariable(Token name, bool canAssign) {
 
     if (canAssign && match(TOKEN_EQUAL)) {
         parsePrecedence(PREC_ASSIGNMENT);
-        // Jika assignment terjadi pada scope global (top-level),
-        // perlakukan sebagai deklarasi/immediate definition.
-        // Ini memungkinkan penulisan: x = 10 tanpa kata kunci 'variabel'.
-        if (setOp == OP_SET_GLOBAL && current->scopeDepth == 0) {
-            // OP_DEFINE_GLOBAL consumes the value; re-load it so that a
-            // top-level assignment still evaluates to the assigned value
+        // Assignment to a name that resolves to a global is treated as an
+        // implicit definition (create-or-update), at ANY scope depth. This
+        // lets `x = 10` work without `variabel`, including inside jika/selagi/
+        // untuk bodies (which are their own scopes). Function-local variables
+        // must still use `variabel` to be captured by closures.
+        if (setOp == OP_SET_GLOBAL) {
+            // OP_DEFINE_GLOBAL consumes the value; re-load it so that the
+            // assignment still evaluates to the assigned value
             // (assignment is an expression, e.g. cetak(x = 5)).
             emitBytes(OP_DEFINE_GLOBAL, (uint8_t)arg);
             emitBytes(OP_GET_GLOBAL, (uint8_t)arg);
