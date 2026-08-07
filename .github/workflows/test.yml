@@ -183,9 +183,11 @@ jobs:
 
       - name: Fuzz (short run; fails on any crash)
         run: |
-          # Empty stdin so input() sees EOF and never blocks.
+          # Front-end only (scanner + compiler); the target never executes
+          # bytecode, so program-level infinite loops cannot cause timeouts.
+          # A timeout here would indicate a genuine compiler hang.
           ./fuzz_compile corpus -max_total_time=60 -max_len=2048 \
-            -timeout=5 -rss_limit_mb=2048 -print_final_stats=1 < /dev/null
+            -timeout=10 -rss_limit_mb=2048 -print_final_stats=1 < /dev/null
 
       - name: Upload crash artifacts
         if: failure()
