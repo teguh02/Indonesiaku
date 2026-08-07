@@ -1,0 +1,45 @@
+# Operasi berkas (file I/O).
+# Contoh ini menulis, membaca, lalu menghapus berkas sementara,
+# sehingga tidak meninggalkan jejak dan keluarannya deterministik.
+
+berkas = "_contoh_berkas_sementara.txt"
+
+cetak("=== tulis_semua & baca_semua ===")
+tulis_semua(berkas, "Halo Dunia\nBaris kedua\n")
+isi = baca_semua(berkas)
+cetak(isi)
+cetak("panjang isi:", panjang(isi))
+
+cetak("=== tambah_berkas ===")
+tambah_berkas(berkas, "Baris ketiga\n")
+
+cetak("=== baca per baris ===")
+f = buka_berkas(berkas, "b")
+nomor = 1
+baris = baca_baris(f)
+selagi baris != kosong {
+    cetak(format("{}: {}", nomor, baris))
+    nomor = nomor + 1
+    baris = baca_baris(f)
+}
+tutup(f)
+
+cetak("=== tulis via handle ===")
+w = buka_berkas(berkas, "t")
+untuk n dalam [10, 20, 30] {
+    tulis(w, format("nilai={}\n", n))
+}
+tutup(w)
+cetak(baca_semua(berkas))
+
+cetak("=== ada_berkas & hapus_berkas ===")
+cetak("ada sebelum hapus:", ada_berkas(berkas))
+hapus_berkas(berkas)
+cetak("ada setelah hapus:", ada_berkas(berkas))
+
+cetak("=== kesalahan berkas dapat ditangkap ===")
+coba {
+    baca_semua("berkas_yang_tidak_ada.txt")
+} kecuali e {
+    cetak("gagal membaca (tertangkap)")
+}

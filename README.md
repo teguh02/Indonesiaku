@@ -155,6 +155,15 @@ cetak("Halo, dunia!")
 cetak("Nama:", nama, "Umur:", umur)
 ```
 
+### Escape String
+String mendukung urutan escape: `\n` (baris baru), `\t` (tab), `\r`, `\"` (kutip), `\\` (backslash).
+```python
+cetak("baris satu\nbaris dua")
+cetak("kolom1\tkolom2")
+cetak("dia bilang \"halo\"")
+cetak("path: C:\\folder")
+```
+
 ### Operasi Aritmatika
 ```python
 x = 10
@@ -469,10 +478,41 @@ Fungsi berikut tersedia langsung tanpa impor (didefinisikan di `src/native.c`):
 ### Utilitas
 | Fungsi | Deskripsi |
 |--------|-----------|
-| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"kamus"`, `"objek"`, `"kelas"` |
+| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
 | `input(prompt)` | Baca satu baris dari stdin (prompt opsional) |
 | `henti(detik)` | Jeda eksekusi selama `detik` detik |
 | `jam()` | Waktu CPU berjalan (detik) |
+| `argumen` | Variabel global: list argumen baris perintah |
+
+### Konversi & Format
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `ke_angka(teks)` | String → angka (gagal dapat ditangkap `coba/kecuali`) |
+| `ke_teks(nilai)` | Nilai apa pun → string |
+| `format(pola, ...)` | Ganti setiap `{}` di pola dengan argumen berikutnya |
+| `acak_bulat(min, maks)` | Bilangan bulat acak dalam `[min, maks]` |
+
+### Berkas (File I/O)
+Semua kegagalan dapat ditangkap dengan `coba/kecuali`.
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `buka_berkas(path, mode)` | Buka berkas → handle. Mode: `"b"` baca, `"t"` tulis, `"s"` sambung |
+| `tutup(berkas)` | Tutup handle berkas |
+| `baca(berkas)` | Baca seluruh sisa isi berkas → string |
+| `baca_baris(berkas)` | Baca satu baris → string, atau `kosong` di akhir berkas |
+| `tulis(berkas, teks)` | Tulis teks ke handle → jumlah byte |
+| `baca_semua(path)` | Baca seluruh isi berkas dari path → string |
+| `tulis_semua(path, teks)` | Tulis (timpa) teks ke path |
+| `tambah_berkas(path, teks)` | Tambahkan teks ke akhir berkas |
+| `ada_berkas(path)` | Apakah berkas ada → boolean |
+| `hapus_berkas(path)` | Hapus berkas |
+
+### Waktu & Tanggal
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `waktu()` | Detik sejak epoch (Unix time) |
+| `tanggal()` | Kamus `{tahun, bulan, hari, jam, menit, detik, hari_minggu, hari_tahun}` |
+| `format_tanggal(pola)` | Format waktu sekarang dengan pola `strftime` (mis. `"%Y-%m-%d"`) |
 
 ## 🗺️ Roadmap
 

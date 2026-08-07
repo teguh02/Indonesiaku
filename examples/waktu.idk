@@ -1,0 +1,22 @@
+# Waktu & tanggal.
+# Nilai aktual bergantung waktu berjalan, jadi contoh ini hanya memeriksa
+# jenis & rentang agar keluarannya tetap deterministik untuk pengujian.
+
+cetak("=== waktu (epoch) ===")
+w = waktu()
+cetak("jenis:", jenis(w))
+cetak("wajar (> tahun 2001):", w > 1000000000)
+
+cetak("=== tanggal (kamus komponen) ===")
+t = tanggal()
+cetak("jenis:", jenis(t))
+cetak("tahun >= 2020:", t["tahun"] >= 2020)
+cetak("bulan 1..12:", t["bulan"] >= 1 dan t["bulan"] <= 12)
+cetak("hari 1..31:", t["hari"] >= 1 dan t["hari"] <= 31)
+cetak("jam 0..23:", t["jam"] >= 0 dan t["jam"] <= 23)
+cetak("menit 0..59:", t["menit"] >= 0 dan t["menit"] <= 59)
+
+cetak("=== format_tanggal ===")
+tahun_str = format_tanggal("%Y")
+cetak("jenis format:", jenis(tahun_str))
+cetak("panjang tahun 4 digit:", panjang(tahun_str) == 4)

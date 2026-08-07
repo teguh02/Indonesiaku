@@ -34,8 +34,10 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - **Blocks use braces `{ }`, not Python indentation.** The scanner has no INDENT/DEDENT. `jika c { ... } jika_lain c2 { ... } selain { ... }`, `selagi c { ... }`, `fungsi f() { ... }`.
 - Implicit assignment `x = 10` at top level defines a global. Inside a function, assignment to an unresolved name still targets a global — use `variabel x = ...` to create a function-local (required for closures to capture).
 - Implemented: closures/upvalues, lists `[..]` + indexing, dicts via `kamus()` + string indexing, `untuk x dalam list { }`, `hentikan`/`lanjut`, classes (`kelas`, `init`, `diri`, `<` inheritance, `super`), `naikkan` + `coba/kecuali`, `impor "file.idk"` (shared global namespace, cached).
-- Catchable vs fatal: only user `naikkan` is caught by `kecuali`. Internal runtime errors (type/bounds/undefined) print and abort (exit 70) — by design.
-- Builtins live in `src/native.c`, registered in `initVM` (`src/vm.c`). Math/string/list/dict/util families.
+- Catchable vs fatal: only user `naikkan` **and native-function errors** (raised via `nativeRaise`) are caught by `kecuali`. Truly internal runtime errors (`runtimeError`: undefined var, bad opcode) print and abort (exit 70). Native builtins use `nativeRaise`, so I/O/argument failures are catchable.
+- String literals process escape sequences (`\n \t \r \" \\ \'`) in the compiler's `string()` (compiler.c); the scanner skips escaped chars so `\"` doesn't end a string. Adding new escapes = edit both.
+- Builtins live in `src/native.c`, registered in `initVM` (`src/vm.c`). Families: math, string, list, dict, conversion (`ke_angka`/`ke_teks`/`format`), file I/O (`buka_berkas`/`baca`/`tulis`/...), date/time (`waktu`/`tanggal`), util. `OBJ_FILE` handles auto-close on GC.
+- Command-line args after the script path are exposed as the global list `argumen`.
 
 ## CI
 

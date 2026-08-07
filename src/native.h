@@ -112,4 +112,27 @@ Value nativeFnFormat(int argCount, Value* args);
 // acak_bulat(min, maks) - Bilangan bulat acak dalam [min, maks]
 Value nativeFnAcakBulat(int argCount, Value* args);
 
+// ============================================================================
+// FUNGSI BERKAS (FILE I/O)
+// ============================================================================
+
+Value nativeFnBukaBerkas(int argCount, Value* args);   // buka_berkas(path, mode)
+Value nativeFnTutup(int argCount, Value* args);         // tutup(berkas)
+Value nativeFnBaca(int argCount, Value* args);          // baca(berkas)
+Value nativeFnBacaBaris(int argCount, Value* args);     // baca_baris(berkas)
+Value nativeFnTulis(int argCount, Value* args);         // tulis(berkas, teks)
+Value nativeFnBacaSemua(int argCount, Value* args);     // baca_semua(path)
+Value nativeFnTulisSemua(int argCount, Value* args);    // tulis_semua(path, teks)
+Value nativeFnTambahBerkas(int argCount, Value* args);  // tambah_berkas(path, teks)
+Value nativeFnAdaBerkas(int argCount, Value* args);     // ada_berkas(path)
+Value nativeFnHapusBerkas(int argCount, Value* args);   // hapus_berkas(path)
+
+// ============================================================================
+// FUNGSI WAKTU & TANGGAL
+// ============================================================================
+
+Value nativeFnWaktu(int argCount, Value* args);          // waktu()
+Value nativeFnTanggal(int argCount, Value* args);        // tanggal()
+Value nativeFnFormatTanggal(int argCount, Value* args);  // format_tanggal(pola)
+
 #endif

@@ -581,3 +581,323 @@ Value nativeFnAcakBulat(int argCount, Value* args) {
     long range = hi - lo + 1;
     return NUMBER_VAL((double)(lo + (rand() % range)));
 }
+
+// ============================================================================
+// FUNGSI BERKAS (FILE I/O) - IMPLEMENTASI
+// Semua kegagalan memakai nativeRaise sehingga dapat ditangkap coba/kecuali.
+// ============================================================================
+
+// buka_berkas(path, mode) - Buka berkas, kembalikan handle.
+// mode: "b" (baca), "t" (tulis), "s" (sambung/append).
+Value nativeFnBukaBerkas(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("buka_berkas() memerlukan 2 argumen (path, mode)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0]) || !IS_STRING(args[1])) {
+        nativeRaise("buka_berkas() memerlukan (string, string)");
+        return KOSONG_VAL;
+    }
+
+    ObjString* path = AS_STRING(args[0]);
+    const char* m = AS_STRING(args[1])->chars;
+    const char* cmode;
+    if (strcmp(m, "b") == 0)      cmode = "rb";
+    else if (strcmp(m, "t") == 0) cmode = "wb";
+    else if (strcmp(m, "s") == 0) cmode = "ab";
+    else {
+        nativeRaise("buka_berkas() mode tidak dikenal '%s' (pakai \"b\", \"t\", atau \"s\")", m);
+        return KOSONG_VAL;
+    }
+
+    FILE* fp = fopen(path->chars, cmode);
+    if (fp == NULL) {
+        nativeRaise("buka_berkas() gagal membuka '%s'", path->chars);
+        return KOSONG_VAL;
+    }
+    return OBJ_VAL(newFile(fp, path));
+}
+
+Value nativeFnTutup(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("tutup() memerlukan 1 argumen (berkas)");
+        return KOSONG_VAL;
+    }
+    if (!IS_FILE(args[0])) {
+        nativeRaise("tutup() hanya menerima berkas");
+        return KOSONG_VAL;
+    }
+    ObjFile* file = AS_FILE(args[0]);
+    if (file->isOpen && file->handle != NULL) {
+        fclose((FILE*)file->handle);
+        file->handle = NULL;
+        file->isOpen = false;
+    }
+    return KOSONG_VAL;
+}
+
+Value nativeFnBaca(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("baca() memerlukan 1 argumen (berkas)");
+        return KOSONG_VAL;
+    }
+    if (!IS_FILE(args[0])) {
+        nativeRaise("baca() hanya menerima berkas");
+        return KOSONG_VAL;
+    }
+    ObjFile* file = AS_FILE(args[0]);
+    if (!file->isOpen || file->handle == NULL) {
+        nativeRaise("baca() pada berkas yang sudah tertutup");
+        return KOSONG_VAL;
+    }
+
+    FILE* fp = (FILE*)file->handle;
+    long cur = ftell(fp);
+    fseek(fp, 0L, SEEK_END);
+    long end = ftell(fp);
+    fseek(fp, cur, SEEK_SET);
+    long remaining = end - cur;
+    if (remaining < 0) remaining = 0;
+
+    char* buffer = ALLOCATE(char, remaining + 1);
+    size_t read = fread(buffer, 1, (size_t)remaining, fp);
+    buffer[read] = '\0';
+    ObjString* result = takeString(buffer, (int)read);
+    return OBJ_VAL(result);
+}
+
+Value nativeFnBacaBaris(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("baca_baris() memerlukan 1 argumen (berkas)");
+        return KOSONG_VAL;
+    }
+    if (!IS_FILE(args[0])) {
+        nativeRaise("baca_baris() hanya menerima berkas");
+        return KOSONG_VAL;
+    }
+    ObjFile* file = AS_FILE(args[0]);
+    if (!file->isOpen || file->handle == NULL) {
+        nativeRaise("baca_baris() pada berkas yang sudah tertutup");
+        return KOSONG_VAL;
+    }
+
+    FILE* fp = (FILE*)file->handle;
+    int cap = 128, len = 0;
+    char* buffer = ALLOCATE(char, cap);
+    int c;
+    bool any = false;
+    while ((c = fgetc(fp)) != EOF) {
+        any = true;
+        if (c == '\n') break;
+        if (len + 1 >= cap) {
+            int oldCap = cap;
+            cap *= 2;
+            buffer = GROW_ARRAY(char, buffer, oldCap, cap);
+        }
+        buffer[len++] = (char)c;
+    }
+    if (!any && len == 0) {
+        // EOF with nothing read -> kosong signals end of file.
+        FREE_ARRAY(char, buffer, cap);
+        return KOSONG_VAL;
+    }
+    // Strip a trailing '\r' (Windows line endings).
+    if (len > 0 && buffer[len - 1] == '\r') len--;
+    buffer[len] = '\0';
+    ObjString* result = takeString(buffer, len);
+    // takeString may free `buffer` if interned; the capacity we allocated is
+    // len+1..cap, so shrink accounting is not tracked precisely here (small
+    // transient). Acceptable for a line reader.
+    return OBJ_VAL(result);
+}
+
+Value nativeFnTulis(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("tulis() memerlukan 2 argumen (berkas, teks)");
+        return KOSONG_VAL;
+    }
+    if (!IS_FILE(args[0]) || !IS_STRING(args[1])) {
+        nativeRaise("tulis() memerlukan (berkas, string)");
+        return KOSONG_VAL;
+    }
+    ObjFile* file = AS_FILE(args[0]);
+    if (!file->isOpen || file->handle == NULL) {
+        nativeRaise("tulis() pada berkas yang sudah tertutup");
+        return KOSONG_VAL;
+    }
+    ObjString* text = AS_STRING(args[1]);
+    size_t written = fwrite(text->chars, 1, (size_t)text->length, (FILE*)file->handle);
+    if (written != (size_t)text->length) {
+        nativeRaise("tulis() gagal menulis ke '%s'", file->path->chars);
+        return KOSONG_VAL;
+    }
+    return NUMBER_VAL((double)written);
+}
+
+Value nativeFnBacaSemua(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("baca_semua() memerlukan 1 argumen (path)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaise("baca_semua() hanya menerima string path");
+        return KOSONG_VAL;
+    }
+    ObjString* path = AS_STRING(args[0]);
+    FILE* fp = fopen(path->chars, "rb");
+    if (fp == NULL) {
+        nativeRaise("baca_semua() gagal membuka '%s'", path->chars);
+        return KOSONG_VAL;
+    }
+    fseek(fp, 0L, SEEK_END);
+    long size = ftell(fp);
+    if (size < 0) size = 0;
+    rewind(fp);
+    char* buffer = ALLOCATE(char, size + 1);
+    size_t read = fread(buffer, 1, (size_t)size, fp);
+    buffer[read] = '\0';
+    fclose(fp);
+    return OBJ_VAL(takeString(buffer, (int)read));
+}
+
+static Value writeWholeFile(const char* path, ObjString* text, const char* mode, const char* fname) {
+    FILE* fp = fopen(path, mode);
+    if (fp == NULL) {
+        nativeRaise("%s() gagal membuka '%s'", fname, path);
+        return KOSONG_VAL;
+    }
+    size_t written = fwrite(text->chars, 1, (size_t)text->length, fp);
+    fclose(fp);
+    if (written != (size_t)text->length) {
+        nativeRaise("%s() gagal menulis ke '%s'", fname, path);
+        return KOSONG_VAL;
+    }
+    return NUMBER_VAL((double)written);
+}
+
+Value nativeFnTulisSemua(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("tulis_semua() memerlukan 2 argumen (path, teks)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0]) || !IS_STRING(args[1])) {
+        nativeRaise("tulis_semua() memerlukan (string, string)");
+        return KOSONG_VAL;
+    }
+    return writeWholeFile(AS_STRING(args[0])->chars, AS_STRING(args[1]), "wb", "tulis_semua");
+}
+
+Value nativeFnTambahBerkas(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("tambah_berkas() memerlukan 2 argumen (path, teks)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0]) || !IS_STRING(args[1])) {
+        nativeRaise("tambah_berkas() memerlukan (string, string)");
+        return KOSONG_VAL;
+    }
+    return writeWholeFile(AS_STRING(args[0])->chars, AS_STRING(args[1]), "ab", "tambah_berkas");
+}
+
+Value nativeFnAdaBerkas(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("ada_berkas() memerlukan 1 argumen (path)");
+        return BOOL_VAL(false);
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaise("ada_berkas() hanya menerima string path");
+        return BOOL_VAL(false);
+    }
+    FILE* fp = fopen(AS_STRING(args[0])->chars, "rb");
+    if (fp == NULL) return BOOL_VAL(false);
+    fclose(fp);
+    return BOOL_VAL(true);
+}
+
+Value nativeFnHapusBerkas(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("hapus_berkas() memerlukan 1 argumen (path)");
+        return BOOL_VAL(false);
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaise("hapus_berkas() hanya menerima string path");
+        return BOOL_VAL(false);
+    }
+    if (remove(AS_STRING(args[0])->chars) != 0) {
+        nativeRaise("hapus_berkas() gagal menghapus '%s'", AS_STRING(args[0])->chars);
+        return BOOL_VAL(false);
+    }
+    return BOOL_VAL(true);
+}
+
+// ============================================================================
+// FUNGSI WAKTU & TANGGAL - IMPLEMENTASI
+// ============================================================================
+
+// waktu() - Detik sejak epoch (Unix time).
+Value nativeFnWaktu(int argCount, Value* args) {
+    (void)args;
+    if (argCount != 0) {
+        nativeRaise("waktu() tidak menerima argumen");
+        return NUMBER_VAL(0);
+    }
+    return NUMBER_VAL((double)time(NULL));
+}
+
+// Helper: set a numeric entry on a dict (key is a C string).
+static void dictSetNum(ObjDict* dict, const char* key, double num) {
+    ObjString* k = copyString(key, (int)strlen(key));
+    push(OBJ_VAL(k));  // keep reachable during tableSet allocation
+    tableSet(&dict->table, k, NUMBER_VAL(num));
+    pop();
+}
+
+// tanggal() - Kamus berisi komponen tanggal/waktu lokal saat ini:
+// {tahun, bulan, hari, jam, menit, detik, hari_minggu, hari_tahun}
+Value nativeFnTanggal(int argCount, Value* args) {
+    (void)args;
+    if (argCount != 0) {
+        nativeRaise("tanggal() tidak menerima argumen");
+        return KOSONG_VAL;
+    }
+    time_t t = time(NULL);
+    struct tm* lt = localtime(&t);
+    if (lt == NULL) {
+        nativeRaise("tanggal() gagal membaca waktu sistem");
+        return KOSONG_VAL;
+    }
+
+    ObjDict* dict = newDict();
+    push(OBJ_VAL(dict));  // keep reachable while populating
+    dictSetNum(dict, "tahun",       lt->tm_year + 1900);
+    dictSetNum(dict, "bulan",       lt->tm_mon + 1);
+    dictSetNum(dict, "hari",        lt->tm_mday);
+    dictSetNum(dict, "jam",         lt->tm_hour);
+    dictSetNum(dict, "menit",       lt->tm_min);
+    dictSetNum(dict, "detik",       lt->tm_sec);
+    dictSetNum(dict, "hari_minggu", lt->tm_wday);
+    dictSetNum(dict, "hari_tahun",  lt->tm_yday + 1);
+    pop();
+    return OBJ_VAL(dict);
+}
+
+// format_tanggal(pola) - Format waktu lokal saat ini dengan pola strftime.
+Value nativeFnFormatTanggal(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("format_tanggal() memerlukan 1 argumen (pola)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaise("format_tanggal() hanya menerima string pola");
+        return KOSONG_VAL;
+    }
+    time_t t = time(NULL);
+    struct tm* lt = localtime(&t);
+    if (lt == NULL) {
+        nativeRaise("format_tanggal() gagal membaca waktu sistem");
+        return KOSONG_VAL;
+    }
+    char buf[256];
+    size_t n = strftime(buf, sizeof(buf), AS_STRING(args[0])->chars, lt);
+    return OBJ_VAL(copyString(buf, (int)n));
+}

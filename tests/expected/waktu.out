@@ -1,0 +1,23 @@
+=== waktu (epoch) ===
+jenis:
+angka
+wajar (> tahun 2001):
+benar
+=== tanggal (kamus komponen) ===
+jenis:
+kamus
+tahun >= 2020:
+benar
+bulan 1..12:
+benar
+hari 1..31:
+benar
+jam 0..23:
+benar
+menit 0..59:
+benar
+=== format_tanggal ===
+jenis format:
+string
+panjang tahun 4 digit:
+benar

@@ -132,6 +132,21 @@ void initVM() {
     defineNative("ke_teks", nativeFnKeTeks);
     defineNative("format", nativeFnFormat);
     defineNative("acak_bulat", nativeFnAcakBulat);
+
+    defineNative("buka_berkas", nativeFnBukaBerkas);
+    defineNative("tutup", nativeFnTutup);
+    defineNative("baca", nativeFnBaca);
+    defineNative("baca_baris", nativeFnBacaBaris);
+    defineNative("tulis", nativeFnTulis);
+    defineNative("baca_semua", nativeFnBacaSemua);
+    defineNative("tulis_semua", nativeFnTulisSemua);
+    defineNative("tambah_berkas", nativeFnTambahBerkas);
+    defineNative("ada_berkas", nativeFnAdaBerkas);
+    defineNative("hapus_berkas", nativeFnHapusBerkas);
+
+    defineNative("waktu", nativeFnWaktu);
+    defineNative("tanggal", nativeFnTanggal);
+    defineNative("format_tanggal", nativeFnFormatTanggal);
 }
 
 void freeVM() {

@@ -238,6 +238,10 @@ static Token number() {
 static Token string() {
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
+        // Skip escaped characters (e.g. \" \\) so they don't end the string.
+        if (peek() == '\\' && peekNext() != '\0') {
+            advance();
+        }
         advance();
     }
 
@@ -310,6 +314,9 @@ Token scanToken() {
             // Single quote strings
             while (peek() != '\'' && !isAtEnd()) {
                 if (peek() == '\n') scanner.line++;
+                if (peek() == '\\' && peekNext() != '\0') {
+                    advance();
+                }
                 advance();
             }
             if (isAtEnd()) return errorToken("String tidak ditutup.");

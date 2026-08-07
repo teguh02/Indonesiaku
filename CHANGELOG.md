@@ -7,6 +7,25 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- 🧯 **Error native yang dapat ditangkap** — fungsi bawaan kini memicu kesalahan
+  via `nativeRaise` yang bisa ditangkap `coba/kecuali` (dulu semua fatal).
+- 🔤 **Konversi & format** — `ke_angka`, `ke_teks`, `format("... {} ...", ...)`,
+  `acak_bulat(min, maks)`. `acak()` kini di-seed.
+- 📄 **Berkas (File I/O)** — `buka_berkas`, `tutup`, `baca`, `baca_baris`,
+  `tulis`, `baca_semua`, `tulis_semua`, `tambah_berkas`, `ada_berkas`,
+  `hapus_berkas`. Tipe objek baru `OBJ_FILE` (auto-close saat GC).
+- 🕐 **Waktu & Tanggal** — `waktu()`, `tanggal()` (kamus komponen),
+  `format_tanggal(pola)`.
+- 🧵 **Urutan escape string** — `\n \t \r \" \\ \'` kini diproses di literal
+  string (scanner + compiler).
+- ⌨️ **Argumen baris perintah** — variabel global `argumen` (list string);
+  `indk skrip.idk arg1 arg2 ...`.
+
+### Changed
+- Pencetakan angka lebih presisi (15 digit, tanpa notasi ilmiah tak sengaja,
+  integer tanpa `.0`).
+
 ## [0.2.0] - 2026-08-07
 
 Rilis fitur besar: bahasa kini mencakup closure, struktur data, OOP penuh,

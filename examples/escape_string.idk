@@ -1,0 +1,18 @@
+# Urutan escape dalam string literal:
+#   \n baris baru, \t tab, \r carriage return,
+#   \" tanda kutip, \\ backslash, \0 karakter null (jarang dipakai)
+
+cetak("=== Baris Baru (\\n) ===")
+cetak("baris satu\nbaris dua")
+
+cetak("=== Tab (\\t) ===")
+cetak("kolom1\tkolom2\tkolom3")
+
+cetak("=== Tanda Kutip (\\\") ===")
+cetak("dia berkata \"halo\" kepadaku")
+
+cetak("=== Backslash (\\\\) ===")
+cetak("path: C:\\folder\\file")
+
+cetak("=== Gabungan ===")
+cetak("Nama:\tBudi\nUmur:\t25")

@@ -1,0 +1,23 @@
+=== tulis_semua & baca_semua ===
+Halo Dunia
+Baris kedua
+
+panjang isi:
+23
+=== tambah_berkas ===
+=== baca per baris ===
+1: Halo Dunia
+2: Baris kedua
+3: Baris ketiga
+=== tulis via handle ===
+nilai=10
+nilai=20
+nilai=30
+
+=== ada_berkas & hapus_berkas ===
+ada sebelum hapus:
+benar
+ada setelah hapus:
+salah
+=== kesalahan berkas dapat ditangkap ===
+gagal membaca (tertangkap)

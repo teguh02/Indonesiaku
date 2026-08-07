@@ -1,0 +1,12 @@
+=== Baris Baru (\n) ===
+baris satu
+baris dua
+=== Tab (\t) ===
+kolom1	kolom2	kolom3
+=== Tanda Kutip (\") ===
+dia berkata "halo" kepadaku
+=== Backslash (\\) ===
+path: C:\folder\file
+=== Gabungan ===
+Nama:	Budi
+Umur:	25

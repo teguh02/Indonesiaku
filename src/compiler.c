@@ -565,8 +565,39 @@ static void or_(bool canAssign) {
 }
 
 static void string(bool canAssign) {
-    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
-                                    parser.previous.length - 2)));
+    // The token includes the surrounding quotes. Process escape sequences
+    // (\n \t \r \\ \" \' \0) into a fresh buffer, then intern it.
+    const char* src = parser.previous.start + 1;
+    int rawLen = parser.previous.length - 2;
+
+    char* chars = ALLOCATE(char, rawLen + 1);
+    int len = 0;
+    for (int i = 0; i < rawLen; i++) {
+        char c = src[i];
+        if (c == '\\' && i + 1 < rawLen) {
+            char next = src[++i];
+            switch (next) {
+                case 'n':  chars[len++] = '\n'; break;
+                case 't':  chars[len++] = '\t'; break;
+                case 'r':  chars[len++] = '\r'; break;
+                case '\\': chars[len++] = '\\'; break;
+                case '"':  chars[len++] = '"';  break;
+                case '\'': chars[len++] = '\''; break;
+                case '0':  chars[len++] = '\0'; break;
+                default:
+                    // Unknown escape: keep the backslash and the character.
+                    chars[len++] = '\\';
+                    chars[len++] = next;
+                    break;
+            }
+        } else {
+            chars[len++] = c;
+        }
+    }
+    chars[len] = '\0';
+
+    ObjString* str = takeString(chars, len);
+    emitConstant(OBJ_VAL(str));
 }
 
 static void namedVariable(Token name, bool canAssign) {
