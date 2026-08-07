@@ -7,8 +7,19 @@
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    typedef SOCKET indk_socket_t;
+    #define INDK_INVALID_SOCKET INVALID_SOCKET
+    #define INDK_CLOSESOCKET(s) closesocket(s)
 #else
     #include <unistd.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    typedef int indk_socket_t;
+    #define INDK_INVALID_SOCKET (-1)
+    #define INDK_CLOSESOCKET(s) close(s)
 #endif
 
 #include "native.h"
@@ -397,6 +408,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("kelas", 5));
     } else if (IS_FILE(args[0])) {
         return OBJ_VAL(copyString("berkas", 6));
+    } else if (IS_SOCKET(args[0])) {
+        return OBJ_VAL(copyString("soket", 5));
     } else if (IS_FUNCTION(args[0]) || IS_CLOSURE(args[0]) ||
                IS_NATIVE(args[0]) || IS_BOUND_METHOD(args[0])) {
         return OBJ_VAL(copyString("fungsi", 6));
@@ -1040,4 +1053,175 @@ Value nativeFnSisip(int argCount, Value* args) {
     }
     list->items.values[i] = args[2];
     return args[0];
+}
+
+// ============================================================================
+// SOKET (TCP) - IMPLEMENTASI
+// Server HTTP sederhana. Listen di 127.0.0.1 (localhost) demi keamanan.
+// Semua kegagalan memakai nativeRaise (dapat ditangkap coba/kecuali).
+// ============================================================================
+
+void indkCloseSocket(long long fd) {
+    INDK_CLOSESOCKET((indk_socket_t)fd);
+}
+
+#ifdef _WIN32
+static int indkWinsockReady = 0;
+static void indkEnsureWinsock() {
+    if (!indkWinsockReady) {
+        WSADATA wsa;
+        WSAStartup(MAKEWORD(2, 2), &wsa);
+        indkWinsockReady = 1;
+    }
+}
+#else
+static void indkEnsureWinsock() { }
+#endif
+
+// soket_dengar(port) -> soket server yang mendengarkan di 127.0.0.1:port.
+Value nativeFnSoketDengar(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("soket_dengar() memerlukan 1 argumen (port)");
+        return KOSONG_VAL;
+    }
+    if (!IS_NUMBER(args[0])) {
+        nativeRaise("soket_dengar() hanya menerima angka (port)");
+        return KOSONG_VAL;
+    }
+    int port = (int)AS_NUMBER(args[0]);
+    if (port < 1 || port > 65535) {
+        nativeRaise("soket_dengar() port di luar jangkauan (1-65535)");
+        return KOSONG_VAL;
+    }
+
+    indkEnsureWinsock();
+
+    indk_socket_t s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s == INDK_INVALID_SOCKET) {
+        nativeRaise("soket_dengar() gagal membuat soket");
+        return KOSONG_VAL;
+    }
+
+    // Izinkan reuse alamat agar restart cepat tidak "address in use".
+    int yes = 1;
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons((unsigned short)port);
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
+
+    if (bind(s, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+        INDK_CLOSESOCKET(s);
+        nativeRaise("soket_dengar() gagal bind ke port %d", port);
+        return KOSONG_VAL;
+    }
+    if (listen(s, 16) != 0) {
+        INDK_CLOSESOCKET(s);
+        nativeRaise("soket_dengar() gagal listen di port %d", port);
+        return KOSONG_VAL;
+    }
+
+    return OBJ_VAL(newSocket((long long)s));
+}
+
+// soket_terima(server) -> soket klien (blocking sampai ada koneksi).
+Value nativeFnSoketTerima(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("soket_terima() memerlukan 1 argumen (soket server)");
+        return KOSONG_VAL;
+    }
+    if (!IS_SOCKET(args[0])) {
+        nativeRaise("soket_terima() hanya menerima soket");
+        return KOSONG_VAL;
+    }
+    ObjSocket* server = AS_SOCKET(args[0]);
+    if (!server->isOpen) {
+        nativeRaise("soket_terima() pada soket yang sudah tertutup");
+        return KOSONG_VAL;
+    }
+    indk_socket_t c = accept((indk_socket_t)server->fd, NULL, NULL);
+    if (c == INDK_INVALID_SOCKET) {
+        nativeRaise("soket_terima() gagal menerima koneksi");
+        return KOSONG_VAL;
+    }
+    return OBJ_VAL(newSocket((long long)c));
+}
+
+// soket_baca(klien) -> teks yang diterima (satu recv, maks ~64KB), atau
+// string kosong jika koneksi ditutup pihak lain.
+Value nativeFnSoketBaca(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("soket_baca() memerlukan 1 argumen (soket klien)");
+        return KOSONG_VAL;
+    }
+    if (!IS_SOCKET(args[0])) {
+        nativeRaise("soket_baca() hanya menerima soket");
+        return KOSONG_VAL;
+    }
+    ObjSocket* client = AS_SOCKET(args[0]);
+    if (!client->isOpen) {
+        nativeRaise("soket_baca() pada soket yang sudah tertutup");
+        return KOSONG_VAL;
+    }
+
+    int cap = 65536;
+    char* buffer = ALLOCATE(char, cap);
+    int received = (int)recv((indk_socket_t)client->fd, buffer, cap - 1, 0);
+    if (received < 0) {
+        FREE_ARRAY(char, buffer, cap);
+        nativeRaise("soket_baca() gagal membaca dari soket");
+        return KOSONG_VAL;
+    }
+    buffer[received] = '\0';
+    ObjString* result = takeString(buffer, received);
+    return OBJ_VAL(result);
+}
+
+// soket_tulis(klien, teks) -> jumlah byte terkirim.
+Value nativeFnSoketTulis(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("soket_tulis() memerlukan 2 argumen (soket, teks)");
+        return NUMBER_VAL(0);
+    }
+    if (!IS_SOCKET(args[0]) || !IS_STRING(args[1])) {
+        nativeRaise("soket_tulis() memerlukan (soket, string)");
+        return NUMBER_VAL(0);
+    }
+    ObjSocket* client = AS_SOCKET(args[0]);
+    if (!client->isOpen) {
+        nativeRaise("soket_tulis() pada soket yang sudah tertutup");
+        return NUMBER_VAL(0);
+    }
+    ObjString* text = AS_STRING(args[1]);
+    int total = 0;
+    while (total < text->length) {
+        int sent = (int)send((indk_socket_t)client->fd,
+                             text->chars + total, text->length - total, 0);
+        if (sent <= 0) {
+            nativeRaise("soket_tulis() gagal mengirim data");
+            return NUMBER_VAL(total);
+        }
+        total += sent;
+    }
+    return NUMBER_VAL((double)total);
+}
+
+// soket_tutup(soket) -> tutup soket (server atau klien).
+Value nativeFnSoketTutup(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("soket_tutup() memerlukan 1 argumen (soket)");
+        return KOSONG_VAL;
+    }
+    if (!IS_SOCKET(args[0])) {
+        nativeRaise("soket_tutup() hanya menerima soket");
+        return KOSONG_VAL;
+    }
+    ObjSocket* sock = AS_SOCKET(args[0]);
+    if (sock->isOpen) {
+        INDK_CLOSESOCKET((indk_socket_t)sock->fd);
+        sock->isOpen = false;
+    }
+    return KOSONG_VAL;
 }

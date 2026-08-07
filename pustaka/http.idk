@@ -1,0 +1,91 @@
+# pustaka/http.idk - Parsing request & pembuatan response HTTP sederhana.
+# Impor: impor "pustaka/http.idk"  (butuh pustaka/teks.idk)
+#
+# http_urai_request(teks) -> kamus {metode, path, versi, header, badan}
+# http_response(kode, tipe_konten, badan) -> string response HTTP lengkap
+
+impor "pustaka/teks.idk"
+
+# Pisahkan header "Nama: nilai" menjadi list [nama, nilai].
+fungsi _http_pisah_header(baris) {
+    variabel i = teks_cari(baris, ":")
+    jika i == 0 - 1 {
+        kembalikan ["", ""]
+    }
+    variabel nama = potong(baris, 0, i)
+    variabel nilai = teks_pangkas(potong(baris, i + 1, panjang(baris) - i - 1))
+    kembalikan [nama, nilai]
+}
+
+# Urai request HTTP mentah menjadi kamus komponen.
+fungsi http_urai_request(teks) {
+    variabel hasil = kamus()
+    hasil["metode"] = ""
+    hasil["path"] = ""
+    hasil["versi"] = ""
+    hasil["header"] = kamus()
+    hasil["badan"] = ""
+
+    # Pisahkan header dari badan pada baris kosong pertama (\r\n\r\n).
+    variabel pemisah = teks_cari(teks, "\r\n\r\n")
+    variabel bagian_header = teks
+    jika pemisah != 0 - 1 {
+        bagian_header = potong(teks, 0, pemisah)
+        hasil["badan"] = potong(teks, pemisah + 4, panjang(teks) - pemisah - 4)
+    }
+
+    variabel baris = teks_pisah(bagian_header, "\r\n")
+    jika panjang(baris) == 0 {
+        kembalikan hasil
+    }
+
+    # Baris pertama: "METODE /path HTTP/1.1"
+    variabel awal = teks_pisah(baris[0], " ")
+    jika panjang(awal) >= 3 {
+        hasil["metode"] = awal[0]
+        hasil["path"] = awal[1]
+        hasil["versi"] = awal[2]
+    }
+
+    # Sisa baris: header.
+    variabel i = 1
+    selagi i < panjang(baris) {
+        jika panjang(baris[i]) > 0 {
+            variabel h = _http_pisah_header(baris[i])
+            jika h[0] != "" {
+                hasil["header"][h[0]] = h[1]
+            }
+        }
+        i = i + 1
+    }
+
+    kembalikan hasil
+}
+
+# Frasa status untuk kode umum.
+fungsi _http_frasa(kode) {
+    jika kode == 200 { kembalikan "OK" }
+    jika kode == 201 { kembalikan "Created" }
+    jika kode == 204 { kembalikan "No Content" }
+    jika kode == 400 { kembalikan "Bad Request" }
+    jika kode == 404 { kembalikan "Not Found" }
+    jika kode == 405 { kembalikan "Method Not Allowed" }
+    jika kode == 500 { kembalikan "Internal Server Error" }
+    kembalikan "OK"
+}
+
+# Bangun response HTTP lengkap sebagai string.
+fungsi http_response(kode, tipe_konten, badan) {
+    variabel r = "HTTP/1.1 " + ke_teks(kode) + " " + _http_frasa(kode) + "\r\n"
+    r = r + "Content-Type: " + tipe_konten + "\r\n"
+    r = r + "Content-Length: " + ke_teks(panjang(badan)) + "\r\n"
+    r = r + "Connection: close\r\n"
+    r = r + "\r\n"
+    r = r + badan
+    kembalikan r
+}
+
+# Pintasan: response JSON.
+fungsi http_response_json(kode, badan) {
+    kembalikan http_response(kode, "application/json", badan)
+}

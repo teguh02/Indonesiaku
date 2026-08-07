@@ -18,6 +18,7 @@
 #define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define IS_FILE(value)         isObjType(value, OBJ_FILE)
+#define IS_SOCKET(value)       isObjType(value, OBJ_SOCKET)
 
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
@@ -30,6 +31,7 @@
 #define AS_INSTANCE(value)     ((ObjInstance*)AS_OBJ(value))
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
 #define AS_FILE(value)         ((ObjFile*)AS_OBJ(value))
+#define AS_SOCKET(value)       ((ObjSocket*)AS_OBJ(value))
 
 typedef enum {
     OBJ_STRING,
@@ -43,6 +45,7 @@ typedef enum {
     OBJ_INSTANCE,
     OBJ_BOUND_METHOD,
     OBJ_FILE,
+    OBJ_SOCKET,
 } ObjType;
 
 struct Obj {
@@ -122,6 +125,12 @@ typedef struct {
     bool isOpen;
 } ObjFile;
 
+typedef struct {
+    Obj obj;
+    long long fd;        // OS socket descriptor (int on POSIX, SOCKET on Win)
+    bool isOpen;
+} ObjSocket;
+
 ObjFunction* newFunction();
 ObjNative* newNative(NativeFn function);
 ObjClosure* newClosure(ObjFunction* function);
@@ -132,6 +141,7 @@ ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method);
 ObjFile* newFile(void* handle, ObjString* path);
+ObjSocket* newSocket(long long fd);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
 void printObject(Value value);

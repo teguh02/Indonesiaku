@@ -11,6 +11,8 @@ ifeq ($(OS),Windows_NT)
     RMDIR = rmdir /S /Q
     # On Windows, del requires backslash paths; / is parsed as a switch.
     CLEAN = del /Q src\*.o $(TARGET) 2>NUL & exit 0
+    # Winsock for TCP sockets (soket_* natives).
+    LDFLAGS += -lws2_32
 else
     EXE =
     RM = rm -f

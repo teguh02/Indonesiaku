@@ -457,6 +457,26 @@ indk examples/todo_cli.idk hapus 1                # DELETE
 Dibangun di atas `pustaka/json.idk` (serialisasi/parsing JSON yang ditulis
 dalam Indonesiaku sendiri) dan fungsi berkas bawaan.
 
+### Contoh Aplikasi: REST API HTTP (Todo-list)
+
+`examples/todo_server.idk` adalah **server REST API HTTP** sungguhan (soket TCP,
+`127.0.0.1`) untuk Todo-list dengan penyimpanan JSON:
+
+```bash
+indk examples/todo_server.idk 8080        # jalankan server
+
+# di terminal lain:
+curl http://127.0.0.1:8080/todos                              # GET semua
+curl -X POST -d '{"teks":"beli susu"}' http://127.0.0.1:8080/todos   # POST
+curl http://127.0.0.1:8080/todos/1                            # GET satu
+curl -X PUT -d '{"selesai":true}' http://127.0.0.1:8080/todos/1      # PUT
+curl -X DELETE http://127.0.0.1:8080/todos/1                  # DELETE
+```
+
+Dibangun di atas native soket TCP (`soket_dengar`/`soket_terima`/...) dan
+`pustaka/http.idk` (parsing request + pembuatan response). Server single-thread
+& blocking untuk tujuan edukasi.
+
 ## 🔤 Kata Kunci
 
 ### Tabel Pemetaan (Python → Indonesiaku)

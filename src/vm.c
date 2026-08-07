@@ -154,6 +154,12 @@ void initVM() {
     defineNative("chr", nativeFnChr);
     defineNative("hapus_pada", nativeFnHapusPada);
     defineNative("sisip", nativeFnSisip);
+
+    defineNative("soket_dengar", nativeFnSoketDengar);
+    defineNative("soket_terima", nativeFnSoketTerima);
+    defineNative("soket_baca", nativeFnSoketBaca);
+    defineNative("soket_tulis", nativeFnSoketTulis);
+    defineNative("soket_tutup", nativeFnSoketTutup);
 }
 
 void freeVM() {

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `0.3.0`).
+Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `0.4.0`).
 
 ## Build
 
@@ -36,7 +36,8 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - Implemented: closures/upvalues, lists `[..]` + indexing, dicts via `kamus()` + string indexing, `untuk x dalam list { }`, `hentikan`/`lanjut`, classes (`kelas`, `init`, `diri`, `<` inheritance, `super`), `naikkan` + `coba/kecuali`, `impor "file.idk"` (shared global namespace, cached).
 - Catchable vs fatal: only user `naikkan` **and native-function errors** (raised via `nativeRaise`) are caught by `kecuali`. Truly internal runtime errors (`runtimeError`: undefined var, bad opcode) print and abort (exit 70). Native builtins use `nativeRaise`, so I/O/argument failures are catchable.
 - String literals process escape sequences (`\n \t \r \" \\ \'`) in the compiler's `string()` (compiler.c); the scanner skips escaped chars so `\"` doesn't end a string. Adding new escapes = edit both.
-- Builtins live in `src/native.c`, registered in `initVM` (`src/vm.c`). Families: math, string, list, dict, conversion (`ke_angka`/`ke_teks`/`format`), file I/O (`buka_berkas`/`baca`/`tulis`/...), date/time (`waktu`/`tanggal`), util. `OBJ_FILE` handles auto-close on GC.
+- Builtins live in `src/native.c`, registered in `initVM` (`src/vm.c`). Families: math, string, list, dict, conversion (`ke_angka`/`ke_teks`/`format`), file I/O (`buka_berkas`/`baca`/`tulis`/...), date/time (`waktu`/`tanggal`), TCP sockets (`soket_dengar`/`soket_terima`/`soket_baca`/`soket_tulis`/`soket_tutup`), util. `OBJ_FILE` and `OBJ_SOCKET` handles auto-close on GC.
+- Sockets: Winsock on Windows (Makefile adds `-lws2_32`; native.c lazy-inits `WSAStartup`), BSD sockets on POSIX; servers listen on `127.0.0.1` only. `examples/todo_server.idk` is a REST HTTP server built on `pustaka/http.idk` (request parse + response build) + `pustaka/json.idk`. Integration-tested in CI (`tests/test_todo_server.{sh,ps1}`, job `todo-http`) — a blocking server can't be a golden test, so it's driven by `curl` and shut down via the `/berhenti` endpoint.
 - Command-line args after the script path are exposed as the global list `argumen`.
 - Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`, `json.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`, `json_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring), `ord`/`chr`, and first-class functions.
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). Only compound assignment (`+=` etc.) requires the global to already exist.

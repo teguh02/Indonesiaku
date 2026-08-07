@@ -7,31 +7,39 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
-### Added
-- 📇 **JSON** — `pustaka/json.idk` (`json_teks` serialize, `json_urai` parse),
-  ditulis dalam Indonesiaku sendiri.
-- ✅ **Aplikasi contoh Todo-list JSON DB** — `examples/todo_cli.idk` (CRUD
-  berbasis command-line dengan berkas JSON, memetakan operasi REST) +
-  `examples/todo_demo.idk`. Diuji di CI (job `todo-crud` + golden).
-- 🔡 **Native tambahan** — `ord(karakter)`, `chr(kode)`, `hapus_pada(list, i)`,
-  `sisip(list, i, nilai)`.
-- 🧪 **Uji sintaks dasar** — `examples/sintaks_dasar.idk` (smoke test golden)
-  merangkum kasus dasar: variabel, operator gabungan, fungsi, rekursi, fungsi
-  sebagai nilai kelas-satu, percabangan, perulangan.
+## [0.4.0] - 2026-08-07
 
-### Changed
-- `jenis()` kini mengembalikan `"fungsi"` untuk fungsi/closure/native/metode
-  terikat (dulu `"object"`).
+Rilis JSON + REST: aplikasi contoh Todo-list dalam dua bentuk — CRUD CLI
+dan REST API HTTP (soket TCP), keduanya diuji di CI.
+
+### Added
+- 🌐 **Soket TCP** — tipe objek `OBJ_SOCKET` + native `soket_dengar(port)`,
+  `soket_terima`, `soket_baca`, `soket_tulis`, `soket_tutup` (Winsock di
+  Windows, BSD di POSIX; listen di 127.0.0.1). Auto-close saat GC.
+- 🔌 **`pustaka/http.idk`** — `http_urai_request` (parse request HTTP),
+  `http_response`/`http_response_json` (bangun response).
+- 🚀 **Server REST HTTP** — `examples/todo_server.idk`: REST API Todo-list
+  (`GET/POST/PUT/DELETE /todos`) dengan penyimpanan JSON. Diuji CI (job
+  `todo-http` + `tests/test_todo_server.{sh,ps1}`).
+- 📇 **JSON** — `pustaka/json.idk` (`json_teks`, `json_urai`), ditulis dalam
+  Indonesiaku sendiri.
+- ✅ **Todo-list JSON DB (CLI)** — `examples/todo_cli.idk` (CRUD command-line).
+  Diuji CI (job `todo-crud`).
+- 🔡 **Native tambahan** — `ord`, `chr`, `hapus_pada(list, i)`,
+  `sisip(list, i, nilai)`.
+- 🧪 **Uji sintaks dasar** — `examples/sintaks_dasar.idk` (smoke test golden).
 
 ### Fixed
-- 🐛 **Regresi assignment implisit di dalam blok**: setelah badan `jika`/
-  `selagi`/`untuk` diberi scope (v0.3.0), `x = 10` di dalam blok gagal
-  ("Variabel tidak terdefinisi"). Kini assignment ke nama global memakai
-  semantik definisi (create-or-update) di kedalaman scope mana pun.
-- 🐛 **Korupsi nilai kamus saat GC**: `OP_INDEX_SET` untuk kamus mem-pop
-  operand sebelum `tableSet`, sehingga GC selama pertumbuhan tabel bisa
-  membebaskan dict/kunci/nilai. Kini operand ditahan di stack (peek) sampai
-  selesai. Ditemukan lewat parser JSON di bawah stress-GC.
+- 🐛 **Regresi assignment implisit di dalam blok** — `x = 10` di dalam
+  `jika`/`selagi`/`untuk` (setelah scoping v0.3.0). Kini memakai semantik
+  definisi di kedalaman scope mana pun.
+- 🐛 **Korupsi nilai kamus saat GC** — `OP_INDEX_SET` dict mem-pop operand
+  sebelum `tableSet`; kini ditahan di stack. Ditemukan lewat parser JSON di
+  bawah stress-GC.
+
+### Changed
+- `jenis()` mengembalikan `"fungsi"` untuk fungsi/closure/native/metode
+  terikat, dan `"soket"` untuk soket.
 
 ## [0.3.0] - 2026-08-07
 

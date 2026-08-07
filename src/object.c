@@ -95,6 +95,13 @@ ObjFile* newFile(void* handle, ObjString* path) {
     return file;
 }
 
+ObjSocket* newSocket(long long fd) {
+    ObjSocket* sock = ALLOCATE_OBJ(ObjSocket, OBJ_SOCKET);
+    sock->fd = fd;
+    sock->isOpen = true;
+    return sock;
+}
+
 ObjNative* newNative(NativeFn function) {
     ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
     native->function = function;
@@ -207,6 +214,11 @@ void printObject(Value value) {
             ObjFile* file = AS_FILE(value);
             printf("<berkas %s%s>", file->path->chars,
                    file->isOpen ? "" : " (tertutup)");
+            break;
+        }
+        case OBJ_SOCKET: {
+            ObjSocket* sock = AS_SOCKET(value);
+            printf("<soket%s>", sock->isOpen ? "" : " (tertutup)");
             break;
         }
     }

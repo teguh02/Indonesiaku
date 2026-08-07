@@ -110,6 +110,19 @@ Semua kesalahan dapat ditangkap `coba/kecuali`.
 | `input(prompt)` | Baca satu baris dari stdin |
 | `argumen` | Variabel global: list argumen baris perintah |
 
+### 1.9 Soket TCP
+
+Server mendengarkan di `127.0.0.1` saja (localhost). Semua kesalahan dapat
+ditangkap `coba/kecuali`. Untuk server HTTP, gunakan `pustaka/http.idk`.
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `soket_dengar(port)` | Buat soket server yang mendengarkan di `127.0.0.1:port` |
+| `soket_terima(server)` | Blocking: terima koneksi → soket klien |
+| `soket_baca(klien)` | Baca data yang diterima (satu recv) → string |
+| `soket_tulis(klien, teks)` | Kirim teks → jumlah byte |
+| `soket_tutup(soket)` | Tutup soket (server atau klien) |
+
 ---
 
 ## 2. Pustaka Standar (`pustaka/`)
@@ -207,8 +220,23 @@ kembali = json_urai(teks)     # kamus dengan list
 Digunakan oleh aplikasi contoh `examples/todo_cli.idk` (CRUD Todo-list
 berbasis berkas JSON) dan `examples/todo_demo.idk`.
 
+### 2.6 `pustaka/http.idk`
+
+```python
+impor "pustaka/http.idk"
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `http_urai_request(teks)` | Parse request HTTP mentah → kamus `{metode, path, versi, header, badan}` |
+| `http_response(kode, tipe_konten, badan)` | Bangun string response HTTP |
+| `http_response_json(kode, badan)` | Pintasan response JSON |
+
+Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
+di atas soket TCP.
+
 ---
 
 Lihat contoh lengkap di folder `examples/` (mis. `pustaka_teks.idk`,
 `pustaka_daftar.idk`, `berkas.idk`, `konversi.idk`, `json_pakai.idk`,
-`todo_demo.idk`).
+`todo_demo.idk`, `todo_server.idk`, `http_pakai.idk`).

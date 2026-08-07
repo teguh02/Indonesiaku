@@ -146,4 +146,17 @@ Value nativeFnChr(int argCount, Value* args);       // chr(kode)
 Value nativeFnHapusPada(int argCount, Value* args); // hapus_pada(list, i)
 Value nativeFnSisip(int argCount, Value* args);     // sisip(list, i, nilai)
 
+// ============================================================================
+// SOKET (TCP) — untuk server HTTP sederhana
+// ============================================================================
+
+Value nativeFnSoketDengar(int argCount, Value* args);  // soket_dengar(port)
+Value nativeFnSoketTerima(int argCount, Value* args);  // soket_terima(server)
+Value nativeFnSoketBaca(int argCount, Value* args);    // soket_baca(klien)
+Value nativeFnSoketTulis(int argCount, Value* args);   // soket_tulis(klien, teks)
+Value nativeFnSoketTutup(int argCount, Value* args);   // soket_tutup(soket)
+
+// Close a raw socket fd (used by the GC to reclaim leaked sockets).
+void indkCloseSocket(long long fd);
+
 #endif

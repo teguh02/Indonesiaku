@@ -4,6 +4,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "memory.h"
+#include "native.h"
 #include "object.h"
 #include "table.h"
 #include "vm.h"
@@ -128,6 +129,8 @@ static void blackenObject(Obj* object) {
         case OBJ_FILE:
             markObject((Obj*)((ObjFile*)object)->path);
             break;
+        case OBJ_SOCKET:
+            break;
         case OBJ_NATIVE:
         case OBJ_STRING:
             break;
@@ -197,6 +200,16 @@ static void freeObject(Obj* object) {
                 file->isOpen = false;
             }
             FREE(ObjFile, object);
+            break;
+        }
+        case OBJ_SOCKET: {
+            ObjSocket* sock = (ObjSocket*)object;
+            // Close the socket if still open (prevents fd leaks on GC).
+            if (sock->isOpen) {
+                indkCloseSocket(sock->fd);
+                sock->isOpen = false;
+            }
+            FREE(ObjSocket, object);
             break;
         }
         case OBJ_NATIVE: {

@@ -1,0 +1,46 @@
+=== urai request GET ===
+metode:
+GET
+path:
+/todos
+versi:
+HTTP/1.1
+host:
+localhost
+badan kosong:
+benar
+=== urai request POST dengan badan ===
+metode:
+POST
+path:
+/todos
+content-type:
+application/json
+badan:
+{"teks":"beli susu"}
+=== urai path dengan id ===
+metode:
+DELETE
+path:
+/todos/42
+=== bangun response ===
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 4
+Connection: close
+
+halo
+---
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Content-Length: 31
+Connection: close
+
+{"kesalahan":"tidak ditemukan"}
+---
+HTTP/1.1 201 Created
+Content-Type: application/json
+Content-Length: 8
+Connection: close
+
+{"id":1}

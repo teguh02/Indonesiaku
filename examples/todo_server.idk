@@ -1,0 +1,190 @@
+# Todo-list REST API - Server HTTP sederhana (localhost).
+#
+# Menjalankan server yang mendengarkan di 127.0.0.1:PORT dan menyediakan
+# REST API CRUD untuk todo, dengan penyimpanan berkas JSON.
+#
+# Menjalankan:  indk examples/todo_server.idk [port]   (bawaan 8080)
+# Menguji (di terminal lain):
+#   curl http://127.0.0.1:8080/todos
+#   curl -X POST -d "{\"teks\":\"beli susu\"}" http://127.0.0.1:8080/todos
+#   curl http://127.0.0.1:8080/todos/1
+#   curl -X PUT  -d "{\"selesai\":true}"     http://127.0.0.1:8080/todos/1
+#   curl -X DELETE http://127.0.0.1:8080/todos/1
+#
+# Catatan: server single-thread, blocking, untuk tujuan demo/edukasi.
+# Endpoint khusus GET /berhenti mematikan server (dipakai uji otomatis).
+
+impor "pustaka/json.idk"
+impor "pustaka/http.idk"
+impor "pustaka/teks.idk"
+
+DB_PATH = "data_todo_server.json"
+
+# --- Lapisan DB (JSON file) -------------------------------------------------
+
+fungsi db_muat() {
+    jika tidak ada_berkas(DB_PATH) {
+        variabel db = kamus()
+        db["todos"] = []
+        db["id_berikut"] = 1
+        kembalikan db
+    }
+    variabel isi = baca_semua(DB_PATH)
+    jika panjang(isi) == 0 {
+        variabel db2 = kamus()
+        db2["todos"] = []
+        db2["id_berikut"] = 1
+        kembalikan db2
+    }
+    kembalikan json_urai(isi)
+}
+
+fungsi db_simpan(db) {
+    tulis_semua(DB_PATH, json_teks(db))
+}
+
+fungsi todo_indeks(db, id) {
+    variabel daftar = db["todos"]
+    variabel i = 0
+    selagi i < panjang(daftar) {
+        jika daftar[i]["id"] == id {
+            kembalikan i
+        }
+        i = i + 1
+    }
+    kembalikan 0 - 1
+}
+
+# --- Router -----------------------------------------------------------------
+
+# Ambil id dari path "/todos/<id>", atau -1 jika tidak ada.
+fungsi path_id(path) {
+    variabel awalan = "/todos/"
+    jika teks_mulai_dengan(path, awalan) {
+        variabel sisa = potong(path, panjang(awalan), panjang(path) - panjang(awalan))
+        jika panjang(sisa) == 0 {
+            kembalikan 0 - 1
+        }
+        coba {
+            kembalikan ke_angka(sisa)
+        } kecuali e {
+            kembalikan 0 - 1
+        }
+    }
+    kembalikan 0 - 1
+}
+
+# Tangani satu request, kembalikan string response HTTP.
+fungsi tangani(req) {
+    variabel metode = req["metode"]
+    variabel path = req["path"]
+
+    # Endpoint kontrol untuk mematikan server (dipakai uji).
+    jika path == "/berhenti" {
+        kembalikan http_response(200, "text/plain", "berhenti")
+    }
+
+    variabel db = db_muat()
+
+    # GET /todos  -> daftar semua
+    jika metode == "GET" dan path == "/todos" {
+        kembalikan http_response_json(200, json_teks(db["todos"]))
+    }
+
+    # POST /todos -> buat todo baru dari badan JSON {"teks": "..."}
+    jika metode == "POST" dan path == "/todos" {
+        coba {
+            variabel data = json_urai(req["badan"])
+            variabel item = kamus()
+            item["id"] = db["id_berikut"]
+            item["teks"] = data["teks"]
+            item["selesai"] = salah
+            tambah(db["todos"], item)
+            db["id_berikut"] = db["id_berikut"] + 1
+            db_simpan(db)
+            kembalikan http_response_json(201, json_teks(item))
+        } kecuali e {
+            kembalikan http_response_json(400, "{\"kesalahan\":\"badan tidak valid\"}")
+        }
+    }
+
+    variabel id = path_id(path)
+
+    # GET /todos/<id> -> satu todo
+    jika metode == "GET" dan id != 0 - 1 {
+        variabel idx = todo_indeks(db, id)
+        jika idx == 0 - 1 {
+            kembalikan http_response_json(404, "{\"kesalahan\":\"tidak ditemukan\"}")
+        }
+        kembalikan http_response_json(200, json_teks(db["todos"][idx]))
+    }
+
+    # PUT /todos/<id> -> ubah (badan JSON {"teks":..} dan/atau {"selesai":..})
+    jika metode == "PUT" dan id != 0 - 1 {
+        variabel idx2 = todo_indeks(db, id)
+        jika idx2 == 0 - 1 {
+            kembalikan http_response_json(404, "{\"kesalahan\":\"tidak ditemukan\"}")
+        }
+        coba {
+            variabel data2 = json_urai(req["badan"])
+            jika punya(data2, "teks") {
+                db["todos"][idx2]["teks"] = data2["teks"]
+            }
+            jika punya(data2, "selesai") {
+                db["todos"][idx2]["selesai"] = data2["selesai"]
+            }
+            db_simpan(db)
+            kembalikan http_response_json(200, json_teks(db["todos"][idx2]))
+        } kecuali e {
+            kembalikan http_response_json(400, "{\"kesalahan\":\"badan tidak valid\"}")
+        }
+    }
+
+    # DELETE /todos/<id>
+    jika metode == "DELETE" dan id != 0 - 1 {
+        variabel idx3 = todo_indeks(db, id)
+        jika idx3 == 0 - 1 {
+            kembalikan http_response_json(404, "{\"kesalahan\":\"tidak ditemukan\"}")
+        }
+        hapus_pada(db["todos"], idx3)
+        db_simpan(db)
+        kembalikan http_response_json(200, "{\"pesan\":\"dihapus\"}")
+    }
+
+    kembalikan http_response_json(404, "{\"kesalahan\":\"rute tidak dikenal\"}")
+}
+
+# --- Loop server ------------------------------------------------------------
+
+fungsi jalankan_server(port) {
+    variabel server = soket_dengar(port)
+    cetak(format("Server Todo REST mendengarkan di http://127.0.0.1:{}", port))
+    cetak("Tekan Ctrl+C untuk berhenti (atau GET /berhenti).")
+
+    variabel berjalan = benar
+    selagi berjalan {
+        variabel klien = soket_terima(server)
+        coba {
+            variabel mentah = soket_baca(klien)
+            variabel req = http_urai_request(mentah)
+            variabel resp = tangani(req)
+            soket_tulis(klien, resp)
+            jika req["path"] == "/berhenti" {
+                berjalan = salah
+            }
+        } kecuali e {
+            # Jangan biarkan satu request buruk mematikan server.
+            cetak("Kesalahan menangani request:", e)
+        }
+        soket_tutup(klien)
+    }
+    soket_tutup(server)
+    cetak("Server berhenti.")
+}
+
+# Port dari argumen, bawaan 8080.
+port_pakai = 8080
+jika panjang(argumen) >= 1 {
+    port_pakai = ke_angka(argumen[0])
+}
+jalankan_server(port_pakai)

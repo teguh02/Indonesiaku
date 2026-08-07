@@ -1,0 +1,32 @@
+# Contoh pustaka HTTP: parsing request & pembuatan response (tanpa soket,
+# sehingga deterministik untuk pengujian).
+impor "pustaka/http.idk"
+
+cetak("=== urai request GET ===")
+req_get = "GET /todos HTTP/1.1\r\nHost: localhost\r\nAccept: */*\r\n\r\n"
+g = http_urai_request(req_get)
+cetak("metode:", g["metode"])
+cetak("path:", g["path"])
+cetak("versi:", g["versi"])
+cetak("host:", g["header"]["Host"])
+cetak("badan kosong:", panjang(g["badan"]) == 0)
+
+cetak("=== urai request POST dengan badan ===")
+req_post = "POST /todos HTTP/1.1\r\nContent-Type: application/json\r\n\r\n{\"teks\":\"beli susu\"}"
+p = http_urai_request(req_post)
+cetak("metode:", p["metode"])
+cetak("path:", p["path"])
+cetak("content-type:", p["header"]["Content-Type"])
+cetak("badan:", p["badan"])
+
+cetak("=== urai path dengan id ===")
+d = http_urai_request("DELETE /todos/42 HTTP/1.1\r\n\r\n")
+cetak("metode:", d["metode"])
+cetak("path:", d["path"])
+
+cetak("=== bangun response ===")
+cetak(http_response(200, "text/plain", "halo"))
+cetak("---")
+cetak(http_response_json(404, "{\"kesalahan\":\"tidak ditemukan\"}"))
+cetak("---")
+cetak(http_response(201, "application/json", "{\"id\":1}"))
