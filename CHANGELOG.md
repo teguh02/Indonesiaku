@@ -15,6 +15,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   `examples/todo_demo.idk`. Diuji di CI (job `todo-crud` + golden).
 - 🔡 **Native tambahan** — `ord(karakter)`, `chr(kode)`, `hapus_pada(list, i)`,
   `sisip(list, i, nilai)`.
+- 🧪 **Uji sintaks dasar** — `examples/sintaks_dasar.idk` (smoke test golden)
+  merangkum kasus dasar: variabel, operator gabungan, fungsi, rekursi, fungsi
+  sebagai nilai kelas-satu, percabangan, perulangan.
+
+### Changed
+- `jenis()` kini mengembalikan `"fungsi"` untuk fungsi/closure/native/metode
+  terikat (dulu `"object"`).
 
 ### Fixed
 - 🐛 **Regresi assignment implisit di dalam blok**: setelah badan `jika`/

@@ -397,6 +397,9 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("kelas", 5));
     } else if (IS_FILE(args[0])) {
         return OBJ_VAL(copyString("berkas", 6));
+    } else if (IS_FUNCTION(args[0]) || IS_CLOSURE(args[0]) ||
+               IS_NATIVE(args[0]) || IS_BOUND_METHOD(args[0])) {
+        return OBJ_VAL(copyString("fungsi", 6));
     } else if (IS_OBJ(args[0])) {
         return OBJ_VAL(copyString("object", 6));
     }

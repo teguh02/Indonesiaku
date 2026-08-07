@@ -1,0 +1,58 @@
+# Uji sintaks dasar (smoke test) — merangkum kasus dasar bahasa dalam satu
+# berkas deterministik. Menghindari duplikasi dengan contoh lain yang lebih
+# spesifik (fibonacci, fungsi, compound_operators, dll.).
+
+cetak("=== variabel & assignment implisit ===")
+x = 10
+cetak(x)
+
+cetak("=== operator gabungan ===")
+x += 5
+cetak(x)
+x -= 3
+cetak(x)
+x *= 2
+cetak(x)
+
+cetak("=== fungsi & assignment lokal implisit ===")
+fungsi kurangi(n) {
+    hasil = n - 1
+    kembalikan hasil
+}
+cetak(kurangi(5))
+
+cetak("=== rekursi ===")
+fungsi faktorial(n) {
+    jika n <= 1 {
+        kembalikan 1
+    }
+    kembalikan n * faktorial(n - 1)
+}
+cetak(faktorial(5))
+
+cetak("=== fungsi sebagai nilai kelas-satu ===")
+m = min
+cetak(m(8, 3))
+cetak(jenis(m))
+a = akar
+cetak(a(25))
+
+cetak("=== percabangan ===")
+untuk n dalam [0 - 2, 0, 5] {
+    jika n > 0 {
+        cetak(n, "positif")
+    } jika_lain n == 0 {
+        cetak(n, "nol")
+    } selain {
+        cetak(n, "negatif")
+    }
+}
+
+cetak("=== perulangan selagi ===")
+i = 1
+jumlah = 0
+selagi i <= 5 {
+    jumlah += i
+    i += 1
+}
+cetak("jumlah 1..5:", jumlah)
