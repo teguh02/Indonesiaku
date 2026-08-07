@@ -255,10 +255,10 @@ jobs:
         shell: powershell
         run: |
           if (Test-Path "indk.exe") {
-            Write-Host "✓ indk.exe found"
+            Write-Host "[OK] indk.exe found"
             & .\indk.exe -v
           } else {
-            Write-Host "✗ indk.exe not found"
+            Write-Host "[FAIL] indk.exe not found"
             exit 1
           }
 
@@ -281,9 +281,9 @@ jobs:
       - name: Check critical files
         run: |
           echo "Checking critical files..."
-          test -f Makefile && echo "✓ Makefile exists" || echo "✗ Makefile missing"
-          test -f src/main.c && echo "✓ src/main.c exists" || echo "✗ src/main.c missing"
-          test -f README.md && echo "✓ README.md exists" || echo "✗ README.md missing"
+          test -f Makefile && echo "[OK] Makefile exists" || echo "[FAIL] Makefile missing"
+          test -f src/main.c && echo "[OK] src/main.c exists" || echo "[FAIL] src/main.c missing"
+          test -f README.md && echo "[OK] README.md exists" || echo "[FAIL] README.md missing"
           echo "File check completed"
 
   build-documentation:
@@ -298,11 +298,11 @@ jobs:
       - name: Check documentation files
         run: |
           echo "Checking documentation..."
-          test -f README.md && echo "✓ README.md" || exit 1
-          test -f CHANGELOG.md && echo "✓ CHANGELOG.md" || exit 1
-          test -f LICENSE && echo "✓ LICENSE" || exit 1
-          test -d docs && echo "✓ docs/" || exit 1
-          test -d examples && echo "✓ examples/" || exit 1
+          test -f README.md && echo "[OK] README.md" || exit 1
+          test -f CHANGELOG.md && echo "[OK] CHANGELOG.md" || exit 1
+          test -f LICENSE && echo "[OK] LICENSE" || exit 1
+          test -d docs && echo "[OK] docs/" || exit 1
+          test -d examples && echo "[OK] examples/" || exit 1
           echo ""
           echo "Documentation check passed!"
 
@@ -310,8 +310,8 @@ jobs:
         run: |
           echo "Checking example files..."
           find examples -name "*.idk" -type f | wc -l
-          test -f examples/hello.idk && echo "✓ hello.idk" || exit 1
-          test -f examples/fibonacci.idk && echo "✓ fibonacci.idk" || exit 1
+          test -f examples/hello.idk && echo "[OK] hello.idk" || exit 1
+          test -f examples/fibonacci.idk && echo "[OK] fibonacci.idk" || exit 1
 
   report-results:
     name: Test Results Report
@@ -341,20 +341,20 @@ jobs:
         run: |
           echo "::group::Build Status"
           if [ "${{ needs.test-linux.result }}" = "success" ]; then
-            echo "✅ Linux Tests: PASSED"
+            echo "[OK] Linux Tests: PASSED"
           else
-            echo "⚠️ Linux Tests: FAILED/SKIPPED"
+            echo "[WARN] Linux Tests: FAILED/SKIPPED"
           fi
           
           if [ "${{ needs.test-macos.result }}" = "success" ]; then
-            echo "✅ macOS Tests: PASSED"
+            echo "[OK] macOS Tests: PASSED"
           else
-            echo "⚠️ macOS Tests: FAILED/SKIPPED"
+            echo "[WARN] macOS Tests: FAILED/SKIPPED"
           fi
           
           if [ "${{ needs.test-windows.result }}" = "success" ]; then
-            echo "✅ Windows Tests: PASSED"
+            echo "[OK] Windows Tests: PASSED"
           else
-            echo "⚠️ Windows Tests: FAILED/SKIPPED"
+            echo "[WARN] Windows Tests: FAILED/SKIPPED"
           fi
           echo "::endgroup::"
