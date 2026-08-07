@@ -1,0 +1,20 @@
+=== TEST FUNGSI STRING ===
+
+panjang('hello'):
+5
+
+panjang('Indonesiaku'):
+11
+
+huruf_besar('hello world'):
+HELLO WORLD
+
+huruf_kecil('HELLO WORLD'):
+hello world
+
+ganti('hello world', 'world', 'Indonesiaku'):
+hello Indonesiaku
+
+ganti('aaa bbb aaa', 'aaa', 'ccc'):
+ccc bbb ccc
+

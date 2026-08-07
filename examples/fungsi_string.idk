@@ -1,0 +1,28 @@
+# Test Fungsi String Bawaan
+
+cetak("=== TEST FUNGSI STRING ===")
+cetak("")
+
+cetak("panjang('hello'):")
+cetak(panjang("hello"))
+cetak("")
+
+cetak("panjang('Indonesiaku'):")
+cetak(panjang("Indonesiaku"))
+cetak("")
+
+cetak("huruf_besar('hello world'):")
+cetak(huruf_besar("hello world"))
+cetak("")
+
+cetak("huruf_kecil('HELLO WORLD'):")
+cetak(huruf_kecil("HELLO WORLD"))
+cetak("")
+
+cetak("ganti('hello world', 'world', 'Indonesiaku'):")
+cetak(ganti("hello world", "world", "Indonesiaku"))
+cetak("")
+
+cetak("ganti('aaa bbb aaa', 'aaa', 'ccc'):")
+cetak(ganti("aaa bbb aaa", "aaa", "ccc"))
+cetak("")

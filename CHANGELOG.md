@@ -6,12 +6,60 @@ Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Planned
-- Perulangan `untuk...dalam` (for...in loop)
-- List, Dictionary, Set operations
-- `hentikan` (break) dan `lanjut` (continue) statements
-- String concatenation dan operations
-- Operator assignment gabungan (+=, -=, *=, /=)
+
+## [0.2.0] - 2026-08-07
+
+Rilis fitur besar: bahasa kini mencakup closure, struktur data, OOP penuh,
+penanganan kesalahan, dan sistem modul — semua dengan garbage collector
+mark-sweep dan cakupan pengujian golden-output.
+
+### Added
+- 🧠 **Closures & upvalues** — fungsi bersarang menangkap variabel lokal
+  (gunakan `variabel` untuk lokal yang di-capture); upvalue tertutup persist
+  setelah fungsi induk kembali.
+- 📚 **List** — literal `[..]`, pengindeksan baca/tulis, list bersarang;
+  builtin `panjang`, `tambah`, `hapus`.
+- 🔑 **Kamus (dictionary)** — `kamus()`, pengindeksan kunci string; builtin
+  `punya`, `kunci`, `hapus_kunci`.
+- 🔁 **`untuk ... dalam`** — iterasi list (for-in).
+- ⏭️ **`hentikan` / `lanjut`** — break & continue di `selagi` dan `untuk`.
+- 🏛️ **Kelas & OOP** — `kelas`, `init` (konstruktor), `diri` (this), metode,
+  field, pewarisan (`kelas Anak < Induk`), `super`, polimorfisme.
+- 🧯 **Penanganan kesalahan** — `naikkan` (raise) dan `coba { } kecuali e { }`
+  (try/catch) dengan unwinding call-stack dan nesting.
+- 📦 **Sistem modul** — `impor "file.idk"` memuat file lain ke namespace global
+  dengan cache anti-duplikasi.
+- ♻️ **Garbage Collector mark-sweep** — koleksi otomatis berbasis ambang
+  alokasi; flag `DEBUG_STRESS_GC` / `DEBUG_LOG_GC`.
+- 🧰 Builtin baru: `abs`, `pangkat`, `bulat`, `lantai`, `atap`, `acak`,
+  `huruf_besar`, `huruf_kecil`, `ganti`, `jenis`, `input`, `henti`, dan builtin
+  list/kamus di atas.
+
+### Fixed
+- 🐛 **Build link error**: `src/native.c` tidak ada di `Makefile SOURCES`
+  (dan one-liner gcc README) — menyebabkan `undefined reference` saat link.
+- 🐛 **Stack underflow** pada setiap `jika`/`selagi`: `OP_JUMP_IF_FALSE`
+  melakukan pop ganda. Kini tidak pop (sesuai desain clox).
+- 🐛 **Operator `atau` (OR) rusak total** — salah kelas huruf di scanner
+  (`case 'o'` alih-alih `'a'`) → "Variabel tidak terdefinisi 'atau'".
+- 🐛 **Propagasi error**: `push`/`pop` yang gagal kini menghentikan eksekusi
+  (dulu lanjut dengan stack korup).
+- 🐛 **`OP_DEFINE_GLOBAL` tidak pop** → deklarasi meninggalkan nilai di stack,
+  merusak slot lokal `untuk...dalam`. Deklarasi kini stack-neutral.
+- 🐛 **`make clean` gagal di Windows** (`del /Q src/main.o` — `/` diartikan
+  switch). Diperbaiki dengan path backslash.
+- 🐛 **Makefile tanpa dependensi header** → perubahan `.h` tidak memicu
+  rekompilasi (miscompile senyap). Kini `%.o: %.c $(HEADERS)`.
+- 🐛 Hardening fungsi native: validasi tipe semua argumen sebelum konversi.
+
+### Changed
+- 🔒 CI (`test.yml`) tidak lagi `continue-on-error` pada langkah build & test;
+  ditambah job **ASan/UBSan** (stress GC), **Valgrind**, dan **coverage (lcov)**.
+- ✅ Suite pengujian beralih ke **golden-output** (bandingkan stdout + cek
+  stderr/exit-code), bukan hanya exit-code. Ditambah benchmark performa.
+- 📖 Dokumentasi sintaks diselaraskan ke sintaks kurung kurawal `{ }` yang
+  sebenarnya di-parse (README sebelumnya salah mengajarkan gaya Python).
+- `cetak` bekerja untuk semua tipe baru (list, kamus, objek).
 
 ## [0.1.1] - 2025-10-28
 

@@ -1,0 +1,12 @@
+=== Function Composition ===
+tambah(5, 3) =
+8
+kuali(8) =
+64
+kali_tiga(64) =
+192
+absolute(-42) =
+42
+absolute(42) =
+42
+Selesai!

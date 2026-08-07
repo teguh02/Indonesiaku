@@ -50,15 +50,14 @@ static char* readFile(const char* path) {
     return buffer;
 }
 
-static void runFile(const char* path) {
+static int runFile(const char* path) {
     char* source = readFile(path);
     InterpretResult result = interpret(source);
     free(source);
 
-    if (result == INTERPRET_COMPILE_ERROR) exit(65);
-    if (result == INTERPRET_RUNTIME_ERROR) exit(70);
-    // For successful execution, exit with code 0
-    exit(0);
+    if (result == INTERPRET_COMPILE_ERROR) return 65;
+    if (result == INTERPRET_RUNTIME_ERROR) return 70;
+    return 0;
 }
 
 int main(int argc, const char* argv[]) {
@@ -78,17 +77,17 @@ int main(int argc, const char* argv[]) {
 
     initVM();
 
+    int exitCode = 0;
     if (argc == 1) {
         repl();
-        freeVM();
     } else if (argc == 2) {
-        runFile(argv[1]);
-        // Skip freeVM() for file mode to avoid cleanup crashes
-        return 0;
+        exitCode = runFile(argv[1]);
     } else {
         fprintf(stderr, "Penggunaan: indk [path]\n");
-        exit(64);
+        freeVM();
+        return 64;
     }
 
-    return 0;
+    freeVM();
+    return exitCode;
 }

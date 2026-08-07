@@ -1,0 +1,31 @@
+=== Kelas & Objek ===
+Ini adalah
+Kucing
+Kucing
+berkata:
+Meong
+akses field langsung:
+Kucing
+=== Pewarisan & super ===
+Ini adalah
+Rex
+Rex
+menggonggong:
+Guk guk
+Rex
+berkata:
+Guk guk
+jenis:
+objek
+=== Polimorfisme ===
+Sapi
+berkata:
+Moo
+Bruno
+menggonggong:
+Guk guk
+=== State per-objek ===
+1
+2
+1
+3

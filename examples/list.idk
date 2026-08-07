@@ -1,0 +1,39 @@
+# List (senarai) - struktur data urut
+# Mendukung: literal [..], indexing get/set, panjang, tambah, hapus
+
+cetak("=== List Dasar ===")
+angka = [10, 20, 30]
+cetak(angka)
+cetak(angka[0])
+cetak(angka[2])
+cetak("panjang:", panjang(angka))
+
+cetak("=== Ubah Elemen ===")
+angka[1] = 99
+cetak(angka)
+
+cetak("=== Tambah & Hapus ===")
+tambah(angka, 40)
+tambah(angka, 50)
+cetak(angka)
+terakhir = hapus(angka)
+cetak("dihapus:", terakhir)
+cetak(angka)
+
+cetak("=== List Bersarang & Campuran ===")
+matriks = [[1, 2], [3, 4]]
+cetak(matriks[0][1])
+cetak(matriks[1][0])
+campur = [1, "dua", benar, kosong]
+cetak(campur)
+cetak("jenis:", jenis(campur))
+
+cetak("=== Bangun List dengan Loop ===")
+kuadrat = []
+i = 1
+selagi i <= 5 {
+    tambah(kuadrat, i * i)
+    i = i + 1
+}
+cetak(kuadrat)
+cetak("jumlah elemen:", panjang(kuadrat))

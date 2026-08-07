@@ -1,0 +1,20 @@
+# Test Fungsi Utilitas Bawaan
+
+cetak("=== TEST FUNGSI UTILITAS ===")
+cetak("")
+
+cetak("jenis(42):")
+cetak(jenis(42))
+cetak("")
+
+cetak("jenis('hello'):")
+cetak(jenis("hello"))
+cetak("")
+
+cetak("jenis(benar):")
+cetak(jenis(benar))
+cetak("")
+
+cetak("jenis(kosong):")
+cetak(jenis(kosong))
+cetak("")

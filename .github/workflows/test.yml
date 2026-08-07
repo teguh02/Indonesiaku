@@ -51,7 +51,151 @@ jobs:
       - name: Run tests
         run: |
           chmod +x tests/test_all.sh
-          bash tests/test_all.sh 2>&1 || true  # Continue even if tests fail
+          bash tests/test_all.sh
+
+  sanitizers:
+    name: ASan + UBSan (stress GC)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GCC
+        run: sudo apt-get update && sudo apt-get install -y gcc make
+
+      - name: Build with AddressSanitizer + UBSan + stress GC
+        run: |
+          gcc -std=c11 -g -O1 -Isrc \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -DDEBUG_STRESS_GC \
+            -o indk_asan \
+            src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+
+      - name: Run every example under sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          # A memory/UB error makes indk_asan exit non-zero with a sanitizer
+          # report; that fails the step. Program-level runtime errors (exit 70)
+          # are expected for some inputs and are not sanitizer failures.
+          rc=0
+          for f in examples/*.idk examples/oop/*.idk; do
+            echo "== $f =="
+            out="$(./indk_asan "$f" 2>&1)" || true
+            if echo "$out" | grep -Eq "ERROR: (AddressSanitizer|LeakSanitizer)|runtime error:"; then
+              echo "$out"
+              echo "SANITIZER FAILURE in $f"
+              rc=1
+            fi
+          done
+          exit $rc
+
+  valgrind:
+    name: Valgrind leak check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y gcc make valgrind
+
+      - name: Build (debug)
+        run: |
+          gcc -std=c11 -g -O0 -Isrc -o indk_dbg \
+            src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+
+      - name: Valgrind on representative examples
+        run: |
+          rc=0
+          for f in examples/hello.idk examples/variabel.idk examples/fibonacci.idk \
+                   examples/fungsi_string.idk examples/state_management.idk \
+                   examples/regresi_logika.idk examples/closure.idk examples/list.idk \
+                   examples/kamus.idk examples/oop/kelas.idk examples/coba_kecuali.idk; do
+            echo "== valgrind $f =="
+            valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=definite \
+              ./indk_dbg "$f" > /dev/null || { echo "LEAK/ERROR in $f"; rc=1; }
+          done
+          exit $rc
+
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y gcc make lcov
+
+      - name: Build with coverage instrumentation
+        run: |
+          gcc -std=c11 -O0 -g --coverage -Isrc -o indk \
+            src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+
+      - name: Exercise every example
+        run: |
+          for f in examples/*.idk examples/oop/*.idk; do
+            ./indk "$f" > /dev/null 2>&1 || true
+          done
+
+      - name: Generate lcov report
+        run: |
+          lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch,negative 2>/dev/null || \
+          lcov --capture --directory . --output-file coverage.info
+          lcov --list coverage.info || true
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.info
+
+  fuzz:
+    name: Fuzz scanner/compiler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Build libFuzzer target
+        run: |
+          clang -g -O1 -fsanitize=fuzzer,address,undefined -Isrc \
+            tests/fuzz_compile.c src/chunk.c src/compiler.c src/debug.c \
+            src/memory.c src/native.c src/object.c src/scanner.c src/table.c \
+            src/value.c src/vm.c -lm -o fuzz_compile
+
+      - name: Seed corpus from examples
+        run: |
+          mkdir -p corpus
+          cp examples/*.idk corpus/ 2>/dev/null || true
+
+      - name: Fuzz (short run; fails on any crash)
+        run: |
+          # Empty stdin so input() sees EOF and never blocks.
+          ./fuzz_compile corpus -max_total_time=60 -max_len=2048 \
+            -timeout=5 -rss_limit_mb=2048 -print_final_stats=1 < /dev/null
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes
+          path: |
+            crash-*
+            timeout-*
+            oom-*
 
   test-macos:
     name: Test on macOS
@@ -80,7 +224,7 @@ jobs:
       - name: Run tests
         run: |
           chmod +x tests/test_all.sh
-          bash tests/test_all.sh 2>&1 || true
+          bash tests/test_all.sh
 
   test-windows:
     name: Test on Windows
@@ -106,7 +250,6 @@ jobs:
           cd $env:GITHUB_WORKSPACE
           make clean
           make
-        continue-on-error: true
 
       - name: Check if binary exists
         shell: powershell
@@ -115,20 +258,15 @@ jobs:
             Write-Host "✓ indk.exe found"
             & .\indk.exe -v
           } else {
-            Write-Host "✗ indk.exe not found - will skip executable tests"
+            Write-Host "✗ indk.exe not found"
+            exit 1
           }
-        continue-on-error: true
 
       - name: Run tests (PowerShell)
         shell: powershell
         run: |
           cd $env:GITHUB_WORKSPACE
-          if (Test-Path "tests/test_all.ps1") {
-            & powershell -ExecutionPolicy Bypass -File tests/test_all.ps1
-          } else {
-            Write-Host "Test script not found"
-          }
-        continue-on-error: true
+          & powershell -ExecutionPolicy Bypass -File tests/test_all.ps1
 
   code-quality:
     name: Code Quality Checks

@@ -49,3 +49,7 @@ __pycache__/
 # Testing files
 test_*.idk
 *_test.idk
+
+# But DO track golden output fixtures for the test suite
+!tests/expected/
+!tests/expected/*.out

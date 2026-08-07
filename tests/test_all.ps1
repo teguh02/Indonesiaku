@@ -1,72 +1,85 @@
-﻿Write-Host "=================================================" -ForegroundColor Cyan
-Write-Host "  INDONESIAKU v0.1 - COMPLETE TEST SUITE" -ForegroundColor Cyan
-Write-Host "  (6 Basic + 9 Advanced + 5 OOP = 20 total)" -ForegroundColor Cyan
-Write-Host "=================================================" -ForegroundColor Cyan
-Write-Host ""
+﻿# =================================================
+#  INDONESIAKU - GOLDEN OUTPUT TEST SUITE (Windows)
+#  Runs every example and asserts stdout matches
+#  tests/expected/<name>.out. Exits non-zero on any
+#  failure so CI can gate on it.
+# =================================================
 
-if (-Not (Test-Path ".\indk.exe")) {
-    Write-Host "ERROR: indk.exe tidak ditemukan!" -ForegroundColor Red
+# Native stderr from indk.exe must not abort the runner.
+$ErrorActionPreference = "Continue"
+
+# Resolve repo root (parent of this script's dir)
+$repo = Split-Path -Parent $PSScriptRoot
+Set-Location $repo
+
+$exe = Join-Path $repo "indk.exe"
+if (-Not (Test-Path $exe)) {
+    Write-Host "ERROR: indk.exe not found. Build first (make)." -ForegroundColor Red
     exit 1
 }
 
-$basicTests = @("hello.idk","variabel.idk","fungsi.idk","fibonacci.idk","percabangan.idk","perulangan_selagi.idk")
-$advancedTests = @("complex_arithmetic.idk","control_flow_complex.idk","function_composition.idk","loop_nested.idk","mutual_recursion.idk","pattern_generation.idk","performance_stress.idk","recursion_deep.idk","state_management.idk")
-$oopTests = @("oop_test_01_basic.idk","oop_test_02_simulasi.idk","oop_test_03_closure.idk","oop_test_04_inheritance.idk","oop_test_05_polymorphism.idk")
-
-$totalTests = 0
-$passedTests = 0
-$failedTests = 0
-$basicPassed = 0
-$advancedPassed = 0
-$oopPassed = 0
-
-Write-Host "BASIC TESTS (6):" -ForegroundColor Green
-foreach ($test in $basicTests) {
-    $path = ".\examples\$test"
-    if (Test-Path $path) {
-        Write-Host "  - $test" -NoNewline
-        $output = & .\indk.exe $path 2>&1
-        if ($LASTEXITCODE -eq 0) { Write-Host " OK" -ForegroundColor Green; $passedTests++; $basicPassed++ }
-        else { Write-Host " FAIL" -ForegroundColor Red; $failedTests++ }
-        $totalTests++
-    }
+$expectedDir = Join-Path $repo "tests\expected"
+if (-Not (Test-Path $expectedDir)) {
+    Write-Host "ERROR: tests\expected not found." -ForegroundColor Red
+    exit 1
 }
 
-Write-Host ""
-Write-Host "ADVANCED TESTS (9):" -ForegroundColor Green
-foreach ($test in $advancedTests) {
-    $path = ".\examples\$test"
-    if (Test-Path $path) {
-        Write-Host "  - $test" -NoNewline
-        $output = & .\indk.exe $path 2>&1
-        if ($LASTEXITCODE -eq 0) { Write-Host " OK" -ForegroundColor Green; $passedTests++; $advancedPassed++ }
-        else { Write-Host " FAIL" -ForegroundColor Red; $failedTests++ }
-        $totalTests++
-    }
+# Map example base name -> source path
+$sources = @{}
+foreach ($f in Get-ChildItem -Path (Join-Path $repo "examples") -Recurse -Filter *.idk) {
+    $sources[$f.BaseName] = $f.FullName
 }
 
-Write-Host ""
-Write-Host "OOP TESTS (5):" -ForegroundColor Green
-Write-Host "  Note: OOP native not implemented in v0.1" -ForegroundColor Yellow
-Write-Host "  These tests show what can be simulated with functions" -ForegroundColor Yellow
-foreach ($test in $oopTests) {
-    $path = ".\examples\oop\$test"
-    if (Test-Path $path) {
-        Write-Host "  - $test" -NoNewline
-        $output = & .\indk.exe $path 2>&1
-        if ($LASTEXITCODE -eq 0) { Write-Host " OK" -ForegroundColor Green; $passedTests++; $oopPassed++ }
-        else { Write-Host " FAIL" -ForegroundColor Yellow }
-        $totalTests++
-    }
-}
+$total = 0; $passed = 0; $failed = 0
+$failures = @()
 
-Write-Host ""
 Write-Host "=================================================" -ForegroundColor Cyan
-Write-Host "SUMMARY:" -ForegroundColor Cyan
-Write-Host "  Basic:    $basicPassed/6" -ForegroundColor Green
-Write-Host "  Advanced: $advancedPassed/9" -ForegroundColor Green
-Write-Host "  OOP:      $oopPassed/5" -ForegroundColor Green
-Write-Host ""
-Write-Host "TOTAL: $passedTests/$totalTests PASSED" -ForegroundColor Green
-if ($failedTests -eq 0) { Write-Host "SUCCESS: ALL TESTS PASSING!" -ForegroundColor Green }
+Write-Host "  INDONESIAKU - GOLDEN OUTPUT TESTS" -ForegroundColor Cyan
 Write-Host "=================================================" -ForegroundColor Cyan
+
+foreach ($exp in Get-ChildItem -Path $expectedDir -Filter *.out | Sort-Object Name) {
+    $name = $exp.BaseName
+    $total++
+    if (-Not $sources.ContainsKey($name)) {
+        Write-Host "  x $name  (no matching .idk source)" -ForegroundColor Red
+        $failed++; $failures += $name; continue
+    }
+
+    $outFile = [System.IO.Path]::GetTempFileName()
+    $errFile = [System.IO.Path]::GetTempFileName()
+    $proc = Start-Process -FilePath $exe -ArgumentList $sources[$name] -NoNewWindow -Wait -PassThru `
+        -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+    $code = $proc.ExitCode
+    $actual = Get-Content -Raw -Path $outFile -ErrorAction SilentlyContinue
+    $stderr = Get-Content -Raw -Path $errFile -ErrorAction SilentlyContinue
+    Remove-Item $outFile, $errFile -Force -ErrorAction SilentlyContinue
+    if ($null -eq $actual) { $actual = "" }
+    $expectedText = Get-Content -Raw -Path $exp.FullName
+    if ($null -eq $expectedText) { $expectedText = "" }
+
+    # Normalize line endings for comparison
+    $a = ($actual -replace "`r`n", "`n").TrimEnd("`n")
+    $e = ($expectedText -replace "`r`n", "`n").TrimEnd("`n")
+
+    if ($code -eq 0 -and $a -eq $e -and [string]::IsNullOrEmpty($stderr)) {
+        Write-Host "  + $name" -ForegroundColor Green
+        $passed++
+    } else {
+        $reason = if ($code -ne 0) { "exit=$code" }
+                  elseif (-not [string]::IsNullOrEmpty($stderr)) { "stderr: $($stderr.Trim())" }
+                  else { "output mismatch" }
+        Write-Host "  x $name  ($reason)" -ForegroundColor Red
+        $failed++; $failures += $name
+    }
+}
+
+Write-Host "=================================================" -ForegroundColor Cyan
+Write-Host "TOTAL: $passed/$total PASSED" -ForegroundColor Cyan
+if ($failed -eq 0) {
+    Write-Host "SUCCESS: ALL TESTS PASSING!" -ForegroundColor Green
+    exit 0
+} else {
+    Write-Host "FAILURE: $failed test(s) failed:" -ForegroundColor Red
+    $failures | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+    exit 1
+}

@@ -1,0 +1,38 @@
+# Closures (fungsi bersarang yang menangkap variabel lokal)
+# Gunakan kata kunci 'variabel' untuk membuat variabel lokal fungsi
+# yang dapat ditangkap oleh closure.
+
+fungsi buat_pencacah() {
+    variabel hitung = 0
+    fungsi naik() {
+        hitung = hitung + 1
+        kembalikan hitung
+    }
+    kembalikan naik
+}
+
+cetak("=== Closure Pencacah ===")
+c = buat_pencacah()
+cetak(c())
+cetak(c())
+cetak(c())
+
+# Closure kedua punya state independen
+d = buat_pencacah()
+cetak(d())
+cetak(c())
+
+# Closure yang menangkap parameter
+fungsi buat_penambah(n) {
+    fungsi tambah(x) {
+        kembalikan x + n
+    }
+    kembalikan tambah
+}
+
+cetak("=== Closure Penambah ===")
+tambah5 = buat_penambah(5)
+tambah10 = buat_penambah(10)
+cetak(tambah5(1))
+cetak(tambah10(1))
+cetak(tambah5(100))

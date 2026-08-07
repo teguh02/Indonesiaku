@@ -1,0 +1,30 @@
+# Pustaka contoh untuk demonstrasi 'impor'.
+# File ini hanya mendefinisikan fungsi & kelas (tanpa cetak di tingkat atas),
+# sehingga aman dijalankan langsung maupun diimpor.
+
+fungsi luas_lingkaran(jari) {
+    kembalikan 3.14159 * jari * jari
+}
+
+fungsi maksimum_list(daftar) {
+    variabel terbesar = daftar[0]
+    untuk n dalam daftar {
+        jika n > terbesar {
+            terbesar = n
+        }
+    }
+    kembalikan terbesar
+}
+
+kelas Kalkulator {
+    init() {
+        diri.hasil = 0
+    }
+    tambah(n) {
+        diri.hasil = diri.hasil + n
+        kembalikan diri
+    }
+    nilai() {
+        kembalikan diri.hasil
+    }
+}

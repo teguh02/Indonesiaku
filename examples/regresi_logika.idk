@@ -1,0 +1,37 @@
+# Regressi: pastikan operator logika dan percabangan/perulangan
+# tidak menyebabkan stack underflow atau salah tokenisasi.
+#
+# Bug historis yang dicegah:
+#  - OP_JUMP_IF_FALSE double-pop -> "Stack underflow" pada jika/selagi
+#  - 'atau' salah kelas di scanner -> "Variabel tidak terdefinisi 'atau'"
+
+cetak("=== Regressi Logika & Kontrol ===")
+
+# jika tanpa else tidak boleh underflow
+x = 10
+jika x > 5 {
+    cetak("jika-ok")
+}
+
+# selagi tidak boleh underflow
+i = 0
+selagi i < 3 {
+    cetak(i)
+    i = i + 1
+}
+
+# operator 'dan'
+cetak(benar dan salah)
+cetak(benar dan benar)
+
+# operator 'atau'
+cetak(benar atau salah)
+cetak(salah atau salah)
+
+# kombinasi dalam kondisi
+jika x > 5 dan x < 20 {
+    cetak("rentang-ok")
+}
+jika x > 100 atau x == 10 {
+    cetak("atau-ok")
+}

@@ -1,0 +1,25 @@
+=== Tangkap Kesalahan ===
+mulai
+tertangkap:
+sesuatu gagal
+lanjut normal
+=== Tanpa Kesalahan ===
+semua aman
+=== Kesalahan dari Fungsi ===
+5
+gagal membagi:
+pembagian dengan nol
+=== coba Bersarang ===
+inner:
+kesalahan dalam
+outer:
+diteruskan ke luar
+=== Menangkap dalam Perulangan ===
+proses
+1
+lewati
+2
+proses
+3
+lewati
+4

@@ -1,0 +1,62 @@
+# Pemrograman Berorientasi Objek (OOP)
+# kelas, init (konstruktor), diri (this), metode, pewarisan (<), super
+
+cetak("=== Kelas & Objek ===")
+kelas Hewan {
+    init(nama, suara) {
+        diri.nama = nama
+        diri.suara = suara
+    }
+    bersuara() {
+        cetak(diri.nama, "berkata:", diri.suara)
+    }
+    deskripsi() {
+        cetak("Ini adalah", diri.nama)
+    }
+}
+
+kucing = Hewan("Kucing", "Meong")
+kucing.deskripsi()
+kucing.bersuara()
+cetak("akses field langsung:", kucing.nama)
+
+cetak("=== Pewarisan & super ===")
+kelas Anjing < Hewan {
+    init(nama) {
+        super.init(nama, "Guk guk")
+    }
+    bersuara() {
+        cetak(diri.nama, "menggonggong:", diri.suara)
+    }
+    bersuara_induk() {
+        super.bersuara()
+    }
+}
+
+rex = Anjing("Rex")
+rex.deskripsi()
+rex.bersuara()
+rex.bersuara_induk()
+cetak("jenis:", jenis(rex))
+
+cetak("=== Polimorfisme ===")
+untuk h dalam [Hewan("Sapi", "Moo"), Anjing("Bruno")] {
+    h.bersuara()
+}
+
+cetak("=== State per-objek ===")
+kelas Pencacah {
+    init() {
+        diri.nilai = 0
+    }
+    naik() {
+        diri.nilai = diri.nilai + 1
+        kembalikan diri.nilai
+    }
+}
+c1 = Pencacah()
+c2 = Pencacah()
+cetak(c1.naik())
+cetak(c1.naik())
+cetak(c2.naik())
+cetak(c1.naik())

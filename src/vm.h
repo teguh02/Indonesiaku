@@ -7,6 +7,7 @@
 
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
+#define TRY_MAX 64
 
 // Stack protection checks
 #define STACK_UNDERFLOW_CHECK(count) \
@@ -35,19 +36,40 @@
     } while (false)
 
 typedef struct {
-    ObjFunction* function;
+    ObjClosure* closure;
     uint8_t* ip;
     Value* slots;
 } CallFrame;
+
+// Records an active 'coba' (try) block so a raised error can unwind to its
+// 'kecuali' (catch) handler.
+typedef struct {
+    uint8_t* handlerIp;   // where the catch handler begins
+    int frameCount;       // frame depth when the try block was entered
+    Value* stackTop;      // stack top when the try block was entered
+} TryHandler;
 
 typedef struct {
     CallFrame frames[FRAMES_MAX];
     Value stack[STACK_MAX];
     Value* stackTop;
     int frameCount;
+    TryHandler tryHandlers[TRY_MAX];
+    int tryCount;
     Table globals;
     Table strings;
+    Table loadedModules;
+    ObjString* initString;
+    ObjUpvalue* openUpvalues;
     Obj* objects;
+    bool hadError;
+
+    // Garbage collector bookkeeping
+    size_t bytesAllocated;
+    size_t nextGC;
+    int grayCount;
+    int grayCapacity;
+    Obj** grayStack;
 } VM;
 
 typedef enum {
@@ -63,5 +85,6 @@ void freeVM();
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
+void runtimeError(const char* format, ...);
 
 #endif

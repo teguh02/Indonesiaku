@@ -1,0 +1,42 @@
+=== State Management ===
+Call #
+1
+: added
+10
+, total =
+10
+Call #
+2
+: added
+20
+, total =
+30
+Call #
+3
+: added
+30
+, total =
+60
+Call #
+4
+: added
+40
+, total =
+100
+Call #
+5
+: added
+50
+, total =
+150
+Final: total calls =
+5
+Final: total sum =
+150
+
+Conditional additions:
+Calls made:
+3
+Final sum:
+40
+Selesai!

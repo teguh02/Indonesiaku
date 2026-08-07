@@ -1,0 +1,59 @@
+# Penanganan kesalahan dengan coba/kecuali dan naikkan
+# 'naikkan' melempar nilai; 'coba { } kecuali e { }' menangkapnya.
+# Catatan: hanya kesalahan yang di-'naikkan' pengguna yang dapat ditangkap.
+
+cetak("=== Tangkap Kesalahan ===")
+coba {
+    cetak("mulai")
+    naikkan "sesuatu gagal"
+    cetak("tidak akan muncul")
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+cetak("lanjut normal")
+
+cetak("=== Tanpa Kesalahan ===")
+coba {
+    cetak("semua aman")
+} kecuali e {
+    cetak("tidak akan muncul")
+}
+
+cetak("=== Kesalahan dari Fungsi ===")
+fungsi bagi(a, b) {
+    jika b == 0 {
+        naikkan "pembagian dengan nol"
+    }
+    kembalikan a / b
+}
+
+coba {
+    cetak(bagi(10, 2))
+    cetak(bagi(10, 0))
+} kecuali e {
+    cetak("gagal membagi:", e)
+}
+
+cetak("=== coba Bersarang ===")
+coba {
+    coba {
+        naikkan "kesalahan dalam"
+    } kecuali e {
+        cetak("inner:", e)
+        naikkan "diteruskan ke luar"
+    }
+} kecuali e {
+    cetak("outer:", e)
+}
+
+cetak("=== Menangkap dalam Perulangan ===")
+untuk n dalam [1, 2, 3, 4] {
+    coba {
+        jika n % 2 == 0 {
+            naikkan "genap tidak diizinkan"
+        }
+        cetak("proses", n)
+    } kecuali e {
+        cetak("lewati", n)
+    }
+}

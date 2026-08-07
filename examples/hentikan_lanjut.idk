@@ -1,0 +1,37 @@
+# hentikan (break) dan lanjut (continue) di dalam perulangan
+
+cetak("=== selagi + hentikan ===")
+i = 0
+selagi i < 10 {
+    jika i == 5 { hentikan }
+    cetak(i)
+    i = i + 1
+}
+
+cetak("=== selagi + lanjut (lewati genap) ===")
+i = 0
+selagi i < 8 {
+    i = i + 1
+    jika i % 2 == 0 { lanjut }
+    cetak(i)
+}
+
+cetak("=== untuk...dalam + hentikan ===")
+untuk x dalam [1, 2, 3, 4, 5, 6] {
+    jika x == 4 { hentikan }
+    cetak(x)
+}
+
+cetak("=== untuk...dalam + lanjut ===")
+untuk x dalam [1, 2, 3, 4, 5] {
+    jika x == 3 { lanjut }
+    cetak(x)
+}
+
+cetak("=== kombinasi bersarang ===")
+untuk a dalam [1, 2, 3] {
+    untuk b dalam [10, 20, 30] {
+        jika b == 20 { hentikan }
+        cetak(a * b)
+    }
+}

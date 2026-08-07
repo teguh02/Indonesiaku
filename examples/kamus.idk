@@ -1,0 +1,33 @@
+# Kamus (dictionary) - pasangan kunci(string)-nilai
+# Dibuat dengan kamus(), diakses dengan indexing string.
+
+cetak("=== Kamus Dasar ===")
+orang = kamus()
+orang["nama"] = "Budi"
+orang["umur"] = 25
+orang["kota"] = "Jakarta"
+cetak(orang["nama"])
+cetak(orang["umur"])
+cetak(orang["kota"])
+cetak("jumlah kunci:", panjang(orang))
+
+cetak("=== Cek & Perbarui ===")
+cetak(punya(orang, "nama"))
+cetak(punya(orang, "email"))
+cetak(orang["email"])
+orang["umur"] = 26
+cetak(orang["umur"])
+
+cetak("=== Hapus Kunci ===")
+hapus_kunci(orang, "kota")
+cetak(panjang(orang))
+cetak(punya(orang, "kota"))
+
+cetak("=== Jenis & Nilai Bertipe Campuran ===")
+cetak(jenis(orang))
+data = kamus()
+data["aktif"] = benar
+data["skor"] = [90, 85, 88]
+cetak(data["aktif"])
+cetak(data["skor"][0])
+cetak(data["skor"][2])

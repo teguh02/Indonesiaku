@@ -1,0 +1,20 @@
+=== Counter 1 ===
+Initial:
+0
+After increment:
+Value:
+1
+Value:
+2
+Value:
+3
+
+Reset counter
+Value after reset:
+0
+
+=== Counter 2 (shares state) ===
+Start with:
+0
+After increment:
+1

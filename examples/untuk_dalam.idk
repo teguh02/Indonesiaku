@@ -1,0 +1,28 @@
+# Perulangan untuk...dalam (for-in) untuk mengiterasi list
+
+cetak("=== Iterasi Sederhana ===")
+untuk buah dalam ["apel", "mangga", "jeruk"] {
+    cetak(buah)
+}
+
+cetak("=== Menjumlahkan Elemen ===")
+angka = [1, 2, 3, 4, 5]
+total = 0
+untuk n dalam angka {
+    total = total + n
+}
+cetak("total:", total)
+
+cetak("=== Loop Bersarang (matriks) ===")
+matriks = [[1, 2, 3], [4, 5, 6]]
+untuk baris dalam matriks {
+    untuk sel dalam baris {
+        cetak(sel)
+    }
+}
+
+cetak("=== List Kosong (badan dilewati) ===")
+untuk x dalam [] {
+    cetak("tidak akan muncul")
+}
+cetak("selesai")

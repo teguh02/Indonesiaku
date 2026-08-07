@@ -36,33 +36,30 @@
 
 Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - **Mudah dipahami** oleh penutur Bahasa Indonesia
-- **Mirip Python** dalam struktur dan filosofi (indentasi, titik dua, dll)
+- **Mirip Python** dalam struktur dan filosofi (dinamis, ekspresif); blok kode menggunakan kurung kurawal `{ }`
 - **Menggunakan kata kunci Bahasa Indonesia** untuk semua perintah
 - **Diimplementasikan dengan C** untuk performa yang baik
 
 ## ✨ Fitur
 
-### Saat Ini (v0.1)
-- ✅ Ekspresi aritmatika (+, -, *, /, %, **)
-- ✅ Variabel dinamis
-- ✅ Tipe data: angka (number), boolean (benar/salah), kosong (null), string
-- ✅ Percabangan: `jika`, `jika_lain`, `selain`
-- ✅ Perulangan: `selagi` (while)
-- ✅ Fungsi dengan parameter dan nilai kembalian
-- ✅ Operator logika: `dan`, `atau`, `tidak`
-- ✅ Operator perbandingan: `==`, `!=`, `<`, `<=`, `>`, `>=`
-- ✅ Fungsi cetak (print)
-- ✅ Rekursi
-- ✅ REPL interaktif
+### Saat Ini (v0.2)
+- ✅ Ekspresi aritmatika (+, -, *, /, %, **) & assignment gabungan (+=, -=, dll)
+- ✅ Tipe data: angka, boolean (`benar`/`salah`), `kosong`, string
+- ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
+- ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
+- ✅ **List** `[..]` + indexing, **Kamus** via `kamus()` + indexing string
+- ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
+- ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
+- ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`
+- ✅ **Sistem modul**: `impor "file.idk"` (namespace global bersama, di-cache)
+- ✅ **Garbage Collector** mark-sweep
+- ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 
-### Akan Datang (v0.2+)
-- 🔲 Perulangan `untuk...dalam` (for...in) dengan list
-- 🔲 List, Dictionary, Set operations
-- 🔲 Kelas dan Object-Oriented Programming
-- 🔲 Import modul
-- 🔲 Garbage Collection
-- 🔲 Error handling yang lebih baik
-- 🔲 Standard library
+### Akan Datang
+- 🔲 `akhirnya` (finally) untuk `coba`/`kecuali`
+- 🔲 Literal kamus `{ }`, Set
+- 🔲 String methods lanjutan & file I/O
+- 🔲 Standard library yang lebih lengkap
 
 ## 🔧 Instalasi
 
@@ -80,7 +77,7 @@ git clone <repository-url>
 cd Indonesiaku
 
 # Compile dengan GCC
-gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
 
 # Atau gunakan Make (jika tersedia)
 make
@@ -93,7 +90,7 @@ git clone <repository-url>
 cd Indonesiaku
 
 # Compile dengan GCC
-gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
 
 # Atau gunakan Make
 make
@@ -175,14 +172,15 @@ pangkat = x ** 2    # 100
 ```python
 nilai = 85
 
-jika nilai >= 90:
+jika nilai >= 90 {
     cetak("Nilai A")
-jika_lain nilai >= 80:
+} jika_lain nilai >= 80 {
     cetak("Nilai B")
-jika_lain nilai >= 70:
+} jika_lain nilai >= 70 {
     cetak("Nilai C")
-selain:
+} selain {
     cetak("Nilai D")
+}
 ```
 
 ### Operator Logika
@@ -190,63 +188,73 @@ selain:
 umur = 20
 punya_sim = benar
 
-jika umur >= 17 dan punya_sim:
+jika umur >= 17 dan punya_sim {
     cetak("Boleh menyetir")
-selain:
+} selain {
     cetak("Tidak boleh menyetir")
+}
 
-jika umur < 13 atau umur > 65:
+jika umur < 13 atau umur > 65 {
     cetak("Diskon khusus")
+}
 
-jika tidak punya_sim:
+jika tidak punya_sim {
     cetak("Harus punya SIM dulu")
+}
 ```
 
 ### Perulangan (While)
 ```python
 # Hitung mundur
 i = 5
-selagi i > 0:
+selagi i > 0 {
     cetak(i)
     i = i - 1
+}
 cetak("Selesai!")
 
 # Jumlah 1 sampai 10
 i = 1
 jumlah = 0
-selagi i <= 10:
+selagi i <= 10 {
     jumlah = jumlah + i
     i = i + 1
+}
 cetak("Jumlah:", jumlah)
 ```
 
 ### Fungsi
 ```python
 # Fungsi tanpa parameter
-fungsi sapa():
+fungsi sapa() {
     cetak("Halo!")
+}
 
 sapa()
 
 # Fungsi dengan parameter
-fungsi sapa_nama(nama):
+fungsi sapa_nama(nama) {
     cetak("Halo,", nama)
+}
 
 sapa_nama("Budi")
 
 # Fungsi dengan return
-fungsi tambah(a, b):
+fungsi tambah(a, b) {
     kembalikan a + b
+}
 
 hasil = tambah(5, 3)
 cetak("Hasil:", hasil)
 
 # Fungsi rekursif
-fungsi faktorial(n):
-    jika n <= 1:
+fungsi faktorial(n) {
+    jika n <= 1 {
         kembalikan 1
-    selain:
+    } selain {
         kembalikan n * faktorial(n - 1)
+    }
+}
 
 cetak("5! =", faktorial(5))  # Output: 120
 ```
@@ -261,46 +269,126 @@ cetak("Selamat datang di Bahasa Indonesiaku!")
 
 ### Fibonacci
 ```python
-fungsi fibonacci(n):
-    jika n <= 1:
+fungsi fibonacci(n) {
+    jika n <= 1 {
         kembalikan n
-    selain:
+    } selain {
         kembalikan fibonacci(n - 1) + fibonacci(n - 2)
+    }
+}
 
 i = 0
-selagi i < 10:
+selagi i < 10 {
     cetak("Fibonacci(", i, ") =", fibonacci(i))
     i = i + 1
+}
 ```
 
 ### Cek Bilangan Prima
 ```python
-fungsi adalah_prima(n):
-    jika n <= 1:
+fungsi adalah_prima(n) {
+    jika n <= 1 {
         kembalikan salah
-    
-    jika n == 2:
+    }
+
+    jika n == 2 {
         kembalikan benar
-    
-    jika n % 2 == 0:
+    }
+
+    jika n % 2 == 0 {
         kembalikan salah
-    
+    }
+
     i = 3
-    selagi i * i <= n:
-        jika n % i == 0:
+    selagi i * i <= n {
+        jika n % i == 0 {
             kembalikan salah
+        }
         i = i + 2
-    
+    }
+
     kembalikan benar
+}
 
 angka = 1
-selagi angka <= 20:
-    jika adalah_prima(angka):
+selagi angka <= 20 {
+    jika adalah_prima(angka) {
         cetak(angka, "adalah bilangan prima")
+    }
     angka = angka + 1
+}
 ```
 
 Lebih banyak contoh tersedia di folder `examples/`.
+
+## 🚀 Fitur Lanjutan
+
+### List & Kamus
+```python
+angka = [10, 20, 30]
+cetak(angka[0])          # 10
+tambah(angka, 40)        # [10, 20, 30, 40]
+cetak(panjang(angka))    # 4
+
+orang = kamus()
+orang["nama"] = "Budi"
+cetak(orang["nama"])     # Budi
+cetak(punya(orang, "umur"))  # salah
+```
+
+### Perulangan untuk...dalam, hentikan, lanjut
+```python
+untuk x dalam [1, 2, 3, 4, 5] {
+    jika x == 4 { hentikan }   # break
+    jika x == 2 { lanjut }     # continue
+    cetak(x)
+}
+```
+
+### Closure
+```python
+fungsi buat_pencacah() {
+    variabel n = 0             # 'variabel' wajib agar bisa ditangkap closure
+    fungsi naik() {
+        n = n + 1
+        kembalikan n
+    }
+    kembalikan naik
+}
+c = buat_pencacah()
+cetak(c())  # 1
+cetak(c())  # 2
+```
+
+### Kelas & Pewarisan
+```python
+kelas Hewan {
+    init(nama) { diri.nama = nama }
+    bersuara() { cetak(diri.nama, "bersuara") }
+}
+kelas Anjing < Hewan {
+    bersuara() {
+        super.bersuara()
+        cetak(diri.nama, "menggonggong")
+    }
+}
+Anjing("Rex").bersuara()
+```
+
+### Penanganan Kesalahan
+```python
+coba {
+    naikkan "terjadi kesalahan"
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+```
+
+### Impor Modul
+```python
+impor "examples/pustaka_matematika.idk"
+cetak(luas_lingkaran(2))
+```
 
 ## 🔤 Kata Kunci
 
@@ -338,6 +426,53 @@ Lebih banyak contoh tersedia di folder `examples/`.
 - `except` → `kecuali`
 - `finally` → `akhirnya`
 - `raise` → `naikkan`
+
+## 🧰 Fungsi Bawaan (Built-in)
+
+Fungsi berikut tersedia langsung tanpa impor (didefinisikan di `src/native.c`):
+
+### Matematika
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `min(a, b, ...)` | Nilai terkecil (min. 2 argumen) |
+| `max(a, b, ...)` | Nilai terbesar (min. 2 argumen) |
+| `abs(x)` | Nilai absolut |
+| `akar(x)` | Akar kuadrat (x tidak boleh negatif) |
+| `pangkat(x, y)` | x pangkat y |
+| `bulat(x)` | Pembulatan ke bilangan terdekat |
+| `lantai(x)` | Pembulatan ke bawah (floor) |
+| `atap(x)` | Pembulatan ke atas (ceil) |
+| `acak()` | Angka acak antara 0 dan 1 |
+
+### String
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `panjang(x)` | Panjang string, list, atau kamus |
+| `huruf_besar(s)` | Ubah ke huruf kapital |
+| `huruf_kecil(s)` | Ubah ke huruf kecil |
+| `ganti(teks, cari, ganti)` | Ganti semua kemunculan substring |
+
+### List
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `tambah(list, nilai)` | Tambah elemen ke akhir list |
+| `hapus(list)` | Hapus & kembalikan elemen terakhir |
+
+### Kamus
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `kamus()` | Buat kamus kosong |
+| `punya(kamus, kunci)` | Apakah kunci ada |
+| `kunci(kamus)` | List berisi semua kunci |
+| `hapus_kunci(kamus, kunci)` | Hapus pasangan kunci-nilai |
+
+### Utilitas
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"kamus"`, `"objek"`, `"kelas"` |
+| `input(prompt)` | Baca satu baris dari stdin (prompt opsional) |
+| `henti(detik)` | Jeda eksekusi selama `detik` detik |
+| `jam()` | Waktu CPU berjalan (detik) |
 
 ## 🗺️ Roadmap
 
@@ -377,11 +512,9 @@ Kode Sumber (.idk)
     ↓
 Scanner/Lexer (Token)
     ↓
-Parser (AST)
+Compiler single-pass (Pratt parser → Bytecode langsung, tanpa AST)
     ↓
-Compiler (Bytecode)
-    ↓
-Virtual Machine (Eksekusi)
+Virtual Machine (Eksekusi bytecode berbasis stack)
 ```
 
 ### Struktur Proyek

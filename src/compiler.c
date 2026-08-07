@@ -7,6 +7,7 @@
 #include "compiler.h"
 #include "scanner.h"
 #include "object.h"
+#include "memory.h"
 
 #if 0
 // Disable debug printing of compiled bytecode by default in release builds.
@@ -51,10 +52,18 @@ typedef struct {
 typedef struct {
     Token name;
     int depth;
+    bool isCaptured;
 } Local;
+
+typedef struct {
+    uint8_t index;
+    bool isLocal;
+} Upvalue;
 
 typedef enum {
     TYPE_FUNCTION,
+    TYPE_INITIALIZER,
+    TYPE_METHOD,
     TYPE_SCRIPT
 } FunctionType;
 
@@ -65,11 +74,31 @@ typedef struct Compiler {
 
     Local locals[UINT8_COUNT];
     int localCount;
+    Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
 } Compiler;
 
 Parser parser;
 Compiler* current = NULL;
+
+typedef struct ClassCompiler {
+    struct ClassCompiler* enclosing;
+    bool hasSuperclass;
+} ClassCompiler;
+
+ClassCompiler* currentClass = NULL;
+
+// Tracks the innermost enclosing loop so 'hentikan' (break) and 'lanjut'
+// (continue) know where to jump and how many locals to discard.
+typedef struct LoopCtx {
+    struct LoopCtx* enclosing;
+    int continueTarget;   // bytecode offset to jump to for 'lanjut'
+    int scopeDepth;       // scope depth of the loop body
+    int breakJumps[UINT8_COUNT];
+    int breakCount;
+} LoopCtx;
+
+LoopCtx* currentLoop = NULL;
 
 static Chunk* currentChunk() {
     return &current->function->chunk;
@@ -164,12 +193,21 @@ static int emitJump(uint8_t instruction) {
 }
 
 static void emitReturn() {
-    emitByte(OP_KOSONG);
+    if (current->type == TYPE_INITIALIZER) {
+        emitBytes(OP_GET_LOCAL, 0);  // return 'diri'
+    } else {
+        emitByte(OP_KOSONG);
+    }
     emitByte(OP_RETURN);
 }
 
 static uint8_t makeConstant(Value value) {
+    // Protect value from a GC that may be triggered while growing the
+    // constants array (writeValueArray allocates). It is only referenced
+    // by this local until addConstant stores it.
+    push(value);
     int constant = addConstant(currentChunk(), value);
+    pop();
     if (constant > UINT8_MAX) {
         error("Terlalu banyak konstanta dalam satu chunk.");
         return 0;
@@ -209,8 +247,15 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
 
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
-    local->name.start = "";
-    local->name.length = 0;
+    local->isCaptured = false;
+    if (type != TYPE_FUNCTION && type != TYPE_SCRIPT) {
+        // Methods reserve slot 0 for 'diri' (the receiver / this).
+        local->name.start = "diri";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 static ObjFunction* endCompiler() {
@@ -238,7 +283,11 @@ static void endScope() {
     while (current->localCount > 0 &&
            current->locals[current->localCount - 1].depth >
                current->scopeDepth) {
-        emitByte(OP_POP);
+        if (current->locals[current->localCount - 1].isCaptured) {
+            emitByte(OP_CLOSE_UPVALUE);
+        } else {
+            emitByte(OP_POP);
+        }
         current->localCount--;
     }
 }
@@ -248,6 +297,8 @@ static void statement();
 static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+static void beginLoop(LoopCtx* loop, int continueTarget);
+static void endLoop();
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
@@ -272,6 +323,43 @@ static int resolveLocal(Compiler* compiler, Token* name) {
     return -1;
 }
 
+static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal) {
+    int upvalueCount = compiler->function->upvalueCount;
+
+    for (int i = 0; i < upvalueCount; i++) {
+        Upvalue* upvalue = &compiler->upvalues[i];
+        if (upvalue->index == index && upvalue->isLocal == isLocal) {
+            return i;
+        }
+    }
+
+    if (upvalueCount == UINT8_COUNT) {
+        error("Terlalu banyak variabel closure dalam fungsi.");
+        return 0;
+    }
+
+    compiler->upvalues[upvalueCount].isLocal = isLocal;
+    compiler->upvalues[upvalueCount].index = index;
+    return compiler->function->upvalueCount++;
+}
+
+static int resolveUpvalue(Compiler* compiler, Token* name) {
+    if (compiler->enclosing == NULL) return -1;
+
+    int local = resolveLocal(compiler->enclosing, name);
+    if (local != -1) {
+        compiler->enclosing->locals[local].isCaptured = true;
+        return addUpvalue(compiler, (uint8_t)local, true);
+    }
+
+    int upvalue = resolveUpvalue(compiler->enclosing, name);
+    if (upvalue != -1) {
+        return addUpvalue(compiler, (uint8_t)upvalue, false);
+    }
+
+    return -1;
+}
+
 static void addLocal(Token name) {
     if (current->localCount == UINT8_COUNT) {
         error("Terlalu banyak variabel lokal dalam fungsi.");
@@ -281,6 +369,20 @@ static void addLocal(Token name) {
     Local* local = &current->locals[current->localCount++];
     local->name = name;
     local->depth = -1;
+    local->isCaptured = false;
+}
+
+// Add a synthetic, already-initialized local whose name cannot collide with
+// a user identifier. Returns its stack slot. Used to desugar 'untuk...dalam'.
+static int addSyntheticLocal(const char* text) {
+    Token token;
+    token.start = text;
+    token.length = (int)strlen(text);
+    token.type = TOKEN_IDENTIFIER;
+    token.line = parser.previous.line;
+    addLocal(token);
+    current->locals[current->localCount - 1].depth = current->scopeDepth;
+    return current->localCount - 1;
 }
 
 static void declareVariable() {
@@ -375,6 +477,55 @@ static void call(bool canAssign) {
     emitBytes(OP_CALL, argCount);
 }
 
+static void dot(bool canAssign) {
+    consume(TOKEN_IDENTIFIER, "Harapkan nama properti setelah '.'.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitBytes(OP_SET_PROPERTY, name);
+    } else if (match(TOKEN_LEFT_PAREN)) {
+        uint8_t argCount = argumentList();
+        emitBytes(OP_INVOKE, name);
+        emitByte(argCount);
+    } else {
+        emitBytes(OP_GET_PROPERTY, name);
+    }
+}
+
+static void listLiteral(bool canAssign) {
+    // '[' already consumed. Parse comma-separated elements.
+    int count = 0;
+    if (!check(TOKEN_RIGHT_BRACKET)) {
+        do {
+            // Allow trailing newlines inside list literals.
+            while (match(TOKEN_NEWLINE)) {}
+            if (check(TOKEN_RIGHT_BRACKET)) break;
+            expression();
+            if (count == 255) {
+                error("Tidak boleh lebih dari 255 elemen dalam literal list.");
+            }
+            count++;
+            while (match(TOKEN_NEWLINE)) {}
+        } while (match(TOKEN_COMMA));
+    }
+    consume(TOKEN_RIGHT_BRACKET, "Harapkan ']' setelah elemen list.");
+    emitBytes(OP_BUILD_LIST, (uint8_t)count);
+}
+
+static void subscript(bool canAssign) {
+    // The list/target is already on the stack. '[' already consumed.
+    expression();
+    consume(TOKEN_RIGHT_BRACKET, "Harapkan ']' setelah indeks.");
+
+    if (canAssign && match(TOKEN_EQUAL)) {
+        expression();
+        emitByte(OP_INDEX_SET);
+    } else {
+        emitByte(OP_INDEX_GET);
+    }
+}
+
 static void literal(bool canAssign) {
     switch (parser.previous.type) {
         case TOKEN_SALAH: emitByte(OP_SALAH); break;
@@ -416,6 +567,9 @@ static void namedVariable(Token name, bool canAssign) {
     if (arg != -1) {
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
+    } else if ((arg = resolveUpvalue(current, &name)) != -1) {
+        getOp = OP_GET_UPVALUE;
+        setOp = OP_SET_UPVALUE;
     } else {
         arg = identifierConstant(&name);
         getOp = OP_GET_GLOBAL;
@@ -428,7 +582,11 @@ static void namedVariable(Token name, bool canAssign) {
         // perlakukan sebagai deklarasi/immediate definition.
         // Ini memungkinkan penulisan: x = 10 tanpa kata kunci 'variabel'.
         if (setOp == OP_SET_GLOBAL && current->scopeDepth == 0) {
+            // OP_DEFINE_GLOBAL consumes the value; re-load it so that a
+            // top-level assignment still evaluates to the assigned value
+            // (assignment is an expression, e.g. cetak(x = 5)).
             emitBytes(OP_DEFINE_GLOBAL, (uint8_t)arg);
+            emitBytes(OP_GET_GLOBAL, (uint8_t)arg);
         } else {
             emitBytes(setOp, (uint8_t)arg);
         }
@@ -477,6 +635,44 @@ static void variable(bool canAssign) {
     namedVariable(parser.previous, canAssign);
 }
 
+static Token syntheticToken(const char* text) {
+    Token token;
+    token.start = text;
+    token.length = (int)strlen(text);
+    return token;
+}
+
+static void diri_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Tidak dapat menggunakan 'diri' di luar kelas.");
+        return;
+    }
+    variable(false);
+}
+
+static void super_(bool canAssign) {
+    if (currentClass == NULL) {
+        error("Tidak dapat menggunakan 'super' di luar kelas.");
+    } else if (!currentClass->hasSuperclass) {
+        error("Tidak dapat menggunakan 'super' pada kelas tanpa induk.");
+    }
+
+    consume(TOKEN_DOT, "Harapkan '.' setelah 'super'.");
+    consume(TOKEN_IDENTIFIER, "Harapkan nama metode induk.");
+    uint8_t name = identifierConstant(&parser.previous);
+
+    namedVariable(syntheticToken("diri"), false);
+    if (match(TOKEN_LEFT_PAREN)) {
+        uint8_t argCount = argumentList();
+        namedVariable(syntheticToken("super"), false);
+        emitBytes(OP_SUPER_INVOKE, name);
+        emitByte(argCount);
+    } else {
+        namedVariable(syntheticToken("super"), false);
+        emitBytes(OP_GET_SUPER, name);
+    }
+}
+
 static void unary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
 
@@ -497,10 +693,10 @@ ParseRule rules[] = {
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LEFT_BRACKET]  = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LEFT_BRACKET]  = {listLiteral, subscript, PREC_CALL},
   [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_DOT]           = {NULL,     dot,    PREC_CALL},
   [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
   [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
   [TOKEN_COLON]         = {NULL,     NULL,   PREC_NONE},
@@ -531,8 +727,8 @@ ParseRule rules[] = {
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
   [TOKEN_CETAK]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_DIRI]          = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
+  [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
   [TOKEN_BENAR]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_VARIABEL]      = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SELAGI]        = {NULL,     NULL,   PREC_NONE},
@@ -606,7 +802,12 @@ static void function(FunctionType type) {
     block();
 
     ObjFunction* function = endCompiler();
-    emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
+
+    for (int i = 0; i < function->upvalueCount; i++) {
+        emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
+        emitByte(compiler.upvalues[i].index);
+    }
 }
 
 static void funDeclaration() {
@@ -614,6 +815,69 @@ static void funDeclaration() {
     markInitialized();
     function(TYPE_FUNCTION);
     defineVariable(global);
+}
+
+static void method() {
+    consume(TOKEN_IDENTIFIER, "Harapkan nama metode.");
+    uint8_t constant = identifierConstant(&parser.previous);
+
+    FunctionType type = TYPE_METHOD;
+    if (parser.previous.length == 4 &&
+        memcmp(parser.previous.start, "init", 4) == 0) {
+        type = TYPE_INITIALIZER;
+    }
+    function(type);
+    emitBytes(OP_METHOD, constant);
+}
+
+static void classDeclaration() {
+    consume(TOKEN_IDENTIFIER, "Harapkan nama kelas.");
+    Token className = parser.previous;
+    uint8_t nameConstant = identifierConstant(&parser.previous);
+    declareVariable();
+
+    emitBytes(OP_CLASS, nameConstant);
+    defineVariable(nameConstant);
+
+    ClassCompiler classCompiler;
+    classCompiler.hasSuperclass = false;
+    classCompiler.enclosing = currentClass;
+    currentClass = &classCompiler;
+
+    // Optional superclass:  kelas Anak < Induk { ... }
+    if (match(TOKEN_LESS)) {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama kelas induk.");
+        variable(false);
+
+        if (identifiersEqual(&className, &parser.previous)) {
+            error("Sebuah kelas tidak dapat mewarisi dirinya sendiri.");
+        }
+
+        beginScope();
+        addLocal(syntheticToken("super"));
+        defineVariable(0);
+
+        namedVariable(className, false);
+        emitByte(OP_INHERIT);
+        classCompiler.hasSuperclass = true;
+    }
+
+    namedVariable(className, false);  // push the class for OP_METHOD
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' sebelum badan kelas.");
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        while (match(TOKEN_NEWLINE)) {}
+        if (check(TOKEN_RIGHT_BRACE)) break;
+        method();
+        while (match(TOKEN_NEWLINE)) {}
+    }
+    consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah badan kelas.");
+    emitByte(OP_POP);  // pop the class
+
+    if (classCompiler.hasSuperclass) {
+        endScope();
+    }
+
+    currentClass = currentClass->enclosing;
 }
 
 static void varDeclaration() {
@@ -636,21 +900,129 @@ static void expressionStatement() {
 }
 
 static void forStatement() {
+    // Desugar:  untuk x dalam <list> { body }
+    // into an index-based loop over the list, using hidden local slots.
     beginScope();
-    
-    // 'untuk' identifier 'dalam' expression '{'
+
     consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'untuk'.");
     Token varName = parser.previous;
-    
+
     consume(TOKEN_DALAM, "Harapkan 'dalam' setelah nama variabel.");
+
+    // Evaluate the iterable and stash it in a hidden slot.
     expression();
+    int seqSlot = addSyntheticLocal("  untuk seq");
+
+    // Hidden length slot.
+    emitBytes(OP_GET_LOCAL, (uint8_t)seqSlot);
+    emitByte(OP_LIST_LEN);
+    int lenSlot = addSyntheticLocal("  untuk len");
+
+    // Hidden index slot = -1 (the increment runs before the first
+    // condition check, bringing it to 0 for the first iteration).
+    emitConstant(NUMBER_VAL(-1));
+    int idxSlot = addSyntheticLocal("  untuk idx");
+
+    // User-visible loop variable, initialized to kosong for now.
+    emitByte(OP_KOSONG);
+    addLocal(varName);
+    markInitialized();
+    int varSlot = current->localCount - 1;
+
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah ekspresi dalam 'untuk'.");
-    
-    int loopStart = currentChunk()->count;
+
+    // Layout (so 'lanjut' can target the increment):
+    //   incrementStart:  idx = idx + 1
+    //   condStart:       if !(idx < len) goto exit
+    //                    x = seq[idx]; body; goto incrementStart
+    // On first entry we jump straight to condStart, skipping the increment.
+    int incrementStart = currentChunk()->count;
+
+    // idx = idx + 1
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitConstant(NUMBER_VAL(1));
+    emitByte(OP_ADD);
+    emitBytes(OP_SET_LOCAL, (uint8_t)idxSlot);
+    emitByte(OP_POP);
+
+    int condStart = currentChunk()->count;
+
+    // Condition: idx < len
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitBytes(OP_GET_LOCAL, (uint8_t)lenSlot);
+    emitByte(OP_LESS);
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP); // condition
+
+    // x = seq[idx]
+    emitBytes(OP_GET_LOCAL, (uint8_t)seqSlot);
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitByte(OP_INDEX_GET);
+    emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
+    emitByte(OP_POP);
+
+    // Loop body. 'lanjut' jumps to incrementStart; 'hentikan' to the end.
+    LoopCtx loop;
+    beginLoop(&loop, incrementStart);
     block();
-    emitLoop(loopStart);
-    
+
+    emitLoop(incrementStart);
+
+    patchJump(exitJump);
+    emitByte(OP_POP); // condition
+
+    endLoop();  // break jumps land here, past the condition pop
+
     endScope();
+}
+
+static void beginLoop(LoopCtx* loop, int continueTarget) {
+    loop->enclosing = currentLoop;
+    loop->continueTarget = continueTarget;
+    loop->scopeDepth = current->scopeDepth;
+    loop->breakCount = 0;
+    currentLoop = loop;
+}
+
+static void endLoop() {
+    for (int i = 0; i < currentLoop->breakCount; i++) {
+        patchJump(currentLoop->breakJumps[i]);
+    }
+    currentLoop = currentLoop->enclosing;
+}
+
+// Emit OP_POP for each local declared deeper than the given scope depth, so
+// break/continue leave the operand stack balanced. Does not remove the
+// compiler's record of those locals (they remain in scope for the rest of
+// the body); endScope() handles the real cleanup.
+static void popLocalsToDepth(int depth) {
+    for (int i = current->localCount - 1;
+         i >= 0 && current->locals[i].depth > depth;
+         i--) {
+        emitByte(OP_POP);
+    }
+}
+
+static void breakStatement() {
+    if (currentLoop == NULL) {
+        error("'hentikan' hanya boleh di dalam perulangan.");
+        return;
+    }
+    popLocalsToDepth(currentLoop->scopeDepth);
+    if (currentLoop->breakCount == UINT8_COUNT) {
+        error("Terlalu banyak 'hentikan' dalam satu perulangan.");
+        return;
+    }
+    currentLoop->breakJumps[currentLoop->breakCount++] = emitJump(OP_JUMP);
+}
+
+static void continueStatement() {
+    if (currentLoop == NULL) {
+        error("'lanjut' hanya boleh di dalam perulangan.");
+        return;
+    }
+    popLocalsToDepth(currentLoop->scopeDepth);
+    emitLoop(currentLoop->continueTarget);
 }
 
 static void ifStatement() {
@@ -678,9 +1050,54 @@ static void ifStatement() {
     patchJump(elseJump);  // Patch the true path jump to skip else
 }
 
+static void raiseStatement() {
+    // naikkan <ekspresi>  -> evaluate then throw.
+    expression();
+    emitByte(OP_THROW);
+}
+
+static void importStatement() {
+    // impor "path.idk"   -> load & run another file in the same namespace.
+    consume(TOKEN_STRING, "Harapkan nama file (string) setelah 'impor'.");
+    // Reuse the string literal handling to push the path (minus quotes).
+    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
+                                    parser.previous.length - 2)));
+    emitByte(OP_IMPORT);
+    emitByte(OP_POP);  // discard the module's return value (kosong)
+}
+
+static void tryStatement() {
+    // coba { body } kecuali <var> { handler }
+    int tryJump = emitJump(OP_TRY_BEGIN);  // operand = offset to catch handler
+
+    beginScope();
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah 'coba'.");
+    block();
+    endScope();
+
+    emitByte(OP_TRY_END);                  // normal path: unregister handler
+    int endJump = emitJump(OP_JUMP);       // skip over the catch handler
+
+    // Catch handler starts here. The VM has pushed the raised value on top.
+    patchJump(tryJump);
+
+    consume(TOKEN_KECUALI, "Harapkan 'kecuali' setelah blok 'coba'.");
+
+    beginScope();
+    // Bind the raised value (already on the stack) to the catch variable.
+    consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'kecuali'.");
+    addLocal(parser.previous);
+    markInitialized();
+
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah nama variabel 'kecuali'.");
+    block();
+    endScope();  // pops the catch variable (the raised value)
+
+    patchJump(endJump);
+}
+
 static void printStatement() {
     consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah 'cetak'.");
-    
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             expression();
@@ -699,6 +1116,9 @@ static void returnStatement() {
     if (match(TOKEN_NEWLINE) || check(TOKEN_EOF)) {
         emitReturn();
     } else {
+        if (current->type == TYPE_INITIALIZER) {
+            error("Tidak dapat mengembalikan nilai dari 'init'.");
+        }
         expression();
         emitByte(OP_RETURN);
     }
@@ -711,12 +1131,17 @@ static void whileStatement() {
 
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
+
+    LoopCtx loop;
+    beginLoop(&loop, loopStart);
     block();
-    
+
     emitLoop(loopStart);
 
     patchJump(exitJump);
     emitByte(OP_POP);
+
+    endLoop();  // break jumps land here, past the condition pop
 }
 
 static void synchronize() {
@@ -749,6 +1174,8 @@ static void declaration() {
 
     if (match(TOKEN_FUNGSI)) {
         funDeclaration();
+    } else if (match(TOKEN_KELAS)) {
+        classDeclaration();
     } else if (match(TOKEN_VARIABEL)) {
         varDeclaration();
     } else {
@@ -769,6 +1196,16 @@ static void statement() {
         returnStatement();
     } else if (match(TOKEN_SELAGI)) {
         whileStatement();
+    } else if (match(TOKEN_HENTIKAN)) {
+        breakStatement();
+    } else if (match(TOKEN_LANJUT)) {
+        continueStatement();
+    } else if (match(TOKEN_COBA)) {
+        tryStatement();
+    } else if (match(TOKEN_NAIKKAN)) {
+        raiseStatement();
+    } else if (match(TOKEN_IMPOR)) {
+        importStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         beginScope();
         block();
@@ -797,4 +1234,15 @@ ObjFunction* compile(const char* source) {
 
     ObjFunction* function = endCompiler();
     return parser.hadError ? NULL : function;
+}
+
+// Mark every function currently being compiled so the GC does not free
+// them mid-compilation (a collection can be triggered by allocations in
+// copyString/makeConstant while parsing).
+void markCompilerRoots() {
+    Compiler* compiler = current;
+    while (compiler != NULL) {
+        markObject((Obj*)compiler->function);
+        compiler = compiler->enclosing;
+    }
 }

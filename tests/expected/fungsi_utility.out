@@ -1,0 +1,14 @@
+=== TEST FUNGSI UTILITAS ===
+
+jenis(42):
+angka
+
+jenis('hello'):
+string
+
+jenis(benar):
+boolean
+
+jenis(kosong):
+kosong
+

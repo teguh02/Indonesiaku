@@ -1,0 +1,18 @@
+# Contoh penggunaan 'impor' untuk memuat pustaka lain.
+# Kode yang diimpor berbagi namespace global yang sama.
+
+impor "examples/pustaka_matematika.idk"
+
+cetak("=== Fungsi dari Pustaka ===")
+cetak(luas_lingkaran(2))
+cetak(maksimum_list([3, 7, 1, 9, 4]))
+
+cetak("=== Kelas dari Pustaka ===")
+k = Kalkulator()
+k.tambah(10)
+k.tambah(5)
+cetak(k.nilai())
+
+cetak("=== Impor Ulang (dari cache, tidak dijalankan lagi) ===")
+impor "examples/pustaka_matematika.idk"
+cetak("selesai")

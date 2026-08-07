@@ -1,0 +1,23 @@
+=== List Dasar ===
+[10, 20, 30]
+10
+30
+panjang:
+3
+=== Ubah Elemen ===
+[10, 99, 30]
+=== Tambah & Hapus ===
+[10, 99, 30, 40, 50]
+dihapus:
+50
+[10, 99, 30, 40]
+=== List Bersarang & Campuran ===
+2
+3
+[1, dua, benar, kosong]
+jenis:
+list
+=== Bangun List dengan Loop ===
+[1, 4, 9, 16, 25]
+jumlah elemen:
+5

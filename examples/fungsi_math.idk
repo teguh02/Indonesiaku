@@ -1,0 +1,44 @@
+# Test Fungsi Matematika Bawaan
+
+cetak("=== TEST FUNGSI MATEMATIKA ===")
+cetak("")
+
+cetak("min(5, 3, 8, 1):")
+cetak(min(5, 3, 8, 1))
+cetak("")
+
+cetak("max(5, 3, 8, 1):")
+cetak(max(5, 3, 8, 1))
+cetak("")
+
+cetak("abs(-42):")
+cetak(abs(-42))
+cetak("")
+
+cetak("akar(16):")
+cetak(akar(16))
+cetak("")
+
+cetak("akar(2):")
+cetak(akar(2))
+cetak("")
+
+cetak("pangkat(2, 3):")
+cetak(pangkat(2, 3))
+cetak("")
+
+cetak("pangkat(10, 2):")
+cetak(pangkat(10, 2))
+cetak("")
+
+cetak("bulat(3.7):")
+cetak(bulat(3.7))
+cetak("")
+
+cetak("lantai(3.9):")
+cetak(lantai(3.9))
+cetak("")
+
+cetak("atap(3.1):")
+cetak(atap(3.1))
+cetak("")
