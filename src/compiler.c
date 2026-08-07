@@ -221,6 +221,14 @@ static void emitConstant(Value value) {
 }
 
 static void patchJump(int offset) {
+    // Defense-in-depth: never write outside the emitted code. A malformed
+    // program combined with a compiler bug could otherwise corrupt the heap
+    // (found via fuzzing). If the offset is invalid, report and bail.
+    if (offset < 0 || offset + 1 >= currentChunk()->count) {
+        error("Kesalahan internal: offset lompatan tidak valid.");
+        return;
+    }
+
     // -2 to adjust for the bytecode for the jump offset itself.
     int jump = currentChunk()->count - offset - 2;
 
@@ -786,6 +794,14 @@ static void function(FunctionType type) {
     initCompiler(&compiler, type);
     beginScope();
 
+    // A function body is a fresh compilation unit with its own chunk. The
+    // loop context (used to patch break/continue jumps) must NOT leak in from
+    // an enclosing loop, or break/continue would record jump offsets against
+    // the outer chunk and later patch them into this smaller one — a heap
+    // buffer overflow. Reset it for the duration of the body and restore after.
+    LoopCtx* savedLoop = currentLoop;
+    currentLoop = NULL;
+
     consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah nama fungsi.");
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
@@ -802,6 +818,9 @@ static void function(FunctionType type) {
     block();
 
     ObjFunction* function = endCompiler();
+
+    currentLoop = savedLoop;
+
     emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; i++) {
