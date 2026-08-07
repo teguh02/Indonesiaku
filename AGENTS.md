@@ -38,6 +38,8 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - String literals process escape sequences (`\n \t \r \" \\ \'`) in the compiler's `string()` (compiler.c); the scanner skips escaped chars so `\"` doesn't end a string. Adding new escapes = edit both.
 - Builtins live in `src/native.c`, registered in `initVM` (`src/vm.c`). Families: math, string, list, dict, conversion (`ke_angka`/`ke_teks`/`format`), file I/O (`buka_berkas`/`baca`/`tulis`/...), date/time (`waktu`/`tanggal`), util. `OBJ_FILE` handles auto-close on GC.
 - Command-line args after the script path are exposed as the global list `argumen`.
+- Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring) and first-class functions.
+- Non-obvious VM facts: `<`/`>` compare strings via `strcmp` (not just numbers). `variabel` declared inside a `jika`/`selagi`/`untuk` body is properly scoped (each body gets `beginScope`/`endScope`); a regression once leaked such locals past the loop — see `examples/lingkup_variabel.idk`.
 
 ## CI
 

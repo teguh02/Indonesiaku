@@ -1,0 +1,128 @@
+# pustaka/teks.idk - Pustaka manipulasi teks (ditulis dalam Indonesiaku).
+# Impor: impor "pustaka/teks.idk"
+# Dibangun di atas primitif bawaan: panjang, karakter, potong.
+# Fungsi diberi awalan 'teks_' karena namespace global berbagi.
+
+# teks_cari(teks, cari) -> indeks kemunculan pertama, atau -1 jika tak ada.
+fungsi teks_cari(teks, cari) {
+    variabel n = panjang(teks)
+    variabel m = panjang(cari)
+    jika m == 0 {
+        kembalikan 0
+    }
+    variabel i = 0
+    selagi i <= n - m {
+        jika potong(teks, i, m) == cari {
+            kembalikan i
+        }
+        i = i + 1
+    }
+    kembalikan 0 - 1
+}
+
+# teks_berisi(teks, cari) -> benar jika 'cari' ada di dalam 'teks'.
+fungsi teks_berisi(teks, cari) {
+    kembalikan teks_cari(teks, cari) != 0 - 1
+}
+
+# teks_mulai_dengan(teks, awalan) -> boolean.
+fungsi teks_mulai_dengan(teks, awalan) {
+    variabel m = panjang(awalan)
+    jika m > panjang(teks) {
+        kembalikan salah
+    }
+    kembalikan potong(teks, 0, m) == awalan
+}
+
+# teks_akhiri_dengan(teks, akhiran) -> boolean.
+fungsi teks_akhiri_dengan(teks, akhiran) {
+    variabel n = panjang(teks)
+    variabel m = panjang(akhiran)
+    jika m > n {
+        kembalikan salah
+    }
+    kembalikan potong(teks, n - m, m) == akhiran
+}
+
+# teks_pisah(teks, pemisah) -> list bagian.
+fungsi teks_pisah(teks, pemisah) {
+    variabel hasil = []
+    variabel n = panjang(teks)
+    variabel m = panjang(pemisah)
+    jika m == 0 {
+        tambah(hasil, teks)
+        kembalikan hasil
+    }
+    variabel mulai = 0
+    variabel i = 0
+    selagi i <= n - m {
+        jika potong(teks, i, m) == pemisah {
+            tambah(hasil, potong(teks, mulai, i - mulai))
+            i = i + m
+            mulai = i
+        } selain {
+            i = i + 1
+        }
+    }
+    # sisa terakhir setelah pemisah terakhir
+    tambah(hasil, potong(teks, mulai, n - mulai))
+    kembalikan hasil
+}
+
+# teks_gabung(daftar, perekat) -> string hasil penggabungan.
+fungsi teks_gabung(daftar, perekat) {
+    variabel hasil = ""
+    variabel i = 0
+    selagi i < panjang(daftar) {
+        jika i > 0 {
+            hasil = hasil + perekat
+        }
+        hasil = hasil + ke_teks(daftar[i])
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# teks_ulang(teks, n) -> teks diulang n kali.
+fungsi teks_ulang(teks, n) {
+    variabel hasil = ""
+    variabel i = 0
+    selagi i < n {
+        hasil = hasil + teks
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# teks_balik(teks) -> teks terbalik.
+fungsi teks_balik(teks) {
+    variabel hasil = ""
+    variabel i = panjang(teks) - 1
+    selagi i >= 0 {
+        hasil = hasil + karakter(teks, i)
+        i = i - 1
+    }
+    kembalikan hasil
+}
+
+# teks_pangkas(teks) -> hilangkan spasi/tab di awal & akhir.
+fungsi teks_pangkas(teks) {
+    variabel n = panjang(teks)
+    variabel awal = 0
+    selagi awal < n {
+        variabel c = karakter(teks, awal)
+        jika c != " " dan c != "\t" dan c != "\n" dan c != "\r" {
+            hentikan
+        }
+        awal = awal + 1
+    }
+    variabel akhir = n - 1
+    selagi akhir >= awal {
+        variabel c2 = karakter(teks, akhir)
+        jika c2 != " " dan c2 != "\t" dan c2 != "\n" dan c2 != "\r" {
+            hentikan
+        }
+        akhir = akhir - 1
+    }
+    kembalikan potong(teks, awal, akhir - awal + 1)
+}

@@ -147,6 +147,9 @@ void initVM() {
     defineNative("waktu", nativeFnWaktu);
     defineNative("tanggal", nativeFnTanggal);
     defineNative("format_tanggal", nativeFnFormatTanggal);
+
+    defineNative("karakter", nativeFnKarakter);
+    defineNative("potong", nativeFnPotong);
 }
 
 void freeVM() {
@@ -551,8 +554,26 @@ static InterpretResult run() {
                 push(BOOL_VAL(valuesEqual(a, b)));
                 break;
             }
-            case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
-            case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
+            case OP_GREATER: {
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                    ObjString* b = AS_STRING(pop());
+                    ObjString* a = AS_STRING(pop());
+                    push(BOOL_VAL(strcmp(a->chars, b->chars) > 0));
+                } else {
+                    BINARY_OP(BOOL_VAL, >);
+                }
+                break;
+            }
+            case OP_LESS: {
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                    ObjString* b = AS_STRING(pop());
+                    ObjString* a = AS_STRING(pop());
+                    push(BOOL_VAL(strcmp(a->chars, b->chars) < 0));
+                } else {
+                    BINARY_OP(BOOL_VAL, <);
+                }
+                break;
+            }
             case OP_ADD: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                     concatenate();

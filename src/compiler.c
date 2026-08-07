@@ -1014,7 +1014,9 @@ static void forStatement() {
     // Loop body. 'lanjut' jumps to incrementStart; 'hentikan' to the end.
     LoopCtx loop;
     beginLoop(&loop, incrementStart);
+    beginScope();
     block();
+    endScope();
 
     emitLoop(incrementStart);
 
@@ -1083,7 +1085,9 @@ static void ifStatement() {
     int thenJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);  // Pop condition from stack if true
     
+    beginScope();
     block();
+    endScope();
     
     // Jump over else/jika_lain block if condition was true
     int elseJump = emitJump(OP_JUMP);
@@ -1094,7 +1098,9 @@ static void ifStatement() {
         ifStatement();
     } else if (match(TOKEN_SELAIN)) {
         consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah 'selain'.");
+        beginScope();
         block();
+        endScope();
     }
 
     patchJump(elseJump);  // Patch the true path jump to skip else
@@ -1184,7 +1190,9 @@ static void whileStatement() {
 
     LoopCtx loop;
     beginLoop(&loop, loopStart);
+    beginScope();
     block();
+    endScope();
 
     emitLoop(loopStart);
 

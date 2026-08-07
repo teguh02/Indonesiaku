@@ -399,6 +399,46 @@ impor "examples/pustaka_matematika.idk"
 cetak(luas_lingkaran(2))
 ```
 
+## 📦 Pustaka Standar (ditulis dalam Indonesiaku)
+
+Pustaka di folder `pustaka/` ditulis dalam bahasa Indonesiaku sendiri dan
+di-`impor` sesuai kebutuhan. Fungsi diberi awalan agar tidak bentrok dengan
+namespace global.
+
+```python
+impor "pustaka/teks.idk"
+impor "pustaka/daftar.idk"
+impor "pustaka/matematika.idk"
+impor "pustaka/kamus.idk"
+
+# Teks
+cetak(teks_pisah("a,b,c", ","))          # [a, b, c]
+cetak(teks_gabung(["x","y"], "-"))       # x-y
+cetak(teks_balik("halo"))                # olah
+
+# Daftar (list) — fungsi tingkat tinggi
+fungsi kali2(x) { kembalikan x * 2 }
+cetak(daftar_peta([1,2,3], kali2))       # [2, 4, 6]
+cetak(daftar_urutkan([3,1,2]))           # [1, 2, 3]
+
+# Matematika
+cetak(mat_faktorial(5))                  # 120
+cetak(mat_fpb(48, 36))                   # 12
+
+# Kamus
+d = kamus_dari_pasangan([["a",1],["b",2]])
+cetak(d["a"])                            # 1
+```
+
+| Pustaka | Fungsi utama |
+|---------|--------------|
+| `pustaka/teks.idk` | `teks_cari`, `teks_pisah`, `teks_gabung`, `teks_mulai_dengan`, `teks_akhiri_dengan`, `teks_pangkas`, `teks_ulang`, `teks_balik`, `teks_berisi` |
+| `pustaka/daftar.idk` | `daftar_peta`, `daftar_saring`, `daftar_lipat`, `daftar_urutkan`, `daftar_berisi`, `daftar_indeks_dari`, `daftar_iris`, `daftar_balik` |
+| `pustaka/matematika.idk` | `MAT_PI`, `MAT_E`, `mat_faktorial`, `mat_fpb`, `mat_kpk`, `mat_genap`, `mat_ganjil`, `mat_jumlah`, `mat_rata_rata`, `mat_adalah_prima` |
+| `pustaka/kamus.idk` | `kamus_nilai`, `kamus_gabung`, `kamus_dari_pasangan`, `kamus_salin`, `kamus_ambil` |
+
+Primitif teks bawaan yang mendasari pustaka: `karakter(teks, i)`, `potong(teks, mulai, jumlah)`.
+
 ## 🔤 Kata Kunci
 
 ### Tabel Pemetaan (Python → Indonesiaku)

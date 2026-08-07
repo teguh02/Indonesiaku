@@ -135,4 +135,11 @@ Value nativeFnWaktu(int argCount, Value* args);          // waktu()
 Value nativeFnTanggal(int argCount, Value* args);        // tanggal()
 Value nativeFnFormatTanggal(int argCount, Value* args);  // format_tanggal(pola)
 
+// ============================================================================
+// PRIMITIF TEKS (untuk pustaka teks .idk)
+// ============================================================================
+
+Value nativeFnKarakter(int argCount, Value* args);  // karakter(teks, i)
+Value nativeFnPotong(int argCount, Value* args);    // potong(teks, mulai, jumlah)
+
 #endif

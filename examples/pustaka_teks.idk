@@ -1,0 +1,23 @@
+# Contoh penggunaan pustaka teks.
+impor "pustaka/teks.idk"
+
+cetak("=== cari & berisi ===")
+cetak(teks_cari("selamat pagi", "pagi"))
+cetak(teks_cari("halo dunia", "xyz"))
+cetak(teks_berisi("indonesia raya", "raya"))
+
+cetak("=== mulai & akhiri ===")
+cetak(teks_mulai_dengan("laporan.txt", "lap"))
+cetak(teks_akhiri_dengan("laporan.txt", ".txt"))
+
+cetak("=== pisah & gabung ===")
+bagian = teks_pisah("apel,mangga,jeruk", ",")
+cetak(bagian)
+cetak(panjang(bagian))
+cetak(teks_gabung(bagian, " | "))
+cetak(teks_gabung([1, 2, 3], "-"))
+
+cetak("=== ulang, balik, pangkas ===")
+cetak(teks_ulang("=", 10))
+cetak(teks_balik("indonesiaku"))
+cetak("[" + teks_pangkas("   ada spasi   ") + "]")

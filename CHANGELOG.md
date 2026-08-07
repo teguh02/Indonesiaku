@@ -8,6 +8,25 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added
+- 📚 **Pustaka standar dalam bahasa sendiri** (`pustaka/`, di-`impor`):
+  `teks.idk` (pisah/gabung/cari/pangkas/balik/...), `daftar.idk`
+  (peta/saring/lipat/urutkan/iris/...), `matematika.idk`
+  (faktorial/fpb/kpk/prima/rata_rata/...), `kamus.idk`
+  (nilai/gabung/dari_pasangan/...).
+- 🔡 **Primitif teks** `karakter(teks, i)` dan `potong(teks, mulai, jumlah)`
+  sebagai dasar pustaka teks.
+
+### Fixed
+- 🐛 **Variabel bocor dari badan blok**: `variabel` yang dideklarasikan di
+  dalam `jika`/`selagi`/`untuk` tidak di-scope, sehingga bocor ke variabel
+  berikutnya (terutama saat `hentikan`). Kini setiap badan blok memakai
+  scope tersendiri. Regressi dijaga oleh `examples/lingkup_variabel.idk`.
+
+### Changed
+- `<` dan `>` kini juga membandingkan string (via `strcmp`), memungkinkan
+  pengurutan string.
+
+### Added (Fase 5-6 sebelumnya)
 - 🧯 **Error native yang dapat ditangkap** — fungsi bawaan kini memicu kesalahan
   via `nativeRaise` yang bisa ditangkap `coba/kecuali` (dulu semua fatal).
 - 🔤 **Konversi & format** — `ke_angka`, `ke_teks`, `format("... {} ...", ...)`,

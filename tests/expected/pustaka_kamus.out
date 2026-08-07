@@ -1,0 +1,19 @@
+=== nilai ===
+[1, 2]
+=== gabung (b menimpa a) ===
+[x, y, z]
+1
+20
+30
+=== dari_pasangan ===
+Budi
+25
+Jakarta
+=== ambil dengan bawaan ===
+1
+99
+=== salin ===
+asli:
+1
+salinan:
+100

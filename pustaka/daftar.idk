@@ -1,0 +1,104 @@
+# pustaka/daftar.idk - Pustaka utilitas list (ditulis dalam Indonesiaku).
+# Impor: impor "pustaka/daftar.idk"
+# Memanfaatkan fungsi sebagai nilai (first-class) untuk peta/saring/lipat.
+
+# daftar_peta(daftar, fn) -> list baru berisi fn(elemen) untuk tiap elemen.
+fungsi daftar_peta(daftar, fn) {
+    variabel hasil = []
+    untuk x dalam daftar {
+        tambah(hasil, fn(x))
+    }
+    kembalikan hasil
+}
+
+# daftar_saring(daftar, fn) -> list elemen yang fn(elemen) bernilai benar.
+fungsi daftar_saring(daftar, fn) {
+    variabel hasil = []
+    untuk x dalam daftar {
+        jika fn(x) {
+            tambah(hasil, x)
+        }
+    }
+    kembalikan hasil
+}
+
+# daftar_lipat(daftar, awal, fn) -> reduksi: fn(fn(awal, e0), e1)...
+fungsi daftar_lipat(daftar, awal, fn) {
+    variabel akumulasi = awal
+    untuk x dalam daftar {
+        akumulasi = fn(akumulasi, x)
+    }
+    kembalikan akumulasi
+}
+
+# daftar_berisi(daftar, nilai) -> boolean.
+fungsi daftar_berisi(daftar, nilai) {
+    untuk x dalam daftar {
+        jika x == nilai {
+            kembalikan benar
+        }
+    }
+    kembalikan salah
+}
+
+# daftar_indeks_dari(daftar, nilai) -> indeks pertama, atau -1.
+fungsi daftar_indeks_dari(daftar, nilai) {
+    variabel i = 0
+    selagi i < panjang(daftar) {
+        jika daftar[i] == nilai {
+            kembalikan i
+        }
+        i = i + 1
+    }
+    kembalikan 0 - 1
+}
+
+# daftar_iris(daftar, mulai, akhir) -> sublist [mulai, akhir).
+fungsi daftar_iris(daftar, mulai, akhir) {
+    variabel hasil = []
+    variabel i = mulai
+    selagi i < akhir dan i < panjang(daftar) {
+        tambah(hasil, daftar[i])
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# daftar_balik(daftar) -> list dengan urutan terbalik.
+fungsi daftar_balik(daftar) {
+    variabel hasil = []
+    variabel i = panjang(daftar) - 1
+    selagi i >= 0 {
+        tambah(hasil, daftar[i])
+        i = i - 1
+    }
+    kembalikan hasil
+}
+
+# daftar_salin(daftar) -> salinan dangkal.
+fungsi daftar_salin(daftar) {
+    variabel hasil = []
+    untuk x dalam daftar {
+        tambah(hasil, x)
+    }
+    kembalikan hasil
+}
+
+# daftar_urutkan(daftar) -> list terurut menaik (insertion sort, salinan baru).
+# Bekerja untuk angka maupun string (memakai operator perbandingan bahasa).
+fungsi daftar_urutkan(daftar) {
+    variabel a = daftar_salin(daftar)
+    variabel n = panjang(a)
+    variabel i = 1
+    selagi i < n {
+        variabel kunci_nilai = a[i]
+        variabel j = i - 1
+        selagi j >= 0 dan a[j] > kunci_nilai {
+            a[j + 1] = a[j]
+            j = j - 1
+        }
+        a[j + 1] = kunci_nilai
+        i = i + 1
+    }
+    kembalikan a
+}

@@ -1,0 +1,16 @@
+=== peta (map) ===
+[2, 4, 6, 8]
+=== saring (filter) ===
+[2, 4, 6]
+=== lipat (reduce) ===
+15
+=== berisi & indeks_dari ===
+benar
+2
+-1
+=== iris & balik ===
+[2, 3, 4]
+[4, 3, 2, 1]
+=== urutkan (angka & string) ===
+[1, 2, 3, 5, 8, 9]
+[apel, belimbing, ceri, mangga]

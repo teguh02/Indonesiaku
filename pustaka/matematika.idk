@@ -1,0 +1,107 @@
+# pustaka/matematika.idk - Konstanta & fungsi matematika (dalam Indonesiaku).
+# Impor: impor "pustaka/matematika.idk"
+# Memanfaatkan builtin: abs, akar, pangkat, bulat, lantai, atap, min, max.
+
+MAT_PI = 3.14159265358979
+MAT_E  = 2.71828182845905
+
+# mat_genap(n) / mat_ganjil(n)
+fungsi mat_genap(n) {
+    kembalikan n % 2 == 0
+}
+fungsi mat_ganjil(n) {
+    kembalikan n % 2 != 0
+}
+
+# mat_faktorial(n) -> n!  (n bilangan bulat >= 0)
+fungsi mat_faktorial(n) {
+    jika n < 0 {
+        naikkan "faktorial memerlukan n >= 0"
+    }
+    variabel hasil = 1
+    variabel i = 2
+    selagi i <= n {
+        hasil = hasil * i
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# mat_fpb(a, b) -> faktor persekutuan terbesar (algoritma Euclid).
+fungsi mat_fpb(a, b) {
+    variabel x = abs(a)
+    variabel y = abs(b)
+    selagi y != 0 {
+        variabel sisa = x % y
+        x = y
+        y = sisa
+    }
+    kembalikan x
+}
+
+# mat_kpk(a, b) -> kelipatan persekutuan terkecil.
+fungsi mat_kpk(a, b) {
+    jika a == 0 atau b == 0 {
+        kembalikan 0
+    }
+    kembalikan abs(a * b) / mat_fpb(a, b)
+}
+
+# mat_jumlah(daftar) -> jumlah seluruh elemen.
+fungsi mat_jumlah(daftar) {
+    variabel total = 0
+    untuk x dalam daftar {
+        total = total + x
+    }
+    kembalikan total
+}
+
+# mat_rata_rata(daftar) -> nilai rata-rata.
+fungsi mat_rata_rata(daftar) {
+    variabel n = panjang(daftar)
+    jika n == 0 {
+        naikkan "rata_rata dari list kosong"
+    }
+    kembalikan mat_jumlah(daftar) / n
+}
+
+# mat_maks_list(daftar) / mat_min_list(daftar)
+fungsi mat_maks_list(daftar) {
+    jika panjang(daftar) == 0 {
+        naikkan "maks_list dari list kosong"
+    }
+    variabel m = daftar[0]
+    untuk x dalam daftar {
+        jika x > m {
+            m = x
+        }
+    }
+    kembalikan m
+}
+fungsi mat_min_list(daftar) {
+    jika panjang(daftar) == 0 {
+        naikkan "min_list dari list kosong"
+    }
+    variabel m = daftar[0]
+    untuk x dalam daftar {
+        jika x < m {
+            m = x
+        }
+    }
+    kembalikan m
+}
+
+# mat_adalah_prima(n) -> boolean.
+fungsi mat_adalah_prima(n) {
+    jika n < 2 {
+        kembalikan salah
+    }
+    variabel i = 2
+    selagi i * i <= n {
+        jika n % i == 0 {
+            kembalikan salah
+        }
+        i = i + 1
+    }
+    kembalikan benar
+}

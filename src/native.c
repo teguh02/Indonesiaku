@@ -901,3 +901,49 @@ Value nativeFnFormatTanggal(int argCount, Value* args) {
     size_t n = strftime(buf, sizeof(buf), AS_STRING(args[0])->chars, lt);
     return OBJ_VAL(copyString(buf, (int)n));
 }
+
+// ============================================================================
+// PRIMITIF TEKS - untuk membangun pustaka teks di bahasa .idk
+// ============================================================================
+
+// karakter(teks, i) - Karakter (string 1-byte) pada indeks i.
+Value nativeFnKarakter(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("karakter() memerlukan 2 argumen (teks, indeks)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0]) || !IS_NUMBER(args[1])) {
+        nativeRaise("karakter() memerlukan (string, angka)");
+        return KOSONG_VAL;
+    }
+    ObjString* s = AS_STRING(args[0]);
+    int i = (int)AS_NUMBER(args[1]);
+    if (i < 0 || i >= s->length) {
+        nativeRaise("karakter() indeks di luar jangkauan (indeks %d, panjang %d)", i, s->length);
+        return KOSONG_VAL;
+    }
+    return OBJ_VAL(copyString(s->chars + i, 1));
+}
+
+// potong(teks, mulai, jumlah) - Substring mulai dari 'mulai' sepanjang 'jumlah'.
+// Jika jumlah melewati akhir string, dipotong sampai akhir.
+Value nativeFnPotong(int argCount, Value* args) {
+    if (argCount != 3) {
+        nativeRaise("potong() memerlukan 3 argumen (teks, mulai, jumlah)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0]) || !IS_NUMBER(args[1]) || !IS_NUMBER(args[2])) {
+        nativeRaise("potong() memerlukan (string, angka, angka)");
+        return KOSONG_VAL;
+    }
+    ObjString* s = AS_STRING(args[0]);
+    int start = (int)AS_NUMBER(args[1]);
+    int count = (int)AS_NUMBER(args[2]);
+    if (start < 0 || start > s->length) {
+        nativeRaise("potong() 'mulai' di luar jangkauan (%d, panjang %d)", start, s->length);
+        return KOSONG_VAL;
+    }
+    if (count < 0) count = 0;
+    if (start + count > s->length) count = s->length - start;
+    return OBJ_VAL(copyString(s->chars + start, count));
+}

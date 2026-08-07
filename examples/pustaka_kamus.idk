@@ -1,0 +1,33 @@
+# Contoh penggunaan pustaka kamus.
+# Keluaran kunci diurutkan agar deterministik (urutan kamus internal tak dijamin).
+impor "pustaka/kamus.idk"
+impor "pustaka/daftar.idk"
+
+a = kamus()
+a["x"] = 1
+a["y"] = 2
+
+b = kamus()
+b["y"] = 20
+b["z"] = 30
+
+cetak("=== nilai ===")
+cetak(daftar_urutkan(kamus_nilai(a)))
+
+cetak("=== gabung (b menimpa a) ===")
+g = kamus_gabung(a, b)
+cetak(daftar_urutkan(kunci(g)))
+cetak(g["x"], g["y"], g["z"])
+
+cetak("=== dari_pasangan ===")
+d = kamus_dari_pasangan([["nama", "Budi"], ["umur", 25], ["kota", "Jakarta"]])
+cetak(d["nama"], d["umur"], d["kota"])
+
+cetak("=== ambil dengan bawaan ===")
+cetak(kamus_ambil(a, "x", 0))
+cetak(kamus_ambil(a, "tidak_ada", 99))
+
+cetak("=== salin ===")
+s = kamus_salin(a)
+s["x"] = 100
+cetak("asli:", a["x"], "salinan:", s["x"])

@@ -1,0 +1,32 @@
+# Contoh penggunaan pustaka matematika.
+impor "pustaka/matematika.idk"
+
+cetak("=== konstanta ===")
+cetak(MAT_PI)
+cetak(MAT_E)
+
+cetak("=== genap & ganjil ===")
+cetak(mat_genap(4), mat_ganjil(4))
+
+cetak("=== faktorial ===")
+cetak(mat_faktorial(5))
+cetak(mat_faktorial(0))
+
+cetak("=== fpb & kpk ===")
+cetak(mat_fpb(48, 36))
+cetak(mat_kpk(4, 6))
+
+cetak("=== jumlah & rata-rata ===")
+cetak(mat_jumlah([1, 2, 3, 4, 5]))
+cetak(mat_rata_rata([10, 20, 30]))
+
+cetak("=== maks & min list ===")
+cetak(mat_maks_list([3, 7, 2, 9, 4]))
+cetak(mat_min_list([3, 7, 2, 9, 4]))
+
+cetak("=== prima ===")
+untuk n dalam [2, 4, 7, 9, 11, 15, 17] {
+    jika mat_adalah_prima(n) {
+        cetak(n, "prima")
+    }
+}

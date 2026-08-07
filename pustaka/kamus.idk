@@ -1,0 +1,50 @@
+# pustaka/kamus.idk - Utilitas kamus/dictionary (dalam Indonesiaku).
+# Impor: impor "pustaka/kamus.idk"
+# Memanfaatkan builtin: kamus, kunci, punya, hapus_kunci, panjang.
+
+# kamus_nilai(k) -> list semua nilai dalam kamus.
+fungsi kamus_nilai(k) {
+    variabel hasil = []
+    untuk kn dalam kunci(k) {
+        tambah(hasil, k[kn])
+    }
+    kembalikan hasil
+}
+
+# kamus_gabung(a, b) -> kamus baru berisi a lalu ditimpa b.
+fungsi kamus_gabung(a, b) {
+    variabel hasil = kamus()
+    untuk kn dalam kunci(a) {
+        hasil[kn] = a[kn]
+    }
+    untuk kn2 dalam kunci(b) {
+        hasil[kn2] = b[kn2]
+    }
+    kembalikan hasil
+}
+
+# kamus_dari_pasangan(pasangan) -> kamus dari list [ [kunci, nilai], ... ].
+fungsi kamus_dari_pasangan(pasangan) {
+    variabel hasil = kamus()
+    untuk p dalam pasangan {
+        hasil[p[0]] = p[1]
+    }
+    kembalikan hasil
+}
+
+# kamus_salin(k) -> salinan dangkal kamus.
+fungsi kamus_salin(k) {
+    variabel hasil = kamus()
+    untuk kn dalam kunci(k) {
+        hasil[kn] = k[kn]
+    }
+    kembalikan hasil
+}
+
+# kamus_ambil(k, kunci_cari, bawaan) -> nilai jika ada, jika tidak 'bawaan'.
+fungsi kamus_ambil(k, kunci_cari, bawaan) {
+    jika punya(k, kunci_cari) {
+        kembalikan k[kunci_cari]
+    }
+    kembalikan bawaan
+}

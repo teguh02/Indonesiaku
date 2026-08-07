@@ -1,0 +1,38 @@
+# Regressi: variabel yang dideklarasikan di dalam badan jika/selagi/untuk
+# harus dibersihkan (scoped) dan tidak bocor ke variabel berikutnya —
+# termasuk saat 'hentikan' (break) keluar dari perulangan.
+
+fungsi uji_selagi_break() {
+    variabel i = 0
+    selagi i < 5 {
+        variabel sementara = "BOCOR"
+        jika i == 2 { hentikan }
+        i = i + 1
+    }
+    variabel setelah = 99
+    kembalikan setelah
+}
+
+fungsi uji_untuk() {
+    variabel total = 0
+    untuk n dalam [1, 2, 3] {
+        variabel kuadrat = n * n
+        total = total + kuadrat
+    }
+    variabel penanda = 7
+    kembalikan total + penanda
+}
+
+fungsi uji_jika() {
+    variabel x = 10
+    jika x > 5 {
+        variabel dalam_jika = "abc"
+    }
+    variabel luar = x * 2
+    kembalikan luar
+}
+
+cetak("=== variabel di badan tidak bocor ===")
+cetak(uji_selagi_break())
+cetak(uji_untuk())
+cetak(uji_jika())
