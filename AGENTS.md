@@ -39,7 +39,7 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - Builtins live in `src/native.c`, registered in `initVM` (`src/vm.c`). Families: math, string, list, dict, conversion (`ke_angka`/`ke_teks`/`format`), file I/O (`buka_berkas`/`baca`/`tulis`/...), date/time (`waktu`/`tanggal`), TCP sockets (`soket_dengar`/`soket_terima`/`soket_baca`/`soket_tulis`/`soket_tutup`), util. `OBJ_FILE` and `OBJ_SOCKET` handles auto-close on GC.
 - Sockets: Winsock on Windows (Makefile adds `-lws2_32`; native.c lazy-inits `WSAStartup`), BSD sockets on POSIX; servers listen on `127.0.0.1` only. `examples/todo_server.idk` is a REST HTTP server built on `pustaka/http.idk` (request parse + response build) + `pustaka/json.idk`. Integration-tested in CI (`tests/test_todo_server.{sh,ps1}`, job `todo-http`) — a blocking server can't be a golden test, so it's driven by `curl` and shut down via the `/berhenti` endpoint.
 - Command-line args after the script path are exposed as the global list `argumen`.
-- Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`, `json.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`, `json_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring), `ord`/`chr`, and first-class functions.
+- Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`, `json.idk`, `http.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`, `json_`, `http_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring), `ord`/`chr`, and first-class functions.
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). Only compound assignment (`+=` etc.) requires the global to already exist.
 - GC-safety when mutating collections: keep operands on the VM stack (`peek`, not `pop`) until after `tableSet`/`writeValueArray`, which can grow and trigger a GC. `OP_INDEX_SET` for dicts and the `sisip` native follow this.
 - `examples/todo_cli.idk` is the Todo-list JSON DB demo (CRUD over a JSON file via `pustaka/json.idk`). Integration-tested in CI by `tests/test_todo_cli.{sh,ps1}` (job `todo-crud`) plus golden tests for `json_pakai`/`todo_demo`.
@@ -48,20 +48,30 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 
 ## CI
 
-- `.github/workflows/test.yml`: gating jobs on Linux/macOS/Windows (build + golden tests), plus **ASan+UBSan (stress GC)**, **Valgrind**, **coverage (lcov artifact)**, and a short **libFuzzer** run (`tests/fuzz_compile.c`). `continue-on-error` was removed from build/test steps — CI red now means a real failure.
-- `.github/workflows/release.yml`: on `v*.*.*` tags; now runs the test suite before publishing artifacts.
+- `.github/workflows/test.yml` jobs: `test-linux`/`test-macos`/`test-windows` (build + golden tests, gating), **`todo-crud`** (CLI CRUD integration via `tests/test_todo_cli.sh`), **`todo-http`** (REST server integration via `tests/test_todo_server.sh`, driven by `curl`), **`sanitizers`** (ASan+UBSan with `-DDEBUG_STRESS_GC`), **`valgrind`**, **`coverage`** (lcov artifact), **`fuzz`** (short libFuzzer run on `tests/fuzz_compile.c` — compiles the front end only, does NOT execute, so infinite-loop programs can't cause timeouts). `continue-on-error` was removed from build/test steps — CI red now means a real failure.
+- Non-Linux `sanitizers`/`valgrind`/`fuzz` jobs build via raw gcc/clang (no `-lws2_32`; on Linux sockets are in libc). The gating Windows job builds via `make` and DOES link `-lws2_32`.
+- `.github/workflows/release.yml`: on `v*.*.*` tags; runs the test suite before publishing artifacts.
 
 ## Layout gotchas
 
 - `compiler/` is **not** the language compiler — it's the Windows installer (Inno Setup `.iss` + assets). `dist/` holds prebuilt `Indonesiaku-Setup-*.exe`. All language implementation lives in `src/`.
 - Root-level `test_*.idk` files are ad-hoc scratch scripts (git-ignored), not the test suite.
 - `src/` map: `main.c` CLI/REPL · `scanner.c` lexer · `compiler.c` single-pass parser+codegen (Pratt) · `chunk.c` bytecode · `vm.c` interpreter loop + native registration + import · `native.c` builtins · `value.c`/`object.c` values & heap objects · `table.c` hash table · `memory.c` allocation + GC · `debug.c` disassembler.
+- `docker/images/Dockerfile` is multi-stage (build → slim Alpine runtime, ~12.6 MB); it bundles the `indk` binary + `pustaka/` + `examples/`. Image is `teguh02/indonesiaku:<version>` and `:latest` on Docker Hub. Keep the `LABEL version` in sync with `INDK_VERSION`.
+
+## Docs website (docs/ is also a static site)
+
+- `docs/` holds BOTH the markdown docs (`*.md`) AND a static documentation website deployed to Netlify (**https://indonesiaku-docs.netlify.app**). Pages: `index.html` (landing), `about.html`, `author.html`, `docs.html` (markdown reader), shared `assets/site.css`.
+- `docs.html` renders the `.md` files at runtime with marked.js (fetched from the same folder) and syntax-highlights with highlight.js. To add a doc to the reader's sidebar, edit the `DOCS` array in `docs.html`.
+- **Embedding example code in docs:** put a marker `{{embed:examples/foo.idk}}` on its own line in a `.md`. The reader fetches that file from `raw.githubusercontent.com/teguh02/Indonesiaku/main/...` so it always mirrors the repo — `examples/` is NOT copied into `docs/`. This means an embedded example must be committed+pushed to `main` before it shows on the live site.
+- `netlify.toml` (repo root): `publish = "docs"`, plus headers forcing `text/markdown` / `text/plain` content-types so `fetch()` works. Deploy after doc/site changes with `netlify deploy --prod --dir docs` (site is linked; `.netlify/` is git-ignored). The reader requires HTTP (fetch) — it does not work over `file://`.
+- When language features change, keep these in sync: `README.md`, `CHANGELOG.md`, `docs/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), this `AGENTS.md`, and the Dockerfile `LABEL version`.
 
 ## Conventions
 
 - C style: 4-space indent, types PascalCase, constants UPPER_CASE, variables snake_case, braces same-line. `.editorconfig` enforces LF + 4-space (tabs for Makefile).
 - Commit messages use Indonesian prefixes: `Tambah:` (add), `Perbaiki:` (fix), `Ubah:` (change), `Docs:`, `Refactor:`, `Test:`, `Chore:`.
 
-## Docs
+## Docs content
 
-- Structured docs (Indonesian) in `docs/`; syntax reference: `docs/03_PANDUAN_SINTAKS.md`.
+- Structured docs (Indonesian) in `docs/` (`01_PERKENALAN` … `07_PUSTAKA_STANDAR`). Syntax reference: `docs/03_PANDUAN_SINTAKS.md`; full builtin/stdlib reference: `docs/07_PUSTAKA_STANDAR.md`. These same `.md` files render the live website (see "Docs website" above). Repo/author facts to keep consistent: GitHub `teguh02/Indonesiaku`, email `teguhrijanandi02@gmail.com` (older docs used a wrong `teguhriyan` handle — fixed).
