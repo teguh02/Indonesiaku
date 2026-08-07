@@ -5,7 +5,7 @@ Shape: Circle
 Radius:
 5
 Area:
-78.5397
+78.53975
 
 --- Rectangle 1 ---
 Shape: Rectangle
@@ -30,8 +30,8 @@ Shape: Circle
 Radius:
 3
 Area:
-28.2743
+28.27431
 
 === Total Areas ===
 Total area of all shapes:
-150.814
+150.81406

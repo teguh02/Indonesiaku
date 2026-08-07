@@ -1,0 +1,15 @@
+=== Tangkap Kesalahan Native ===
+tertangkap:
+akar() tidak dapat menerima angka negatif
+tertangkap:
+min() memerlukan minimal 2 argumen
+tertangkap:
+panjang() hanya menerima string, list, atau kamus
+=== Program Tetap Berjalan ===
+4
+2
+=== Tangkap dalam Perulangan ===
+1
+2
+3
+4

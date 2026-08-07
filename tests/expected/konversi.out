@@ -1,0 +1,19 @@
+=== Cetak Angka ===
+5
+123456789
+3.14
+0.25
+=== ke_angka (string -> angka) ===
+50
+7
+=== ke_teks (nilai -> string) ===
+100
+benar
+Umur: 25 tahun
+=== format dengan {} ===
+Halo Budi, selamat datang!
+2 + 3 = 5
+Nilai: 90 (benar)
+=== ke_angka gagal dapat ditangkap ===
+gagal konversi:
+ke_angka() gagal: 'bukan angka' bukan angka valid

@@ -47,5 +47,6 @@ void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(Value value);
+void numberToString(double value, char* buf, size_t size);
 
 #endif

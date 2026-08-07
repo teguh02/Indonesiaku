@@ -125,6 +125,9 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)bound->method);
             break;
         }
+        case OBJ_FILE:
+            markObject((Obj*)((ObjFile*)object)->path);
+            break;
         case OBJ_NATIVE:
         case OBJ_STRING:
             break;
@@ -185,6 +188,17 @@ static void freeObject(Obj* object) {
         case OBJ_BOUND_METHOD:
             FREE(ObjBoundMethod, object);
             break;
+        case OBJ_FILE: {
+            ObjFile* file = (ObjFile*)object;
+            // Close the OS handle if the program forgot to. Prevents fd leaks
+            // when a file object is collected while still open.
+            if (file->isOpen && file->handle != NULL) {
+                fclose((FILE*)file->handle);
+                file->isOpen = false;
+            }
+            FREE(ObjFile, object);
+            break;
+        }
         case OBJ_NATIVE: {
             FREE(ObjNative, object);
             break;
@@ -219,6 +233,9 @@ static void markRoots() {
 
     // The interned "init" method name.
     markObject((Obj*)vm.initString);
+
+    // A pending native error value (raised but not yet unwound).
+    markValue(vm.nativeErrorValue);
 }
 
 static void traceReferences() {

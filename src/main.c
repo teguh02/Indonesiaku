@@ -61,16 +61,17 @@ static int runFile(const char* path) {
 }
 
 int main(int argc, const char* argv[]) {
-    // Handle simple CLI flags before initializing the VM
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0) {
+    // Handle simple CLI flags only when they are the first argument, so a
+    // script can receive its own "-v"/"-h" arguments without interception.
+    if (argc >= 2) {
+        if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
             printf("%s\n", INDK_VERSION);
             return 0;
         }
-        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+        if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Indonesiaku %s\n", INDK_VERSION);
-            printf("Usage: indk [path]\n");
-            printf("Options:\n  -v, --version   Show version\n  -h, --help      Show this help\n");
+            printf("Penggunaan: indk [path] [argumen...]\n");
+            printf("Opsi:\n  -v, --version   Tampilkan versi\n  -h, --help      Tampilkan bantuan\n");
             return 0;
         }
     }
@@ -80,12 +81,10 @@ int main(int argc, const char* argv[]) {
     int exitCode = 0;
     if (argc == 1) {
         repl();
-    } else if (argc == 2) {
-        exitCode = runFile(argv[1]);
     } else {
-        fprintf(stderr, "Penggunaan: indk [path]\n");
-        freeVM();
-        return 64;
+        // indk script.idk [arg1 arg2 ...]
+        defineArgs(argc, argv, 2);
+        exitCode = runFile(argv[1]);
     }
 
     freeVM();

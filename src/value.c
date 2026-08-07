@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "memory.h"
 #include "value.h"
@@ -34,9 +35,31 @@ void printValue(Value value) {
             printf(AS_BOOL(value) ? "benar" : "salah");
             break;
         case VAL_KOSONG: printf("kosong"); break;
-        case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+        case VAL_NUMBER: {
+            char buf[32];
+            numberToString(AS_NUMBER(value), buf, sizeof(buf));
+            printf("%s", buf);
+            break;
+        }
         case VAL_OBJ: printObject(value); break;
     }
+}
+
+// Format a double the way the language prints numbers: whole values without a
+// trailing ".0", and other values with enough precision to round-trip while
+// avoiding accidental scientific notation for ordinary magnitudes.
+void numberToString(double value, char* buf, size_t size) {
+    if (isnan(value)) { snprintf(buf, size, "nan"); return; }
+    if (isinf(value)) { snprintf(buf, size, value < 0 ? "-takhingga" : "takhingga"); return; }
+
+    // Integer-valued and within a range that %.0f prints exactly.
+    if (value == floor(value) && fabs(value) < 1e15) {
+        snprintf(buf, size, "%.0f", value);
+        return;
+    }
+
+    // Non-integer: use up to 15 significant digits, then trim trailing zeros.
+    snprintf(buf, size, "%.15g", value);
 }
 
 bool valuesEqual(Value a, Value b) {

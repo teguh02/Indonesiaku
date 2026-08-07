@@ -64,6 +64,11 @@ typedef struct {
     Obj* objects;
     bool hadError;
 
+    // Set by a native function that wants to raise a *catchable* error
+    // (via nativeRaise). callValue converts it into a throwValue unwind.
+    bool nativeErrorPending;
+    Value nativeErrorValue;
+
     // Garbage collector bookkeeping
     size_t bytesAllocated;
     size_t nextGC;
@@ -82,9 +87,11 @@ extern VM vm;
 
 void initVM();
 void freeVM();
+void defineArgs(int argc, const char* argv[], int start);
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
 void runtimeError(const char* format, ...);
+void nativeRaise(const char* format, ...);
 
 #endif

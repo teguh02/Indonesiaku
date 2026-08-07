@@ -96,4 +96,20 @@ Value nativeFnInput(int argCount, Value* args);
 // henti(sek) - Menunda eksekusi dalam detik
 Value nativeFnHenti(int argCount, Value* args);
 
+// ============================================================================
+// FUNGSI KONVERSI & FORMAT
+// ============================================================================
+
+// ke_angka(teks) - Konversi string ke angka
+Value nativeFnKeAngka(int argCount, Value* args);
+
+// ke_teks(nilai) - Konversi nilai apa pun ke string
+Value nativeFnKeTeks(int argCount, Value* args);
+
+// format(pola, ...) - Ganti setiap {} di pola dengan argumen
+Value nativeFnFormat(int argCount, Value* args);
+
+// acak_bulat(min, maks) - Bilangan bulat acak dalam [min, maks]
+Value nativeFnAcakBulat(int argCount, Value* args);
+
 #endif

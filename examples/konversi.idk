@@ -1,0 +1,28 @@
+# Konversi tipe & pemformatan
+
+cetak("=== Cetak Angka ===")
+cetak(5)
+cetak(123456789)
+cetak(3.14)
+cetak(1 / 4)
+
+cetak("=== ke_angka (string -> angka) ===")
+cetak(ke_angka("42") + 8)
+cetak(ke_angka("3.5") * 2)
+
+cetak("=== ke_teks (nilai -> string) ===")
+cetak(ke_teks(100))
+cetak(ke_teks(benar))
+cetak("Umur: " + ke_teks(25) + " tahun")
+
+cetak("=== format dengan {} ===")
+cetak(format("Halo {}, selamat datang!", "Budi"))
+cetak(format("{} + {} = {}", 2, 3, 5))
+cetak(format("Nilai: {} ({})", 90, benar))
+
+cetak("=== ke_angka gagal dapat ditangkap ===")
+coba {
+    cetak(ke_angka("bukan angka"))
+} kecuali e {
+    cetak("gagal konversi:", e)
+}

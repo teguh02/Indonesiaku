@@ -55,6 +55,21 @@ void runtimeError(const char* format, ...) {
     resetStack();
 }
 
+// Raise a *catchable* error from a native function. Formats a message string
+// and stashes it; callValue will convert it into a throwValue() unwind after
+// the native returns, so `coba/kecuali` can catch it. Unlike runtimeError,
+// this does not tear down the VM.
+void nativeRaise(const char* format, ...) {
+    char buffer[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    vm.nativeErrorValue = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+    vm.nativeErrorPending = true;
+}
+
 static void defineNative(const char* name, NativeFn function) {
     push(OBJ_VAL(copyString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function)));
@@ -67,6 +82,10 @@ void initVM() {
     resetStack();
     vm.objects = NULL;
     vm.hadError = false;
+    vm.nativeErrorPending = false;
+    vm.nativeErrorValue = KOSONG_VAL;
+
+    srand((unsigned int)time(NULL));
 
     vm.bytesAllocated = 0;
     vm.nextGC = 1024 * 1024;
@@ -108,6 +127,11 @@ void initVM() {
     defineNative("jenis", nativeFnJenis);
     defineNative("input", nativeFnInput);
     defineNative("henti", nativeFnHenti);
+
+    defineNative("ke_angka", nativeFnKeAngka);
+    defineNative("ke_teks", nativeFnKeTeks);
+    defineNative("format", nativeFnFormat);
+    defineNative("acak_bulat", nativeFnAcakBulat);
 }
 
 void freeVM() {
@@ -116,6 +140,24 @@ void freeVM() {
     freeTable(&vm.loadedModules);
     vm.initString = NULL;
     freeObjects();
+}
+
+// Expose command-line arguments to the program as a global list `argumen`.
+// argv[start..argc) become string elements (start skips the script path).
+void defineArgs(int argc, const char* argv[], int start) {
+    ObjList* list = newList();
+    push(OBJ_VAL(list));  // keep reachable during allocation
+    for (int i = start; i < argc; i++) {
+        Value s = OBJ_VAL(copyString(argv[i], (int)strlen(argv[i])));
+        push(s);
+        writeValueArray(&list->items, s);
+        pop();
+    }
+    ObjString* name = copyString("argumen", 7);
+    push(OBJ_VAL(name));
+    tableSet(&vm.globals, name, OBJ_VAL(list));
+    pop();  // name
+    pop();  // list
 }
 
 void push(Value value) {
@@ -314,6 +356,30 @@ static bool throwValue(Value error) {
     CallFrame* frame = &vm.frames[vm.frameCount - 1];
     frame->ip = handler->handlerIp;
     return true;
+}
+
+// After a call, a native may have flagged a catchable error via nativeRaise.
+// Convert it into a throwValue() unwind. Returns:
+//   0 = no pending error (continue normally)
+//   1 = error raised and caught (a handler is now active; caller must refresh
+//       its frame pointer and push the error value for 'kecuali')
+//  -1 = error raised but uncaught (caller should abort with RUNTIME_ERROR)
+static int resolveNativeError() {
+    if (!vm.nativeErrorPending) return 0;
+    vm.nativeErrorPending = false;
+    Value error = vm.nativeErrorValue;
+    vm.nativeErrorValue = KOSONG_VAL;
+
+    if (!throwValue(error)) {
+        if (IS_STRING(error)) {
+            runtimeError("%s", AS_CSTRING(error));
+        } else {
+            runtimeError("Kesalahan tak tertangani dari fungsi bawaan.");
+        }
+        return -1;
+    }
+    push(error);  // make the raised value available to 'kecuali'
+    return 1;
 }
 
 static ObjUpvalue* captureUpvalue(Value* local) {
@@ -553,6 +619,8 @@ static InterpretResult run() {
                 if (!callValue(peek(argCount), argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                int ne = resolveNativeError();
+                if (ne == -1) return INTERPRET_RUNTIME_ERROR;
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }
@@ -713,6 +781,8 @@ static InterpretResult run() {
                 if (!invoke(method, argCount)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                int ne = resolveNativeError();
+                if (ne == -1) return INTERPRET_RUNTIME_ERROR;
                 frame = &vm.frames[vm.frameCount - 1];
                 break;
             }

@@ -1,0 +1,15 @@
+# Mengakses argumen baris perintah lewat variabel global 'argumen'.
+# Jalankan: indk examples/argumen.idk satu dua tiga
+# (Saat dijalankan tanpa argumen, daftar 'argumen' kosong.)
+
+cetak("=== Argumen Baris Perintah ===")
+cetak("jenis:", jenis(argumen))
+cetak("jumlah:", panjang(argumen))
+
+jika panjang(argumen) == 0 {
+    cetak("(tidak ada argumen diberikan)")
+} selain {
+    untuk a dalam argumen {
+        cetak("argumen:", a)
+    }
+}

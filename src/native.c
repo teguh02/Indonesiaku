@@ -23,18 +23,18 @@
 
 Value nativeFnMin(int argCount, Value* args) {
     if (argCount < 2) {
-        runtimeError("min() memerlukan minimal 2 argumen");
+        nativeRaise("min() memerlukan minimal 2 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("min() hanya menerima angka");
+        nativeRaise("min() hanya menerima angka");
         return NUMBER_VAL(0);
     }
 
     double min = AS_NUMBER(args[0]);
     for (int i = 1; i < argCount; i++) {
         if (!IS_NUMBER(args[i])) {
-            runtimeError("min() hanya menerima angka");
+            nativeRaise("min() hanya menerima angka");
             return NUMBER_VAL(0);
         }
         double num = AS_NUMBER(args[i]);
@@ -45,18 +45,18 @@ Value nativeFnMin(int argCount, Value* args) {
 
 Value nativeFnMax(int argCount, Value* args) {
     if (argCount < 2) {
-        runtimeError("max() memerlukan minimal 2 argumen");
+        nativeRaise("max() memerlukan minimal 2 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("max() hanya menerima angka");
+        nativeRaise("max() hanya menerima angka");
         return NUMBER_VAL(0);
     }
 
     double max = AS_NUMBER(args[0]);
     for (int i = 1; i < argCount; i++) {
         if (!IS_NUMBER(args[i])) {
-            runtimeError("max() hanya menerima angka");
+            nativeRaise("max() hanya menerima angka");
             return NUMBER_VAL(0);
         }
         double num = AS_NUMBER(args[i]);
@@ -67,11 +67,11 @@ Value nativeFnMax(int argCount, Value* args) {
 
 Value nativeFnAbs(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("abs() memerlukan 1 argumen");
+        nativeRaise("abs() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("abs() hanya menerima angka");
+        nativeRaise("abs() hanya menerima angka");
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(fabs(AS_NUMBER(args[0])));
@@ -79,16 +79,16 @@ Value nativeFnAbs(int argCount, Value* args) {
 
 Value nativeFnAkar(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("akar() memerlukan 1 argumen");
+        nativeRaise("akar() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("akar() hanya menerima angka");
+        nativeRaise("akar() hanya menerima angka");
         return NUMBER_VAL(0);
     }
     double num = AS_NUMBER(args[0]);
     if (num < 0) {
-        runtimeError("akar() tidak dapat menerima angka negatif");
+        nativeRaise("akar() tidak dapat menerima angka negatif");
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(sqrt(num));
@@ -96,11 +96,11 @@ Value nativeFnAkar(int argCount, Value* args) {
 
 Value nativeFnPangkat(int argCount, Value* args) {
     if (argCount != 2) {
-        runtimeError("pangkat() memerlukan 2 argumen");
+        nativeRaise("pangkat() memerlukan 2 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0]) || !IS_NUMBER(args[1])) {
-        runtimeError("pangkat() hanya menerima angka");
+        nativeRaise("pangkat() hanya menerima angka");
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(pow(AS_NUMBER(args[0]), AS_NUMBER(args[1])));
@@ -108,11 +108,11 @@ Value nativeFnPangkat(int argCount, Value* args) {
 
 Value nativeFnBulat(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("bulat() memerlukan 1 argumen");
+        nativeRaise("bulat() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("bulat() hanya menerima angka");
+        nativeRaise("bulat() hanya menerima angka");
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(round(AS_NUMBER(args[0])));
@@ -120,11 +120,11 @@ Value nativeFnBulat(int argCount, Value* args) {
 
 Value nativeFnLantai(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("lantai() memerlukan 1 argumen");
+        nativeRaise("lantai() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("lantai() hanya menerima angka");
+        nativeRaise("lantai() hanya menerima angka");
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(floor(AS_NUMBER(args[0])));
@@ -132,11 +132,11 @@ Value nativeFnLantai(int argCount, Value* args) {
 
 Value nativeFnAtap(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("atap() memerlukan 1 argumen");
+        nativeRaise("atap() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("atap() hanya menerima angka");
+        nativeRaise("atap() hanya menerima angka");
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(ceil(AS_NUMBER(args[0])));
@@ -144,7 +144,7 @@ Value nativeFnAtap(int argCount, Value* args) {
 
 Value nativeFnAcak(int argCount, Value* args) {
     if (argCount != 0) {
-        runtimeError("acak() tidak memerlukan argumen");
+        nativeRaise("acak() tidak memerlukan argumen");
         return NUMBER_VAL(0);
     }
     // Return random number between 0 and 1
@@ -157,7 +157,7 @@ Value nativeFnAcak(int argCount, Value* args) {
 
 Value nativeFnPanjang(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("panjang() memerlukan 1 argumen");
+        nativeRaise("panjang() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
     if (IS_STRING(args[0])) {
@@ -175,17 +175,17 @@ Value nativeFnPanjang(int argCount, Value* args) {
         }
         return NUMBER_VAL(n);
     }
-    runtimeError("panjang() hanya menerima string, list, atau kamus");
+    nativeRaise("panjang() hanya menerima string, list, atau kamus");
     return NUMBER_VAL(0);
 }
 
 Value nativeFnTambah(int argCount, Value* args) {
     if (argCount != 2) {
-        runtimeError("tambah() memerlukan 2 argumen (list, nilai)");
+        nativeRaise("tambah() memerlukan 2 argumen (list, nilai)");
         return KOSONG_VAL;
     }
     if (!IS_LIST(args[0])) {
-        runtimeError("tambah() argumen pertama harus list");
+        nativeRaise("tambah() argumen pertama harus list");
         return KOSONG_VAL;
     }
     ObjList* list = AS_LIST(args[0]);
@@ -195,16 +195,16 @@ Value nativeFnTambah(int argCount, Value* args) {
 
 Value nativeFnHapus(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("hapus() memerlukan 1 argumen (list)");
+        nativeRaise("hapus() memerlukan 1 argumen (list)");
         return KOSONG_VAL;
     }
     if (!IS_LIST(args[0])) {
-        runtimeError("hapus() hanya menerima list");
+        nativeRaise("hapus() hanya menerima list");
         return KOSONG_VAL;
     }
     ObjList* list = AS_LIST(args[0]);
     if (list->items.count == 0) {
-        runtimeError("hapus() pada list kosong");
+        nativeRaise("hapus() pada list kosong");
         return KOSONG_VAL;
     }
     Value last = list->items.values[list->items.count - 1];
@@ -219,7 +219,7 @@ Value nativeFnHapus(int argCount, Value* args) {
 Value nativeFnKamus(int argCount, Value* args) {
     (void)args;
     if (argCount != 0) {
-        runtimeError("kamus() tidak menerima argumen");
+        nativeRaise("kamus() tidak menerima argumen");
         return KOSONG_VAL;
     }
     return OBJ_VAL(newDict());
@@ -227,11 +227,11 @@ Value nativeFnKamus(int argCount, Value* args) {
 
 Value nativeFnPunya(int argCount, Value* args) {
     if (argCount != 2) {
-        runtimeError("punya() memerlukan 2 argumen (kamus, kunci)");
+        nativeRaise("punya() memerlukan 2 argumen (kamus, kunci)");
         return BOOL_VAL(false);
     }
     if (!IS_DICT(args[0]) || !IS_STRING(args[1])) {
-        runtimeError("punya() memerlukan (kamus, string)");
+        nativeRaise("punya() memerlukan (kamus, string)");
         return BOOL_VAL(false);
     }
     Value tmp;
@@ -240,11 +240,11 @@ Value nativeFnPunya(int argCount, Value* args) {
 
 Value nativeFnHapusKunci(int argCount, Value* args) {
     if (argCount != 2) {
-        runtimeError("hapus_kunci() memerlukan 2 argumen (kamus, kunci)");
+        nativeRaise("hapus_kunci() memerlukan 2 argumen (kamus, kunci)");
         return BOOL_VAL(false);
     }
     if (!IS_DICT(args[0]) || !IS_STRING(args[1])) {
-        runtimeError("hapus_kunci() memerlukan (kamus, string)");
+        nativeRaise("hapus_kunci() memerlukan (kamus, string)");
         return BOOL_VAL(false);
     }
     return BOOL_VAL(tableDelete(&AS_DICT(args[0])->table, AS_STRING(args[1])));
@@ -252,11 +252,11 @@ Value nativeFnHapusKunci(int argCount, Value* args) {
 
 Value nativeFnKunci(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("kunci() memerlukan 1 argumen (kamus)");
+        nativeRaise("kunci() memerlukan 1 argumen (kamus)");
         return KOSONG_VAL;
     }
     if (!IS_DICT(args[0])) {
-        runtimeError("kunci() hanya menerima kamus");
+        nativeRaise("kunci() hanya menerima kamus");
         return KOSONG_VAL;
     }
     ObjDict* dict = AS_DICT(args[0]);
@@ -275,11 +275,11 @@ Value nativeFnKunci(int argCount, Value* args) {
 
 Value nativeFnHurofBesar(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("huruf_besar() memerlukan 1 argumen");
+        nativeRaise("huruf_besar() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
     if (!IS_STRING(args[0])) {
-        runtimeError("huruf_besar() hanya menerima string");
+        nativeRaise("huruf_besar() hanya menerima string");
         return KOSONG_VAL;
     }
 
@@ -297,11 +297,11 @@ Value nativeFnHurofBesar(int argCount, Value* args) {
 
 Value nativeFnHurofKecil(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("huruf_kecil() memerlukan 1 argumen");
+        nativeRaise("huruf_kecil() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
     if (!IS_STRING(args[0])) {
-        runtimeError("huruf_kecil() hanya menerima string");
+        nativeRaise("huruf_kecil() hanya menerima string");
         return KOSONG_VAL;
     }
 
@@ -319,11 +319,11 @@ Value nativeFnHurofKecil(int argCount, Value* args) {
 
 Value nativeFnGanti(int argCount, Value* args) {
     if (argCount != 3) {
-        runtimeError("ganti() memerlukan 3 argumen");
+        nativeRaise("ganti() memerlukan 3 argumen");
         return KOSONG_VAL;
     }
     if (!IS_STRING(args[0]) || !IS_STRING(args[1]) || !IS_STRING(args[2])) {
-        runtimeError("ganti() hanya menerima string");
+        nativeRaise("ganti() hanya menerima string");
         return KOSONG_VAL;
     }
 
@@ -375,7 +375,7 @@ Value nativeFnGanti(int argCount, Value* args) {
 
 Value nativeFnJenis(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("jenis() memerlukan 1 argumen");
+        nativeRaise("jenis() memerlukan 1 argumen");
         return OBJ_VAL(copyString("kosong", 6));
     }
 
@@ -395,6 +395,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("objek", 5));
     } else if (IS_CLASS(args[0])) {
         return OBJ_VAL(copyString("kelas", 5));
+    } else if (IS_FILE(args[0])) {
+        return OBJ_VAL(copyString("berkas", 6));
     } else if (IS_OBJ(args[0])) {
         return OBJ_VAL(copyString("object", 6));
     }
@@ -403,14 +405,14 @@ Value nativeFnJenis(int argCount, Value* args) {
 
 Value nativeFnInput(int argCount, Value* args) {
     if (argCount > 1) {
-        runtimeError("input() menerima maksimal 1 argumen");
+        nativeRaise("input() menerima maksimal 1 argumen");
         return KOSONG_VAL;
     }
 
     // Print prompt jika ada
     if (argCount == 1) {
         if (!IS_STRING(args[0])) {
-            runtimeError("prompt harus berupa string");
+            nativeRaise("prompt harus berupa string");
             return KOSONG_VAL;
         }
         ObjString* prompt = AS_STRING(args[0]);
@@ -436,17 +438,17 @@ Value nativeFnInput(int argCount, Value* args) {
 
 Value nativeFnHenti(int argCount, Value* args) {
     if (argCount != 1) {
-        runtimeError("henti() memerlukan 1 argumen");
+        nativeRaise("henti() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
     if (!IS_NUMBER(args[0])) {
-        runtimeError("henti() hanya menerima angka (detik)");
+        nativeRaise("henti() hanya menerima angka (detik)");
         return KOSONG_VAL;
     }
 
     double seconds = AS_NUMBER(args[0]);
     if (seconds < 0) {
-        runtimeError("henti() tidak boleh negatif");
+        nativeRaise("henti() tidak boleh negatif");
         return KOSONG_VAL;
     }
 
@@ -457,4 +459,125 @@ Value nativeFnHenti(int argCount, Value* args) {
 #endif
 
     return KOSONG_VAL;
+}
+
+// ============================================================================
+// FUNGSI KONVERSI & FORMAT - IMPLEMENTASI
+// ============================================================================
+
+// Append a value's text representation into buf at *pos (bounded by size).
+static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
+    char tmp[64];
+    const char* s = NULL;
+    int len = 0;
+
+    if (IS_BOOL(v)) {
+        s = AS_BOOL(v) ? "benar" : "salah";
+    } else if (IS_KOSONG(v)) {
+        s = "kosong";
+    } else if (IS_NUMBER(v)) {
+        numberToString(AS_NUMBER(v), tmp, sizeof(tmp));
+        s = tmp;
+    } else if (IS_STRING(v)) {
+        ObjString* str = AS_STRING(v);
+        s = str->chars;
+        len = str->length;
+    } else {
+        s = "<objek>";
+    }
+
+    if (len == 0) len = (int)strlen(s);
+    for (int i = 0; i < len && *pos + 1 < size; i++) {
+        buf[(*pos)++] = s[i];
+    }
+    buf[*pos] = '\0';
+}
+
+Value nativeFnKeAngka(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("ke_angka() memerlukan 1 argumen");
+        return NUMBER_VAL(0);
+    }
+    if (IS_NUMBER(args[0])) return args[0];
+    if (!IS_STRING(args[0])) {
+        nativeRaise("ke_angka() hanya menerima string atau angka");
+        return NUMBER_VAL(0);
+    }
+    ObjString* str = AS_STRING(args[0]);
+    char* end = NULL;
+    double v = strtod(str->chars, &end);
+    // Reject empty input or trailing non-numeric garbage.
+    if (end == str->chars || *end != '\0') {
+        nativeRaise("ke_angka() gagal: '%s' bukan angka valid", str->chars);
+        return NUMBER_VAL(0);
+    }
+    return NUMBER_VAL(v);
+}
+
+Value nativeFnKeTeks(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("ke_teks() memerlukan 1 argumen");
+        return KOSONG_VAL;
+    }
+    char buf[512];
+    size_t pos = 0;
+    buf[0] = '\0';
+    appendValueText(args[0], buf, sizeof(buf), &pos);
+    return OBJ_VAL(copyString(buf, (int)pos));
+}
+
+// format(pola, ...) - ganti setiap '{}' di pola dengan argumen berikutnya.
+Value nativeFnFormat(int argCount, Value* args) {
+    if (argCount < 1) {
+        nativeRaise("format() memerlukan minimal 1 argumen (pola)");
+        return KOSONG_VAL;
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaise("format() argumen pertama harus string pola");
+        return KOSONG_VAL;
+    }
+
+    ObjString* pola = AS_STRING(args[0]);
+    char buf[1024];
+    size_t pos = 0;
+    buf[0] = '\0';
+    int nextArg = 1;
+
+    for (int i = 0; i < pola->length && pos + 1 < sizeof(buf); i++) {
+        if (pola->chars[i] == '{' && i + 1 < pola->length &&
+            pola->chars[i + 1] == '}') {
+            if (nextArg < argCount) {
+                appendValueText(args[nextArg++], buf, sizeof(buf), &pos);
+            } else {
+                // Not enough args: leave the placeholder literally.
+                if (pos + 2 < sizeof(buf)) { buf[pos++] = '{'; buf[pos++] = '}'; }
+            }
+            i++; // skip '}'
+        } else {
+            buf[pos++] = pola->chars[i];
+        }
+        buf[pos] = '\0';
+    }
+
+    return OBJ_VAL(copyString(buf, (int)pos));
+}
+
+// acak_bulat(min, maks) - bilangan bulat acak dalam [min, maks].
+Value nativeFnAcakBulat(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("acak_bulat() memerlukan 2 argumen (min, maks)");
+        return NUMBER_VAL(0);
+    }
+    if (!IS_NUMBER(args[0]) || !IS_NUMBER(args[1])) {
+        nativeRaise("acak_bulat() hanya menerima angka");
+        return NUMBER_VAL(0);
+    }
+    long lo = (long)AS_NUMBER(args[0]);
+    long hi = (long)AS_NUMBER(args[1]);
+    if (lo > hi) {
+        nativeRaise("acak_bulat(): min tidak boleh lebih besar dari maks");
+        return NUMBER_VAL(0);
+    }
+    long range = hi - lo + 1;
+    return NUMBER_VAL((double)(lo + (rand() % range)));
 }

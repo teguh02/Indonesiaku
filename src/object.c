@@ -87,6 +87,14 @@ ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method) {
     return bound;
 }
 
+ObjFile* newFile(void* handle, ObjString* path) {
+    ObjFile* file = ALLOCATE_OBJ(ObjFile, OBJ_FILE);
+    file->handle = handle;
+    file->path = path;
+    file->isOpen = true;
+    return file;
+}
+
 ObjNative* newNative(NativeFn function) {
     ObjNative* native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
     native->function = function;
@@ -195,5 +203,11 @@ void printObject(Value value) {
         case OBJ_BOUND_METHOD:
             printFunction(AS_BOUND_METHOD(value)->method->function);
             break;
+        case OBJ_FILE: {
+            ObjFile* file = AS_FILE(value);
+            printf("<berkas %s%s>", file->path->chars,
+                   file->isOpen ? "" : " (tertutup)");
+            break;
+        }
     }
 }

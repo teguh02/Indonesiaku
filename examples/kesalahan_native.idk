@@ -1,0 +1,34 @@
+# Kesalahan dari fungsi bawaan kini dapat ditangkap dengan coba/kecuali.
+# (Sebelumnya semua kesalahan native bersifat fatal.)
+
+cetak("=== Tangkap Kesalahan Native ===")
+coba {
+    cetak(akar(-4))
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+
+coba {
+    cetak(min(5))
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+
+coba {
+    cetak(panjang(123))
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+
+cetak("=== Program Tetap Berjalan ===")
+cetak(akar(16))
+cetak(min(3, 7, 2))
+
+cetak("=== Tangkap dalam Perulangan ===")
+untuk i dalam [1, 4, 9, 16] {
+    coba {
+        cetak(akar(i))
+    } kecuali e {
+        cetak("gagal")
+    }
+}
