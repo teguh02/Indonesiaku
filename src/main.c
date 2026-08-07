@@ -7,17 +7,61 @@
 #include "debug.h"
 #include "vm.h"
 
+// Count net brace depth in a line, ignoring braces inside strings and after
+// a '#' comment. Used by the REPL to keep reading until a block is complete.
+static int braceDelta(const char* s) {
+    int depth = 0;
+    bool inString = false;
+    char quote = 0;
+    for (const char* p = s; *p; p++) {
+        char c = *p;
+        if (inString) {
+            if (c == '\\' && p[1] != '\0') { p++; continue; }
+            if (c == quote) inString = false;
+        } else if (c == '"' || c == '\'') {
+            inString = true;
+            quote = c;
+        } else if (c == '#') {
+            break;  // rest of line is a comment
+        } else if (c == '{') {
+            depth++;
+        } else if (c == '}') {
+            depth--;
+        }
+    }
+    return depth;
+}
+
 static void repl() {
     char line[1024];
-    for (;;) {
-        printf("> ");
+    char buffer[8192];
 
-        if (!fgets(line, sizeof(line), stdin)) {
-            printf("\n");
-            break;
+    for (;;) {
+        buffer[0] = '\0';
+        int depth = 0;
+        bool first = true;
+
+        // Read one logical unit: keep reading continuation lines while there
+        // are unclosed braces so multi-line blocks (fungsi/kelas/jika/...) work.
+        for (;;) {
+            printf(first ? "> " : "... ");
+            if (!fgets(line, sizeof(line), stdin)) {
+                printf("\n");
+                if (buffer[0] != '\0') interpret(buffer);
+                return;
+            }
+            first = false;
+
+            // Append the line to the accumulation buffer (bounded).
+            if (strlen(buffer) + strlen(line) < sizeof(buffer)) {
+                strcat(buffer, line);
+            }
+
+            depth += braceDelta(line);
+            if (depth <= 0) break;  // block complete (or no block opened)
         }
 
-        interpret(line);
+        interpret(buffer);
     }
 }
 

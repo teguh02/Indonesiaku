@@ -17,6 +17,7 @@
 | **[docs/04_KONTRIBUSI.md](docs/04_KONTRIBUSI.md)** | 🤝 Cara berkontribusi & setup dev |
 | **[docs/05_CREATOR.md](docs/05_CREATOR.md)** | 👤 Profile & motivasi creator |
 | **[docs/06_PENUTUP.md](docs/06_PENUTUP.md)** | ✅ Kesimpulan, FAQ, resources |
+| **[docs/07_PUSTAKA_STANDAR.md](docs/07_PUSTAKA_STANDAR.md)** | 📚 Referensi lengkap fungsi bawaan & pustaka standar |
 
 ---
 

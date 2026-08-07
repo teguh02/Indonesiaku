@@ -59,6 +59,12 @@ Kesimpulan, tips, dan informasi tambahan.
 - Next steps
 - Support & feedback channels
 
+### 7. [Referensi Pustaka Standar](07_PUSTAKA_STANDAR.md)
+Daftar lengkap fungsi bawaan dan pustaka standar.
+- Fungsi bawaan: matematika, string, list, kamus, konversi, berkas, waktu
+- Pustaka `.idk`: `teks`, `daftar`, `matematika`, `kamus`
+- Signature & deskripsi tiap fungsi
+
 ---
 
 ## 🚀 Memulai Cepat

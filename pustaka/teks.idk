@@ -99,7 +99,7 @@ fungsi teks_balik(teks) {
     variabel hasil = ""
     variabel i = panjang(teks) - 1
     selagi i >= 0 {
-        hasil = hasil + karakter(teks, i)
+        hasil = hasil + teks[i]
         i = i - 1
     }
     kembalikan hasil
@@ -110,7 +110,7 @@ fungsi teks_pangkas(teks) {
     variabel n = panjang(teks)
     variabel awal = 0
     selagi awal < n {
-        variabel c = karakter(teks, awal)
+        variabel c = teks[awal]
         jika c != " " dan c != "\t" dan c != "\n" dan c != "\r" {
             hentikan
         }
@@ -118,7 +118,7 @@ fungsi teks_pangkas(teks) {
     }
     variabel akhir = n - 1
     selagi akhir >= awal {
-        variabel c2 = karakter(teks, akhir)
+        variabel c2 = teks[akhir]
         jika c2 != " " dan c2 != "\t" dan c2 != "\n" dan c2 != "\r" {
             hentikan
         }

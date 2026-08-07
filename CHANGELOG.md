@@ -7,27 +7,21 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-07
+
+Rilis pustaka standar: fungsi bawaan untuk berkas, waktu, konversi, plus
+pustaka teks/daftar/matematika/kamus yang ditulis dalam bahasa Indonesiaku
+sendiri (dogfooding).
+
 ### Added
 - 📚 **Pustaka standar dalam bahasa sendiri** (`pustaka/`, di-`impor`):
   `teks.idk` (pisah/gabung/cari/pangkas/balik/...), `daftar.idk`
   (peta/saring/lipat/urutkan/iris/...), `matematika.idk`
   (faktorial/fpb/kpk/prima/rata_rata/...), `kamus.idk`
   (nilai/gabung/dari_pasangan/...).
-- 🔡 **Primitif teks** `karakter(teks, i)` dan `potong(teks, mulai, jumlah)`
-  sebagai dasar pustaka teks.
-
-### Fixed
-- 🐛 **Variabel bocor dari badan blok**: `variabel` yang dideklarasikan di
-  dalam `jika`/`selagi`/`untuk` tidak di-scope, sehingga bocor ke variabel
-  berikutnya (terutama saat `hentikan`). Kini setiap badan blok memakai
-  scope tersendiri. Regressi dijaga oleh `examples/lingkup_variabel.idk`.
-
-### Changed
-- `<` dan `>` kini juga membandingkan string (via `strcmp`), memungkinkan
-  pengurutan string.
-
-### Added (Fase 5-6 sebelumnya)
-- 🧯 **Error native yang dapat ditangkap** — fungsi bawaan kini memicu kesalahan
+- 🔡 **Primitif & pengindeksan teks** — `karakter(teks, i)`,
+  `potong(teks, mulai, jumlah)`, dan pengindeksan `teks[i]` (baca).
+- 🧯 **Error native yang dapat ditangkap** — fungsi bawaan memicu kesalahan
   via `nativeRaise` yang bisa ditangkap `coba/kecuali` (dulu semua fatal).
 - 🔤 **Konversi & format** — `ke_angka`, `ke_teks`, `format("... {} ...", ...)`,
   `acak_bulat(min, maks)`. `acak()` kini di-seed.
@@ -40,8 +34,19 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   string (scanner + compiler).
 - ⌨️ **Argumen baris perintah** — variabel global `argumen` (list string);
   `indk skrip.idk arg1 arg2 ...`.
+- 🖥️ **REPL multi-baris** — blok (`fungsi`/`kelas`/`jika`/...) dapat ditulis
+  lintas baris; prompt lanjutan `...` sampai kurung kurawal seimbang.
+- 📖 **Referensi pustaka standar** terstruktur di `docs/07_PUSTAKA_STANDAR.md`.
+
+### Fixed
+- 🐛 **Variabel bocor dari badan blok**: `variabel` yang dideklarasikan di
+  dalam `jika`/`selagi`/`untuk` tidak di-scope, sehingga bocor ke variabel
+  berikutnya (terutama saat `hentikan`). Kini setiap badan blok memakai
+  scope tersendiri. Regressi dijaga oleh `examples/lingkup_variabel.idk`.
 
 ### Changed
+- `<` dan `>` kini juga membandingkan string (via `strcmp`), memungkinkan
+  pengurutan string.
 - Pencetakan angka lebih presisi (15 digit, tanpa notasi ilmiah tak sengaja,
   integer tanpa `.0`).
 

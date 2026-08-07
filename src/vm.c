@@ -722,8 +722,17 @@ static InterpretResult run() {
                     } else {
                         push(value);
                     }
+                } else if (IS_STRING(peek(1)) && IS_NUMBER(peek(0))) {
+                    int index = (int)AS_NUMBER(pop());
+                    ObjString* str = AS_STRING(pop());
+                    if (index < 0 || index >= str->length) {
+                        runtimeError("Indeks string di luar jangkauan (indeks %d, panjang %d).",
+                                     index, str->length);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    push(OBJ_VAL(copyString(str->chars + index, 1)));
                 } else {
-                    runtimeError("Pengindeksan tidak valid: gunakan list[angka] atau kamus[string].");
+                    runtimeError("Pengindeksan tidak valid: gunakan list[angka], kamus[string], atau teks[angka].");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -748,7 +757,11 @@ static InterpretResult run() {
                     tableSet(&dict->table, key, value);
                     push(value);
                 } else {
-                    runtimeError("Pengindeksan tidak valid: gunakan list[angka] atau kamus[string].");
+                    if (IS_STRING(peek(2))) {
+                        runtimeError("String tidak dapat diubah; gunakan potong()/gabungan untuk membuat string baru.");
+                    } else {
+                        runtimeError("Pengindeksan tidak valid: gunakan list[angka] atau kamus[string].");
+                    }
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;

@@ -1,0 +1,35 @@
+# Pengindeksan string: teks[i] mengembalikan karakter (string 1 huruf).
+# String bersifat immutable (tidak dapat diubah lewat indeks).
+
+s = "Indonesia"
+
+cetak("=== akses karakter ===")
+cetak(s[0])
+cetak(s[3])
+cetak(s[panjang(s) - 1])
+
+cetak("=== iterasi per karakter ===")
+i = 0
+selagi i < panjang(s) {
+    cetak(i, "->", s[i])
+    i = i + 1
+}
+
+cetak("=== hitung huruf tertentu ===")
+kata = "mississippi"
+jumlah_s = 0
+untuk idx dalam [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
+    jika kata[idx] == "s" {
+        jumlah_s = jumlah_s + 1
+    }
+}
+cetak("jumlah 's':", jumlah_s)
+
+cetak("=== balik string manual ===")
+terbalik = ""
+j = panjang(s) - 1
+selagi j >= 0 {
+    terbalik = terbalik + s[j]
+    j = j - 1
+}
+cetak(terbalik)

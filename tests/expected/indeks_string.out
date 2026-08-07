@@ -1,0 +1,37 @@
+=== akses karakter ===
+I
+o
+a
+=== iterasi per karakter ===
+0
+->
+I
+1
+->
+n
+2
+->
+d
+3
+->
+o
+4
+->
+n
+5
+->
+e
+6
+->
+s
+7
+->
+i
+8
+->
+a
+=== hitung huruf tertentu ===
+jumlah 's':
+4
+=== balik string manual ===
+aisenodnI
