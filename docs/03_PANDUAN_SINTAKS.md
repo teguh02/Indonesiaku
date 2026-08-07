@@ -462,7 +462,200 @@ cetak(fibonacci(10))  # Output: 55
 
 ---
 
+## Operator Assignment Gabungan
+
+```indonesiaku
+x = 10
+x += 5    # x = x + 5  -> 15
+x -= 3    # -> 12
+x *= 2    # -> 24
+x /= 4    # -> 6
+x %= 4    # -> 2
+x **= 3   # -> 8
+```
+> Contoh: [`examples/compound_operators.idk`](../examples/compound_operators.idk)
+
+---
+
+## List (Senarai)
+
+```indonesiaku
+angka = [10, 20, 30]
+cetak(angka[0])          # 10 (pengindeksan)
+angka[1] = 99            # ubah elemen
+tambah(angka, 40)        # tambah ke akhir
+cetak(panjang(angka))    # 4
+x = hapus(angka)         # hapus & kembalikan elemen terakhir
+hapus_pada(angka, 0)     # hapus pada indeks
+sisip(angka, 0, 5)       # sisipkan pada indeks
+
+# List bisa bersarang & bertipe campuran
+matriks = [[1, 2], [3, 4]]
+cetak(matriks[0][1])     # 2
+```
+> Contoh: [`examples/list.idk`](../examples/list.idk)
+
+{{embed:examples/list.idk}}
+
+---
+
+## Kamus (Dictionary)
+
+```indonesiaku
+orang = kamus()
+orang["nama"] = "Budi"
+orang["umur"] = 25
+cetak(orang["nama"])         # Budi
+cetak(punya(orang, "umur"))  # benar
+hapus_kunci(orang, "umur")
+untuk k dalam kunci(orang) {  # iterasi kunci
+    cetak(k, "=", orang[k])
+}
+```
+> Contoh: [`examples/kamus.idk`](../examples/kamus.idk)
+
+---
+
+## Perulangan untuk...dalam (for-in)
+
+```indonesiaku
+untuk buah dalam ["apel", "mangga", "jeruk"] {
+    cetak(buah)
+}
+
+total = 0
+untuk n dalam [1, 2, 3, 4, 5] {
+    total = total + n
+}
+cetak("total:", total)   # 15
+```
+> Contoh: [`examples/untuk_dalam.idk`](../examples/untuk_dalam.idk)
+
+---
+
+## hentikan & lanjut (break & continue)
+
+```indonesiaku
+untuk x dalam [1, 2, 3, 4, 5, 6] {
+    jika x == 4 { hentikan }   # keluar dari loop
+    jika x == 2 { lanjut }     # lompat ke iterasi berikut
+    cetak(x)
+}
+# Output: 1, 3
+```
+> Contoh: [`examples/hentikan_lanjut.idk`](../examples/hentikan_lanjut.idk)
+
+---
+
+## Pengindeksan String
+
+String dapat diakses per karakter (baca-saja; string bersifat immutable).
+
+```indonesiaku
+s = "halo"
+cetak(s[0])           # h
+cetak(panjang(s))     # 4
+untuk i dalam [0, 1, 2, 3] {
+    cetak(s[i])
+}
+```
+> Contoh: [`examples/indeks_string.idk`](../examples/indeks_string.idk)
+
+---
+
+## Closure
+
+Gunakan kata kunci `variabel` untuk membuat variabel lokal fungsi yang dapat
+ditangkap oleh closure (fungsi bersarang).
+
+```indonesiaku
+fungsi buat_pencacah() {
+    variabel hitung = 0
+    fungsi naik() {
+        hitung = hitung + 1
+        kembalikan hitung
+    }
+    kembalikan naik
+}
+
+c = buat_pencacah()
+cetak(c())   # 1
+cetak(c())   # 2
+```
+> Contoh: [`examples/closure.idk`](../examples/closure.idk)
+
+---
+
+## Kelas & OOP
+
+```indonesiaku
+kelas Hewan {
+    init(nama, suara) {
+        diri.nama = nama
+        diri.suara = suara
+    }
+    bersuara() {
+        cetak(diri.nama, "berkata:", diri.suara)
+    }
+}
+
+kelas Anjing < Hewan {          # pewarisan dengan '<'
+    init(nama) {
+        super.init(nama, "Guk")  # panggil konstruktor induk
+    }
+}
+
+a = Anjing("Rex")
+a.bersuara()   # Rex berkata: Guk
+```
+> Contoh: [`examples/oop/kelas.idk`](../examples/oop/kelas.idk)
+
+{{embed:examples/oop/kelas.idk}}
+
+---
+
+## Penanganan Kesalahan (naikkan / coba / kecuali)
+
+```indonesiaku
+coba {
+    naikkan "terjadi kesalahan"
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+
+# Kesalahan fungsi bawaan juga dapat ditangkap:
+coba {
+    x = ke_angka("bukan angka")
+} kecuali e {
+    cetak("gagal konversi:", e)
+}
+```
+> Contoh: [`examples/coba_kecuali.idk`](../examples/coba_kecuali.idk)
+
+---
+
+## Modul (impor)
+
+`impor "file.idk"` menjalankan file lain dalam namespace global yang sama
+(di-cache, sehingga impor ulang diabaikan).
+
+```indonesiaku
+impor "pustaka/teks.idk"
+impor "pustaka/daftar.idk"
+
+cetak(teks_pisah("a,b,c", ","))        # [a, b, c]
+cetak(daftar_urutkan([3, 1, 2]))       # [1, 2, 3]
+```
+> Contoh: [`examples/impor.idk`](../examples/impor.idk)
+> Lihat daftar pustaka standar di [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).
+
+---
+
 ## Built-in Functions
+
+> Referensi lengkap semua fungsi bawaan (matematika, string, list, kamus,
+> konversi, berkas, waktu/tanggal, soket) ada di
+> [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).
 
 ### cetak() - Print Output
 
@@ -694,28 +887,30 @@ selagi angka <= 20 {
 
 ## Ringkasan Keywords
 
-| Category | Keywords |
+| Kategori | Keywords |
 |----------|----------|
-| **Data Type** | `benar`, `salah`, `kosong` |
-| **Control Flow** | `jika`, `selain`, `selagi` |
-| **Function** | `fungsi`, `kembalikan` |
-| **Operator** | `dan`, `atau`, `tidak` |
+| **Tipe/Literal** | `benar`, `salah`, `kosong` |
+| **Percabangan** | `jika`, `jika_lain`, `selain` |
+| **Perulangan** | `selagi`, `untuk`, `dalam`, `hentikan`, `lanjut` |
+| **Fungsi** | `fungsi`, `kembalikan`, `variabel` |
+| **Kelas/OOP** | `kelas`, `diri`, `super` |
+| **Kesalahan** | `naikkan`, `coba`, `kecuali` |
+| **Modul** | `impor` |
+| **Operator logika** | `dan`, `atau`, `tidak` |
 | **Output** | `cetak` |
-| **Time** | `jam` |
 
 ---
 
 ## Tips & Tricks
 
 1. **Gunakan descriptive names** - Nama yang jelas mempermudah debugging
-2. **Test di REPL** - Coba command secara interaktif terlebih dahulu
+2. **Test di REPL** - Coba command secara interaktif terlebih dahulu (blok multi-baris didukung)
 3. **Break kompleks logic** - Pisahkan menjadi fungsi-fungsi kecil
 4. **Use functions** - Untuk menghindari code duplication
 5. **Comment wisely** - Untuk logic yang kompleks, bukan yang obvious
 
 ---
 
-**Dokumen ini memberikan fondasi yang cukup untuk mulai menggunakan Bahasa Pemrograman Indonesiaku. Untuk pertanyaan lebih lanjut, silakan lihat contoh di folder `/examples` atau file dokumentasi lainnya.**
+**Dokumen ini memberikan fondasi untuk mulai menggunakan Bahasa Pemrograman Indonesiaku. Untuk pertanyaan lebih lanjut, silakan lihat contoh di folder `/examples` atau [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).**
 
-Versi: 1.0  
-Terakhir diperbarui: 28 Oktober 2025
+Versi bahasa: v0.4.0

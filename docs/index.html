@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indonesiaku — Bahasa Pemrograman Berbahasa Indonesia</title>
+  <meta name="description" content="Indonesiaku: bahasa pemrograman dengan sintaks Bahasa Indonesia, dibangun sebagai bytecode VM dalam C. Closure, OOP, JSON, REST API, dan lebih banyak lagi." />
+  <link rel="stylesheet" href="assets/site.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">🇮🇩 Indonesiaku<span class="dot">.</span></a>
+      <div class="nav-links">
+        <a href="index.html" class="active">Beranda</a>
+        <a href="about.html">Tentang</a>
+        <a href="author.html">Penulis</a>
+        <a href="docs.html">Dokumentasi</a>
+        <a href="https://github.com/teguh02/Indonesiaku" class="hide-sm" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="flag">🇮🇩</div>
+    <h1>Ngoding dalam <span class="grad">Bahasa Indonesia</span></h1>
+    <p class="lead">
+      <strong>Indonesiaku</strong> adalah bahasa pemrograman dengan sintaks Bahasa
+      Indonesia — closure, kelas &amp; OOP, JSON, hingga REST API — dibangun sebagai
+      bytecode VM dalam C.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="docs.html">📖 Baca Dokumentasi</a>
+      <a class="btn btn-ghost" href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener">⭐ Lihat di GitHub</a>
+    </div>
+    <div class="badge-row">
+      <span class="badge">v0.4.0</span>
+      <span class="badge">Bytecode VM (C11)</span>
+      <span class="badge">Garbage Collector</span>
+      <span class="badge">Lintas Platform</span>
+      <span class="badge">MIT License</span>
+    </div>
+
+    <div class="code-hero">
+      <div class="bar"><span></span><span></span><span></span></div>
+      <pre><code class="language-python"># halo.idk
+fungsi sapa(nama) {
+    cetak("Halo,", nama)
+}
+
+untuk orang dalam ["Budi", "Ani", "Citra"] {
+    sapa(orang)
+}</code></pre>
+    </div>
+  </header>
+
+  <!-- FITUR -->
+  <section class="wrap">
+    <div class="section-title">
+      <h2>Kenapa Indonesiaku?</h2>
+      <p>Bahasa yang lengkap fiturnya, ditulis untuk belajar dan berkarya dalam bahasa sendiri.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="ico">🗣️</div><h3>Keyword Bahasa Indonesia</h3><p><code>jika</code>, <code>selagi</code>, <code>fungsi</code>, <code>kelas</code>, <code>cetak</code> — kode yang terbaca alami.</p></div>
+      <div class="card"><div class="ico">🧠</div><h3>Fitur Modern</h3><p>Closure, list &amp; kamus, kelas &amp; pewarisan, exception, dan sistem modul.</p></div>
+      <div class="card"><div class="ico">♻️</div><h3>Garbage Collector</h3><p>Manajemen memori otomatis (mark-sweep) — fokus pada logika, bukan alokasi.</p></div>
+      <div class="card"><div class="ico">📇</div><h3>JSON &amp; REST API</h3><p>Pustaka JSON &amp; HTTP bawaan. Contoh Todo-list: CRUD CLI dan server REST.</p></div>
+      <div class="card"><div class="ico">📚</div><h3>Pustaka Standar</h3><p>Teks, daftar, matematika, kamus — ditulis dalam bahasa Indonesiaku sendiri.</p></div>
+      <div class="card"><div class="ico">⚡</div><h3>Ringan &amp; Cepat</h3><p>Bytecode VM berbasis stack dalam C11. Image Docker ~12 MB.</p></div>
+    </div>
+  </section>
+
+  <!-- CONTOH -->
+  <section class="wrap" style="background: var(--bg-2); border-radius: var(--radius);">
+    <div class="section-title">
+      <h2>Sekilas Kode</h2>
+      <p>Kelas, pewarisan, dan penanganan kesalahan — semuanya dalam Bahasa Indonesia.</p>
+    </div>
+    <div class="code-hero">
+      <div class="bar"><span></span><span></span><span></span></div>
+      <pre><code class="language-python">kelas Hewan {
+    init(nama, suara) {
+        diri.nama = nama
+        diri.suara = suara
+    }
+    bersuara() {
+        cetak(diri.nama, "berkata:", diri.suara)
+    }
+}
+
+kelas Anjing < Hewan {          # pewarisan
+    init(nama) { super.init(nama, "Guk") }
+}
+
+coba {
+    Anjing("Rex").bersuara()    # Rex berkata: Guk
+} kecuali e {
+    cetak("gagal:", e)
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- CTA akhir -->
+  <section class="wrap" style="text-align:center;">
+    <h2>Mulai sekarang</h2>
+    <p style="color:var(--tinta-2); max-width:560px; margin:0.5rem auto 1.5rem;">
+      Pasang lewat Docker atau build dari sumber, lalu jalankan program pertamamu.
+    </p>
+    <div class="code-hero" style="max-width:560px;">
+      <div class="bar"><span></span><span></span><span></span></div>
+      <pre><code class="language-bash">docker run --rm teguh02/indonesiaku:latest examples/hello.idk</code></pre>
+    </div>
+    <div class="cta" style="margin-top:1.5rem;">
+      <a class="btn btn-primary" href="docs.html">Pelajari Sintaks</a>
+      <a class="btn btn-ghost" href="about.html">Tentang Proyek</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div>
+        <strong>🇮🇩 Indonesiaku</strong> — programmu dalam Bahasa Indonesia.
+        <div class="muted">Dirilis di bawah MIT License · v0.4.0</div>
+      </div>
+      <div>
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://hub.docker.com/r/teguh02/indonesiaku" target="_blank" rel="noopener">Docker Hub</a> ·
+        <a href="docs.html">Dokumentasi</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</body>
+</html>

@@ -30,28 +30,27 @@ Dalam dokumentasi Indonesiaku, kami telah membahas:
 ### Status Proyek Saat Ini
 
 ```
-Versi:          0.1 (Stable)
-Test Coverage:  19/20 passing (95%)
-Examples:       20+ test programs
-Documentation:  Complete & comprehensive
-Community:      Growing & welcoming
-
-Status: ✅ PRODUCTION READY (for v0.1)
+Versi:          0.4.0
+Golden test:    51 lulus (CI lintas Linux/macOS/Windows)
+Examples:       50+ program contoh
+Pustaka:        teks, daftar, matematika, kamus, json, http
+Documentation:  Lengkap & komprehensif
 ```
 
-### Pencapaian v0.1
+### Pencapaian v0.4.0
 
 | Kategori | Status |
 |----------|--------|
-| **Core VM** | ✅ Complete |
-| **Scanner & Compiler** | ✅ Complete |
-| **Basic Types** | ✅ Complete |
-| **Functions** | ✅ Complete |
-| **Closures** | ✅ Complete |
-| **Recursion** | ✅ Complete |
-| **Memory Management** | ✅ Complete |
-| **Error Handling** | ✅ Complete |
-| **Testing** | ✅ Complete |
+| **Core VM (bytecode + GC mark-sweep)** | ✅ Complete |
+| **Scanner & Compiler single-pass** | ✅ Complete |
+| **Tipe: angka, string, boolean, kosong, list, kamus** | ✅ Complete |
+| **Fungsi, rekursi, closure** | ✅ Complete |
+| **Kelas & OOP (pewarisan, super)** | ✅ Complete |
+| **Exception (`naikkan`/`coba`/`kecuali`)** | ✅ Complete |
+| **Modul (`impor`)** | ✅ Complete |
+| **File I/O, waktu/tanggal, soket TCP** | ✅ Complete |
+| **Pustaka standar (`pustaka/`)** | ✅ Complete |
+| **Testing (golden + integrasi CLI/HTTP + stress-GC)** | ✅ Complete |
 | **Documentation** | ✅ Complete |
 
 ---
@@ -102,10 +101,10 @@ Status: ✅ PRODUCTION READY (for v0.1)
 
 **Q: Apakah Indonesiaku production-ready?**
 
-A: v0.1 stable dan dapat digunakan untuk learning. Untuk production, tunggu v1.0 dengan:
-- Lebih comprehensive standard library
-- Performance optimization
-- Advanced language features
+A: v0.4.0 sudah mencakup fitur inti (list, kamus, kelas/OOP, exception, modul,
+GC, File I/O, soket) dengan pengujian golden + integrasi di CI. Cocok untuk
+pembelajaran dan aplikasi kecil-menengah. Untuk sistem skala besar/produksi
+kritis, pertimbangkan bahasa yang lebih matang ekosistemnya.
 
 **Q: Bisakah saya membuat aplikasi real-world dengan Indonesiaku?**
 
@@ -182,7 +181,7 @@ A: Ya! Contributions welcome. Process:
 
 **Q: Bagaimana cara setup development environment?**
 
-A: Lihat `docs/03_KONTRIBUSI.md` section "Setup Development Environment"
+A: Lihat `docs/04_KONTRIBUSI.md` section "Setup Development Environment"
 
 **Q: Apakah source code C mudah dipelajari?**
 
@@ -199,16 +198,17 @@ Good starting points:
 
 ### Pertanyaan tentang Compatibility
 
-**Q: Akan ada breaking changes di v0.2+?**
+**Q: Akan ada breaking changes di versi mendatang?**
 
-A: Kemungkinan ada untuk major version changes. Semua changes akan:
-- Didiskusikan di advance
-- Documented dengan migration guide
-- Backward compatibility dipertimbangkan
+A: Kemungkinan ada untuk perubahan versi mayor. Semua perubahan akan:
+- Didiskusikan lebih dulu
+- Didokumentasikan di `CHANGELOG.md`
+- Mempertimbangkan kompatibilitas mundur
 
-**Q: Bisakah saya run v0.1 programs di v0.2?**
+**Q: Apakah program lama tetap jalan di versi baru?**
 
-A: Semua valid v0.1 programs akan tetap valid di v0.2+, dengan possible enhancements.
+A: Program yang valid umumnya tetap valid di versi berikutnya. Lihat
+`CHANGELOG.md` untuk daftar perubahan tiap rilis.
 
 ---
 
@@ -237,11 +237,12 @@ xcode-select --install
 # Make sure you're in correct directory
 cd c:\Users\teguh\Works\myself\Indonesiaku
 
-# Try building again
-gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe \
-    src/main.c src/chunk.c src/compiler.c src/debug.c \
-    src/memory.c src/object.c src/scanner.c src/table.c \
-    src/value.c src/vm.c -lm
+# Cara termudah: gunakan Makefile
+make clean && make
+
+# Atau kompilasi manual (SEMUA src/*.c, termasuk native.c dan lainnya):
+gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe src/*.c -lm
+# (di Windows tambahkan -lws2_32 untuk soket)
 ```
 
 #### Runtime Issues
@@ -324,31 +325,37 @@ cat examples/test_file.idk   # Linux/Mac
 | **Contributing** | `docs/04_KONTRIBUSI.md` | How to contribute |
 | **Creator** | `docs/05_CREATOR.md` | About Teguh Rijanandi |
 | **Resources** | `docs/06_PENUTUP.md` | FAQ, troubleshooting, resources |
-| **Syntax Reference** | `/SYNTAX_REFERENCE.md` | Quick syntax reference |
+| **Pustaka Standar** | `docs/07_PUSTAKA_STANDAR.md` | Referensi fungsi bawaan & pustaka |
 | **Changelog** | `/CHANGELOG.md` | Version history |
 
 ### Examples & Tests
 
+Semua contoh program ada di folder `examples/`. Sebagian:
+
 ```
 examples/
-├── hello.idk                    # Hello world
-├── variabel.idk                 # Variables
-├── fungsi.idk                   # Functions
-├── fibonacci.idk                # Fibonacci recursion
-├── recursion_deep.idk           # Deep recursion test
-├── closure.idk                  # Function closures
-├── advanced/                    # Advanced examples
-│   ├── complex_arithmetic.idk
-│   ├── state_management.idk
-│   ├── mutual_recursion.idk
-│   └── ... (9 total)
-└── oop/                         # OOP patterns
-    ├── oop_test_01_basic.idk   # Native OOP (intentional fail)
-    ├── oop_test_02_simulasi.idk
-    ├── oop_test_03_closure.idk
-    ├── oop_test_04_inheritance.idk
-    └── oop_test_05_polymorphism.idk
+├── hello.idk                 # Hello world
+├── variabel.idk              # Variabel & aritmatika
+├── fungsi.idk                # Fungsi
+├── fibonacci.idk             # Rekursi
+├── closure.idk               # Closure
+├── list.idk                  # List
+├── kamus.idk                 # Kamus (dictionary)
+├── untuk_dalam.idk           # for-in (untuk...dalam)
+├── hentikan_lanjut.idk       # break/continue
+├── coba_kecuali.idk          # Exception handling
+├── impor.idk                 # Modul (impor)
+├── berkas.idk                # File I/O
+├── konversi.idk              # ke_angka / ke_teks / format
+├── json_pakai.idk            # JSON (pustaka/json.idk)
+├── todo_cli.idk              # Todo-list JSON DB (CRUD CLI)
+├── todo_server.idk           # REST API HTTP server
+└── oop/
+    ├── kelas.idk             # Kelas & pewarisan (OOP nyata)
+    └── oop_test_*.idk        # Pola OOP tambahan
 ```
+
+Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
 ### External Resources
 
@@ -372,10 +379,10 @@ examples/
 
 ### Community Resources
 
-- **GitHub Repository** - https://github.com/teguhriyan/Indonesiaku
+- **GitHub Repository** - https://github.com/teguh02/Indonesiaku
 - **Issue Tracker** - Report bugs & request features
 - **Discussions** - Ask questions & share ideas
-- **Email** - teguhriyan@gmail.com
+- **Email** - teguhrijanandi02@gmail.com
 
 ---
 
@@ -385,7 +392,7 @@ examples/
 
 1. **Install & Setup**
    ```bash
-   git clone https://github.com/teguhriyan/Indonesiaku.git
+   git clone https://github.com/teguh02/Indonesiaku.git
    cd Indonesiaku
    make  # atau gcc command
    ```
@@ -506,7 +513,7 @@ Body:
 - **Examples** - Run related examples untuk solutions
 - **REPL** - Test ideas interactively
 - **Community** - Ask di GitHub Discussions
-- **Email** - teguhriyan@gmail.com untuk urgent questions
+- **Email** - teguhrijanandi02@gmail.com untuk urgent questions
 
 ### Giving Feedback
 
@@ -542,8 +549,8 @@ Jika menggunakan Indonesiaku untuk research atau projects:
 ```
 Author: Teguh Rijanandi
 Project: Bahasa Pemrograman Indonesiaku
-Repository: https://github.com/teguhriyan/Indonesiaku
-Version: 0.1 (2025)
+Repository: https://github.com/teguh02/Indonesiaku
+Version: 0.4.0
 ```
 
 ### Credits
@@ -638,7 +645,7 @@ Mari bersama-sama membangun masa depan programming yang lebih accessible, innova
 
 ```
 ╔════════════════════════════════════════════════════╗
-║     Bahasa Pemrograman Indonesiaku v0.1           ║
+║     Bahasa Pemrograman Indonesiaku v0.4.0           ║
 ║                                                    ║
 ║  "Programming dalam bahasa ibu kita"              ║
 ║                                                    ║
@@ -652,5 +659,5 @@ Mari bersama-sama membangun masa depan programming yang lebih accessible, innova
 
 Versi: 1.0  
 Terakhir diperbarui: 28 Oktober 2025  
-Repository: https://github.com/teguhriyan/Indonesiaku  
+Repository: https://github.com/teguh02/Indonesiaku  
 Creator: Teguh Rijanandi

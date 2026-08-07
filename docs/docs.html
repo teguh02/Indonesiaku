@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dokumentasi — Indonesiaku</title>
+  <meta name="description" content="Dokumentasi lengkap bahasa pemrograman Indonesiaku." />
+  <link rel="stylesheet" href="assets/site.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">🇮🇩 Indonesiaku<span class="dot">.</span></a>
+      <div class="nav-links">
+        <a href="index.html">Beranda</a>
+        <a href="about.html">Tentang</a>
+        <a href="author.html">Penulis</a>
+        <a href="docs.html" class="active">Dokumentasi</a>
+        <a href="https://github.com/teguh02/Indonesiaku" class="hide-sm" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="docs-shell">
+    <aside class="docs-side">
+      <h4>Panduan</h4>
+      <nav id="doc-nav"></nav>
+    </aside>
+    <main class="docs-content">
+      <article id="doc-body" class="prose">
+        <p class="loading">Memuat dokumentasi…</p>
+      </article>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div><strong>🇮🇩 Indonesiaku</strong><div class="muted">MIT License · v0.4.0</div></div>
+      <div>
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://hub.docker.com/r/teguh02/indonesiaku" target="_blank" rel="noopener">Docker Hub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    // ----------------------------------------------------------------
+    // Daftar dokumen (file .md di folder ini). Urutan = urutan sidebar.
+    // ----------------------------------------------------------------
+    const DOCS = [
+      { file: "README.md",              title: "Ikhtisar" },
+      { file: "01_PERKENALAN.md",       title: "1. Perkenalan" },
+      { file: "02_INSTALASI.md",        title: "2. Instalasi" },
+      { file: "03_PANDUAN_SINTAKS.md",  title: "3. Panduan Sintaks" },
+      { file: "07_PUSTAKA_STANDAR.md",  title: "4. Pustaka Standar" },
+      { file: "04_KONTRIBUSI.md",       title: "5. Kontribusi" },
+      { file: "05_CREATOR.md",          title: "6. Penulis" },
+      { file: "06_PENUTUP.md",          title: "7. Penutup & FAQ" },
+    ];
+
+    // Contoh kode di-embed dari GitHub raw agar selalu sinkron dengan repo.
+    const RAW_BASE = "https://raw.githubusercontent.com/teguh02/Indonesiaku/main/";
+
+    const navEl  = document.getElementById("doc-nav");
+    const bodyEl = document.getElementById("doc-body");
+
+    // Bangun sidebar.
+    DOCS.forEach(d => {
+      const a = document.createElement("a");
+      a.textContent = d.title;
+      a.href = "#" + d.file;
+      a.dataset.file = d.file;
+      a.addEventListener("click", e => { e.preventDefault(); loadDoc(d.file, true); });
+      navEl.appendChild(a);
+    });
+
+    function setActive(file) {
+      navEl.querySelectorAll("a").forEach(a =>
+        a.classList.toggle("active", a.dataset.file === file));
+    }
+
+    // marked: buka tautan eksternal di tab baru, dan biarkan link ../examples
+    // menunjuk ke GitHub agar bisa diklik dari situs.
+    marked.setOptions({ gfm: true, breaks: false });
+
+    async function fetchText(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.status + " " + res.statusText);
+      return res.text();
+    }
+
+    // Ganti penanda embed:
+    //   {{embed:examples/list.idk}}  → blok kode dari GitHub raw
+    // Juga: baris "> Contoh: [teks](../examples/xxx.idk)" tetap jadi tautan,
+    // tapi ditambah tombol untuk membuka file mentah.
+    async function resolveEmbeds(container) {
+      // 1) placeholder eksplisit yang sudah dirender jadi teks {{embed:...}}
+      const walker = container.innerHTML;
+      const re = /\{\{\s*embed:([^}]+?)\s*\}\}/g;
+      let html = walker;
+      const jobs = [];
+      html = html.replace(re, (m, path) => {
+        const id = "embed_" + Math.random().toString(36).slice(2);
+        jobs.push({ id, path: path.trim() });
+        return `<div class="embed-example" id="${id}"><div class="embed-head">${escapeHtml(path.trim())}<span>memuat…</span></div><pre><code></code></pre></div>`;
+      });
+      if (jobs.length) container.innerHTML = html;
+
+      for (const job of jobs) {
+        const box = document.getElementById(job.id);
+        if (!box) continue;
+        try {
+          const code = await fetchText(RAW_BASE + job.path);
+          const gh = "https://github.com/teguh02/Indonesiaku/blob/main/" + job.path;
+          box.querySelector(".embed-head").innerHTML =
+            `<a href="${gh}" target="_blank" rel="noopener">${escapeHtml(job.path)}</a>` +
+            `<a href="${RAW_BASE + job.path}" target="_blank" rel="noopener">lihat mentah ↗</a>`;
+          const codeEl = box.querySelector("code");
+          codeEl.className = "language-python";
+          codeEl.textContent = code;
+          hljs.highlightElement(codeEl);
+        } catch (err) {
+          box.querySelector(".embed-head").innerHTML =
+            `${escapeHtml(job.path)} <span>gagal memuat</span>`;
+          box.querySelector("code").textContent = "// gagal memuat contoh: " + err.message;
+        }
+      }
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    // Perbaiki tautan relatif ../examples & antar-dokumen agar berfungsi.
+    function fixLinks(container) {
+      container.querySelectorAll("a[href]").forEach(a => {
+        const href = a.getAttribute("href");
+        if (!href) return;
+        // Link ke file .md lain → muat via viewer.
+        const mdMatch = href.match(/^(?:\.\/)?(\w[\w.]*?\.md)(#.*)?$/i);
+        if (mdMatch && DOCS.some(d => d.file === mdMatch[1])) {
+          a.addEventListener("click", e => { e.preventDefault(); loadDoc(mdMatch[1], true); });
+          return;
+        }
+        // Link ke ../examples atau ../file → arahkan ke GitHub.
+        if (href.startsWith("../")) {
+          a.href = "https://github.com/teguh02/Indonesiaku/blob/main/" + href.replace(/^\.\.\//, "");
+          a.target = "_blank"; a.rel = "noopener";
+        } else if (/^https?:\/\//.test(href)) {
+          a.target = "_blank"; a.rel = "noopener";
+        }
+      });
+    }
+
+    async function loadDoc(file, push) {
+      setActive(file);
+      bodyEl.innerHTML = '<p class="loading">Memuat…</p>';
+      try {
+        const md = await fetchText(file);
+        bodyEl.innerHTML = marked.parse(md);
+        await resolveEmbeds(bodyEl);
+        fixLinks(bodyEl);
+        bodyEl.querySelectorAll("pre code:not(.hljs)").forEach(el => hljs.highlightElement(el));
+        window.scrollTo({ top: 0, behavior: "instant" });
+        if (push) history.replaceState(null, "", "#" + file);
+      } catch (err) {
+        bodyEl.innerHTML =
+          `<h1>Gagal memuat</h1><p>Tidak dapat memuat <code>${escapeHtml(file)}</code>: ${escapeHtml(err.message)}.</p>` +
+          `<p>Pastikan situs diakses lewat HTTP (bukan file://) — mis. GitHub Pages atau server lokal.</p>`;
+      }
+    }
+
+    // Muat dokumen sesuai hash, atau default ke ikhtisar.
+    const start = (location.hash || "").replace(/^#/, "");
+    loadDoc(DOCS.some(d => d.file === start) ? start : DOCS[0].file, false);
+  </script>
+</body>
+</html>

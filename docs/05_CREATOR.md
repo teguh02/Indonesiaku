@@ -260,7 +260,7 @@ Untuk menghubungi Teguh Rijanandi:
 
 ### Email
 
-- **Primary:** teguhriyan@gmail.com
+- **Primary:** teguhrijanandi02@gmail.com
 - **Work:** teguh@indonesiaku.dev
 
 ### Social Media
@@ -271,7 +271,7 @@ Untuk menghubungi Teguh Rijanandi:
 
 ### Project
 
-- **GitHub Repository:** https://github.com/teguhriyan/Indonesiaku
+- **GitHub Repository:** https://github.com/teguh02/Indonesiaku
 - **Documentation:** `/docs` folder
 - **Issues:** GitHub Issues for bug reports
 
@@ -293,7 +293,7 @@ Ingin berkontribusi atau mendukung proyek?
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/teguhriyan/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku.git
 
 # 2. Read contributing guide
 cat docs/03_KONTRIBUSI.md
@@ -334,7 +334,7 @@ Kepada semua yang percaya pada visi Indonesiaku dan mendukung perjalanan ini!
 
 ### Jangka Pendek (1 tahun)
 
-- Stable v0.1 release
+- Rilis v0.4.0
 - Growing community
 - More examples dan tutorials
 - Indonesian language adoption

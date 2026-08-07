@@ -1,0 +1,17 @@
+# Netlify deploy config — situs dokumentasi Indonesiaku.
+# Situs statis di folder docs/ (landing + about + author + docs reader).
+
+[build]
+  publish = "docs"
+  command = ""
+
+# Sajikan .md dengan tipe teks agar fetch() di docs.html bisa membacanya.
+[[headers]]
+  for = "/*.md"
+  [headers.values]
+    Content-Type = "text/markdown; charset=utf-8"
+
+[[headers]]
+  for = "/*.idk"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"

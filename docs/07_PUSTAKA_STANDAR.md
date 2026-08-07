@@ -240,3 +240,24 @@ di atas soket TCP.
 Lihat contoh lengkap di folder `examples/` (mis. `pustaka_teks.idk`,
 `pustaka_daftar.idk`, `berkas.idk`, `konversi.idk`, `json_pakai.idk`,
 `todo_demo.idk`, `todo_server.idk`, `http_pakai.idk`).
+
+---
+
+## 3. Aplikasi Contoh: Todo-list JSON DB
+
+Dua aplikasi contoh lengkap menunjukkan penggunaan pustaka standar untuk
+membangun aplikasi nyata dengan penyimpanan JSON.
+
+### 3.1 CRUD berbasis command-line
+
+`examples/todo_cli.idk` — memetakan operasi REST ke perintah CLI
+(`tambah`=POST, `daftar`/`lihat`=GET, `selesai`/`ubah`=PUT, `hapus`=DELETE):
+
+{{embed:examples/todo_cli.idk}}
+
+### 3.2 Server REST API (HTTP)
+
+`examples/todo_server.idk` — server HTTP sungguhan (soket TCP) dengan endpoint
+`GET/POST/PUT/DELETE /todos`:
+
+{{embed:examples/todo_server.idk}}

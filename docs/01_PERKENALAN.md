@@ -21,61 +21,52 @@ Menjadi bahasa pemrograman pertama yang fully mendukung pemrograman dalam Bahasa
 
 ## Fitur Utama
 
-### ✅ v0.1.1 (Saat Ini)
+### ✅ v0.4.0 (Saat Ini)
 
 **Tipe Data**
-- ✅ Numbers (integer dan float)
-- ✅ Booleans (`benar`, `salah`)
-- ✅ Strings (text)
-- ✅ Null (`kosong`)
+- ✅ Angka (integer & float, direpresentasikan sebagai `double`)
+- ✅ Boolean (`benar`, `salah`)
+- ✅ String (dengan escape `\n \t \r \" \\`)
+- ✅ `kosong` (null)
+- ✅ **List** (`[1, 2, 3]`) + pengindeksan baca/tulis
+- ✅ **Kamus/dictionary** (`kamus()` + indeks string)
 
 **Kontrol Program**
-- ✅ Variabel global
-- ✅ If/else statements (`jika`, `selain`)
-- ✅ While loops (`selagi`)
-- ✅ Fungsi dengan parameter dan return value
-- ✅ Recursion support
+- ✅ Variabel global & lokal (`variabel` untuk lokal/closure)
+- ✅ `jika` / `jika_lain` / `selain`
+- ✅ `selagi` (while) dan **`untuk ... dalam`** (for-in)
+- ✅ **`hentikan` / `lanjut`** (break/continue)
+- ✅ Fungsi, rekursi, dan **closure** (menangkap variabel)
+- ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
+- ✅ **Penanganan kesalahan**: `naikkan`, `coba` / `kecuali`
+- ✅ **Modul**: `impor "file.idk"`
 
-**Operators**
-- ✅ Arithmetic: `+`, `-`, `*`, `/`, `%`
-- ✅ Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
-- ✅ Logical: `dan`, `atau`, `tidak`
+**Operator**
+- ✅ Aritmatika: `+`, `-`, `*`, `/`, `%`, `**`
+- ✅ Assignment gabungan: `+=`, `-=`, `*=`, `/=`, `%=`, `**=`
+- ✅ Perbandingan: `==`, `!=`, `<`, `>`, `<=`, `>=` (juga membandingkan string)
+- ✅ Logika: `dan`, `atau`, `tidak`
 
-**Built-in Functions**
-- ✅ `cetak()` - Print output
-- ✅ `jam()` - Get current time
+**Fungsi Bawaan** (lengkap di [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md))
+- Matematika, string, list, kamus, konversi (`ke_angka`/`ke_teks`/`format`)
+- Berkas (File I/O), waktu/tanggal, soket TCP, utilitas
 
-**Features Lainnya**
-- ✅ Comments (`#`)
-- ✅ OOP patterns (via functions)
-- ✅ Recursion mendalam
-- ✅ Nested loops dan functions
+**Infrastruktur**
+- ✅ Garbage collector mark-sweep
+- ✅ Pustaka standar dalam bahasa sendiri (`pustaka/`)
+- ✅ Contoh aplikasi: Todo-list JSON DB (CLI + REST HTTP server)
 
 ---
 
 ## Roadmap Pengembangan
 
-### v0.2 (Planned)
-- ⏳ For...in loops (`untuk...dalam`)
-- ⏳ Array/List support
-- ⏳ Break dan Continue statements
-- ⏳ String operations (concatenation, indexing)
-- ⏳ More built-in functions
+Semua fitur inti (list, kamus, kelas/OOP, exception, modul, GC, File I/O, soket)
+sudah **terimplementasi** di v0.4.0. Kandidat pekerjaan berikutnya:
 
-### v0.3 (Planned)
-- ⏳ Native class support (`kelas`)
-- ⏳ Inheritance dan polymorphism
-- ⏳ Access modifiers (public/private)
-- ⏳ Constructor methods
-- ⏳ `diri` (self) keyword
-- ⏳ Method chaining
-
-### v0.4+ (Future)
-- 🔮 Exception handling (`coba...kecuali`)
-- 🔮 Module system (`impor`)
-- 🔮 File I/O operations
-- 🔮 Standard library expansion
-- 🔮 Package manager
+- 🔮 `akhirnya` (finally) untuk `coba`/`kecuali`
+- 🔮 Kesadaran UTF-8 pada fungsi string (kini berbasis byte)
+- 🔮 Literal kamus `{ }` dan slicing `list[a:b]`
+- 🔮 Standard library yang lebih luas & package manager
 
 ---
 
@@ -87,13 +78,9 @@ Source Code (.idk)
      ↓
   Scanner (Lexical Analysis)
      ↓
-  Parser (Syntax Analysis)
+  Compiler single-pass (Pratt parser → Bytecode langsung, tanpa AST)
      ↓
-  Compiler (Code Generation)
-     ↓
-  Bytecode
-     ↓
-  Virtual Machine (Execution)
+  Virtual Machine berbasis stack (+ garbage collector mark-sweep)
      ↓
   Output
 ```
@@ -134,13 +121,17 @@ Source Code (.idk)
 ### Program 1: Fibonacci Recursion
 ```indonesiaku
 fungsi fibonacci(n) {
-    jika n <= 1:
+    jika n <= 1 {
         kembalikan n
+    }
     kembalikan fibonacci(n - 1) + fibonacci(n - 2)
 }
 
 cetak("Fibonacci ke-10:", fibonacci(10))
 ```
+> Contoh lengkap yang bisa dijalankan: [`examples/fibonacci.idk`](../examples/fibonacci.idk)
+
+{{embed:examples/fibonacci.idk}}
 
 ### Program 2: Kontrol Program
 ```indonesiaku
@@ -164,18 +155,21 @@ fungsi hitung_luas(panjang, lebar) {
 cetak("Luas:", hitung_luas(10, 5))
 ```
 
+> Kumpulan contoh lengkap ada di folder [`examples/`](../examples/) — mis.
+> `list.idk`, `kamus.idk`, `oop/kelas.idk`, `coba_kecuali.idk`, `todo_cli.idk`,
+> `todo_server.idk`.
+
 ---
 
 ## Statistik Project
 
 | Metrik | Nilai |
 |--------|-------|
-| Lines of Code (VM) | ~3.5K |
-| Number of Opcodes | 31+ |
-| Test Coverage | 95% |
-| Example Programs | 20 |
-| Documentation | 3K+ lines |
-| Git Commits | 12+ |
+| Baris kode (src) | ~4.9K |
+| Jumlah opcode VM | 47 |
+| Contoh program (`examples/`) | 50+ |
+| Golden test | 51 |
+| Pustaka standar (`pustaka/`) | teks, daftar, matematika, kamus, json, http |
 
 ---
 
@@ -241,6 +235,5 @@ Lihat file **KONTRIBUSI.md** untuk detail lengkap.
 ---
 
 **Status**: Aktif dikembangkan  
-**Latest Version**: v0.1.1  
-**Release Date**: Oktober 2025  
+**Latest Version**: v0.4.0  
 **Maintainer**: Teguh Rijanandi

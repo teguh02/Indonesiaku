@@ -66,7 +66,7 @@ Rekomendasi:
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/teguhriyan/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku.git
 cd Indonesiaku
 ```
 
@@ -274,7 +274,7 @@ git clone https://github.com/USERNAME/Indonesiaku.git
 cd Indonesiaku
 
 # 3. Add upstream remote
-git remote add upstream https://github.com/teguhriyan/Indonesiaku.git
+git remote add upstream https://github.com/teguh02/Indonesiaku.git
 
 # 4. Create feature branch
 git checkout -b feature/deskripsi
@@ -643,7 +643,7 @@ Seharusnya: ...
 - **Issues**: Bug reports, feature requests
 - **Discussions**: Q&A, ideas, general discussion
 - **Pull Requests**: Code review discussions
-- **Email**: teguhriyan@example.com (untuk kontribusi besar)
+- **Email**: teguhrijanandi02@gmail.com (untuk kontribusi besar)
 
 ### Code Review
 

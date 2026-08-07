@@ -59,3 +59,5 @@ _contoh_berkas_sementara.txt
 _todo_demo_sementara.json
 data_todo.json
 data_todo_server.json
+# Local Netlify folder
+.netlify

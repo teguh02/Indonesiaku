@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tentang — Indonesiaku</title>
+  <meta name="description" content="Tentang bahasa pemrograman Indonesiaku: visi, misi, arsitektur, dan fitur." />
+  <link rel="stylesheet" href="assets/site.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">🇮🇩 Indonesiaku<span class="dot">.</span></a>
+      <div class="nav-links">
+        <a href="index.html">Beranda</a>
+        <a href="about.html" class="active">Tentang</a>
+        <a href="author.html">Penulis</a>
+        <a href="docs.html">Dokumentasi</a>
+        <a href="https://github.com/teguh02/Indonesiaku" class="hide-sm" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="wrap prose">
+    <h1>Tentang Indonesiaku</h1>
+    <p>
+      <strong>Indonesiaku</strong> adalah bahasa pemrograman yang dirancang agar
+      programming bisa dipelajari dan dipakai dalam Bahasa Indonesia. Semua kata
+      kunci — <code>jika</code>, <code>selagi</code>, <code>fungsi</code>,
+      <code>kelas</code>, <code>cetak</code> — menggunakan Bahasa Indonesia,
+      menghapus hambatan bahasa bagi pemula lokal.
+    </p>
+
+    <h2>Visi &amp; Misi</h2>
+    <blockquote>
+      Menjadi bahasa pemrograman yang membuka akses pendidikan <em>programming</em>
+      untuk jutaan penutur Bahasa Indonesia — membuktikan bahwa bahasa pemrograman
+      dapat didesain dengan keyword non-Inggris tanpa mengorbankan fitur.
+    </blockquote>
+
+    <h2>Bagaimana Cara Kerjanya?</h2>
+    <p>
+      Indonesiaku diimplementasikan sebagai <strong>bytecode virtual machine</strong>
+      dalam C11, mengikuti arsitektur ala <em>Crafting Interpreters</em> (clox):
+    </p>
+    <pre><code>Kode Sumber (.idk)
+     ↓  Scanner (lexer)
+     ↓  Compiler single-pass (Pratt parser → bytecode)
+     ↓  Virtual Machine berbasis stack + garbage collector
+     ↓  Output</code></pre>
+
+    <h2>Fitur Utama (v0.4.0)</h2>
+    <ul>
+      <li><strong>Tipe data</strong>: angka, boolean, string, <code>kosong</code>, list, kamus.</li>
+      <li><strong>Kontrol alur</strong>: <code>jika</code>/<code>jika_lain</code>/<code>selain</code>, <code>selagi</code>, <code>untuk ... dalam</code>, <code>hentikan</code>/<code>lanjut</code>.</li>
+      <li><strong>Fungsi</strong>: rekursi, closure (menangkap variabel), fungsi kelas-satu.</li>
+      <li><strong>OOP</strong>: <code>kelas</code>, <code>init</code>, <code>diri</code>, pewarisan (<code>&lt;</code>), <code>super</code>.</li>
+      <li><strong>Kesalahan</strong>: <code>naikkan</code>, <code>coba</code>/<code>kecuali</code>.</li>
+      <li><strong>Modul</strong>: <code>impor "file.idk"</code>.</li>
+      <li><strong>Pustaka standar</strong>: teks, daftar, matematika, kamus, JSON, HTTP.</li>
+      <li><strong>Infrastruktur</strong>: garbage collector mark-sweep, File I/O, waktu/tanggal, soket TCP.</li>
+    </ul>
+
+    <h2>Contoh Aplikasi Nyata</h2>
+    <p>
+      Repositori menyertakan aplikasi <strong>Todo-list JSON DB</strong> dalam dua bentuk:
+      CRUD berbasis command-line (<code>examples/todo_cli.idk</code>) dan
+      <strong>REST API HTTP server</strong> (<code>examples/todo_server.idk</code>) —
+      keduanya diuji otomatis di CI lintas Linux, macOS, dan Windows.
+    </p>
+
+    <h2>Untuk Siapa?</h2>
+    <ul>
+      <li>✅ Pelajar Indonesia yang baru belajar programming</li>
+      <li>✅ Sekolah/universitas yang mengajar dasar pemrograman</li>
+      <li>✅ Proyek edukasi &amp; penelitian tentang desain bahasa</li>
+      <li>✅ Siapa pun yang ingin ngoding dalam bahasa sendiri</li>
+    </ul>
+
+    <p style="margin-top:2rem;">
+      <a class="btn btn-primary" href="docs.html">Baca Dokumentasi Lengkap →</a>
+    </p>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div><strong>🇮🇩 Indonesiaku</strong><div class="muted">MIT License · v0.4.0</div></div>
+      <div>
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://hub.docker.com/r/teguh02/indonesiaku" target="_blank" rel="noopener">Docker Hub</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

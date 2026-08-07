@@ -46,10 +46,10 @@ Pastikan komputer Anda terhubung ke internet untuk:
 
 1. **Download Installer**
    - Buka: https://github.com/teguh02/Indonesiaku/releases
-   - Download file: `Indonesiaku-Setup-v0.1.1.exe` (latest version)
+   - Download file: `Indonesiaku-Setup-v0.4.0.exe` (latest version)
 
 2. **Jalankan Installer**
-   - Double-click file `Indonesiaku-Setup-v0.1.1.exe`
+   - Double-click file `Indonesiaku-Setup-v0.4.0.exe`
    - Ikuti wizard instalasi: Next → Next → Install → Finish
    - Tunggu hingga instalasi selesai (± 1 menit)
 
@@ -248,7 +248,7 @@ docker pull teguh02/indonesiaku:latest
 **Atau gunakan versi specific:**
 
 ```bash
-docker pull teguh02/indonesiaku:v0.1.2
+docker pull teguh02/indonesiaku:v0.4.0
 ```
 
 **Verifikasi image sudah di-pull:**
@@ -397,7 +397,7 @@ docker rm indonesiaku-bg
 
 ```bash
 docker run --rm teguh02/indonesiaku:latest indk -v
-# Output: Indonesiaku v0.1.2
+# Output: Indonesiaku v0.4.0
 ```
 
 **Check binary location:**
@@ -471,7 +471,7 @@ docker commit <container_id> my-indonesiaku:snapshot
 docker search indonesiaku
 
 # Pull dengan tag spesifik
-docker pull teguh02/indonesiaku:v0.1.2
+docker pull teguh02/indonesiaku:v0.4.0
 
 # List local images
 docker images
@@ -552,7 +552,7 @@ git --version
 cd ~/
 
 # Clone repository
-git clone https://github.com/teguhriyan/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku.git
 cd Indonesiaku
 ```
 
@@ -674,7 +674,7 @@ brew install git
 cd ~/
 
 # Clone repository
-git clone https://github.com/teguhriyan/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku.git
 cd Indonesiaku
 ```
 
@@ -1077,7 +1077,7 @@ Jika mengalami masalah:
 
 3. **Community**
    - GitHub Discussions
-   - Email: teguhriyan@gmail.com
+   - Email: teguhrijanandi02@gmail.com
 
 ---
 

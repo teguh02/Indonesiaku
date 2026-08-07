@@ -10,8 +10,8 @@ Selamat datang di dokumentasi lengkap **Bahasa Pemrograman Indonesiaku** - Bahas
 Pengenalan umum tentang Bahasa Pemrograman Indonesiaku, sejarah, visi, dan misi.
 - Apa itu Bahasa Pemrograman Indonesiaku?
 - Mengapa dibuat?
-- Fitur utama v0.1
-- Roadmap pengembangan v0.2-v1.0
+- Fitur utama v0.4.0
+- Roadmap pengembangan
 
 ### 2. [Panduan Instalasi](02_INSTALASI.md)
 Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem operasi.
@@ -23,13 +23,12 @@ Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem oper
 
 ### 3. [Panduan Sintaks](03_PANDUAN_SINTAKS.md)
 Panduan lengkap penggunaan syntax dan grammar Bahasa Pemrograman Indonesiaku dengan contoh-contoh praktis.
-- Tipe data (numbers, strings, booleans, null)
-- Variabel & scope
-- Operator (aritmatika, perbandingan, logika)
-- Percabangan (if/else/elif)
-- Perulangan (while loops)
-- Fungsi & rekursi
-- Best practices & patterns
+- Tipe data (angka, string, boolean, kosong, list, kamus)
+- Variabel & scope, operator, assignment gabungan
+- Percabangan (`jika`/`jika_lain`/`selain`)
+- Perulangan (`selagi`, `untuk...dalam`, `hentikan`/`lanjut`)
+- Fungsi, rekursi, closure
+- Kelas & OOP, exception, modul (`impor`)
 
 ### 4. [Panduan Kontribusi](04_KONTRIBUSI.md)
 Panduan untuk berkontribusi dalam pengembangan Bahasa Pemrograman Indonesiaku.
@@ -61,8 +60,8 @@ Kesimpulan, tips, dan informasi tambahan.
 
 ### 7. [Referensi Pustaka Standar](07_PUSTAKA_STANDAR.md)
 Daftar lengkap fungsi bawaan dan pustaka standar.
-- Fungsi bawaan: matematika, string, list, kamus, konversi, berkas, waktu
-- Pustaka `.idk`: `teks`, `daftar`, `matematika`, `kamus`
+- Fungsi bawaan: matematika, string, list, kamus, konversi, berkas, waktu, soket
+- Pustaka `.idk`: `teks`, `daftar`, `matematika`, `kamus`, `json`, `http`
 - Signature & deskripsi tiap fungsi
 
 ---
@@ -102,24 +101,21 @@ cetak("Hasil penjumlahan:", jumlah)
 
 | Aspek | Keterangan |
 |-------|-----------|
-| **Versi** | v0.1.1 |
-| **Tipe** | Interpreted bytecode VM |
-| **Syntax** | C-style dengan keywords Indonesia |
-| **Tipe Data** | Number, Boolean, String, Null |
+| **Versi** | v0.4.0 |
+| **Tipe** | Bytecode VM (interpreted) + garbage collector |
+| **Syntax** | Kurung kurawal `{ }` dengan keyword Bahasa Indonesia |
+| **Tipe Data** | Angka, boolean, string, kosong, list, kamus |
 | **Platform** | Windows, Linux, macOS |
-| **License** | Lihat LICENSE |
+| **License** | MIT |
 
 ---
 
 ## 📚 Dokumentasi Tambahan
 
-Selain panduan di atas, project ini juga menyediakan:
-
-- **SYNTAX_REFERENCE.md** - Referensi syntax lengkap
-- **QUICKSTART.md** - Panduan cepat memulai
-- **CHANGELOG.md** - Riwayat perubahan
-- **OOP_TESTING_GUIDE.md** - Panduan OOP patterns
-- **WHY_OOP_TEST_FAILS.md** - Penjelasan limitasi v0.1
+- **[07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md)** - Referensi fungsi bawaan & pustaka
+- **[CHANGELOG.md](../CHANGELOG.md)** - Riwayat perubahan tiap versi
+- **[QUICKSTART.md](../QUICKSTART.md)** - Panduan cepat memulai
+- **[examples/](../examples/)** - 50+ contoh program siap jalan
 
 ---
 
@@ -133,9 +129,8 @@ Selain panduan di atas, project ini juga menyediakan:
 
 ## 📞 Hubungi Kami
 
-- **Email**: teguh.rijanandi@example.com
+- **Email**: teguhrijanandi02@gmail.com
 - **GitHub**: [@teguh02](https://github.com/teguh02)
-- **Twitter**: [@indonesiakudev](https://twitter.com/indonesiakudev)
 
 ---
 
@@ -151,6 +146,5 @@ Terima kasih telah menggunakan Bahasa Pemrograman Indonesiaku. Kami sangat mengh
 
 ---
 
-**Terakhir diperbarui**: 28 Oktober 2025  
 **Maintainer**: Teguh Rijanandi  
-**Version**: 1.0
+**Version**: v0.4.0
