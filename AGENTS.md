@@ -20,6 +20,23 @@ fungsi sapa(nama) {        # PHP-style braces — no ':' , no indentation rule
 
 Consequences you must respect in every change:
 
+- **There is NO indentation rule at all.** Leading whitespace is never
+  significant — not for blocks, not for errors, not for the REPL. Code written
+  entirely flush-left is fully valid Indonesiaku and must keep working:
+
+  ```indonesiaku
+  fungsi faktorial(n) {
+  jika n > 1 {
+  kembalikan n * faktorial(n - 1)
+  }
+  kembalikan 1
+  }
+  cetak(faktorial(5))        # 120 — rata kiri, tetap sah
+  ```
+
+  Inconsistent indentation (2 spaces here, 8 there, a tab in between) is
+  likewise never an error. Indentation is **only** a readability convention in
+  our examples and docs; the compiler must never reject or warn about it.
 - The scanner has **no INDENT/DEDENT tokens and must never grow them** (K4).
   Whitespace at line start carries no meaning. Statements end at a newline
   outside `()`/`[]` (B16), but a block only ends at `}`.

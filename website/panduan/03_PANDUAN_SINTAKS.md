@@ -4,6 +4,43 @@ Panduan lengkap untuk memahami dan menggunakan syntax Bahasa Pemrograman Indones
 
 ---
 
+## Dua hal yang membedakan Indonesiaku dari Python
+
+Indonesiaku meniru **perilaku** Python (truthiness, operator, lingkup
+variabel, model galat), tetapi menulisnya berbeda:
+
+1. **Blok dibungkus `{` dan `}` seperti PHP**, bukan titik dua dan indentasi.
+
+   ```indonesiaku
+   fungsi sapa(nama) {
+       jika nama == "" {
+           kembalikan "Halo, dunia!"
+       }
+       kembalikan "Halo, " + nama
+   }
+   ```
+
+2. **Tidak ada aturan indentasi sama sekali.** Spasi di awal baris tidak
+   pernah berarti. Kode rata kiri seluruhnya tetap sah, begitu pula indentasi
+   yang tidak konsisten:
+
+   ```indonesiaku
+   fungsi faktorial(n) {
+   jika n > 1 {
+   kembalikan n * faktorial(n - 1)
+   }
+   kembalikan 1
+   }
+   cetak(faktorial(5))        # 120
+   ```
+
+   Indentasi hanya soal keterbacaan — tidak akan pernah menjadi galat. Yang
+   menutup blok adalah `}`, bukan kembalinya indentasi.
+
+> Contoh: [`examples/tanpa_indentasi.idk`](../examples/tanpa_indentasi.idk)
+
+---
+
 ## 📋 Daftar Isi
 
 1. [Tipe Data](#tipe-data)

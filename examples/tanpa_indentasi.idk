@@ -1,0 +1,45 @@
+# Tidak ada aturan indentasi (K4). Berkas ini sengaja ditulis dengan
+# indentasi kacau: rata kiri, dua spasi, delapan spasi, dan tab bercampur.
+# Jika suatu saat scanner menumbuhkan INDENT/DEDENT, golden ini akan gagal.
+
+fungsi faktorial(n) {
+jika n > 1 {
+kembalikan n * faktorial(n - 1)
+}
+kembalikan 1
+}
+cetak(faktorial(5))
+
+fungsi jumlah(daftar) {
+        variabel total = 0
+  untuk x dalam daftar {
+	total = total + x
+      }
+   kembalikan total
+}
+cetak(jumlah([1, 2, 3, 4]))
+
+kelas Penghitung {
+init() {
+    diri.n = 0
+	}
+  naik() {
+diri.n = diri.n + 1
+        kembalikan diri.n
+}
+}
+
+variabel c = Penghitung()
+c.naik()
+cetak(c.naik())
+
+# Blok bersarang rata kiri sepenuhnya.
+variabel pesan = ""
+untuk i dalam rentang(3) {
+jika i == 1 {
+pesan = pesan + "satu "
+} selain {
+pesan = pesan + "lain "
+}
+}
+cetak(pesan)
