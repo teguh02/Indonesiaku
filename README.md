@@ -50,7 +50,8 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ Tipe data: angka, boolean (`benar`/`salah`), `kosong`, string
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
 - ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
-- ✅ **List** `[..]` + indexing, **Kamus** via `kamus()` + indexing string
+- ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
+- ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
@@ -351,14 +352,32 @@ Lebih banyak contoh tersedia di folder `examples/`.
 ```python
 angka = [10, 20, 30]
 cetak(angka[0])          # 10
+cetak(angka[-1])         # 30  (indeks negatif)
 tambah(angka, 40)        # [10, 20, 30, 40]
 cetak(panjang(angka))    # 4
 
-orang = kamus()
-orang["nama"] = "Budi"
-cetak(orang["nama"])     # Budi
-cetak(punya(orang, "umur"))  # salah
+# Literal kamus; kunci harus teks
+orang = {"nama": "Budi", "umur": 25}
+cetak(orang["nama"])         # Budi
+cetak(punya(orang, "kota"))  # salah
 ```
+
+`{` di posisi ekspresi = literal kamus, di posisi pernyataan = blok. Jadi
+`{"a": 1}` berdiri sendiri bukan kamus — tulis `x = {"a": 1}`.
+
+### Indeks Negatif & Irisan
+```python
+a = [10, 20, 30, 40, 50]
+cetak(a[-1])      # 50
+cetak(a[1:3])     # [20, 30]
+cetak(a[:2])      # [10, 20]
+cetak(a[3:])      # [40, 50]
+cetak(a[::2])     # [10, 30, 50]
+cetak(a[::-1])    # [50, 40, 30, 20, 10]
+cetak("halo dunia"[0:4])   # halo
+```
+Batas di-*clamp* seperti Python (`a[4:1]` → `[]`), irisan daftar menghasilkan
+salinan dangkal, dan irisan teks menghitung karakter UTF-8.
 
 ### Perulangan untuk...dalam, hentikan, lanjut
 ```python

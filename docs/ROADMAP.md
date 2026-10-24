@@ -65,7 +65,7 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 | ✅ |
 | Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 | ✅ |
 | Assignment di fungsi = lokal; `global`, `nonlokal` | K3 | ✅ |
-| Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B | ⬜ |
+| Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B | ✅ |
 | Argumen bawaan & bernama; `cetak` jadi fungsi (`pisah=`, `akhir=`) | K12 | ⬜ |
 | Fungsi anonim (ekspresi `fungsi(x) { ... }`), ekspresi kondisional | 02 §B | ⬜ |
 | f-string, string `"""` multi-baris, literal `1e3`, `0x`, `0b`, `1_000` | 02 §B | ⬜ |

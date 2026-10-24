@@ -568,7 +568,9 @@ x *= 2 + 3  # -> 10 (sisi kanan dihitung utuh dulu: x = x * (2 + 3))
 ```indonesiaku
 angka = [10, 20, 30]
 cetak(angka[0])          # 10 (pengindeksan)
+cetak(angka[-1])         # 30 (indeks negatif: dihitung dari belakang)
 angka[1] = 99            # ubah elemen
+angka[-1] = 77           # elemen terakhir
 tambah(angka, 40)        # tambah ke akhir
 cetak(panjang(angka))    # 4
 x = hapus(angka)         # hapus & kembalikan elemen terakhir
@@ -585,7 +587,73 @@ cetak(matriks[0][1])     # 2
 
 ---
 
+## Indeks Negatif dan Irisan
+
+Indeks negatif menghitung dari belakang (`-1` = terakhir) dan berlaku untuk
+daftar, teks, dan rentang.
+
+```indonesiaku
+a = [10, 20, 30, 40, 50]
+cetak(a[-1])      # 50
+cetak(a[-2])      # 40
+cetak("halo"[-1]) # o
+a[-1] = 99        # penugasan juga menerima indeks negatif
+```
+
+**Irisan** `a[awal:akhir:langkah]` mengambil sebagian urutan. Setiap bagian
+boleh dikosongkan, dan aturannya mengikuti Python: batas di-*clamp*, irisan di
+luar jangkauan menghasilkan hasil kosong (bukan galat).
+
+```indonesiaku
+cetak(a[1:3])     # [20, 30]      — dari 1 sampai sebelum 3
+cetak(a[:2])      # [10, 20]      — dari awal
+cetak(a[3:])      # [40, 99]      — sampai akhir
+cetak(a[:])       # salinan penuh
+cetak(a[::2])     # [10, 30, 99]  — setiap 2 elemen
+cetak(a[::-1])    # [99, 40, 30, 20, 10] — dibalik
+cetak(a[-3:-1])   # [30, 40]      — batas negatif
+cetak(a[4:1])     # []            — kosong, bukan galat
+
+cetak("halo dunia"[0:4])   # halo
+cetak("halo"[::-1])        # olah
+```
+
+Catatan:
+
+- Irisan daftar menghasilkan **daftar baru** (salinan dangkal), jadi `b = a[:]`
+  aman untuk diubah tanpa menyentuh `a`.
+- Irisan teks menghitung **karakter** (aman untuk UTF-8), bukan byte.
+- `langkah` nol → `GalatNilai`. Mengiris rentang atau kamus → `GalatTipe`.
+- Irisan hanya untuk dibaca: `a[1:3] = ...` ditolak saat kompilasi.
+
+> Contoh: [`examples/kamus_irisan.idk`](../examples/kamus_irisan.idk)
+
+---
+
 ## Kamus (Dictionary)
+
+Kamus dibuat dengan **literal `{ }`** atau dengan `kamus()`.
+
+```indonesiaku
+orang = {"nama": "Budi", "umur": 25}
+kosong = {}
+
+# Multi-baris, koma di akhir boleh
+data = {
+    "angka": [1, 2, 3],
+    "dalam": {"inti": "ya"},
+}
+cetak(data["dalam"]["inti"])   # ya
+```
+
+> **Penting — `{` ambigu.** Indonesiaku memakai `{ }` sebagai blok (gaya PHP),
+> jadi aturannya berdasarkan posisi: di **posisi pernyataan** `{` selalu
+> membuka **blok**; di **posisi ekspresi** `{` selalu membuka **literal kamus**.
+> Karena itu `{"a": 1}` yang berdiri sendiri sebagai satu pernyataan bukan
+> kamus — tulis `x = {"a": 1}` atau `cetak({"a": 1})`.
+
+Kunci harus berupa teks; kunci lain menghasilkan `GalatTipe`. Kunci duplikat:
+nilai terakhir yang menang.
 
 ```indonesiaku
 orang = kamus()

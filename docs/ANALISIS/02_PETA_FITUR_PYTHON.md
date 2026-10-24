@@ -59,11 +59,11 @@ Prinsip penamaan:
 | Docstring / string multi-baris `"""` | | ❌ | 1 |
 | f-string | `f"Halo {nama}"` | ❌ (ada `format()`) | 1 |
 | Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ❌ | 1 |
-| Literal kamus `{"a": 1}` | | ❌ | 1 |
+| Literal kamus `{"a": 1}` | | ✅ | — |
 | Literal tupel `(1, 2)` | | ❌ | 2 |
 | Literal himpunan `{1, 2}` | | ❌ | 2 |
-| Indeks negatif `a[-1]` | | ❌ | 1 |
-| Irisan `a[1:3]`, `a[::-1]` | | ❌ (ada `potong`, `daftar_iris`) | 1 |
+| Indeks negatif `a[-1]` | | ✅ | — |
+| Irisan `a[1:3]`, `a[::-1]` | | ✅ daftar & teks | — |
 | Penugasan berganda `a, b = 1, 2` / tukar | | ❌ | 2 |
 | Unpacking `a, *sisa = daftar` | | ❌ | 2 |
 | Ekspresi kondisional `x jika c selain y` | | ❌ | 1 |
@@ -89,9 +89,9 @@ Prinsip penamaan:
 | `float` | `desimal` | 🟡 | — | Presisi cetak salah (B10) |
 | `complex` | `kompleks` | ❌ | 8 | Prioritas rendah |
 | `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); tanpa metode |
-| `list` | `daftar` | 🟡 | 1 | Tanpa metode, irisan, `+`, `*` |
+| `list` | `daftar` | 🟡 | 1 | Irisan sudah ada; tanpa metode, `+`, `*` |
 | `tuple` | `tupel` | ❌ | 2 | |
-| `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; tanpa literal |
+| `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
 | `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
 | `range` | `rentang` | ✅ | — | Objek malas, seperti Python 3 |
 | `bytes` / `bytearray` | `bita` / `larik_bita` | ❌ | 6 | Diperlukan untuk berkas biner, jaringan |
@@ -164,7 +164,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `eval` / `exec` / `compile` | `evaluasi` / `eksekusi` | ❌ | 6 |
 | `property` / `staticmethod` / `classmethod` | `properti` / `metode_statis` / `metode_kelas` | ❌ | 4 |
 | `object` / `super` | `objek` / `super` | 🟡 `super` | 4 |
-| `slice` | `irisan` | ❌ | 2 |
+| `slice` | `irisan` | ✅ sintaks `[a:b:c]` | — |
 | `bytes` / `bytearray` / `memoryview` | `bita` / `larik_bita` / — | ❌ | 6 |
 | `frozenset` / `complex` | `himpunan_beku` / `kompleks` | ❌ | 8 |
 | `breakpoint` | `titik_henti` | ❌ | 7 |

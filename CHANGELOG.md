@@ -32,6 +32,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   mengakhiri pernyataan; newline di dalam keduanya boleh untuk pemanggilan dan
   list multiline. Titik koma tetap dapat memisahkan pernyataan pada satu baris.
 
+- ✨ **Literal kamus, indeks negatif, dan irisan:** `{"nama": "Budi"}` (kunci
+  harus teks, urutan penyisipan dipertahankan, koma akhir & multi-baris boleh),
+  `a[-1]` untuk daftar/teks/rentang termasuk pada penugasan, serta irisan
+  `a[awal:akhir:langkah]` untuk daftar dan teks dengan aturan Python (batas
+  di-*clamp*, langkah negatif membalik, `a[:]` menyalin). `{` di posisi ekspresi
+  adalah literal kamus; di posisi pernyataan tetap blok.
+
 ### Changed — Fase 1 (merusak kompatibilitas)
 - ⚠️ **Assignment di dalam fungsi membuat variabel lokal (K3)**, seperti Python.
   Dulu `x = 5` di dalam fungsi menulis ke global. Untuk menulis ke luar fungsi,
