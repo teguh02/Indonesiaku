@@ -107,6 +107,7 @@ static void blackenObject(Obj* object) {
             break;
         case OBJ_DICT:
             markTable(&((ObjDict*)object)->table);
+            markArray(&((ObjDict*)object)->keys);
             break;
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
@@ -175,6 +176,7 @@ static void freeObject(Obj* object) {
         case OBJ_DICT: {
             ObjDict* dict = (ObjDict*)object;
             freeTable(&dict->table);
+            freeValueArray(&dict->keys);
             FREE(ObjDict, object);
             break;
         }

@@ -262,7 +262,57 @@ Value nativeFnHapusKunci(int argCount, Value* args) {
         nativeRaise("hapus_kunci() memerlukan (kamus, string)");
         return BOOL_VAL(false);
     }
-    return BOOL_VAL(tableDelete(&AS_DICT(args[0])->table, AS_STRING(args[1])));
+    return BOOL_VAL(dictDelete(AS_DICT(args[0]), AS_STRING(args[1])));
+}
+
+// enumerasi(urutan[, awal]) - pasangan [indeks, nilai] untuk iterable dasar
+Value nativeFnEnumerasi(int argCount, Value* args) {
+    if (argCount < 1 || argCount > 2) {
+        nativeRaise("enumerasi() memerlukan 1 atau 2 argumen");
+        return KOSONG_VAL;
+    }
+    if (argCount == 2 && !IS_NUMBER(args[1])) {
+        nativeRaise("enumerasi() argumen awal harus angka");
+        return KOSONG_VAL;
+    }
+
+    Value urutan = args[0];
+    int count;
+    if (IS_LIST(urutan)) count = AS_LIST(urutan)->items.count;
+    else if (IS_STRING(urutan)) count = AS_STRING(urutan)->charCount;
+    else if (IS_RANGE(urutan)) count = (int)rangeLength(AS_RANGE(urutan));
+    else if (IS_DICT(urutan)) count = dictLength(AS_DICT(urutan));
+    else {
+        nativeRaise("enumerasi() hanya menerima list, teks, rentang, atau kamus");
+        return KOSONG_VAL;
+    }
+
+    double awal = argCount == 2 ? AS_NUMBER(args[1]) : 0;
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));
+    for (int i = 0; i < count; i++) {
+        ObjList* pasangan = newList();
+        push(OBJ_VAL(pasangan));
+        Value nilai;
+        if (IS_LIST(urutan)) nilai = AS_LIST(urutan)->items.values[i];
+        else if (IS_STRING(urutan)) {
+            ObjString* teks = AS_STRING(urutan);
+            int offset = utf8ByteOffset(teks, i);
+            nilai = OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
+        } else if (IS_RANGE(urutan)) {
+            ObjRange* range = AS_RANGE(urutan);
+            nilai = NUMBER_VAL(range->start + i * range->step);
+        } else nilai = dictKeyAt(AS_DICT(urutan), i);
+
+        push(nilai);
+        writeValueArray(&pasangan->items, NUMBER_VAL(awal + i));
+        writeValueArray(&pasangan->items, nilai);
+        pop();
+        writeValueArray(&hasil->items, OBJ_VAL(pasangan));
+        pop();
+    }
+    pop();
+    return OBJ_VAL(hasil);
 }
 
 Value nativeFnKunci(int argCount, Value* args) {
@@ -278,11 +328,8 @@ Value nativeFnKunci(int argCount, Value* args) {
     ObjList* keys = newList();
     // Protect the new list from GC while we populate it.
     push(OBJ_VAL(keys));
-    for (int i = 0; i < dict->table.capacity; i++) {
-        Entry* entry = &dict->table.entries[i];
-        if (entry->key != NULL) {
-            writeValueArray(&keys->items, OBJ_VAL(entry->key));
-        }
+    for (int i = 0; i < dictLength(dict); i++) {
+        writeValueArray(&keys->items, dictKeyAt(dict, i));
     }
     pop();
     return OBJ_VAL(keys);
@@ -869,8 +916,8 @@ Value nativeFnWaktu(int argCount, Value* args) {
 // Helper: set a numeric entry on a dict (key is a C string).
 static void dictSetNum(ObjDict* dict, const char* key, double num) {
     ObjString* k = copyString(key, (int)strlen(key));
-    push(OBJ_VAL(k));  // keep reachable during tableSet allocation
-    tableSet(&dict->table, k, NUMBER_VAL(num));
+    push(OBJ_VAL(k));  // keep reachable during dictionary growth
+    dictSet(dict, k, NUMBER_VAL(num));
     pop();
 }
 

@@ -121,10 +121,14 @@ static TokenType identifierType() {
                 switch (scanner.start[1]) {
                     case 'k': return checkKeyword(2, 6, "hirnya", TOKEN_AKHIRNYA);
                     case 't': return checkKeyword(2, 2, "au", TOKEN_ATAU);
+                    case 'd': return checkKeyword(1, 5, "dalah", TOKEN_ADALAH);
                 }
             }
             break;
         case 'b':
+            if (scanner.current - scanner.start > 1 && scanner.start[1] == 'u') {
+                return checkKeyword(1, 4, "ukan", TOKEN_BUKAN);
+            }
             return checkKeyword(1, 4, "enar", TOKEN_BENAR);
         case 'c':
             if (scanner.current - scanner.start > 1) {

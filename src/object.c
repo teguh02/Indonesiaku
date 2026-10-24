@@ -64,7 +64,37 @@ ObjList* newList() {
 ObjDict* newDict() {
     ObjDict* dict = ALLOCATE_OBJ(ObjDict, OBJ_DICT);
     initTable(&dict->table);
+    initValueArray(&dict->keys);
     return dict;
+}
+
+bool dictSet(ObjDict* dict, ObjString* key, Value value) {
+    bool isNew = tableSet(&dict->table, key, value);
+    if (isNew) writeValueArray(&dict->keys, OBJ_VAL(key));
+    return isNew;
+}
+
+bool dictDelete(ObjDict* dict, ObjString* key) {
+    if (!tableDelete(&dict->table, key)) return false;
+    for (int i = 0; i < dict->keys.count; i++) {
+        if (IS_STRING(dict->keys.values[i]) && AS_STRING(dict->keys.values[i]) == key) {
+            dict->keys.values[i] = KOSONG_VAL;
+            break;
+        }
+    }
+    return true;
+}
+
+Value dictKeyAt(ObjDict* dict, int index) {
+    int live = 0;
+    for (int i = 0; i < dict->keys.count; i++) {
+        Value key = dict->keys.values[i];
+        if (!IS_STRING(key)) continue;
+        Value ignored;
+        if (!tableGet(&dict->table, AS_STRING(key), &ignored)) continue;
+        if (live++ == index) return key;
+    }
+    return KOSONG_VAL;
 }
 
 // Number of live keys (the table's count also includes tombstones).

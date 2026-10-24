@@ -1,0 +1,18 @@
+untuk pasangan dalam enumerasi(["a", "b"], 1) {
+    cetak(pasangan[0], pasangan[1])
+}
+untuk pasangan dalam enumerasi("éx") {
+    cetak(pasangan[0], pasangan[1])
+}
+untuk pasangan dalam enumerasi(rentang(2, 4)) {
+    cetak(pasangan[0], pasangan[1])
+}
+variabel kamus_urut = kamus()
+kamus_urut["z"] = 1
+kamus_urut["a"] = 2
+untuk k dalam kamus_urut {
+    cetak(k)
+}
+untuk pasangan dalam enumerasi(kamus_urut) {
+    cetak(pasangan[0], pasangan[1])
+}

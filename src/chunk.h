@@ -26,6 +26,8 @@ typedef enum {
     OP_POWER,
     OP_FLOOR_DIVIDE,
     OP_IN,
+    OP_CHAIN_COMPARE,
+    OP_CHAIN_CLEANUP,
     OP_NOT,
     OP_NEGATE,
     OP_PRINT,
@@ -55,6 +57,19 @@ typedef enum {
     OP_IMPORT,
     OP_RETURN,
 } OpCode;
+
+typedef enum {
+    CHAIN_EQUAL,
+    CHAIN_NOT_EQUAL,
+    CHAIN_GREATER,
+    CHAIN_LESS,
+    CHAIN_GREATER_EQUAL,
+    CHAIN_LESS_EQUAL,
+    CHAIN_IN,
+    CHAIN_NOT_IN,
+    CHAIN_IDENTITY,
+    CHAIN_NOT_IDENTITY,
+} ChainCompare;
 
 typedef struct {
     int count;

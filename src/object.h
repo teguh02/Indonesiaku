@@ -102,6 +102,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     Table table;
+    ValueArray keys;  // insertion order; deleted keys become kosong
 } ObjDict;
 
 // rentang(awal, akhir, langkah): a lazy arithmetic sequence (Python range).
@@ -151,6 +152,9 @@ ObjUpvalue* newUpvalue(Value* slot);
 ObjList* newList();
 ObjDict* newDict();
 int dictLength(ObjDict* dict);
+bool dictSet(ObjDict* dict, ObjString* key, Value value);
+bool dictDelete(ObjDict* dict, ObjString* key);
+Value dictKeyAt(ObjDict* dict, int index);
 ObjRange* newRange(double start, double stop, double step);
 double rangeLength(ObjRange* range);
 bool rangeContains(ObjRange* range, double value);

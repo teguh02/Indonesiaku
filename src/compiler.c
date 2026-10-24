@@ -775,18 +775,80 @@ static void unary(bool canAssign) {
     }
 }
 
-// x dalam koleksi — membership, same precedence as comparisons (Python 'in').
-static void in_(bool canAssign) {
-    parsePrecedence((Precedence)(PREC_COMPARISON + 1));
-    emitByte(OP_IN);
+// Comparison operators share Python's chaining semantics: a < b < c keeps b
+// on the stack, evaluates it once, and short-circuits before evaluating c.
+static bool isComparisonStart(TokenType type) {
+    return type == TOKEN_EQUAL_EQUAL || type == TOKEN_BANG_EQUAL ||
+           type == TOKEN_GREATER || type == TOKEN_GREATER_EQUAL ||
+           type == TOKEN_LESS || type == TOKEN_LESS_EQUAL ||
+           type == TOKEN_DALAM || type == TOKEN_TIDAK ||
+           type == TOKEN_ADALAH || type == TOKEN_BUKAN;
 }
 
-// x tidak dalam koleksi — 'tidak' used as an infix operator must be followed
-// by 'dalam' (Python 'not in'). Prefix 'tidak x' is handled by unary().
-static void notIn(bool canAssign) {
-    consume(TOKEN_DALAM, "Harapkan 'dalam' setelah 'tidak' (operator 'tidak dalam').");
+static ChainCompare comparisonKind(TokenType type) {
+    switch (type) {
+        case TOKEN_EQUAL_EQUAL: return CHAIN_EQUAL;
+        case TOKEN_BANG_EQUAL: return CHAIN_NOT_EQUAL;
+        case TOKEN_GREATER: return CHAIN_GREATER;
+        case TOKEN_GREATER_EQUAL: return CHAIN_GREATER_EQUAL;
+        case TOKEN_LESS: return CHAIN_LESS;
+        case TOKEN_LESS_EQUAL: return CHAIN_LESS_EQUAL;
+        case TOKEN_DALAM: return CHAIN_IN;
+        case TOKEN_TIDAK:
+            consume(TOKEN_DALAM, "Harapkan 'dalam' setelah 'tidak' (operator 'tidak dalam').");
+            return CHAIN_NOT_IN;
+        case TOKEN_ADALAH: return CHAIN_IDENTITY;
+        case TOKEN_BUKAN:
+            consume(TOKEN_ADALAH, "Harapkan 'adalah' setelah 'bukan' (operator 'bukan adalah').");
+            return CHAIN_NOT_IDENTITY;
+        default: fatalError("Operator perbandingan tidak valid.");
+    }
+    return CHAIN_EQUAL;
+}
+
+static void emitComparison(ChainCompare op) {
+    switch (op) {
+        case CHAIN_EQUAL:
+        case CHAIN_IDENTITY: emitByte(OP_EQUAL); break;
+        case CHAIN_NOT_EQUAL:
+        case CHAIN_NOT_IDENTITY: emitBytes(OP_EQUAL, OP_NOT); break;
+        case CHAIN_GREATER: emitByte(OP_GREATER); break;
+        case CHAIN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+        case CHAIN_LESS: emitByte(OP_LESS); break;
+        case CHAIN_LESS_EQUAL: emitBytes(OP_GREATER, OP_NOT); break;
+        case CHAIN_IN: emitByte(OP_IN); break;
+        case CHAIN_NOT_IN: emitBytes(OP_IN, OP_NOT); break;
+    }
+}
+
+static void comparison(bool canAssign) {
+    ChainCompare op = comparisonKind(parser.previous.type);
     parsePrecedence((Precedence)(PREC_COMPARISON + 1));
-    emitBytes(OP_IN, OP_NOT);
+    if (!isComparisonStart(parser.current.type)) {
+        emitComparison(op);
+        return;
+    }
+
+    int falseJumps[UINT8_COUNT];
+    int falseCount = 0;
+    for (;;) {
+        emitBytes(OP_CHAIN_COMPARE, op);
+        falseJumps[falseCount++] = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP);
+
+        advance();
+        op = comparisonKind(parser.previous.type);
+        parsePrecedence((Precedence)(PREC_COMPARISON + 1));
+        if (!isComparisonStart(parser.current.type)) {
+            emitComparison(op);
+            break;
+        }
+    }
+
+    int endJump = emitJump(OP_JUMP);
+    for (int i = 0; i < falseCount; i++) patchJump(falseJumps[i]);
+    emitByte(OP_CHAIN_CLEANUP);
+    patchJump(endJump);
 }
 
 ParseRule rules[] = {
@@ -807,13 +869,13 @@ ParseRule rules[] = {
   [TOKEN_PERCENT]       = {NULL,     binary, PREC_FACTOR},
   [TOKEN_POWER]         = {NULL,     binary, PREC_POWER},
   [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
-  [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
+  [TOKEN_BANG_EQUAL]    = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
-  [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
+  [TOKEN_EQUAL_EQUAL]   = {NULL,     comparison, PREC_COMPARISON},
+  [TOKEN_GREATER]       = {NULL,     comparison, PREC_COMPARISON},
+  [TOKEN_GREATER_EQUAL] = {NULL,     comparison, PREC_COMPARISON},
+  [TOKEN_LESS]          = {NULL,     comparison, PREC_COMPARISON},
+  [TOKEN_LESS_EQUAL]    = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
   [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
@@ -833,8 +895,10 @@ ParseRule rules[] = {
   [TOKEN_BENAR]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_VARIABEL]      = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SELAGI]        = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_TIDAK]         = {unary,    notIn,  PREC_COMPARISON},
-  [TOKEN_DALAM]         = {NULL,     in_,    PREC_COMPARISON},
+  [TOKEN_TIDAK]         = {unary,    comparison, PREC_COMPARISON},
+  [TOKEN_DALAM]         = {NULL,     comparison, PREC_COMPARISON},
+  [TOKEN_ADALAH]        = {NULL,     comparison, PREC_COMPARISON},
+  [TOKEN_BUKAN]         = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
   [TOKEN_SLASH_SLASH_EQUAL] = {NULL, NULL,   PREC_NONE},
   [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},

@@ -167,6 +167,7 @@ void initVM() {
     defineNative("kamus", nativeFnKamus);
     defineNative("punya", nativeFnPunya);
     defineNative("hapus_kunci", nativeFnHapusKunci);
+    defineNative("enumerasi", nativeFnEnumerasi);
     defineNative("kunci", nativeFnKunci);
 
     defineNative("jenis", nativeFnJenis);
@@ -535,6 +536,46 @@ static bool containsValue(Value container, Value item, bool* found) {
     return false;
 }
 
+static bool chainCompare(ChainCompare op, Value left, Value right, bool* result) {
+    switch (op) {
+        case CHAIN_EQUAL:
+        case CHAIN_IDENTITY:
+            *result = valuesEqual(left, right);
+            return true;
+        case CHAIN_NOT_EQUAL:
+        case CHAIN_NOT_IDENTITY:
+            *result = !valuesEqual(left, right);
+            return true;
+        case CHAIN_IN:
+        case CHAIN_NOT_IN:
+            if (!containsValue(right, left, result)) return false;
+            if (op == CHAIN_NOT_IN) *result = !*result;
+            return true;
+        case CHAIN_GREATER:
+        case CHAIN_GREATER_EQUAL:
+        case CHAIN_LESS:
+        case CHAIN_LESS_EQUAL:
+            if (IS_STRING(left) && IS_STRING(right)) {
+                int cmp = strcmp(AS_STRING(left)->chars, AS_STRING(right)->chars);
+                *result = op == CHAIN_GREATER ? cmp > 0 :
+                          op == CHAIN_GREATER_EQUAL ? cmp >= 0 :
+                          op == CHAIN_LESS ? cmp < 0 : cmp <= 0;
+                return true;
+            }
+            if (!IS_NUMBER(left) || !IS_NUMBER(right)) {
+                runtimeError("Operand harus berupa angka atau dua string.");
+                return false;
+            }
+            *result = op == CHAIN_GREATER ? AS_NUMBER(left) > AS_NUMBER(right) :
+                      op == CHAIN_GREATER_EQUAL ? AS_NUMBER(left) >= AS_NUMBER(right) :
+                      op == CHAIN_LESS ? AS_NUMBER(left) < AS_NUMBER(right) :
+                      AS_NUMBER(left) <= AS_NUMBER(right);
+            return true;
+    }
+    fatalError("Operator rantai perbandingan tidak valid.");
+    return false;
+}
+
 // Python truthiness (K1): salah, kosong, 0, "" and empty list/kamus/rentang
 // are false; everything else (including nan and every instance) is true.
 static bool isFalsey(Value value) {
@@ -750,6 +791,24 @@ static InterpretResult run() {
                 push(BOOL_VAL(found));
                 break;
             }
+            case OP_CHAIN_COMPARE: {
+                ChainCompare op = (ChainCompare)READ_BYTE();
+                Value right = peek(0);
+                bool result;
+                if (!chainCompare(op, peek(1), right, &result)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                vm.stackTop -= 2;
+                push(right);
+                push(BOOL_VAL(result));
+                break;
+            }
+            case OP_CHAIN_CLEANUP: {
+                Value result = pop();
+                pop();
+                push(result);
+                break;
+            }
             case OP_FLOOR_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
                     runtimeError("Operand harus berupa angka.");
@@ -897,6 +956,14 @@ static InterpretResult run() {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     push(NUMBER_VAL(range->start + index * range->step));
+                } else if (IS_DICT(peek(1)) && IS_NUMBER(peek(0))) {
+                    int index = (int)AS_NUMBER(pop());
+                    ObjDict* dict = AS_DICT(pop());
+                    if (index < 0 || index >= dictLength(dict)) {
+                        runtimeError("Indeks kamus di luar jangkauan.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    push(dictKeyAt(dict, index));
                 } else if (IS_DICT(peek(1)) && IS_STRING(peek(0))) {
                     ObjString* key = AS_STRING(pop());
                     ObjDict* dict = AS_DICT(pop());
@@ -946,7 +1013,7 @@ static InterpretResult run() {
                     ObjDict* dict = AS_DICT(peek(2));
                     ObjString* key = AS_STRING(peek(1));
                     Value value = peek(0);
-                    tableSet(&dict->table, key, value);
+                    dictSet(dict, key, value);
                     pop();  // value
                     pop();  // key
                     pop();  // dict
@@ -969,6 +1036,8 @@ static InterpretResult run() {
                     push(NUMBER_VAL(AS_LIST(seq)->items.count));
                 } else if (IS_RANGE(seq)) {
                     push(NUMBER_VAL(rangeLength(AS_RANGE(seq))));
+                } else if (IS_DICT(seq)) {
+                    push(NUMBER_VAL(dictLength(AS_DICT(seq))));
                 } else if (IS_STRING(seq)) {
                     push(NUMBER_VAL(AS_STRING(seq)->charCount));
                 } else {

@@ -99,6 +99,10 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_FLOOR_DIVIDE", offset);
         case OP_IN:
             return simpleInstruction("OP_IN", offset);
+        case OP_CHAIN_COMPARE:
+            return byteInstruction("OP_CHAIN_COMPARE", chunk, offset);
+        case OP_CHAIN_CLEANUP:
+            return simpleInstruction("OP_CHAIN_CLEANUP", offset);
         case OP_NOT:
             return simpleInstruction("OP_NOT", offset);
         case OP_NEGATE:

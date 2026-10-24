@@ -1,0 +1,17 @@
+variabel panggilan = 0
+fungsi tengah() {
+    panggilan = panggilan + 1
+    kembalikan 2
+}
+
+cetak(1 < tengah() < 3)
+cetak(panggilan)
+cetak(3 < tengah() < 4)
+cetak(3 < 2 < tengah())
+variabel b = [1]
+variabel c = b
+cetak(1 dalam b == c)
+variabel a = [1]
+variabel sama = a
+cetak(a adalah sama)
+cetak(a bukan adalah [1])
