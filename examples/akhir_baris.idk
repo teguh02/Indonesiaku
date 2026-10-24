@@ -1,0 +1,27 @@
+# Newline outside grouping separates statements.
+variabel nilai = 7
+nilai
+(3)
+
+cetak(
+    "argumen",
+    nilai
+)
+
+variabel daftar = [
+    1,
+    2,
+    3
+]
+cetak(panjang(daftar))
+
+jika benar {
+    cetak("blok")
+}
+jika_lain salah {
+    cetak("tidak")
+} selain {
+    cetak("selain")
+}
+
+cetak("satu"); cetak("dua")

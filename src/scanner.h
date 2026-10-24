@@ -8,7 +8,7 @@ typedef enum {
     TOKEN_LEFT_BRACKET, TOKEN_RIGHT_BRACKET,
     TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
     TOKEN_COLON,      // dicadangkan: irisan a[1:3] & literal kamus (Fase 1)
-    TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
+    TOKEN_SEMICOLON, TOKEN_NEWLINE, TOKEN_SLASH, TOKEN_STAR,
     TOKEN_PERCENT, TOKEN_POWER,
 
     // One or two character tokens.
@@ -50,6 +50,7 @@ typedef struct {
     const char* start;
     const char* current;
     int line;
+    int groupingDepth;
 } ScannerState;
 
 void initScanner(const char* source);

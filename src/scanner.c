@@ -8,6 +8,7 @@ typedef struct {
     const char* start;
     const char* current;
     int line;
+    int groupingDepth;
 } Scanner;
 
 Scanner scanner;
@@ -16,10 +17,11 @@ void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
     scanner.line = 1;
+    scanner.groupingDepth = 0;
 }
 
 ScannerState saveScanner() {
-    ScannerState state = {scanner.start, scanner.current, scanner.line};
+    ScannerState state = {scanner.start, scanner.current, scanner.line, scanner.groupingDepth};
     return state;
 }
 
@@ -27,6 +29,7 @@ void restoreScanner(ScannerState state) {
     scanner.start = state.start;
     scanner.current = state.current;
     scanner.line = state.line;
+    scanner.groupingDepth = state.groupingDepth;
 }
 
 static bool isAlpha(char c) {
@@ -92,6 +95,7 @@ static void skipWhitespace() {
                 advance();
                 break;
             case '\n':
+                if (scanner.groupingDepth == 0) return;
                 scanner.line++;
                 advance();
                 break;
@@ -279,14 +283,15 @@ Token scanToken() {
     if (isDigit(c)) return number();
 
     switch (c) {
-        case '(': return makeToken(TOKEN_LEFT_PAREN);
-        case ')': return makeToken(TOKEN_RIGHT_PAREN);
+        case '(': scanner.groupingDepth++; return makeToken(TOKEN_LEFT_PAREN);
+        case ')': if (scanner.groupingDepth > 0) scanner.groupingDepth--; return makeToken(TOKEN_RIGHT_PAREN);
         case '{': return makeToken(TOKEN_LEFT_BRACE);
         case '}': return makeToken(TOKEN_RIGHT_BRACE);
-        case '[': return makeToken(TOKEN_LEFT_BRACKET);
-        case ']': return makeToken(TOKEN_RIGHT_BRACKET);
+        case '[': scanner.groupingDepth++; return makeToken(TOKEN_LEFT_BRACKET);
+        case ']': if (scanner.groupingDepth > 0) scanner.groupingDepth--; return makeToken(TOKEN_RIGHT_BRACKET);
         case ':': return makeToken(TOKEN_COLON);
         case ';': return makeToken(TOKEN_SEMICOLON);
+        case '\n': scanner.line++; return makeToken(TOKEN_NEWLINE);
         case ',': return makeToken(TOKEN_COMMA);
         case '.': return makeToken(TOKEN_DOT);
         case '-':

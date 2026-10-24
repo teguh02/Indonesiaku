@@ -864,6 +864,7 @@ ParseRule rules[] = {
   [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
   [TOKEN_COLON]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_NEWLINE]       = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
   [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
   [TOKEN_PERCENT]       = {NULL,     binary, PREC_FACTOR},
@@ -1042,8 +1043,9 @@ static void classDeclaration() {
     namedVariable(className, false);  // push the class for OP_METHOD
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' sebelum badan kelas.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-        if (check(TOKEN_RIGHT_BRACE)) break;
-        if (match(TOKEN_LEWATI)) continue;  // kelas Kosong { lewati }
+        while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
+        if (check(TOKEN_RIGHT_BRACE) || check(TOKEN_EOF)) break;
+        if (match(TOKEN_LEWATI)) continue;
         method();
     }
     consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah badan kelas.");
@@ -1285,6 +1287,7 @@ static void ifStatement() {
     patchJump(thenJump);  // Patch the false condition jump
     emitByte(OP_POP);  // Pop condition from stack if false
 
+    while (match(TOKEN_NEWLINE)) { }
     if (match(TOKEN_JIKA_LAIN)) {
         ifStatement();
     } else if (match(TOKEN_SELAIN)) {
@@ -1532,7 +1535,7 @@ static void returnStatement() {
     // OP_RETURN drops the frame's 'coba' handlers by itself; only enclosing
     // 'akhirnya' blocks need code here (exitTryBlocks).
     bool hasFinally = current->finallyCount > 0;
-    if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE) || check(TOKEN_SEMICOLON)) {
+    if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE) || check(TOKEN_SEMICOLON) || check(TOKEN_NEWLINE)) {
         if (hasFinally) exitTryBlocks(current->tryDepth, 0);
         emitReturn();
         return;
@@ -1610,7 +1613,8 @@ static void synchronize() {
 }
 
 static void declaration() {
-    // Skip stray newlines between declarations
+    while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
+    if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE)) return;
 
     if (match(TOKEN_FUNGSI)) {
         funDeclaration();
@@ -1621,9 +1625,8 @@ static void declaration() {
     } else {
         statement();
     }
-    // Optional ';' separates statements on one line, as in Python:
-    // x = 1; cetak(x)
-    match(TOKEN_SEMICOLON);
+    // `;` and newline are interchangeable statement separators outside grouping.
+    while (match(TOKEN_SEMICOLON) || match(TOKEN_NEWLINE)) { }
 
     if (parser.panicMode) synchronize();
 }
