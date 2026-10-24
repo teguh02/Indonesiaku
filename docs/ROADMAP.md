@@ -51,7 +51,7 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Hapus token mati (`INDENT`/`DEDENT`/`NEWLINE`); `;` jadi pemisah pernyataan; `:` dicadangkan untuk Fase 1 | 01 §6 | ✅ |
 | Selaraskan README/panduan dengan kenyataan (semua blok kode di dokumentasi diuji dengan `indk`) | 01 §6 | ✅ |
 | Tes golden untuk setiap bug di atas | — | ✅ |
-| Putuskan K1–K14 (keputusan desain) | 03 | ⬜ |
+| Putuskan K1–K14 (keputusan desain) — semua rekomendasi disetujui | 03 | ✅ |
 
 ### Fase 1 — Inti mirip Python (0.6–0.7) — *"tutorial Python bab 1–5 bisa ditiru"*
 

@@ -10,22 +10,27 @@ Setiap keputusan memiliki **rekomendasi**. Pemilik proyek menyetujui atau
 mengganti rekomendasi; setelah disetujui, buat rencana di
 `docs/RENCANA_FITUR/` dan tandai "disetujui" di sini.
 
+**2026-10-24:** pemilik proyek menyetujui semua rekomendasi K1–K14 (blok
+tetap `{ }` untuk seri 1.x). Perubahan yang merusak kompatibilitas mengikuti
+kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
+(mis. K3 diberi peringatan kompilasi di 0.5, berlaku di 0.6).
+
 | ID | Keputusan | Rekomendasi | Merusak kompatibilitas? | Status |
 |---|---|---|---|---|
-| K1 | Truthiness | Ikuti Python | Ya | usulan |
-| K2 | Tipe angka | `bulat` + `desimal` | Ya (cetak `7/2`) | usulan |
-| K3 | Scope assignment di fungsi | Lokal secara bawaan + `global`/`nonlokal` | Ya | usulan |
-| K4 | Kurung kurawal vs indentasi | Pertahankan `{ }` untuk 1.x | Tidak | usulan |
-| K5 | Semua error runtime bisa ditangkap | Ya, dengan kelas `Galat*` | Tidak | usulan |
-| K6 | Kunci kamus hilang | `GalatKunci` + `.ambil()` | Ya | usulan |
-| K7 | `==` pada list/kamus | Struktural | Ya | usulan |
-| K8 | Kunci kamus | Semua nilai hashable | Tidak | usulan |
-| K9 | Protokol iterasi | `untuk` atas list, teks, kamus, rentang, iterator | Tidak | usulan |
-| K10 | Metode pada tipe bawaan | Ya (`a.tambah(x)`) + fungsi lama tetap ada | Tidak | usulan |
-| K11 | `jenis()` | Kembalikan objek kelas | Ya | usulan |
-| K12 | `cetak` | Fungsi biasa, argumen dipisah spasi | Ya (multi-arg) | usulan |
-| K13 | String | UTF-8 di memori, indeks & panjang per karakter (code point) | Ya | usulan |
-| K14 | Kebijakan stabilitas & versi | SemVer + periode deprecation 1 minor | — | usulan |
+| K1 | Truthiness | Ikuti Python | Ya | disetujui |
+| K2 | Tipe angka | `bulat` + `desimal` | Ya (cetak `7/2`) | disetujui |
+| K3 | Scope assignment di fungsi | Lokal secara bawaan + `global`/`nonlokal` | Ya | disetujui |
+| K4 | Kurung kurawal vs indentasi | Pertahankan `{ }` untuk 1.x | Tidak | disetujui |
+| K5 | Semua error runtime bisa ditangkap | Ya, dengan kelas `Galat*` | Tidak | disetujui — galat bisa ditangkap ✅ (Fase 0); kelas `Galat*` di Fase 1 |
+| K6 | Kunci kamus hilang | `GalatKunci` + `.ambil()` | Ya | disetujui |
+| K7 | `==` pada list/kamus | Struktural | Ya | disetujui |
+| K8 | Kunci kamus | Semua nilai hashable | Tidak | disetujui |
+| K9 | Protokol iterasi | `untuk` atas list, teks, kamus, rentang, iterator | Tidak | disetujui |
+| K10 | Metode pada tipe bawaan | Ya (`a.tambah(x)`) + fungsi lama tetap ada | Tidak | disetujui |
+| K11 | `jenis()` | Kembalikan objek kelas | Ya | disetujui |
+| K12 | `cetak` | Fungsi biasa, argumen dipisah spasi | Ya (multi-arg) | disetujui — multi-argumen ✅ (Fase 0); `pisah=`/`akhir=` di Fase 1 |
+| K13 | String | UTF-8 di memori, indeks & panjang per karakter (code point) | Ya | selesai ✅ (Fase 0) |
+| K14 | Kebijakan stabilitas & versi | SemVer + periode deprecation 1 minor | — | disetujui |
 
 ---
 
