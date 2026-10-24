@@ -1,0 +1,66 @@
+# Jalankan: docker compose -f docker/playground/docker-compose.yml up -d --build
+#
+# Dua layanan dari satu image:
+#   web    — nginx: menyajikan website/ + proxy /api/ → runner. Satu-satunya
+#            yang mengekspos port ke host/LAN.
+#   runner — python: menjalankan indk. Hanya tersambung ke jaringan `internal`,
+#            jadi tidak punya akses internet keluar dan tidak punya port publik.
+
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: docker/playground/Dockerfile
+    image: indonesiaku-website:0.4.0
+    container_name: indk-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    networks:
+      - publik
+      - internal
+    depends_on:
+      - runner
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:size=32m
+      - /var/run:size=1m
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 128m
+    cpus: 0.50
+
+  runner:
+    image: indonesiaku-website:0.4.0
+    container_name: indk-runner
+    restart: unless-stopped
+    command: ["python3", "/opt/playground/server.py", "--port", "8099"]
+    networks:
+      - internal
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,exec
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 96
+    mem_limit: 192m
+    cpus: 0.50
+
+networks:
+  publik:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true      # tanpa gateway → runner tidak bisa keluar internet
