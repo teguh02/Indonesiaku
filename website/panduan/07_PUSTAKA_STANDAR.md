@@ -68,6 +68,7 @@ Literal: `[1, 2, 3]`. Indeks baca/tulis: `list[i]`, `list[i] = x`.
 | `punya(kamus, kunci)` | Apakah kunci ada → boolean |
 | `kunci(kamus)` | List semua kunci |
 | `hapus_kunci(kamus, kunci)` | Hapus pasangan kunci-nilai |
+| `enumerasi(urutan, awal=0)` | List pasangan `[indeks, nilai]` untuk list, teks, rentang, atau kamus |
 
 Akses: `k["kunci"]`, `k["kunci"] = nilai`. Kunci berupa string.
 

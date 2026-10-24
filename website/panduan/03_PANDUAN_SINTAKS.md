@@ -188,6 +188,19 @@ x >= y    # benar (lebih besar atau sama)
 x <= y    # salah (lebih kecil atau sama)
 ```
 
+### Identitas dan rantai perbandingan
+
+`adalah` membandingkan identitas objek; `bukan adalah` adalah kebalikannya. Perbandingan dapat dirantai seperti Python: operand tengah dihitung sekali dan evaluasi berhenti saat salah.
+
+```indonesiaku
+variabel daftar = [1]
+variabel alias = daftar
+cetak(daftar adalah alias)       # benar
+cetak(daftar bukan adalah [1])   # benar
+cetak(1 < x < 3)
+cetak("apel" dalam buah == buah)
+```
+
 ### Operator Logika
 
 ```indonesiaku
@@ -561,8 +574,11 @@ orang["umur"] = 25
 cetak(orang["nama"])         # Budi
 cetak(punya(orang, "umur"))  # benar
 hapus_kunci(orang, "umur")
-untuk k dalam kunci(orang) {  # iterasi kunci
+untuk k dalam orang {             # iterasi kunci sesuai penyisipan
     cetak(k, "=", orang[k])
+}
+untuk pasangan dalam enumerasi(orang, 1) {
+    cetak(pasangan[0], pasangan[1])
 }
 ```
 > Contoh: [`examples/kamus.idk`](../examples/kamus.idk)

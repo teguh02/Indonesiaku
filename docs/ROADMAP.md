@@ -60,8 +60,8 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Truthiness Python ([rencana](RENCANA_FITUR/selesai/kebenaran_python.md)) | K1 | ✅ |
 | `rentang()` ([rencana](RENCANA_FITUR/selesai/rentang.md)); `untuk` atas teks dan rentang | K9 | ✅ |
 | Operator `dalam` / `tidak dalam` ([rencana](RENCANA_FITUR/selesai/operator_dalam.md)) | 02 §A | ✅ |
-| `enumerasi()`, `untuk` atas kamus | K9 | ⬜ |
-| `adalah` / `bukan`, rantai perbandingan (`1 < x < 3`, `a dalam b == c`) | 02 §A–B | ⬜ |
+| `enumerasi()`, `untuk` atas kamus | K9 | ✅ |
+| `adalah` / `bukan`, rantai perbandingan (`1 < x < 3`, `a dalam b == c`) | 02 §A–B | ✅ |
 | Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 | ⬜ |
 | Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 | ⬜ |
 | Assignment di fungsi = lokal; `global`, `nonlokal` | K3 | ⬜ |

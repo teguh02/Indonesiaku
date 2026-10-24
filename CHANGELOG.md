@@ -16,6 +16,12 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   teks (substring), kamus (kunci), dan rentang; presedensi sama dengan
   perbandingan.
 - ✨ `untuk huruf dalam "teks"` mengiterasi per karakter.
+- ✨ **Rantai perbandingan dan identitas:** `1 < x < 3`, `a dalam b == c`,
+  `adalah`, dan `bukan adalah`. Operand tengah dievaluasi sekali dan rantai
+  berhenti saat perbandingan pertama salah.
+- ✨ **`enumerasi()` dan kamus iterable:** `enumerasi(urutan, awal=0)` membuat
+  pasangan `[indeks, nilai]`; `untuk k dalam kamus` mengiterasi kunci menurut
+  urutan penyisipan.
 
 ### Changed — Fase 1 (merusak kompatibilitas)
 - ⚠️ **Truthiness mengikuti Python (K1)**: `0`, `""`, `[]`, kamus kosong, dan
