@@ -83,18 +83,18 @@
 
       <!-- ================= INDONESIA ================= -->
       <article x-show="lang === 'id'" class="mt-4">
-        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">Sebuah bahasa kecil<br class="hidden sm:block" /> untuk dibongkar dan dipelajari</h1>
+        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">Tentang Indonesiaku</h1>
         <p class="mt-5 text-lg leading-relaxed text-ink-2 dark:text-paper/70">
-          <strong>Indonesiaku</strong> adalah interpreter yang saya buat dengan C11. Kata kuncinya memakai Bahasa Indonesia—<code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">jika</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">selagi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">fungsi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">kelas</code>, dan <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">cetak</code>—supaya contoh program dasar dapat dibaca tanpa menerjemahkan tiap perintah.
+          <strong>Indonesiaku</strong> adalah bahasa pemrograman berbasis bytecode VM yang dibangun dengan C11. Kata kuncinya memakai Bahasa Indonesia—<code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">jika</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">selagi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">fungsi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">kelas</code>, dan <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">cetak</code>—agar program dapat ditulis dan dibaca dengan istilah yang akrab.
         </p>
 
-        <h2 class="mt-12 text-2xl font-bold tracking-tight">Kenapa dibuat</h2>
+        <h2 class="mt-12 text-2xl font-bold tracking-tight">Bahasa pemrograman dalam Bahasa Indonesia</h2>
         <blockquote class="mt-4 border-l-4 border-brand-600 bg-brand-50/60 px-5 py-4 text-ink-2 dark:border-brand-400 dark:bg-brand-900/25 dark:text-paper/70">
-          Proyek ini adalah ruang belajar: bagaimana teks sumber dipindai, diurai, diubah menjadi bytecode, lalu dijalankan oleh virtual machine. Bahasa Indonesianya adalah pilihan desain, bukan sekadar lapisan terjemahan.
+          Indonesiaku dirancang untuk memberi pilihan sintaks Bahasa Indonesia tanpa mengorbankan fitur dasar yang dibutuhkan saat menulis program: fungsi, kelas, modul, koleksi, penanganan kesalahan, JSON, dan HTTP.
         </blockquote>
 
         <h2 class="mt-12 text-2xl font-bold tracking-tight">Cara kerjanya</h2>
-        <p class="mt-3 text-ink-2 dark:text-paper/70">Kode <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">.idk</code> dikompilasi dalam satu lintasan lalu dijalankan oleh VM berbasis stack. Arsitekturnya terinspirasi dari <em>Crafting Interpreters</em> (clox), tetapi implementasinya dapat dibaca langsung di repositori.</p>
+        <p class="mt-3 text-ink-2 dark:text-paper/70">Kode <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">.idk</code> dikompilasi dalam satu lintasan menjadi bytecode, lalu dijalankan oleh VM berbasis stack. Implementasinya terinspirasi dari <em>Crafting Interpreters</em> (clox) dan tersedia terbuka di repositori.</p>
         <div class="code-card mt-5 rounded-xl2 p-5 shadow-lift ring-1 ring-white/10">
           <pre><code>Kode sumber (.idk)
   <span class="tok-p">↓</span>  Scanner                    <span class="tok-c"># token</span>
