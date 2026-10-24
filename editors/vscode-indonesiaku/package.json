@@ -1,0 +1,68 @@
+{
+  "name": "indonesiaku",
+  "displayName": "Indonesiaku",
+  "description": "Language support for Indonesiaku (.idk): syntax highlighting, snippets, and completions.",
+  "version": "0.1.0",
+  "publisher": "teguh02",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "indonesiaku",
+    "indk",
+    "bahasa indonesia",
+    "programming language"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teguh02/Indonesiaku.git"
+  },
+  "main": "./extension.js",
+  "files": [
+    "extension.js",
+    "language-configuration.json",
+    "syntaxes",
+    "snippets",
+    "README.md",
+    "LICENSE"
+  ],
+  "activationEvents": [
+    "onLanguage:indonesiaku"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "indonesiaku",
+        "aliases": [
+          "Indonesiaku",
+          "indk"
+        ],
+        "extensions": [
+          ".idk",
+          ".indk"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "indonesiaku",
+        "scopeName": "source.indonesiaku",
+        "path": "./syntaxes/indonesiaku.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "indonesiaku",
+        "path": "./snippets/indonesiaku.code-snippets"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "npx @vscode/vsce package"
+  }
+}

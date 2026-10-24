@@ -1,0 +1,86 @@
+{
+  "Fungsi": {
+    "prefix": "fungsi",
+    "body": [
+      "fungsi ${1:nama}(${2:argumen}) {",
+      "    ${0}",
+      "}"
+    ],
+    "description": "Buat fungsi Indonesiaku"
+  },
+  "Jika": {
+    "prefix": "jika",
+    "body": [
+      "jika ${1:kondisi} {",
+      "    ${0}",
+      "}"
+    ],
+    "description": "Buat percabangan jika"
+  },
+  "Jika-lain": {
+    "prefix": "jika_lain",
+    "body": [
+      "jika ${1:kondisi} {",
+      "    ${2}",
+      "} jika_lain ${3:kondisi_lain} {",
+      "    ${0}",
+      "} selain {",
+      "    ${4}",
+      "}"
+    ],
+    "description": "Buat jika, jika_lain, dan selain"
+  },
+  "Selagi": {
+    "prefix": "selagi",
+    "body": [
+      "selagi ${1:kondisi} {",
+      "    ${0}",
+      "}"
+    ],
+    "description": "Buat perulangan selagi"
+  },
+  "Untuk dalam": {
+    "prefix": "untuk",
+    "body": [
+      "untuk ${1:item} dalam ${2:daftar} {",
+      "    ${0}",
+      "}"
+    ],
+    "description": "Buat perulangan untuk ... dalam"
+  },
+  "Kelas": {
+    "prefix": "kelas",
+    "body": [
+      "kelas ${1:NamaKelas} {",
+      "    init(${2:argumen}) {",
+      "        ${0}",
+      "    }",
+      "}"
+    ],
+    "description": "Buat kelas dengan konstruktor"
+  },
+  "Coba kecuali": {
+    "prefix": "coba",
+    "body": [
+      "coba {",
+      "    ${1}",
+      "} kecuali ${2:galat} {",
+      "    ${0}",
+      "}"
+    ],
+    "description": "Buat penanganan kesalahan"
+  },
+  "Impor pustaka": {
+    "prefix": "impor",
+    "body": [
+      "impor \"pustaka/${1:modul}.idk\"",
+      "${0}"
+    ],
+    "description": "Impor pustaka standar"
+  },
+  "Cetak": {
+    "prefix": "cetak",
+    "body": "cetak(${0})",
+    "description": "Cetak nilai"
+  }
+}

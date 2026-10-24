@@ -1,0 +1,78 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Indonesiaku",
+  "scopeName": "source.indonesiaku",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#constants" },
+    { "include": "#functions" },
+    { "include": "#numbers" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.indonesiaku",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.indonesiaku",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.indonesiaku", "match": "\\\\[ntr\\\"'\\\\]" }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.indonesiaku",
+          "match": "\\b(?:akhirnya|atau|coba|dalam|dan|dari|dengan|fungsi|hentikan|impor|jika(?:_lain)?|kecuali|kelas|kembalikan|lanjut|lewati|naikkan|sebagai|selagi|selain|super|tidak|untuk|variabel)\\b"
+        },
+        {
+          "name": "keyword.other.indonesiaku",
+          "match": "\\b(?:diri)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.indonesiaku",
+          "match": "\\b(?:benar|salah|kosong)\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.indonesiaku",
+          "match": "\\b(?:cetak|panjang|jenis|input|format|ke_angka|ke_teks|kamus|min|max|abs|akar|pangkat|bulat|lantai|atap|acak|acak_bulat|huruf_besar|huruf_kecil|ganti|tambah|hapus|punya|kunci|hapus_kunci|karakter|potong|ord|chr|waktu|tanggal|format_tanggal|buka_berkas|tutup|baca|baca_baris|baca_semua|tulis|tulis_semua|tambah_berkas|ada_berkas|hapus_berkas|sisip|hapus_pada|soket_dengar|soket_terima|soket_baca|soket_tulis|soket_tutup)\\b"
+        },
+        {
+          "name": "entity.name.function.indonesiaku",
+          "match": "(?<=\\bfungsi\\s)[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.indonesiaku", "match": "\\b(?:0[xX][0-9a-fA-F]+|\\d+(?:\\.\\d+)?)\\b" }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        { "name": "keyword.operator.indonesiaku", "match": "(?:==|!=|<=|>=|//=|\\*\\*=|\\+=|-=|\\*=|/=|%=|//|\\*\\*|[+*/%<>=!])" }
+      ]
+    }
+  }
+}
