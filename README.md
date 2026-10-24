@@ -154,6 +154,16 @@ aktif = benar
 data = kosong
 ```
 
+### Akhir Baris
+Setiap baris di luar `()` dan `[]` mengakhiri pernyataan; `;` tetap boleh untuk dua pernyataan pada satu baris. Newline di dalam panggilan atau list dapat dipakai untuk format multi-baris.
+
+```python
+cetak(
+    "Halo",
+    nama
+)
+```
+
 ### Cetak (Print)
 ```python
 cetak("Halo, dunia!")

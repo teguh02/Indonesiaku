@@ -173,6 +173,8 @@ Aturannya sama dengan Python:
 
 > Contoh: [`examples/operator_aritmetika.idk`](../examples/operator_aritmetika.idk)
 
+> **Akhir baris adalah pemisah pernyataan.** Gunakan satu pernyataan per baris tanpa `;`. Newline di dalam `()` atau `[]` diabaikan sehingga argumen dan list dapat ditulis multi-baris; `{}` tetap digunakan untuk blok.
+
 ### Operator Perbandingan
 
 ```indonesiaku

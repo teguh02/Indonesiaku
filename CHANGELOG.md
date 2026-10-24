@@ -28,6 +28,10 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   `kecuali (GalatTipe, GalatNilai) sebagai e` didukung. `kecuali e` lama tetap
   kompatibel dan mencetak pesannya.
 
+- ✨ **Akhir baris sebagai pemisah pernyataan:** newline di luar `()`/`[]` kini
+  mengakhiri pernyataan; newline di dalam keduanya boleh untuk pemanggilan dan
+  list multiline. Titik koma tetap dapat memisahkan pernyataan pada satu baris.
+
 ### Changed — Fase 1 (merusak kompatibilitas)
 - ⚠️ **Truthiness mengikuti Python (K1)**: `0`, `""`, `[]`, kamus kosong, dan
   rentang kosong kini bernilai **salah** dalam `jika`/`selagi`/`dan`/`atau`/
