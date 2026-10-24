@@ -12,6 +12,7 @@ manusia_umur = kosong
 
 # Constructor - init object Manusia
 fungsi manusia_init(nama, umur) {
+    global manusia_nama, manusia_umur
     manusia_nama = nama
     manusia_umur = umur
 }
@@ -24,6 +25,7 @@ fungsi manusia_sapa() {
 
 # Method - celebrate birthday
 fungsi manusia_ulang_tahun() {
+    global manusia_umur
     manusia_umur = manusia_umur + 1
     cetak(manusia_nama, "sekarang berumur", manusia_umur)
 }

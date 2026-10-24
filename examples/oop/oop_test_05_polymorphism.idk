@@ -7,6 +7,7 @@
 circle_radius = 0
 
 fungsi circle_init(r) {
+    global circle_radius
     circle_radius = r
 }
 
@@ -25,6 +26,7 @@ rect_panjang = 0
 rect_lebar = 0
 
 fungsi rect_init(p, l) {
+    global rect_panjang, rect_lebar
     rect_panjang = p
     rect_lebar = l
 }
@@ -45,6 +47,7 @@ tri_alas = 0
 tri_tinggi = 0
 
 fungsi tri_init(a, t) {
+    global tri_alas, tri_tinggi
     tri_alas = a
     tri_tinggi = t
 }

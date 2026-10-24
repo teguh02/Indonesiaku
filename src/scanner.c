@@ -200,7 +200,12 @@ static TokenType identifierType() {
                 }
             }
             break;
+        case 'g':
+            return checkKeyword(1, 5, "lobal", TOKEN_GLOBAL);
         case 'n':
+            if (scanner.current - scanner.start > 1 && scanner.start[1] == 'o') {
+                return checkKeyword(2, 6, "nlokal", TOKEN_NONLOKAL);
+            }
             return checkKeyword(1, 6, "aikkan", TOKEN_NAIKKAN);
         case 's':
             if (scanner.current - scanner.start > 1) {

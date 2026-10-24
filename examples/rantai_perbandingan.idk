@@ -1,5 +1,6 @@
 variabel panggilan = 0
 fungsi tengah() {
+    global panggilan
     panggilan = panggilan + 1
     kembalikan 2
 }

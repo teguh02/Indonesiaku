@@ -87,6 +87,10 @@ typedef struct Compiler {
     Local locals[UINT8_COUNT];
     int localCount;
     Upvalue upvalues[UINT8_COUNT];
+    Token globals[UINT8_COUNT];
+    int globalCount;
+    Token nonlocals[UINT8_COUNT];
+    int nonlocalCount;
     int scopeDepth;
     int tryDepth;      // 'coba' handlers active at this point in the function
     // Enclosing 'coba' blocks that have an 'akhirnya', innermost last.
@@ -282,6 +286,8 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->function = NULL;
     compiler->type = type;
     compiler->localCount = 0;
+    compiler->globalCount = 0;
+    compiler->nonlocalCount = 0;
     compiler->scopeDepth = 0;
     compiler->tryDepth = 0;
     compiler->finallyCount = 0;
@@ -354,6 +360,13 @@ static uint8_t identifierConstant(Token* name) {
 static bool identifiersEqual(Token* a, Token* b) {
     if (a->length != b->length) return false;
     return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static bool scopeNameDeclared(Token* names, int count, Token* name) {
+    for (int i = 0; i < count; i++) {
+        if (identifiersEqual(&names[i], name)) return true;
+    }
+    return false;
 }
 
 static int resolveLocal(Compiler* compiler, Token* name) {
@@ -648,6 +661,21 @@ static void string(bool canAssign) {
 
 // If the current token is a compound assignment (+=, -=, ...), consume it and
 // store the arithmetic opcode it stands for.
+static bool isCompoundAssign(TokenType type) {
+    switch (type) {
+        case TOKEN_PLUS_EQUAL:
+        case TOKEN_MINUS_EQUAL:
+        case TOKEN_STAR_EQUAL:
+        case TOKEN_SLASH_EQUAL:
+        case TOKEN_SLASH_SLASH_EQUAL:
+        case TOKEN_PERCENT_EQUAL:
+        case TOKEN_POWER_EQUAL:
+            return true;
+        default:
+            return false;
+    }
+}
+
 static bool matchCompoundAssign(uint8_t* op) {
     static const struct { TokenType token; uint8_t op; } COMPOUND_OPS[] = {
         {TOKEN_PLUS_EQUAL,        OP_ADD},
@@ -669,13 +697,22 @@ static bool matchCompoundAssign(uint8_t* op) {
 
 static void namedVariable(Token name, bool canAssign) {
     uint8_t getOp, setOp, compoundOp;
-    int arg = resolveLocal(current, &name);
+    bool forceGlobal = scopeNameDeclared(current->globals, current->globalCount, &name);
+    bool forceNonlocal = scopeNameDeclared(current->nonlocals, current->nonlocalCount, &name);
+    int arg = -1;
+
+    if (!forceGlobal) arg = resolveLocal(current, &name);
     if (arg != -1) {
         getOp = OP_GET_LOCAL;
         setOp = OP_SET_LOCAL;
-    } else if ((arg = resolveUpvalue(current, &name)) != -1) {
+    } else if (!forceGlobal && (arg = resolveUpvalue(current, &name)) != -1) {
         getOp = OP_GET_UPVALUE;
         setOp = OP_SET_UPVALUE;
+    } else if (forceNonlocal) {
+        semanticError("'nonlokal' harus merujuk variabel pada fungsi pembungkus.");
+        arg = identifierConstant(&name);
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
     } else {
         arg = identifierConstant(&name);
         getOp = OP_GET_GLOBAL;
@@ -684,30 +721,17 @@ static void namedVariable(Token name, bool canAssign) {
 
     if (canAssign && match(TOKEN_EQUAL)) {
         if (name.start == callArgStart) {
-            // f(b=1) looks like a Python keyword argument. Compiling it as
-            // an assignment would silently pass the values positionally and
-            // create globals, so reject it until keyword arguments exist.
             semanticError("Argumen bernama (nama=nilai) belum didukung. "
                   "Kirim nilainya sesuai urutan parameter.");
         }
         parsePrecedence(PREC_ASSIGNMENT);
-        // Assignment to a name that resolves to a global is treated as an
-        // implicit definition (create-or-update), at ANY scope depth. This
-        // lets `x = 10` work without `variabel`, including inside jika/selagi/
-        // untuk bodies (which are their own scopes). Function-local variables
-        // must still use `variabel` to be captured by closures.
         if (setOp == OP_SET_GLOBAL) {
-            // OP_DEFINE_GLOBAL consumes the value; re-load it so that the
-            // assignment still evaluates to the assigned value
-            // (assignment is an expression, e.g. cetak(x = 5)).
             emitBytes(OP_DEFINE_GLOBAL, (uint8_t)arg);
             emitBytes(OP_GET_GLOBAL, (uint8_t)arg);
         } else {
             emitBytes(setOp, (uint8_t)arg);
         }
     } else if (canAssign && matchCompoundAssign(&compoundOp)) {
-        // x op= expr becomes x = x op (expr). The right side is a full
-        // expression, so x *= 2 + 3 multiplies by 5 (as in Python).
         emitBytes(getOp, (uint8_t)arg);
         expression();
         emitByte(compoundOp);
@@ -948,6 +972,89 @@ static void block() {
     consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah blok.");
 }
 
+static bool skipBalancedBraces();
+
+// K3: inside a function, `x = ...` creates a function-local. The compiler is
+// single-pass, so before compiling the body we peek over its tokens once and
+// pre-declare a slot for every name assigned there. Doing it lazily at the
+// assignment would put the slot inside whatever jika/selagi scope we happen to
+// be in and discard it at that block's end.
+// Nested fungsi/kelas bodies are skipped: they get their own prescan.
+static void prescanFunctionBody() {
+    Token pending[UINT8_COUNT];
+    int pendingCount = 0;
+    Token declared[UINT8_COUNT];   // `variabel x` at the body's own depth
+    int declaredCount = 0;
+    ScannerState saved = saveScanner();
+    Token saveCurrent = parser.current;
+
+    int depth = 1;
+    Token prev2 = parser.previous;
+    Token prev = parser.previous;   // the '{' we just consumed
+    Token token = parser.current;   // already-scanned lookahead: start here
+    while (depth > 0 && token.type != TOKEN_EOF) {
+        if (token.type == TOKEN_LEFT_BRACE) depth++;
+        else if (token.type == TOKEN_RIGHT_BRACE) { if (--depth == 0) break; }
+        else if (token.type == TOKEN_FUNGSI || token.type == TOKEN_KELAS) {
+            // ponytail: scan to the body's '{'; safe while no construct before
+            // it can contain braces (no dict literals / anonymous functions yet).
+            while (token.type != TOKEN_LEFT_BRACE && token.type != TOKEN_EOF) {
+                token = scanToken();
+            }
+            if (token.type == TOKEN_EOF || !skipBalancedBraces()) break;
+        } else if (token.type == TOKEN_GLOBAL || token.type == TOKEN_NONLOKAL) {
+            bool isGlobal = token.type == TOKEN_GLOBAL;
+            Token* names = isGlobal ? current->globals : current->nonlocals;
+            int* count = isGlobal ? &current->globalCount : &current->nonlocalCount;
+            do {
+                token = scanToken();
+                if (token.type != TOKEN_IDENTIFIER) break;
+                if (!scopeNameDeclared(names, *count, &token) && *count < UINT8_COUNT) {
+                    names[(*count)++] = token;
+                }
+                token = scanToken();
+            } while (token.type == TOKEN_COMMA);
+            continue;
+        } else if (token.type == TOKEN_VARIABEL && depth == 1) {
+            // `variabel x` at the body's own depth owns that slot; a prescan
+            // slot for the same name would collide in the same scope.
+            Token next = scanToken();
+            if (next.type == TOKEN_IDENTIFIER && declaredCount < UINT8_COUNT) {
+                declared[declaredCount++] = next;
+            }
+            prev2 = token;
+            prev = next;
+            token = scanToken();
+            continue;
+        } else if (token.type == TOKEN_EQUAL || isCompoundAssign(token.type)) {
+            // Only a bare name is a candidate: diri.x = and a[i] = assign
+            // through an object, and `variabel x =` declares its own local.
+            if (prev.type == TOKEN_IDENTIFIER && prev2.type != TOKEN_DOT &&
+                prev2.type != TOKEN_VARIABEL && pendingCount < UINT8_COUNT) {
+                pending[pendingCount++] = prev;
+            }
+        }
+        prev2 = prev;
+        prev = token;
+        token = scanToken();
+    }
+
+    restoreScanner(saved);
+    parser.current = saveCurrent;
+
+    for (int i = 0; i < pendingCount; i++) {
+        Token* name = &pending[i];
+        if (scopeNameDeclared(current->globals, current->globalCount, name)) continue;
+        if (scopeNameDeclared(current->nonlocals, current->nonlocalCount, name)) continue;
+        if (scopeNameDeclared(declared, declaredCount, name)) continue;
+        if (resolveLocal(current, name) != -1) continue;
+        if (current->localCount == UINT8_COUNT) break;
+        addLocal(*name);
+        markInitialized();
+        emitByte(OP_KOSONG);
+    }
+}
+
 static void function(FunctionType type) {
     Compiler compiler;
     initCompiler(&compiler, type);
@@ -974,6 +1081,7 @@ static void function(FunctionType type) {
     }
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah parameter.");
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' sebelum badan fungsi.");
+    prescanFunctionBody();
     block();
 
     ObjFunction* function = endCompiler();
@@ -1631,8 +1739,32 @@ static void declaration() {
     if (parser.panicMode) synchronize();
 }
 
+static void scopeDeclaration(bool isGlobal) {
+    if (current->type == TYPE_SCRIPT) {
+        semanticError(isGlobal ? "'global' hanya boleh di dalam fungsi."
+                               : "'nonlokal' hanya boleh di dalam fungsi.");
+    }
+    do {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama setelah deklarasi scope.");
+        Token name = parser.previous;
+        Token* names = isGlobal ? current->globals : current->nonlocals;
+        int* count = isGlobal ? &current->globalCount : &current->nonlocalCount;
+        if (scopeNameDeclared(names, *count, &name)) {
+            // Already recorded by prescanFunctionBody; nothing to do.
+        } else if (*count == UINT8_COUNT) {
+            semanticError("Terlalu banyak deklarasi scope.");
+        } else {
+            names[(*count)++] = name;
+        }
+    } while (match(TOKEN_COMMA));
+}
+
 static void statement() {
-    if (match(TOKEN_LEWATI)) {
+    if (match(TOKEN_GLOBAL)) {
+        scopeDeclaration(true);
+    } else if (match(TOKEN_NONLOKAL)) {
+        scopeDeclaration(false);
+    } else if (match(TOKEN_LEWATI)) {
         // 'lewati' (Python's pass): an explicit no-op statement.
     } else if (match(TOKEN_CETAK)) {
         printStatement();

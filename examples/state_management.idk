@@ -5,6 +5,7 @@ hitungan_call = 0
 total_sum = 0
 
 fungsi accumulate(value) {
+    global hitungan_call, total_sum
     hitungan_call = hitungan_call + 1
     total_sum = total_sum + value
     cetak("Call #", hitungan_call, ": added", value, ", total =", total_sum)
@@ -26,6 +27,7 @@ hitungan_call = 0
 total_sum = 0
 
 fungsi maybe_add(value, condition) {
+    global total_sum, hitungan_call
     jika condition {
         total_sum = total_sum + value
         hitungan_call = hitungan_call + 1

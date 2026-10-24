@@ -1,10 +1,12 @@
 # Closures (fungsi bersarang yang menangkap variabel lokal)
 # Gunakan kata kunci 'variabel' untuk membuat variabel lokal fungsi
-# yang dapat ditangkap oleh closure.
+# yang dapat ditangkap oleh closure. Untuk MENGUBAH variabel fungsi
+# pembungkus dari dalam closure, deklarasikan 'nonlokal'.
 
 fungsi buat_pencacah() {
     variabel hitung = 0
     fungsi naik() {
+        nonlokal hitung
         hitung = hitung + 1
         kembalikan hitung
     }

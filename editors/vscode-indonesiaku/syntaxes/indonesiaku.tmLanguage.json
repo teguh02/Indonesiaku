@@ -36,7 +36,7 @@
       "patterns": [
         {
           "name": "keyword.control.indonesiaku",
-          "match": "\\b(?:akhirnya|atau|coba|dalam|dan|dari|dengan|fungsi|hentikan|impor|jika(?:_lain)?|kecuali|kelas|kembalikan|lanjut|lewati|naikkan|sebagai|selagi|selain|super|tidak|untuk|variabel)\\b"
+          "match": "\\b(?:adalah|akhirnya|atau|bukan|coba|dalam|dan|dari|dengan|fungsi|global|hentikan|impor|jika(?:_lain)?|kecuali|kelas|kembalikan|lanjut|lewati|naikkan|nonlokal|sebagai|selagi|selain|super|tidak|untuk|variabel)\\b"
         },
         {
           "name": "keyword.other.indonesiaku",

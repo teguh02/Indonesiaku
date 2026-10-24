@@ -9,6 +9,7 @@ counter_value = 0
 
 # "Constructor" function
 fungsi buat_counter() {
+    global counter_value
     counter_value = 0
 }
 
@@ -19,12 +20,14 @@ fungsi counter_get() {
 
 # "Increment" method
 fungsi counter_increment() {
+    global counter_value
     counter_value = counter_value + 1
     kembalikan counter_value
 }
 
 # "Reset" method
 fungsi counter_reset() {
+    global counter_value
     counter_value = 0
 }
 

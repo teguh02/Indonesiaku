@@ -8,6 +8,7 @@ kendaraan_nama = kosong
 kendaraan_kecepatan = 0
 
 fungsi kendaraan_init(nama) {
+    global kendaraan_nama, kendaraan_kecepatan
     kendaraan_nama = nama
     kendaraan_kecepatan = 0
 }
@@ -18,6 +19,7 @@ fungsi kendaraan_info() {
 }
 
 fungsi kendaraan_percepat(delta) {
+    global kendaraan_kecepatan
     kendaraan_kecepatan = kendaraan_kecepatan + delta
 }
 
@@ -27,6 +29,7 @@ mobil_roda = 4
 mobil_nama = kosong
 
 fungsi mobil_init(nama) {
+    global mobil_nama, mobil_roda
     kendaraan_init(nama)
     mobil_nama = nama
     mobil_roda = 4
@@ -47,6 +50,7 @@ motor_roda = 2
 motor_nama = kosong
 
 fungsi motor_init(nama) {
+    global motor_nama, motor_roda
     kendaraan_init(nama)
     motor_nama = nama
     motor_roda = 2

@@ -1,0 +1,70 @@
+# Scope assignment: di dalam fungsi, assignment biasa membuat variabel lokal.
+# Gunakan 'global' untuk menulis ke variabel tingkat skrip dan 'nonlokal'
+# untuk menulis ke variabel fungsi pembungkus.
+
+variabel pesan = "skrip"
+
+fungsi lokal_saja() {
+    pesan = "lokal"
+    kembalikan pesan
+}
+cetak(lokal_saja(), pesan)
+
+fungsi ubah_global() {
+    global pesan
+    pesan = "diubah"
+}
+ubah_global()
+cetak(pesan)
+
+# Assignment di dalam blok tetap hidup sampai akhir fungsi.
+fungsi jumlahkan(batas) {
+    total = 0
+    untuk n dalam rentang(1, batas) {
+        total = total + n
+    }
+    kembalikan total
+}
+cetak(jumlahkan(5))
+
+fungsi blok_jika(nyala) {
+    hasil = "mati"
+    jika nyala {
+        hasil = "nyala"
+    }
+    kembalikan hasil
+}
+cetak(blok_jika(benar), blok_jika(salah))
+
+# 'nonlokal' membuat closure dapat mengubah state fungsi pembungkus.
+fungsi buat_pencacah() {
+    hitung = 0
+    fungsi naik() {
+        nonlokal hitung
+        hitung = hitung + 1
+        kembalikan hitung
+    }
+    kembalikan naik
+}
+variabel c = buat_pencacah()
+variabel d = buat_pencacah()
+cetak(c(), c(), c(), d())
+
+# Membaca nama yang tidak di-assign tetap mencari global.
+variabel faktor = 3
+fungsi kali(n) {
+    kembalikan n * faktor
+}
+cetak(kali(4))
+
+# 'global' dan 'nonlokal' menerima beberapa nama sekaligus.
+variabel a = 1
+variabel b = 2
+fungsi tukar() {
+    global a, b
+    variabel t = a
+    a = b
+    b = t
+}
+tukar()
+cetak(a, b)

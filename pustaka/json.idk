@@ -102,12 +102,14 @@ fungsi _json_intip() {
 }
 
 fungsi _json_maju() {
+    global _json_pos
     variabel c = _json_intip()
     _json_pos = _json_pos + 1
     kembalikan c
 }
 
 fungsi _json_lewati_spasi() {
+    global _json_pos
     selagi tidak _json_di_akhir() {
         variabel c = _json_intip()
         jika c == " " atau c == "\t" atau c == "\n" atau c == "\r" {
@@ -160,6 +162,7 @@ fungsi _json_urai_string() {
 }
 
 fungsi _json_urai_angka() {
+    global _json_pos
     variabel mulai = _json_pos
     jika _json_intip() == "-" {
         _json_pos = _json_pos + 1
@@ -189,6 +192,7 @@ fungsi _json_urai_angka() {
 }
 
 fungsi _json_cocok_literal(kata) {
+    global _json_pos
     variabel n = panjang(kata)
     jika potong(_json_src, _json_pos, n) == kata {
         _json_pos = _json_pos + n
@@ -273,6 +277,7 @@ fungsi _json_urai_larik() {
 }
 
 fungsi json_urai(teks) {
+    global _json_pos, _json_src
     _json_src = teks
     _json_pos = 0
     variabel hasil = _json_urai_nilai()

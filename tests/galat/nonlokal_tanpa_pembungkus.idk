@@ -1,0 +1,9 @@
+# 'nonlokal' harus merujuk variabel pada fungsi pembungkus, bukan global.
+variabel nilai = 1
+
+fungsi keliru() {
+    nonlokal nilai
+    nilai = 2
+}
+
+keliru()
