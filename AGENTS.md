@@ -21,6 +21,8 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - **Golden-output** harness: each `tests/expected/<name>.out` is compared against the stdout of the matching `examples/**/<name>.idk`. A test fails on stdout mismatch, non-zero exit, OR any stderr. Runners discover tests by iterating `tests/expected/*.out` and finding the source recursively under `examples/`.
 - Add a test by dropping `examples/foo.idk` and generating its golden: run the binary and redirect stdout only (stderr must stay empty for a passing example), e.g. `indk.exe examples/foo.idk 1>tests/expected/foo.out 2>NUL`.
 - `.gitignore` ignores `*.out` globally but re-includes `tests/expected/*.out` — keep that negation or goldens vanish.
+- **Error tests** (`tests/galat/`): for behavior that must FAIL (compile errors, uncatchable runtime errors), add `tests/galat/foo.idk` + `tests/galat/foo.err`. Passes when the exit code is non-zero and stderr equals the `.err` file exactly; stdout is ignored. Generate with `indk.exe tests/galat/foo.idk 2>tests/galat/foo.err 1>NUL`. Both runners run these after the goldens.
+- Line endings: on Windows `indk.exe` writes CRLF and git (`autocrlf=true`) checks fixtures out as CRLF, so locally generated `.out`/`.err` files are CRLF; git normalizes them on commit and Linux CI compares LF to LF.
 - Non-obvious: some `examples/` files are libraries meant to be `impor`-ed (e.g. `pustaka_matematika.idk`) — they define only, so their golden is an empty file. Don't add top-level `cetak` to them.
 
 ## GC / debugging the VM
@@ -43,6 +45,9 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). Only compound assignment (`+=` etc.) requires the global to already exist.
 - GC-safety when mutating collections: keep operands on the VM stack (`peek`, not `pop`) until after `tableSet`/`writeValueArray`, which can grow and trigger a GC. `OP_INDEX_SET` for dicts and the `sisip` native follow this.
 - `examples/todo_cli.idk` is the Todo-list JSON DB demo (CRUD over a JSON file via `pustaka/json.idk`). Integration-tested in CI by `tests/test_todo_cli.{sh,ps1}` (job `todo-crud`) plus golden tests for `json_pakai`/`todo_demo`.
+- Operators follow Python: `//` floors (`OP_FLOOR_DIVIDE`), `%` takes the divisor's sign, `**` is right-associative and binds tighter than unary minus (`PREC_POWER` > `PREC_UNARY`), `tidak` binds looser than comparisons (`PREC_NOT`). Compound assignment (`+=`, `//=`, ...) is table-driven via `matchCompoundAssign` and its right side is a full `expression()`. Regression: `examples/operator_aritmetika.idk`.
+- Python-style keyword arguments `f(nama=nilai)` are rejected at compile time (`callArgStart` in `compiler.c`) because an assignment-as-argument used to silently create globals. Parenthesized `f((x = 1))` is still allowed. Remove this check when real keyword arguments land.
+- Max call depth `FRAMES_MAX` is 1000 (Python's default); runtime tracebacks collapse identical consecutive frames into `[baris sebelumnya diulang N kali lagi]`.
 - Non-obvious VM facts: `<`/`>` compare strings via `strcmp` (not just numbers). String indexing `teks[i]` (read-only; strings immutable) shares the `OP_INDEX_GET` path with list/dict. `variabel` declared inside a `jika`/`selagi`/`untuk` body is properly scoped (each body gets `beginScope`/`endScope`); a regression once leaked such locals past the loop — see `examples/lingkup_variabel.idk`.
 - The REPL (`main.c`) buffers input across lines until braces balance, so multi-line `fungsi`/`kelas`/`jika` blocks work; `braceDelta` ignores braces in strings/comments.
 
@@ -59,13 +64,31 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - `src/` map: `main.c` CLI/REPL · `scanner.c` lexer · `compiler.c` single-pass parser+codegen (Pratt) · `chunk.c` bytecode · `vm.c` interpreter loop + native registration + import · `native.c` builtins · `value.c`/`object.c` values & heap objects · `table.c` hash table · `memory.c` allocation + GC · `debug.c` disassembler.
 - `docker/images/Dockerfile` is multi-stage (build → slim Alpine runtime, ~12.6 MB); it bundles the `indk` binary + `pustaka/` + `examples/`. Image is `teguh02/indonesiaku:<version>` and `:latest` on Docker Hub. Keep the `LABEL version` in sync with `INDK_VERSION`.
 
-## Docs website (docs/ is also a static site)
+## Website (`website/`) vs language planning (`docs/`)
 
-- `docs/` holds BOTH the markdown docs (`*.md`) AND a static documentation website deployed to Netlify (**https://indonesiaku-docs.netlify.app**). Pages: `index.html` (landing), `about.html`, `author.html`, `docs.html` (markdown reader), shared `assets/site.css`.
-- `docs.html` renders the `.md` files at runtime with marked.js (fetched from the same folder) and syntax-highlights with highlight.js. To add a doc to the reader's sidebar, edit the `DOCS` array in `docs.html`.
+- **Two separate folders, two separate jobs.** `website/` = everything users see (usage docs, site, playground). `docs/` = internal language planning (roadmap, spec, per-feature plans). Never put user guides in `docs/` and never put roadmap/planning in `website/panduan/`.
+- `website/` pages: `index.html` (landing), `about.html`, `author.html`, `docs.html` (markdown reader), `playground/index.html`, shared `assets/`, and the user guides in `website/panduan/*.md`. There is no Netlify anymore — the site is self-hosted.
+- **Frontend stack (no build step):** Tailwind Play CDN + tokens in `assets/tailwind-config.js`, Alpine.js components in `assets/app.js`, and **Senna.js 2.7.3** (globals build) as the SPA engine. Every page is still a complete HTML document with its own URL (crawlable/SEO); Senna only swaps the `#konten` surface. Navigation must never rely on `#konten` being re-parsed by hand — Senna evaluates inline scripts inside the surface, so page scripts MUST be wrapped in an IIFE.
+- **Bilingual:** all UI strings live in `assets/i18n.json` (`id` + `en`, identical keys). `app.js` fetches it **before** loading Alpine and only then calls `Alpine.data('shell', …)`; never add an Alpine `<script>` tag to a page. Long-form prose on `/about` and `/author` is duplicated as two `<article>` blocks toggled by `x-show="lang === 'id'"`.
+- **Theme:** `darkMode: 'class'`; the inline pre-paint script in each `<head>` applies `dark` from `localStorage['indk-theme']` or `prefers-color-scheme`. Never move that script below the stylesheet or the page flashes light.
+- **SPA gotchas:** new pages must also load `marked` + `highlight.js` in the `<head>` (Senna does not swap `<head>`, so the docs reader would break when reached by SPA navigation); docs code uses `history.replaceState(history.state, …)` because plain `null` wipes Senna's history entry and breaks the back button.
+- `website/playground/index.html` is the playground client (plain HTML+JS, no build step). It `POST`s `{ kode }` to `/api/jalankan` and expects `{ stdout, stderr, kode_keluar, ms }`. The API is served by the same Docker bundle; until it exists the page shows a "backend tidak tersedia" state.
+- Local preview must be over HTTP (fetch + CDN + Senna): `python -m http.server 8000 -d website`, then open `http://localhost:8000/`. `file://` will not work.
+
+## Playground API (`docker/playground/`)
+
+- `server.py` — stdlib HTTP service. `POST /api/jalankan {kode, input}` → `{stdout, stderr, kode_keluar, ms}`. It writes the code to a temp dir, symlinks `pustaka/` next to it (so `impor "pustaka/..."` works), writes `input` to a stdin file (one line per `input()` call), runs `indk main.idk`, and returns the result. Limits: 128 KB body, 64 KB each for code/input/output, 3 s wall + 3 s CPU, 128 MB address space, 1 MB file size, 32 fds, 60 req/min per IP. Pass `--static <dir>` to also serve the site (dev mode, no nginx needed).
+- `nginx.conf` — serves `/usr/share/nginx/html` (the `website/` copy), forces `text/markdown` for `*.md` and `text/plain` for `*.idk`, and proxies `/api/` to `http://runner:8099`.
+- `Dockerfile` — one image: builds `indk`, bundles `website/`, `pustaka/`, nginx, python3. `docker-compose.yml` runs it as two services: `web` (published port, attached to `publik` + `internal`) and `runner` (`internal` only, so no internet egress; read-only rootfs, tmpfs `/tmp`, non-root uid 10001, cap_drop ALL).
+- Run: `docker compose -f docker/playground/docker-compose.yml up -d --build` (site on `:8080`).
+- Dev without Docker: build `indk`, then
+  `INDK_BIN=$PWD/indk PUSTAKA_DIR=$PWD/pustaka python3 docker/playground/server.py --port 8099 --static website`.
+- The page hard-codes `const API_URL = "/api/jalankan"`; keep nginx and dev server on that path.
+- `.dockerignore` at the repo root keeps build contexts small; it applies to `docker/images/` too (that image only needs `src/` + `Makefile`).
+- `website/docs.html` renders the `.md` files at runtime with marked.js (fetched relative to `website/`, so entries are `panduan/<file>.md`) and syntax-highlights with highlight.js. To add a doc to the reader's sidebar, edit the `DOCS` array in `docs.html`; the `mdMatch` regex in `fixLinks()` must keep accepting `/` in paths.
 - **Embedding example code in docs:** put a marker `{{embed:examples/foo.idk}}` on its own line in a `.md`. The reader fetches that file from `raw.githubusercontent.com/teguh02/Indonesiaku/main/...` so it always mirrors the repo — `examples/` is NOT copied into `docs/`. This means an embedded example must be committed+pushed to `main` before it shows on the live site.
-- `netlify.toml` (repo root): `publish = "docs"`, plus headers forcing `text/markdown` / `text/plain` content-types so `fetch()` works. Deploy after doc/site changes with `netlify deploy --prod --dir docs` (site is linked; `.netlify/` is git-ignored). The reader requires HTTP (fetch) — it does not work over `file://`.
-- When language features change, keep these in sync: `README.md`, `CHANGELOG.md`, `docs/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), this `AGENTS.md`, and the Dockerfile `LABEL version`.
+- Deployment target is our own server, as ONE Docker bundle: the `website/` static files (docs + site) and the playground run together in a container; no Netlify, no `.netlify/`. Whatever serves the static files MUST send `text/markdown; charset=utf-8` for `*.md` and `text/plain; charset=utf-8` for `*.idk`, otherwise `fetch()` in the reader fails. The reader requires HTTP — it does not work over `file://`. For local preview: `python -m http.server 8000 -d website`.
+- When language features change, keep these in sync: `README.md`, `CHANGELOG.md`, `website/panduan/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), `docs/ROADMAP.md`, this `AGENTS.md`, and the Dockerfile `LABEL version`.
 
 ## Conventions
 
@@ -74,4 +97,6 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 
 ## Docs content
 
-- Structured docs (Indonesian) in `docs/` (`01_PERKENALAN` … `07_PUSTAKA_STANDAR`). Syntax reference: `docs/03_PANDUAN_SINTAKS.md`; full builtin/stdlib reference: `docs/07_PUSTAKA_STANDAR.md`. These same `.md` files render the live website (see "Docs website" above). Repo/author facts to keep consistent: GitHub `teguh02/Indonesiaku`, email `teguhrijanandi02@gmail.com` (older docs used a wrong `teguhriyan` handle — fixed).
+- User guides (Indonesian) in `website/panduan/` (`README` + `01_PERKENALAN` … `07_PUSTAKA_STANDAR`). Syntax reference: `website/panduan/03_PANDUAN_SINTAKS.md`; builtin/stdlib reference: `website/panduan/07_PUSTAKA_STANDAR.md`. These `.md` files are what the live site renders.
+- Language planning lives in `docs/`: `docs/README.md` (index + how to write a plan), `docs/ROADMAP.md` (SINGLE source of truth for roadmap — do not duplicate a roadmap in README/CHANGELOG), `docs/RENCANA_FITUR/TEMPLATE.md` (per-feature plan template).
+- Repo/author facts to keep consistent: GitHub `teguh02/Indonesiaku`, email `teguhrijanandi02@gmail.com` (older docs used a wrong `teguhriyan` handle — fixed).

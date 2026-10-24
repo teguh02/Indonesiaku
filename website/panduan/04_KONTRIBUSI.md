@@ -147,13 +147,15 @@ Indonesiaku/
 ├── tests/                 # Test automation
 │   ├── test_all.ps1      # Run all tests
 │   └── test_output.ps1
-├── docs/                  # Documentation
+├── website/               # Situs dokumentasi + panduan pengguna
+│   ├── index.html
+│   ├── docs.html          # Markdown reader (array DOCS)
+│   ├── assets/
+│   └── panduan/           # Panduan pengguna (README, 01..07)
+├── docs/                  # Perencanaan bahasa (internal)
 │   ├── README.md
-│   ├── 01_PERKENALAN.md
-│   ├── 02_PANDUAN_SINTAKS.md
-│   ├── 03_KONTRIBUSI.md
-│   ├── 04_CREATOR.md
-│   └── 05_PENUTUP.md
+│   ├── ROADMAP.md
+│   └── RENCANA_FITUR/     # Satu file per fitur yang direncanakan
 ├── Makefile              # Build configuration
 └── README.md             # Project root readme
 ```
@@ -170,10 +172,14 @@ Indonesiaku/
 - Example programs
 - Improvements tanpa risiko tinggi
 
-**docs/** - Dokumentasi
+**website/panduan/** - Dokumentasi pengguna
 - Perbaikan typo
 - Clarifications
 - New language translations
+
+**docs/** - Perencanaan bahasa
+- Update roadmap (`docs/ROADMAP.md`)
+- Usulan fitur baru memakai `docs/RENCANA_FITUR/TEMPLATE.md`
 
 ---
 

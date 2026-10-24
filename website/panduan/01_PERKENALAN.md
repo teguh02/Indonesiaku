@@ -229,7 +229,7 @@ Lihat file **KONTRIBUSI.md** untuk detail lengkap.
 
 - **GitHub Repository**: https://github.com/teguh02/Indonesiaku
 - **Issue Tracker**: https://github.com/teguh02/Indonesiaku/issues
-- **Documentation**: `/docs` folder
+- **Documentation**: `website/panduan/` folder
 - **Examples**: `/examples` folder
 
 ---

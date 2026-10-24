@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full scroll-pt-24">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indonesiaku — Bahasa Pemrograman Berbahasa Indonesia</title>
+  <meta name="description" content="Indonesiaku adalah bahasa pemrograman dengan sintaks Bahasa Indonesia, dibangun sebagai bytecode VM dalam C. Closure, OOP, JSON, REST API, dan playground langsung di browser." />
+  <meta name="color-scheme" content="light dark" />
+  <meta property="og:title" content="Indonesiaku — Bahasa Pemrograman Berbahasa Indonesia" />
+  <meta property="og:description" content="Menulis kode dalam bahasa sendiri: bytecode VM C11 dengan kata kunci Bahasa Indonesia." />
+  <meta property="og:type" content="website" />
+
+  <!-- Tailwind (Play CDN) + token desain -->
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script src="assets/tailwind-config.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/site.css" />
+
+  <!-- Terapkan tema sebelum paint, supaya tidak berkedip -->
+  <script>
+    (function () {
+      try {
+        var tema = localStorage.getItem("indk-theme");
+        if (!tema) {
+          tema = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        if (tema === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="assets/app.js"></script>
+  <!-- Pustaka reader dokumentasi (dibutuhkan saat navigasi SPA ke docs.html) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+
+<body x-data="shell" class="min-h-full bg-paper font-sans text-ink antialiased dark:bg-night dark:text-paper">
+  <div id="konten">
+
+  <a href="#utama" data-senna-off class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white">
+    Lewati ke konten
+  </a>
+
+  <!-- ============================= NAVBAR ============================= -->
+  <header class="sticky top-0 z-50 border-b border-ink/10 bg-paper/85 backdrop-blur-md dark:border-white/10 dark:bg-night/85">
+    <div class="mx-auto flex h-16 max-w-wrap items-center gap-1 px-5">
+      <a href="index.html" class="mr-4 flex items-center gap-2.5 text-[15px] font-extrabold tracking-tight">
+        <span class="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 font-mono text-[13px] font-bold text-white shadow-sm">In</span>
+        <span>Indonesiaku<span class="text-brand-600 dark:text-brand-400">.</span></span>
+      </a>
+
+      <nav class="hidden items-center gap-0.5 lg:flex" aria-label="Navigasi utama">
+        <a href="index.html" class="rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 dark:text-brand-300" x-text="t('nav_home')">Beranda</a>
+        <a href="about.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_about')">Tentang</a>
+        <a href="author.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_author')">Penulis</a>
+        <a href="docs.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_docs')">Dokumentasi</a>
+        <a href="playground/" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_playground')">Playground</a>
+      </nav>
+
+      <div class="ml-auto flex items-center gap-1.5">
+        <!-- Pilih bahasa -->
+        <div class="hidden items-center rounded-full border border-ink/10 p-0.5 dark:border-white/15 sm:flex" role="group" aria-label="Bahasa / Language">
+          <button type="button" @click="setLang('id')" :aria-pressed="lang === 'id'"
+                  :class="lang === 'id' ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-ink-3 hover:text-ink dark:text-paper/60 dark:hover:text-paper'"
+                  class="rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-wide transition">ID</button>
+          <button type="button" @click="setLang('en')" :aria-pressed="lang === 'en'"
+                  :class="lang === 'en' ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-ink-3 hover:text-ink dark:text-paper/60 dark:hover:text-paper'"
+                  class="rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-wide transition">EN</button>
+        </div>
+
+        <!-- Tema -->
+        <button type="button" @click="toggleTheme()" :aria-label="t('ui_theme')" :title="t('ui_theme')"
+                class="grid h-9 w-9 place-items-center rounded-full border border-ink/10 text-ink-2 transition hover:bg-ink/[0.04] dark:border-white/15 dark:text-paper/70 dark:hover:bg-white/5">
+          <svg x-show="!dark" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+          </svg>
+          <svg x-show="dark" x-cloak class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+        </button>
+
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener"
+           class="hidden items-center gap-2 rounded-full border border-ink/10 px-3.5 py-1.5 text-sm font-semibold text-ink-2 transition hover:border-ink/25 hover:text-ink dark:border-white/15 dark:text-paper/70 dark:hover:border-white/30 dark:hover:text-paper md:flex">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+          GitHub
+        </a>
+
+        <!-- Menu mobile -->
+        <button type="button" @click="menu = !menu" :aria-expanded="menu" :aria-label="t('nav_menu')"
+                class="grid h-9 w-9 place-items-center rounded-full border border-ink/10 text-ink-2 dark:border-white/15 dark:text-paper/70 lg:hidden">
+          <svg x-show="!menu" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <svg x-show="menu" x-cloak class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel mobile -->
+    <div x-show="menu" x-cloak x-transition.opacity.duration.150ms
+         class="border-t border-ink/10 bg-paper px-5 pb-4 pt-2 dark:border-white/10 dark:bg-night lg:hidden">
+      <nav class="grid gap-1" aria-label="Navigasi mobile">
+        <a href="about.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_about')">Tentang</a>
+        <a href="author.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_author')">Penulis</a>
+        <a href="docs.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_docs')">Dokumentasi</a>
+        <a href="playground/" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_playground')">Playground</a>
+      </nav>
+      <div class="mt-3 flex items-center gap-2 border-t border-ink/10 pt-3 dark:border-white/10">
+        <button type="button" @click="setLang('id')" :class="lang === 'id' ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-ink-3 dark:text-paper/60'" class="rounded-full border border-ink/10 px-3 py-1 font-mono text-[11px] font-bold dark:border-white/15">ID</button>
+        <button type="button" @click="setLang('en')" :class="lang === 'en' ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-ink-3 dark:text-paper/60'" class="rounded-full border border-ink/10 px-3 py-1 font-mono text-[11px] font-bold dark:border-white/15">EN</button>
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener" class="ml-auto text-sm font-semibold text-ink-2 dark:text-paper/70">GitHub ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="utama">
+
+    <!-- ============================= HERO ============================= -->
+    <section class="relative overflow-hidden border-b border-ink/10 dark:border-white/10">
+      <div class="pointer-events-none absolute inset-0 bg-dots bg-dotgrid opacity-40 dark:bg-dots-dark dark:opacity-20 [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)]"></div>
+      <div class="absolute -right-24 top-10 h-72 w-72 rounded-full bg-brand-500/10 blur-3xl dark:bg-brand-500/20"></div>
+
+      <div class="relative mx-auto max-w-wrap px-5 pb-16 pt-14 sm:pt-20 lg:pb-24">
+        <div class="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
+
+          <div class="lg:col-span-6">
+            <p class="reveal font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300" x-text="t('hero_eyebrow')">Bahasa pemrograman · v0.4.0</p>
+
+            <h1 class="reveal reveal-1 mt-4 text-5xl font-extrabold tracking-tight sm:text-6xl">
+              <span x-text="t('hero_title_1')">Menulis kode dalam</span><br />
+              <span class="relative inline-block">
+                <span class="relative z-10" x-text="t('hero_title_2')">bahasa sendiri</span>
+                <span class="absolute inset-x-0 bottom-1.5 z-0 h-3 bg-brand-500/25 dark:bg-brand-400/30"></span>
+              </span>
+            </h1>
+
+            <p class="reveal reveal-2 mt-6 max-w-xl text-[17px] leading-relaxed text-ink-2 dark:text-paper/70" x-text="t('hero_lead')">
+              Indonesiaku adalah bahasa pemrograman dengan kata kunci Bahasa Indonesia, dibangun sebagai bytecode VM dalam C.
+            </p>
+
+            <div class="reveal reveal-3 mt-8 flex flex-wrap items-center gap-3">
+              <a href="docs.html" class="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 motion-safe:hover:-translate-y-0.5">
+                <span x-text="t('hero_cta_docs')">Mulai dari dokumentasi</span>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a href="playground/" class="inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white/60 px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-ink/30 dark:border-white/20 dark:bg-white/5 dark:text-paper dark:hover:border-white/35">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
+                <span x-text="t('hero_cta_playground')">Coba di playground</span>
+              </a>
+            </div>
+
+            <!-- Statistik -->
+            <dl class="reveal reveal-4 mt-10 grid max-w-lg grid-cols-2 gap-x-6 gap-y-4 border-t border-ink/10 pt-6 sm:grid-cols-4 dark:border-white/10">
+              <div>
+                <dt class="font-mono text-2xl font-bold tracking-tight">49</dt>
+                <dd class="mt-0.5 text-xs text-ink-3 dark:text-paper/55" x-text="t('stat_examples')">contoh program</dd>
+              </div>
+              <div>
+                <dt class="font-mono text-2xl font-bold tracking-tight">6</dt>
+                <dd class="mt-0.5 text-xs text-ink-3 dark:text-paper/55" x-text="t('stat_std')">pustaka standar</dd>
+              </div>
+              <div>
+                <dt class="font-mono text-2xl font-bold tracking-tight">3</dt>
+                <dd class="mt-0.5 text-xs text-ink-3 dark:text-paper/55" x-text="t('stat_platforms')">platform CI</dd>
+              </div>
+              <div>
+                <dt class="font-mono text-2xl font-bold tracking-tight">12<span class="text-base">MB</span></dt>
+                <dd class="mt-0.5 text-xs text-ink-3 dark:text-paper/55" x-text="t('stat_image')">image Docker</dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Terminal -->
+          <div class="reveal reveal-2 lg:col-span-6 lg:pl-6">
+            <div class="code-card overflow-hidden rounded-xl2 shadow-lift ring-1 ring-white/10">
+              <div class="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-4 py-2.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57]"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-[#febc2e]"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-[#28c840]"></span>
+                <span class="ml-2 font-mono text-[11px] text-white/45">halo.idk</span>
+                <span class="ml-auto font-mono text-[10px] uppercase tracking-widest text-white/30">indk 0.4.0</span>
+              </div>
+              <pre class="pg-scroll overflow-x-auto p-5"><code><span class="tok-k">fungsi</span> <span class="tok-f">sapa</span>(<span class="tok-p">nama</span>) <span class="tok-p">{</span>
+    <span class="tok-f">cetak</span>(<span class="tok-s">"Halo,"</span>, nama)
+<span class="tok-p">}</span>
+
+<span class="tok-k">untuk</span> orang <span class="tok-k">dalam</span> [<span class="tok-s">"Budi"</span>, <span class="tok-s">"Ani"</span>, <span class="tok-s">"Citra"</span>] <span class="tok-p">{</span>
+    <span class="tok-f">sapa</span>(orang)
+<span class="tok-p">}</span></code></pre>
+              <div class="border-t border-white/10 bg-white/[0.02] px-5 py-3 font-mono text-[12px] leading-relaxed text-white/45">
+                <div><span class="text-brand-400">$</span> indk halo.idk</div>
+                <div class="mt-1 text-white/70">Halo, Budi<br />Halo, Ani<br />Halo, Citra</div>
+              </div>
+            </div>
+            <p class="mt-3 text-center text-xs text-ink-3 dark:text-paper/50" x-text="t('hero_terminal_note')">Dijalankan langsung oleh interpreter asli, bukan simulasi.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= FITUR ============================= -->
+    <section class="mx-auto max-w-wrap px-5 py-16 sm:py-24">
+      <div class="max-w-2xl">
+        <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300" x-text="t('feat_eyebrow')">01 — Kenapa Indonesiaku</p>
+        <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl" x-text="t('feat_title')">Fitur lengkap, sintaks yang akrab</h2>
+        <p class="mt-4 text-ink-2 dark:text-paper/65" x-text="t('feat_lead')">Bukan sekadar pengganti kata kunci.</p>
+      </div>
+
+      <div class="mt-12 grid gap-px overflow-hidden rounded-xl2 border border-ink/10 bg-ink/10 sm:grid-cols-2 lg:grid-cols-3 dark:border-white/10 dark:bg-white/10">
+        <article class="group bg-paper p-6 transition hover:bg-white dark:bg-night dark:hover:bg-night-2">
+          <span class="font-mono text-[11px] font-bold tracking-widest text-brand-600 dark:text-brand-400">01</span>
+          <h3 class="mt-3 text-base font-bold" x-text="t('feat1_t')">Kata kunci Bahasa Indonesia</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2 dark:text-paper/60" x-text="t('feat1_d')">jika, selagi, fungsi, kelas, cetak.</p>
+        </article>
+        <article class="group bg-paper p-6 transition hover:bg-white dark:bg-night dark:hover:bg-night-2">
+          <span class="font-mono text-[11px] font-bold tracking-widest text-brand-600 dark:text-brand-400">02</span>
+          <h3 class="mt-3 text-base font-bold" x-text="t('feat2_t')">Closure &amp; kelas</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2 dark:text-paper/60" x-text="t('feat2_d')">Fungsi kelas-satu.</p>
+        </article>
+        <article class="group bg-paper p-6 transition hover:bg-white dark:bg-night dark:hover:bg-night-2">
+          <span class="font-mono text-[11px] font-bold tracking-widest text-brand-600 dark:text-brand-400">03</span>
+          <h3 class="mt-3 text-base font-bold" x-text="t('feat3_t')">Garbage collector</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2 dark:text-paper/60" x-text="t('feat3_d')">Mark-sweep otomatis.</p>
+        </article>
+        <article class="group bg-paper p-6 transition hover:bg-white dark:bg-night dark:hover:bg-night-2">
+          <span class="font-mono text-[11px] font-bold tracking-widest text-brand-600 dark:text-brand-400">04</span>
+          <h3 class="mt-3 text-base font-bold" x-text="t('feat4_t')">JSON &amp; REST API</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2 dark:text-paper/60" x-text="t('feat4_d')">Pustaka JSON/HTTP bawaan.</p>
+        </article>
+        <article class="group bg-paper p-6 transition hover:bg-white dark:bg-night dark:hover:bg-night-2">
+          <span class="font-mono text-[11px] font-bold tracking-widest text-brand-600 dark:text-brand-400">05</span>
+          <h3 class="mt-3 text-base font-bold" x-text="t('feat5_t')">Pustaka standar</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2 dark:text-paper/60" x-text="t('feat5_d')">teks, daftar, matematika.</p>
+        </article>
+        <article class="group bg-paper p-6 transition hover:bg-white dark:bg-night dark:hover:bg-night-2">
+          <span class="font-mono text-[11px] font-bold tracking-widest text-brand-600 dark:text-brand-400">06</span>
+          <h3 class="mt-3 text-base font-bold" x-text="t('feat6_t')">Ringan &amp; portabel</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2 dark:text-paper/60" x-text="t('feat6_d')">Satu binary C11.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============================= KODE ============================= -->
+    <section class="border-y border-ink/10 bg-paper-2/60 dark:border-white/10 dark:bg-night-2/40">
+      <div class="mx-auto grid max-w-wrap gap-10 px-5 py-16 sm:py-20 lg:grid-cols-12 lg:gap-14">
+        <div class="lg:col-span-5">
+          <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300" x-text="t('code_eyebrow')">02 — Sekilas kode</p>
+          <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl" x-text="t('code_title')">Kelas, warisan, dan error handling</h2>
+          <p class="mt-4 text-ink-2 dark:text-paper/65" x-text="t('code_lead')">Kata kunci Indonesia yang konsisten.</p>
+
+          <ul class="mt-8 space-y-4">
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-brand-600/30 font-mono text-[10px] font-bold text-brand-700 dark:border-brand-400/30 dark:text-brand-300">1</span>
+              <span class="text-sm text-ink-2 dark:text-paper/65" x-text="t('code_note1')">init sebagai konstruktor.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-brand-600/30 font-mono text-[10px] font-bold text-brand-700 dark:border-brand-400/30 dark:text-brand-300">2</span>
+              <span class="text-sm text-ink-2 dark:text-paper/65" x-text="t('code_note2')">Pewarisan memakai &lt;.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-brand-600/30 font-mono text-[10px] font-bold text-brand-700 dark:border-brand-400/30 dark:text-brand-300">3</span>
+              <span class="text-sm text-ink-2 dark:text-paper/65" x-text="t('code_note3')">naikkan dan coba/kecuali.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-7">
+          <div class="code-card overflow-hidden rounded-xl2 shadow-lift ring-1 ring-white/10">
+            <div class="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-4 py-2.5">
+              <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57]"></span>
+              <span class="h-2.5 w-2.5 rounded-full bg-[#febc2e]"></span>
+              <span class="h-2.5 w-2.5 rounded-full bg-[#28c840]"></span>
+              <span class="ml-2 font-mono text-[11px] text-white/45">kelas.idk</span>
+            </div>
+            <pre class="pg-scroll overflow-x-auto p-5"><code><span class="tok-k">kelas</span> <span class="tok-f">Hewan</span> <span class="tok-p">{</span>
+    <span class="tok-k">init</span>(nama, suara) <span class="tok-p">{</span>
+        <span class="tok-k">diri</span>.nama <span class="tok-p">=</span> nama
+        <span class="tok-k">diri</span>.suara <span class="tok-p">=</span> suara
+    <span class="tok-p">}</span>
+
+    <span class="tok-f">bersuara</span>() <span class="tok-p">{</span>
+        <span class="tok-f">cetak</span>(<span class="tok-k">diri</span>.nama, <span class="tok-s">"berkata:"</span>, <span class="tok-k">diri</span>.suara)
+    <span class="tok-p">}</span>
+<span class="tok-p">}</span>
+
+<span class="tok-k">kelas</span> <span class="tok-f">Anjing</span> <span class="tok-p">&lt;</span> <span class="tok-f">Hewan</span> <span class="tok-p">{</span>          <span class="tok-c"># pewarisan</span>
+    <span class="tok-k">init</span>(nama) <span class="tok-p">{</span> <span class="tok-k">super</span>.<span class="tok-f">init</span>(nama, <span class="tok-s">"Guk"</span>) <span class="tok-p">}</span>
+<span class="tok-p">}</span>
+
+<span class="tok-k">coba</span> <span class="tok-p">{</span>
+    <span class="tok-f">Anjing</span>(<span class="tok-s">"Rex"</span>).<span class="tok-f">bersuara</span>()    <span class="tok-c"># Rex berkata: Guk</span>
+<span class="tok-p">}</span> <span class="tok-k">kecuali</span> e <span class="tok-p">{</span>
+    <span class="tok-f">cetak</span>(<span class="tok-s">"gagal:"</span>, e)
+<span class="tok-p">}</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= MULAI CEPAT ============================= -->
+    <section class="mx-auto max-w-wrap px-5 py-16 sm:py-24">
+      <div class="max-w-2xl">
+        <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300" x-text="t('quick_eyebrow')">03 — Mulai cepat</p>
+        <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl" x-text="t('quick_title')">Tiga langkah, tanpa setup rumit</h2>
+        <p class="mt-4 text-ink-2 dark:text-paper/65" x-text="t('quick_lead')">Pilih cara yang paling nyaman.</p>
+      </div>
+
+      <div class="mt-12 grid gap-5 lg:grid-cols-3">
+        <!-- 1 -->
+        <div class="flex flex-col rounded-xl2 border border-ink/10 bg-white p-6 shadow-card dark:border-white/10 dark:bg-night-2">
+          <div class="flex items-baseline gap-2">
+            <span class="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">01</span>
+            <h3 class="text-base font-bold" x-text="t('q1_t')">Jalankan dengan Docker</h3>
+          </div>
+          <p class="mt-2 text-sm text-ink-2 dark:text-paper/60" x-text="t('q1_d')">Semua sudah di dalam image.</p>
+          <div class="mt-4 flex items-center gap-2 rounded-lg bg-night px-3 py-2.5 ring-1 ring-white/10">
+            <code class="pg-scroll min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[12px] text-white/85" x-ref="cmd1">docker run --rm -it teguh02/indonesiaku</code>
+            <button type="button" class="copy-btn shrink-0 rounded-md px-2 py-1 font-mono text-[11px] text-white/50 transition hover:bg-white/10 hover:text-white"
+                    @click="salin($refs.cmd1, $el)" :aria-label="t('ui_copy')">
+              <span class="copy-label">salin</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="flex flex-col rounded-xl2 border border-ink/10 bg-white p-6 shadow-card dark:border-white/10 dark:bg-night-2">
+          <div class="flex items-baseline gap-2">
+            <span class="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">02</span>
+            <h3 class="text-base font-bold" x-text="t('q2_t')">Build dari sumber</h3>
+          </div>
+          <p class="mt-2 text-sm text-ink-2 dark:text-paper/60" x-text="t('q2_d')">Hanya butuh compiler C11.</p>
+          <div class="mt-4 flex items-center gap-2 rounded-lg bg-night px-3 py-2.5 ring-1 ring-white/10">
+            <code class="pg-scroll min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[12px] text-white/85" x-ref="cmd2">make &amp;&amp; ./indk examples/hello.idk</code>
+            <button type="button" class="copy-btn shrink-0 rounded-md px-2 py-1 font-mono text-[11px] text-white/50 transition hover:bg-white/10 hover:text-white"
+                    @click="salin($refs.cmd2, $el)" :aria-label="t('ui_copy')">
+              <span class="copy-label">salin</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="flex flex-col rounded-xl2 border border-ink/10 bg-white p-6 shadow-card dark:border-white/10 dark:bg-night-2">
+          <div class="flex items-baseline gap-2">
+            <span class="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">03</span>
+            <h3 class="text-base font-bold" x-text="t('q3_t')">Coba di browser</h3>
+          </div>
+          <p class="mt-2 text-sm text-ink-2 dark:text-paper/60" x-text="t('q3_d')">Tanpa instalasi.</p>
+          <a href="playground/" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">
+            <span x-text="t('nav_playground')">Playground</span>
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= APLIKASI ============================= -->
+    <section class="border-y border-ink/10 bg-paper-2/60 dark:border-white/10 dark:bg-night-2/40">
+      <div class="mx-auto max-w-wrap px-5 py-16 sm:py-24">
+        <div class="flex flex-wrap items-end justify-between gap-6">
+          <div class="max-w-2xl">
+            <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300" x-text="t('apps_eyebrow')">04 — Aplikasi nyata</p>
+            <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl" x-text="t('apps_title')">Bukan hanya contoh mainan</h2>
+            <p class="mt-4 text-ink-2 dark:text-paper/65" x-text="t('apps_lead')">Dua aplikasi Todo-list yang diuji otomatis.</p>
+          </div>
+          <a href="https://github.com/teguh02/Indonesiaku/tree/main/examples" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300">
+            <span x-text="t('app_cta')">Lihat di GitHub</span> ↗
+          </a>
+        </div>
+
+        <div class="mt-10 grid gap-5 lg:grid-cols-2">
+          <article class="rounded-xl2 border border-ink/10 bg-white p-7 shadow-card dark:border-white/10 dark:bg-night-2">
+            <div class="flex items-center gap-3">
+              <span class="rounded-full bg-brand-600/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">CLI</span>
+              <h3 class="text-lg font-bold" x-text="t('app1_t')">Todo-list CLI + JSON</h3>
+            </div>
+            <p class="mt-3 text-sm text-ink-2 dark:text-paper/60" x-text="t('app1_d')">CRUD lewat command line.</p>
+            <div class="mt-5 rounded-lg bg-night px-4 py-3 ring-1 ring-white/10">
+              <pre class="pg-scroll overflow-x-auto font-mono text-[12px] leading-relaxed text-white/80"><code>indk examples/todo_cli.idk tambah <span class="tok-s">"beli susu"</span>
+indk examples/todo_cli.idk daftar
+indk examples/todo_cli.idk selesai 1</code></pre>
+            </div>
+          </article>
+
+          <article class="rounded-xl2 border border-ink/10 bg-white p-7 shadow-card dark:border-white/10 dark:bg-night-2">
+            <div class="flex items-center gap-3">
+              <span class="rounded-full bg-brand-600/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">HTTP</span>
+              <h3 class="text-lg font-bold" x-text="t('app2_t')">Server REST HTTP</h3>
+            </div>
+            <p class="mt-3 text-sm text-ink-2 dark:text-paper/60" x-text="t('app2_d')">GET/POST/PUT/DELETE /todos.</p>
+            <div class="mt-5 rounded-lg bg-night px-4 py-3 ring-1 ring-white/10">
+              <pre class="pg-scroll overflow-x-auto font-mono text-[12px] leading-relaxed text-white/80"><code>indk examples/todo_server.idk 8080
+
+curl -X POST -d <span class="tok-s">'{"teks":"beli susu"}'</span> \
+  http://127.0.0.1:8080/todos</code></pre>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================= CTA ============================= -->
+    <section class="mx-auto max-w-wrap px-5 py-20">
+      <div class="rounded-xl3 border border-brand-600/20 bg-brand-50/70 px-7 py-12 text-center dark:border-brand-400/20 dark:bg-brand-900/25">
+        <h2 class="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl" x-text="t('cta_title')">Siap menulis program pertamamu?</h2>
+        <p class="mx-auto mt-3 max-w-xl text-ink-2 dark:text-paper/65" x-text="t('cta_lead')">Dokumentasi lengkap berbahasa Indonesia.</p>
+        <div class="mt-7 flex flex-wrap justify-center gap-3">
+          <a href="docs.html" class="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700">
+            <span x-text="t('cta_docs')">Baca dokumentasi</span>
+          </a>
+          <a href="about.html" class="rounded-full border border-ink/15 bg-white/70 px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-ink/30 dark:border-white/20 dark:bg-white/5 dark:text-paper">
+            <span x-text="t('cta_about')">Tentang proyek</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================= FOOTER ============================= -->
+  <footer class="border-t border-ink/10 bg-white dark:border-white/10 dark:bg-night-2">
+    <div class="mx-auto grid max-w-wrap gap-10 px-5 py-14 sm:grid-cols-2 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <a href="index.html" class="flex items-center gap-2.5 text-[15px] font-extrabold tracking-tight">
+          <span class="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 font-mono text-[13px] font-bold text-white">In</span>
+          <span>Indonesiaku<span class="text-brand-600 dark:text-brand-400">.</span></span>
+        </a>
+        <p class="mt-4 max-w-xs text-sm text-ink-2 dark:text-paper/60" x-text="t('foot_tagline')">Bahasa pemrograman dengan sintaks Bahasa Indonesia.</p>
+        <div class="mt-5 flex items-center gap-2 font-mono text-[11px] text-ink-3 dark:text-paper/45">
+          <span class="rounded-full border border-ink/10 px-2 py-0.5 dark:border-white/15">v0.4.0</span>
+          <span class="rounded-full border border-ink/10 px-2 py-0.5 dark:border-white/15">MIT</span>
+          <span class="rounded-full border border-ink/10 px-2 py-0.5 dark:border-white/15">C11</span>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <h3 class="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3 dark:text-paper/40" x-text="t('foot_product')">Produk</h3>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li><a href="docs.html" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_docs')">Dokumentasi</a></li>
+          <li><a href="docs.html#panduan/03_PANDUAN_SINTAKS.md" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_syntax')">Panduan sintaks</a></li>
+          <li><a href="docs.html#panduan/07_PUSTAKA_STANDAR.md" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_stdlib')">Pustaka standar</a></li>
+          <li><a href="playground/" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_playground')">Playground</a></li>
+        </ul>
+      </div>
+
+      <div class="lg:col-span-3">
+        <h3 class="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3 dark:text-paper/40" x-text="t('foot_source')">Sumber</h3>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li><a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300">GitHub ↗</a></li>
+          <li><a href="https://hub.docker.com/r/teguh02/indonesiaku" target="_blank" rel="noopener" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300">Docker Hub ↗</a></li>
+          <li><a href="https://github.com/teguh02/Indonesiaku/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_changelog')">Catatan rilis</a></li>
+          <li><a href="https://github.com/teguh02/Indonesiaku/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_roadmap')">Roadmap</a></li>
+        </ul>
+      </div>
+
+      <div class="lg:col-span-2">
+        <h3 class="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3 dark:text-paper/40" x-text="t('foot_contact')">Kontak</h3>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li><a href="author.html" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300" x-text="t('foot_author')">Penulis</a></li>
+          <li><a href="mailto:teguhrijanandi02@gmail.com" class="text-ink-2 hover:text-brand-700 dark:text-paper/65 dark:hover:text-brand-300">Email</a></li>
+          <li><span class="text-ink-2 dark:text-paper/65" x-text="t('foot_license')">Lisensi MIT</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-ink/10 dark:border-white/10">
+      <div class="mx-auto flex max-w-wrap flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-ink-3 dark:text-paper/45">
+        <p>© 2026 Indonesiaku · <span x-text="t('foot_rights')">Dibuat di Indonesia</span> 🇮🇩</p>
+        <p class="font-mono">indk 0.4.0</p>
+      </div>
+    </div>
+  </footer>
+
+  </div><!-- /#konten -->
+
+  <!-- ================= Senna.js: navigasi SPA =================
+       Setiap halaman tetap HTML utuh dengan URL sendiri (crawlable / SEO),
+       tetapi navigasi antar-halaman tidak memuat ulang seluruh dokumen.
+       Surface = #konten; header/footer ikut diganti dari halaman tujuan. -->
+  <script src="https://cdn.jsdelivr.net/npm/senna@2.7.3/build/globals/senna.min.js" defer></script>
+  <script>
+    window.addEventListener("load", function () {
+      if (!window.senna) return;               // CDN gagal → situs tetap MPA biasa
+      var app = new senna.App();
+      window.__indkApp = app;   // untuk debugging navigasi
+      app.setBasePath("/");
+      app.addSurfaces("konten");
+      app.addRoutes(new senna.Route(/.*/, senna.HtmlScreen));
+    });
+  </script>
+</body>
+</html>

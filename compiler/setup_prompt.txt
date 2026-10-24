@@ -15,7 +15,8 @@ Indonesiaku/
 ├─ src/
 ├─ include/
 ├─ examples/
-├─ docs/
+├─ website/                         ← Situs dokumentasi + panduan pengguna
+├─ docs/                            ← Perencanaan bahasa (internal)
 ├─ compiler/
 │   ├─ indonesiaku_installer.iss    ← file script installer Inno Setup
 │   ├─ setup_prompt.txt             ← (file ini)

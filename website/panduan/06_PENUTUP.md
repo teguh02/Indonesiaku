@@ -181,7 +181,7 @@ A: Ya! Contributions welcome. Process:
 
 **Q: Bagaimana cara setup development environment?**
 
-A: Lihat `docs/04_KONTRIBUSI.md` section "Setup Development Environment"
+A: Lihat `website/panduan/04_KONTRIBUSI.md` section "Setup Development Environment"
 
 **Q: Apakah source code C mudah dipelajari?**
 
@@ -319,13 +319,13 @@ cat examples/test_file.idk   # Linux/Mac
 | Resource | Lokasi | Deskripsi |
 |----------|--------|-----------|
 | **README** | `/README.md` | Project overview |
-| **Perkenalan** | `docs/01_PERKENALAN.md` | Vision & features |
-| **Instalasi** | `docs/02_INSTALASI.md` | Installation guide (Windows, Linux, macOS) |
-| **Syntax Guide** | `docs/03_PANDUAN_SINTAKS.md` | Complete syntax reference |
-| **Contributing** | `docs/04_KONTRIBUSI.md` | How to contribute |
-| **Creator** | `docs/05_CREATOR.md` | About Teguh Rijanandi |
-| **Resources** | `docs/06_PENUTUP.md` | FAQ, troubleshooting, resources |
-| **Pustaka Standar** | `docs/07_PUSTAKA_STANDAR.md` | Referensi fungsi bawaan & pustaka |
+| **Perkenalan** | `website/panduan/01_PERKENALAN.md` | Vision & features |
+| **Instalasi** | `website/panduan/02_INSTALASI.md` | Installation guide (Windows, Linux, macOS) |
+| **Syntax Guide** | `website/panduan/03_PANDUAN_SINTAKS.md` | Complete syntax reference |
+| **Contributing** | `website/panduan/04_KONTRIBUSI.md` | How to contribute |
+| **Creator** | `website/panduan/05_CREATOR.md` | About Teguh Rijanandi |
+| **Resources** | `website/panduan/06_PENUTUP.md` | FAQ, troubleshooting, resources |
+| **Pustaka Standar** | `website/panduan/07_PUSTAKA_STANDAR.md` | Referensi fungsi bawaan & pustaka |
 | **Changelog** | `/CHANGELOG.md` | Version history |
 
 ### Examples & Tests
@@ -398,7 +398,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
    ```
 
 2. **Read Installation Guide**
-   - Baca `docs/02_INSTALASI.md` untuk verify setup Anda
+   - Baca `website/panduan/02_INSTALASI.md` untuk verify setup Anda
 
 3. **Try Hello World**
    ```bash
@@ -423,11 +423,11 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 ### Untuk Intermediate Users
 
 1. **Master Instalasi Platforms**
-   - Verify installation di `docs/02_INSTALASI.md`
+   - Verify installation di `website/panduan/02_INSTALASI.md`
    - Setup di multiple OS jika perlu
 
 2. **Deep Dive Syntax**
-   - Master `docs/03_PANDUAN_SINTAKS.md`
+   - Master `website/panduan/03_PANDUAN_SINTAKS.md`
    - Practice semua examples
    - Modify examples to experiment
 
@@ -437,7 +437,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
    - Rewrite algorithms dengan own approach
 
 4. **Contribute**
-   - Read `docs/04_KONTRIBUSI.md`
+   - Read `website/panduan/04_KONTRIBUSI.md`
    - Pick an issue atau buat feature
    - Submit PR dengan tests
 
@@ -470,12 +470,12 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
 ### Reading Order untuk Deep Learning
 
-1. Start: `docs/01_PERKENALAN.md` - Understand vision
-2. Install: `docs/02_INSTALASI.md` - Setup pada OS Anda
-3. Learn: `docs/03_PANDUAN_SINTAKS.md` - Master syntax
+1. Start: `website/panduan/01_PERKENALAN.md` - Understand vision
+2. Install: `website/panduan/02_INSTALASI.md` - Setup pada OS Anda
+3. Learn: `website/panduan/03_PANDUAN_SINTAKS.md` - Master syntax
 4. Practice: Run examples dan create programs
 5. Understand: Read source code dari `src/`
-6. Contribute: `docs/04_KONTRIBUSI.md` - Make improvements
+6. Contribute: `website/panduan/04_KONTRIBUSI.md` - Make improvements
 7. Share: Tell others about Indonesiaku!
 
 ---
@@ -509,7 +509,7 @@ Body:
 
 ### Getting Help
 
-- **Documentation** - Check `docs/` folder first
+- **Documentation** - Check `website/panduan/` folder first
 - **Examples** - Run related examples untuk solutions
 - **REPL** - Test ideas interactively
 - **Community** - Ask di GitHub Discussions

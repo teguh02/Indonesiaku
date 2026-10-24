@@ -1,0 +1,128 @@
+# Roadmap — Bahasa Indonesiaku
+
+**Satu-satunya sumber kebenaran untuk roadmap.** Versi saat ini: `0.4.0`
+(`INDK_VERSION` di `src/common.h`). Riwayat detail per rilis ada di
+[`CHANGELOG.md`](../CHANGELOG.md).
+
+**Visi:** bahasa bergaya Python dengan kata kunci Bahasa Indonesia —
+semantik selaras dengan Python 3 sehingga apa yang dipelajari di
+Indonesiaku langsung berlaku di Python, dan sebaliknya. Dasar analisis dan
+alasan setiap fase ada di [`ANALISIS/`](ANALISIS/README.md).
+
+## Sudah selesai
+
+| Versi | Isi | Bukti di repo |
+|---|---|---|
+| 0.1.0 | Scanner, compiler Pratt, VM stack, REPL, fungsi, `jika`/`selagi`, `cetak` | `src/` |
+| 0.2.0 | Closure/upvalue, list, kamus, `untuk...dalam`, `hentikan`/`lanjut`, kelas + warisan, `naikkan`/`coba`/`kecuali`, `impor`, GC mark-sweep | `examples/closure.idk`, `examples/oop/` |
+| 0.3.0 | Pustaka standar `pustaka/*.idk`, file I/O, waktu/tanggal, konversi, escape string, `argumen`, REPL multi-baris | `pustaka/`, `examples/berkas.idk` |
+| 0.4.0 | JSON, HTTP, soket TCP, server REST contoh, `ord`/`chr`/`sisip`/`hapus_pada`; pesan error dengan nomor baris + jejak panggilan | `examples/todo_server.idk`, `src/vm.c` `runtimeError` |
+
+## Fase pengembangan
+
+Status: ⬜ belum · 🟨 dikerjakan · ✅ selesai. Setiap butir besar mendapat
+berkas `RENCANA_FITUR/<nama>.md` saat mulai dikerjakan. Kode B*/K* merujuk
+ke [`ANALISIS/01_KONDISI_SAAT_INI.md`](ANALISIS/01_KONDISI_SAAT_INI.md) (bug)
+dan [`ANALISIS/03_KEPUTUSAN_DESAIN.md`](ANALISIS/03_KEPUTUSAN_DESAIN.md)
+(keputusan desain).
+
+### Fase 0 — Stabilisasi (target 0.5.0) — *"tidak ada jawaban salah"*
+
+Tujuan: program pemula (halo dunia, percabangan, perulangan, list, kamus,
+fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
+
+| Butir | Ref | Status |
+|---|---|---|
+| Perbaiki `//` (tidak memancarkan opcode) + tambah `//=` | B1, B13 | ✅ |
+| Tolak `f(x=1)` dengan error kompilasi sampai argumen bernama ada | B2 | ✅ |
+| Batas rekursi 1000 (`FRAMES_MAX`); jejak error merangkum frame berulang | B3 | ✅ |
+| `**` asosiatif kanan; `-2 ** 2 == -4` | B4, B5 | ✅ |
+| `%` dan `//` mengikuti tanda pembagi (Python) | B6 | ✅ |
+| Penugasan majemuk memakai seluruh ekspresi kanan (`x *= 2 + 3`) | B14 | ✅ |
+| `tidak` lebih lemah dari perbandingan | B15 | ✅ |
+| Harness tes galat `tests/galat/` (program yang harus gagal) | — | ✅ |
+| `lewati` dan `akhirnya` diimplementasikan, atau dikeluarkan dari scanner & README | B7 | ⬜ |
+| Bagi nol menjadi error | B9 | ⬜ |
+| Cetak desimal *shortest round-trip* | B10 | ⬜ |
+| Hapus token mati `INDENT/DEDENT/COLON/SEMICOLON` | 01 §6 | ⬜ |
+| Selaraskan README/panduan dengan kenyataan (fitur yang belum ada ditandai jelas) | 01 §6 | ⬜ |
+| Tes golden untuk setiap bug di atas | — | ⬜ |
+| Putuskan K1–K14 (keputusan desain) | 03 | ⬜ |
+
+### Fase 1 — Inti mirip Python (0.6–0.7) — *"tutorial Python bab 1–5 bisa ditiru"*
+
+| Butir | Ref |
+|---|---|
+| Error runtime menjadi pengecualian yang bisa ditangkap; hierarki `Galat*`; `kecuali Tipe sebagai e` | K5, 06 §9 |
+| Truthiness Python | K1 |
+| Assignment di fungsi = lokal; `global`, `nonlokal` | K3 |
+| `rentang()`, `enumerasi()`, `untuk` atas teks/kamus/rentang | K9 |
+| Operator `dalam` / `tidak dalam`, `adalah` / `bukan`, rantai perbandingan | 02 §A–B |
+| Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B |
+| Argumen bawaan & bernama; `cetak` jadi fungsi (`pisah=`, `akhir=`) | K12 |
+| Fungsi anonim (ekspresi `fungsi(x) { ... }`), ekspresi kondisional | 02 §B |
+| f-string, string `"""` multi-baris, literal `1e3`, `0x`, `0b`, `1_000` | 02 §B |
+| Metode pada `teks`/`daftar`/`kamus` (P1 dari katalog 06) | K10, 06 §1–3 |
+| `+`/`*` untuk teks & daftar, `==` struktural | K7 |
+| `pastikan` (assert) | 02 §A |
+| Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" | 04 §5, 05 §5 |
+
+### Fase 2 — Tipe data lengkap (0.8)
+
+`bulat` int64 (+ bignum), `tupel`, `himpunan`, penugasan berganda & unpacking,
+`*args`/`**kwargs`, list comprehension, operator bitwise, `buang` (del),
+kunci kamus non-teks, string per karakter (Unicode), `jenis()` mengembalikan
+kelas, builtin P1–P2 dari 02 §D. Ref: K2, K8, K11, K13, 06 §4–6.
+
+### Fase 3 — Modul & pustaka inti (0.9)
+
+`ObjModule` dengan namespace, `impor x`, `dari x impor y sebagai z`, paket,
+jalur pencarian (`INDK_PATH`), `__utama__`; modul P1 dari katalog 07:
+`matematika`, `acak`, `teks`, `sistem`, `waktu`, `tanggal_waktu`, `json`
+(native). Ref: 04 §6, 07 §1–5.
+
+### ★ Rilis 1.0 — "Stabil untuk umum"
+
+Syarat: Fase 0–3 selesai; `docs/SPESIFIKASI.md` ditulis; semua contoh di
+panduan diuji otomatis; kebijakan stabilitas K14 berlaku. Setelah 1.0, tidak
+ada breaking change sampai 2.0.
+
+### Fase 4 — OOP lengkap (1.1–1.2)
+
+Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
+`@metode_kelas`, dekorator, pewarisan berganda + MRO C3, `dengan ... sebagai`
+(manajer konteks), `adalah_instansi`, kelas abstrak. Ref: 04 §4.
+
+### Fase 5 — Iterator & generator (1.3)
+
+Protokol `_iter_`/`_berikutnya_`, `hasilkan` (yield), generator expression,
+dict/set comprehension, `cocokkan`/`kasus` (pattern matching).
+Ref: 04 §7.
+
+### Fase 6 — Pustaka standar luas (1.x berkelanjutan)
+
+Modul P2 dari katalog 07: `os`/`jalur`, `koleksi`, `iterasi`,
+`fungsional`, `pola` (regex), `csv`, `hash`, `base64`, `log`, `opsi`,
+`proses`, `salin`, `statistik`, `kura` (turtle), klien HTTP, `bita`.
+Sebagian besar cocok untuk kontributor baru.
+
+### Fase 7 — Perkakas & kinerja
+
+`indk uji`, `indk rapikan` (formatter), `indk periksa` (linter), LSP +
+ekstensi VS Code, debugger, `indk --dis`, playground via **WebAssembly**,
+cache `.idkc`, computed goto, superinstruksi, inline cache, NaN-boxing, GC
+generasional, utas/asinkron. Ref: 04 §1, §8–10, §12.
+
+### Fase 8 — Ekosistem
+
+Manajer paket + registri, API embedding C, FFI, `sqlite`, TLS/HTTPS, GUI,
+AOT/bundel executable, anotasi tipe opsional, mode sandbox untuk sekolah.
+Ref: 04 §11–13, 05.
+
+## Cara memakai berkas ini
+
+1. Untuk mengusulkan fitur: salin `RENCANA_FITUR/TEMPLATE.md`, isi, lalu
+   tautkan dari butir fase yang relevan.
+2. Saat fitur selesai: ubah status di sini + catat di `CHANGELOG.md`, lalu
+   hapus/arsipkan berkas rencananya.
+3. Jangan menyalin roadmap ini ke `README.md` atau berkas panduan.

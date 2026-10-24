@@ -47,7 +47,8 @@ Indonesiaku/
 │   └── setup_prompt.txt           ← Dokumentasi original
 ├── dist/                           ← Output installer hasil compile
 │   └── Indonesiaku-Setup-v0.1.1.exe
-├── docs/                           ← Documentation
+├── website/                        ← Situs dokumentasi + panduan pengguna
+├── docs/                           ← Perencanaan bahasa (internal)
 ├── examples/                       ← Example programs
 ├── src/                            ← Source code
 └── README.md

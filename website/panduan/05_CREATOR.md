@@ -272,7 +272,7 @@ Untuk menghubungi Teguh Rijanandi:
 ### Project
 
 - **GitHub Repository:** https://github.com/teguh02/Indonesiaku
-- **Documentation:** `/docs` folder
+- **Documentation:** `website/panduan/` folder
 - **Issues:** GitHub Issues for bug reports
 
 ---
@@ -296,7 +296,7 @@ Ingin berkontribusi atau mendukung proyek?
 git clone https://github.com/teguh02/Indonesiaku.git
 
 # 2. Read contributing guide
-cat docs/03_KONTRIBUSI.md
+cat website/panduan/04_KONTRIBUSI.md
 
 # 3. Pick an issue atau buat fitur baru
 # 4. Submit pull request

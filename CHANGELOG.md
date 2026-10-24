@@ -7,6 +7,68 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — Fase 0 (stabilisasi)
+- 🐛 **`//` (pembagian bulat) rusak**: compiler tidak menghasilkan opcode,
+  sehingga `1 + 10 // 3` menjadi `13`. Kini `OP_FLOOR_DIVIDE` membulatkan ke
+  bawah seperti Python (`-7 // 2 == -4`). `//=` juga ditambahkan.
+- 🐛 **Argumen bernama diam-diam salah**: `f(b=1, a=5)` dulu dikompilasi sebagai
+  assignment global dan nilainya dikirim berurutan (`-4`). Kini ditolak saat
+  kompilasi dengan pesan "Argumen bernama (nama=nilai) belum didukung".
+- 🐛 **Batas rekursi** naik dari 64 menjadi 1000 panggilan (sama dengan Python).
+  Jejak error merangkum frame yang berulang
+  (`[baris sebelumnya diulang N kali lagi]`).
+- 🐛 `**` kini asosiatif kanan (`2 ** 3 ** 2 == 512`) dan lebih kuat dari minus
+  unary (`-2 ** 2 == -4`).
+- 🐛 `%` mengikuti tanda pembagi seperti Python (`-7 % 3 == 2`).
+- 🐛 Penugasan majemuk memakai seluruh ekspresi di sisi kanan: `x *= 2 + 3`
+  dulu hanya mengalikan dengan `2`.
+- 🐛 `tidak` kini lebih lemah dari perbandingan: `tidak 1 == 2` bernilai `benar`
+  (dulu `(tidak 1) == 2`).
+
+### Changed
+- 📁 **Pemisahan dokumentasi**: isi `docs/` dipindah ke `website/` — situs statis
+  di `website/`, panduan pengguna di `website/panduan/`. Folder `docs/` kini
+  khusus **perencanaan bahasa**.
+- 🌐 Situs tidak lagi memakai Netlify (`netlify.toml` + `.netlify/` dihapus);
+  akan di-host sendiri sebagai satu bundel Docker bersama playground.
+
+### Added
+- 🧪 **Tes galat** `tests/galat/*.idk` + `*.err`: menguji program yang *harus*
+  gagal (exit ≠ 0 dan stderr persis sama). Dijalankan oleh kedua runner.
+- 🧪 Tes golden `operator_aritmetika` dan `rekursi_dalam`.
+- 📚 `docs/ANALISIS/`: audit v0.4.0, peta fitur Python → Indonesiaku, keputusan
+  desain, teknik lanjutan, dan katalog fungsi/kelas yang akan diduplikasi.
+  `docs/ROADMAP.md` disusun ulang menjadi Fase 0–8 menuju 1.0.
+- ⌨️ **stdin di playground** — panel Input terpisah di halaman playground;
+  `POST /api/jalankan` menerima `{kode, input}` dan menyalurkan `input` sebagai
+  stdin, sehingga `input("Nama: ")` membaca satu baris per pemanggilan.
+- ⚙️ **API playground** — `docker/playground/server.py` menjalankan `indk` untuk
+  `POST /api/jalankan` (`{kode, input}` → `{stdout, stderr, kode_keluar, ms}`)
+  dengan batas 3 detik, 128 MB, 64 KB input/output, dan rate limit 60/menit per
+  IP.
+- 🐳 **Bundel Docker situs + playground** — satu image (nginx + `indk` + python),
+  dijalankan sebagai dua layanan: `web` (publik) dan `runner` (jaringan
+  internal, tanpa akses internet, read-only, non-root).
+- 🎨 **Desain ulang situs** — Tailwind CSS (Play CDN) + token di
+  `website/assets/tailwind-config.js`, Alpine.js untuk tema/bahasa, tipografi
+  Plus Jakarta Sans + JetBrains Mono, mode terang & gelap berbasis kelas.
+- 🌐 **Dua bahasa (ID/EN)** — semua teks UI di `website/assets/i18n.json`;
+  pemilih bahasa tersimpan di `localStorage`, halaman Tentang & Penulis punya
+  artikel penuh dalam dua bahasa.
+- ⚡ **Senna.js (SPA)** — navigasi antar halaman tanpa reload lewat surface
+  `#konten`, sementara setiap halaman tetap HTML utuh dengan URL sendiri
+  (ramah mesin pencari). Tombol back/forward tetap bekerja.
+- 🧪 **Halaman playground** — `website/playground/index.html`: editor kode +
+  panel keluaran, `POST` AJAX ke `/api/jalankan` (`{ kode }` →
+  `{ stdout, stderr, kode_keluar, ms }`), pintasan Ctrl+Enter. Backend API
+  menyusul (halaman menampilkan status "backend tidak tersedia" bila belum ada).
+- 🗺️ `docs/ROADMAP.md` sebagai satu-satunya sumber kebenaran roadmap, plus
+  `docs/README.md` dan `docs/RENCANA_FITUR/TEMPLATE.md` untuk rencana per fitur.
+
+### Fixed
+- 🔗 Tautan antar-dokumen yang masih menunjuk `docs/…` (termasuk nama berkas
+  yang salah sejak lama, mis. `02_PANDUAN_SINTAKS.md` → `03_PANDUAN_SINTAKS.md`).
+
 ## [0.4.0] - 2026-08-07
 
 Rilis JSON + REST: aplikasi contoh Todo-list dalam dua bentuk — CRUD CLI

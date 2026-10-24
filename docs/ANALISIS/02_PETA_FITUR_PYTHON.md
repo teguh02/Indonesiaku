@@ -1,0 +1,281 @@
+# 02 — Peta Fitur Python → Indonesiaku
+
+Dokumen ini adalah **daftar periksa lengkap** dari apa yang bisa dilakukan
+Python 3.12, dipetakan ke Indonesiaku: sudah ada (✅), sebagian (🟡), belum
+(❌), dan di fase roadmap mana ia direncanakan (lihat
+[`ROADMAP.md`](../ROADMAP.md)). Nama Indonesia di kolom "Usulan" adalah
+**usulan**; nama final dikunci saat rencana fiturnya ditulis di
+`docs/RENCANA_FITUR/`.
+
+Prinsip penamaan:
+
+1. Kata kerja perintah untuk aksi (`cetak`, `kembalikan`, `urutkan`).
+2. Kata benda untuk tipe/konstruktor (`daftar`, `kamus`, `himpunan`).
+3. Hindari bentrok dengan builtin yang sudah ada (mis. `hapus` sudah dipakai
+   builtin, jadi `del` butuh nama lain).
+4. Kalau istilah teknisnya sudah umum dipakai programmer Indonesia (`indeks`,
+   `iterator`, `hash`), boleh dipakai apa adanya.
+
+---
+
+## A. Kata kunci (Python punya 35 + soft keyword)
+
+| Python | Indonesiaku | Status | Fase |
+|---|---|---|---|
+| `True` / `False` / `None` | `benar` / `salah` / `kosong` | ✅ | — |
+| `and` / `or` / `not` | `dan` / `atau` / `tidak` | ✅ | — |
+| `if` / `elif` / `else` | `jika` / `jika_lain` / `selain` | ✅ | — |
+| `while` | `selagi` | ✅ | — |
+| `for ... in` | `untuk ... dalam` | 🟡 hanya list | 1 |
+| `break` / `continue` | `hentikan` / `lanjut` | ✅ | — |
+| `def` | `fungsi` | ✅ | — |
+| `return` | `kembalikan` | ✅ | — |
+| `class` | `kelas` | ✅ | — |
+| `self` (konvensi) | `diri` (kata kunci) | ✅ | — |
+| `super()` | `super` | ✅ | — |
+| `try` / `except` | `coba` / `kecuali` | 🟡 belum ada filter tipe | 1 |
+| `finally` | `akhirnya` | ❌ (token ada) | 0 |
+| `raise` | `naikkan` | ✅ | — |
+| `import` | `impor "berkas"` | 🟡 tanpa namespace | 3 |
+| `from ... import` / `as` | `dari ... impor` / `sebagai` | ❌ (token ada) | 3 |
+| `pass` | `lewati` | ❌ (token ada) | 0 |
+| `in` (operator) | `dalam` | ❌ | 1 |
+| `not in` | `tidak dalam` | ❌ | 1 |
+| `is` / `is not` | `adalah` / `bukan` | ❌ | 1 |
+| `lambda` | `fungsi(x) { ... }` anonim / `lambda` | ❌ | 1 |
+| `global` / `nonlocal` | `global` / `nonlokal` | ❌ | 1 |
+| `del` | `buang` | ❌ | 2 |
+| `assert` | `pastikan` | ❌ | 1 |
+| `with` | `dengan ... sebagai` | ❌ (token ada) | 4 |
+| `yield` | `hasilkan` | ❌ | 5 |
+| `async` / `await` | `asinkron` / `tunggu` | ❌ | 7 |
+| `match` / `case` (3.10) | `cocokkan` / `kasus` | ❌ | 5 |
+
+## B. Sintaks & ekspresi
+
+| Fitur Python | Contoh | Status | Fase |
+|---|---|---|---|
+| Komentar `#` | | ✅ | — |
+| Docstring / string multi-baris `"""` | | ❌ | 1 |
+| f-string | `f"Halo {nama}"` | ❌ (ada `format()`) | 1 |
+| Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ❌ | 1 |
+| Literal kamus `{"a": 1}` | | ❌ | 1 |
+| Literal tupel `(1, 2)` | | ❌ | 2 |
+| Literal himpunan `{1, 2}` | | ❌ | 2 |
+| Indeks negatif `a[-1]` | | ❌ | 1 |
+| Irisan `a[1:3]`, `a[::-1]` | | ❌ (ada `potong`, `daftar_iris`) | 1 |
+| Penugasan berganda `a, b = 1, 2` / tukar | | ❌ | 2 |
+| Unpacking `a, *sisa = daftar` | | ❌ | 2 |
+| Ekspresi kondisional `x jika c selain y` | | ❌ | 1 |
+| Rantai perbandingan `1 < x < 3` | | ❌ | 1 |
+| Floor division `//`, `//=` | | ❌ **rusak** (B1) | 0 |
+| Operator bitwise `& \| ^ ~ << >>` | | ❌ | 2 |
+| List comprehension | `[x*2 untuk x dalam a jika x > 0]` | ❌ | 2 |
+| Dict/set comprehension, generator expression | | ❌ | 5 |
+| Argumen bawaan `def f(a, b=2)` | | ❌ | 1 |
+| Argumen bernama `f(b=1)` | | ❌ **diam-diam salah** (B2) | 0 → 1 |
+| `*args`, `**kwargs` | | ❌ | 2 |
+| Dekorator `@` | | ❌ | 4 |
+| Walrus `:=` | | 🟡 (assignment sudah ekspresi) | — |
+| Anotasi tipe `x: int` | | ❌ | 8 (opsional) |
+
+## C. Tipe data bawaan
+
+| Python | Indonesiaku | Status | Fase | Catatan |
+|---|---|---|---|---|
+| `bool` | `benar`/`salah` | ✅ | — | |
+| `NoneType` | `kosong` | ✅ | — | |
+| `int` (tak terbatas) | `bulat` | ❌ | 2 | Saat ini semua `double` |
+| `float` | `desimal` | 🟡 | — | Presisi cetak salah (B10) |
+| `complex` | `kompleks` | ❌ | 8 | Prioritas rendah |
+| `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); tanpa metode |
+| `list` | `daftar` | 🟡 | 1 | Tanpa metode, irisan, `+`, `*` |
+| `tuple` | `tupel` | ❌ | 2 | |
+| `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; tanpa literal |
+| `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
+| `range` | `rentang` | ❌ | 1 | Penting untuk pemula! |
+| `bytes` / `bytearray` | `bita` / `larik_bita` | ❌ | 6 | Diperlukan untuk berkas biner, jaringan |
+| Fungsi, kelas, metode terikat | | ✅ | — | |
+| Iterator / generator | | ❌ | 5 | |
+| Modul sebagai objek | | ❌ | 3 | |
+
+### C.1 Metode `str` (Python ±47 metode)
+
+Usulan prioritas fase 1–2 (sebagian sudah ada sebagai fungsi `teks_*` di
+`pustaka/teks.idk` — pindahkan ke metode native):
+
+| Python | Usulan | Ada sekarang? |
+|---|---|---|
+| `upper` / `lower` | `.huruf_besar()` / `.huruf_kecil()` | sebagai fungsi |
+| `strip` / `lstrip` / `rstrip` | `.pangkas()` / `.pangkas_kiri()` / `.pangkas_kanan()` | ❌ |
+| `split` / `join` | `.pisah(sep)` / `sep.gabung(daftar)` | 🟡 pustaka |
+| `replace` | `.ganti(a, b)` | sebagai fungsi |
+| `find` / `index` / `count` | `.cari()` / `.indeks()` / `.hitung()` | 🟡 pustaka |
+| `startswith` / `endswith` | `.mulai_dengan()` / `.akhiri_dengan()` | 🟡 pustaka |
+| `isdigit` / `isalpha` / `isspace` | `.adalah_angka()` / `.adalah_huruf()` / `.adalah_spasi()` | ❌ |
+| `title` / `capitalize` | `.judul()` / `.kapital()` | ❌ |
+| `format` | `.format(...)` | sebagai fungsi |
+| `zfill` / `center` / `ljust` | `.isi_nol()` / `.tengah()` / `.rata_kiri()` | ❌ |
+
+### C.2 Metode `list`
+
+`append`→`.tambah`, `extend`→`.perluas`, `insert`→`.sisip`, `pop`→`.ambil_keluar`,
+`remove`→`.hapus`, `clear`→`.kosongkan`, `index`→`.indeks`, `count`→`.hitung`,
+`sort`→`.urutkan`, `reverse`→`.balik`, `copy`→`.salin`.
+
+### C.3 Metode `dict`
+
+`keys`→`.kunci()`, `values`→`.nilai()`, `items`→`.pasangan()`,
+`get`→`.ambil(k, bawaan)`, `pop`→`.ambil_keluar`, `update`→`.perbarui`,
+`setdefault`→`.atur_bawaan`, `clear`→`.kosongkan`, `copy`→`.salin`.
+
+## D. Fungsi bawaan Python (71) → Indonesiaku
+
+Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
+`initVM` (`src/vm.c`).
+
+| Python | Usulan | Ada | Fase |
+|---|---|---|---|
+| `print` | `cetak` | ✅ (kata kunci) | 1: jadikan fungsi, `pisah=`/`akhir=` |
+| `input` | `input` / `masukan` | ✅ | — |
+| `len` | `panjang` | ✅ | — |
+| `type` | `jenis` | 🟡 nama string | 2 |
+| `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_angka`, `ke_teks` | 1 |
+| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus` | 2 |
+| `range` | `rentang` | ❌ | **1** |
+| `enumerate` | `enumerasi` | ❌ | 1 |
+| `zip` | `pasangkan` | ❌ | 2 |
+| `map` / `filter` | `peta` / `saring` | 🟡 `daftar_peta`, `daftar_saring` | 2 |
+| `sorted` / `reversed` | `terurut` / `terbalik` | 🟡 pustaka | 1 |
+| `sum` / `min` / `max` | `jumlah` / `min` / `max` | 🟡 min/max 2 argumen | 1 |
+| `abs` / `round` / `pow` / `divmod` | `abs` / `bulatkan` / `pangkat` / `bagi_sisa` | 🟡 (`bulat` = round?) | 1 |
+| `all` / `any` | `semua` / `ada_yang` | ❌ | 2 |
+| `isinstance` / `issubclass` | `adalah_instansi` / `turunan_dari` | ❌ | 2 |
+| `hasattr` / `getattr` / `setattr` / `delattr` | `punya_atribut` / `ambil_atribut` / `atur_atribut` / `buang_atribut` | ❌ | 4 |
+| `callable` | `bisa_dipanggil` | ❌ | 2 |
+| `repr` / `str` | `repr` / `ke_teks` | 🟡 | 2 |
+| `ord` / `chr` | `ord` / `chr` | ✅ | — |
+| `bin` / `oct` / `hex` | `biner` / `oktal` / `heksa` | ❌ | 2 |
+| `hash` / `id` | `hash` / `id` | ❌ | 2 |
+| `iter` / `next` | `iterator` / `berikutnya` | ❌ | 5 |
+| `open` | `buka` | 🟡 `buka_berkas` | 4: `dengan buka(...) sebagai f` |
+| `format` | `format` | ✅ | — |
+| `dir` / `vars` / `globals` / `locals` / `help` | `daftar_atribut` / `vars` / `global_()` / `lokal()` / `bantuan` | ❌ | 6 |
+| `eval` / `exec` / `compile` | `evaluasi` / `eksekusi` | ❌ | 6 |
+| `property` / `staticmethod` / `classmethod` | `properti` / `metode_statis` / `metode_kelas` | ❌ | 4 |
+| `object` / `super` | `objek` / `super` | 🟡 `super` | 4 |
+| `slice` | `irisan` | ❌ | 2 |
+| `bytes` / `bytearray` / `memoryview` | `bita` / `larik_bita` / — | ❌ | 6 |
+| `frozenset` / `complex` | `himpunan_beku` / `kompleks` | ❌ | 8 |
+| `breakpoint` | `titik_henti` | ❌ | 7 |
+| `aiter` / `anext` / `__import__` / `ascii` | — | ❌ | 8 (opsional) |
+
+## E. Pemrograman berorientasi objek
+
+| Python | Status | Fase |
+|---|---|---|
+| Kelas, konstruktor, metode, pewarisan tunggal, `super` | ✅ | — |
+| `isinstance`, kelas sebagai nilai pertama | ❌ / ✅ | 2 |
+| Pewarisan berganda + MRO (C3) | ❌ | 4 |
+| Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | ❌ | 4 |
+| Usulan nama: `_teks_`, `_sama_`, `_kurang_`, `_tambah_`, `_panjang_`, `_ambil_`, `_iter_`, `_panggil_` | | |
+| Atribut kelas (bukan per instansi) | ❌ | 4 |
+| `@property`, `@staticmethod`, `@classmethod` | ❌ | 4 |
+| Kelas abstrak, `dataclass`, `enum` | ❌ | 6 |
+| Hierarki pengecualian berbasis kelas (`class GalatSaya(Galat)`) | ❌ | 1 |
+
+## F. Pengecualian bawaan (usulan hierarki Indonesia)
+
+```
+Galat (BaseException/Exception)
+├── GalatAritmetika        (ArithmeticError)
+│   └── GalatBagiNol       (ZeroDivisionError)
+├── GalatPencarian         (LookupError)
+│   ├── GalatIndeks        (IndexError)
+│   └── GalatKunci         (KeyError)
+├── GalatTipe              (TypeError)
+├── GalatNilai             (ValueError)
+├── GalatNama              (NameError)
+├── GalatAtribut           (AttributeError)
+├── GalatBerkas / GalatOS  (OSError, FileNotFoundError)
+├── GalatImpor             (ImportError)
+├── GalatRekursi           (RecursionError)
+├── GalatPenegasan         (AssertionError — untuk `pastikan`)
+├── HentiIterasi           (StopIteration)
+└── GalatSintaks           (SyntaxError — dari `evaluasi`)
+```
+
+Pemakaian yang ditargetkan:
+
+```
+coba {
+    angka = ke_bulat(input("Angka: "))
+} kecuali GalatNilai sebagai e {
+    cetak("Bukan angka:", e.pesan)
+} akhirnya {
+    cetak("selesai")
+}
+```
+
+## G. Modul & paket
+
+| Python | Status | Fase |
+|---|---|---|
+| `import modul` dengan namespace (`modul.fungsi`) | ❌ (semua global bercampur) | 3 |
+| `from modul import a, b` / `as` | ❌ | 3 |
+| Paket (folder + `__init__`) | ❌ | 3 |
+| Jalur pencarian modul (`sys.path`, `INDK_PATH`) | ❌ (relatif ke cwd) | 3 |
+| `if __name__ == "__main__"` | ❌ → `jika __nama__ == "__utama__"` | 3 |
+| Cache bytecode (`.pyc`) | ❌ → `.idkc` | 7 |
+| Manajer paket (`pip` + PyPI) | ❌ → `ipm` / `paket` | 8 |
+| Virtual env | ❌ | 8 |
+
+## H. Pustaka standar Python → modul Indonesiaku
+
+Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
+
+| Python | Modul Indonesiaku | Status | Fase |
+|---|---|---|---|
+| `math` | `matematika` | 🟡 builtin + `pustaka/matematika.idk` | 3 |
+| `random` | `acak` | 🟡 `acak`, `acak_bulat` | 3 |
+| `string` | `teks` | 🟡 | 3 |
+| `json` | `json` | ✅ | — |
+| `time` / `datetime` | `waktu` / `tanggal_waktu` | 🟡 | 3 |
+| `os` / `os.path` / `pathlib` / `shutil` / `glob` | `os` / `jalur` | 🟡 berkas dasar | 6 |
+| `sys` | `sistem` (`argumen`, `keluar`, `versi`) | 🟡 `argumen`, `henti` | 3 |
+| `re` | `pola` (regex) | ❌ | 6 |
+| `collections` | `koleksi` (`Penghitung`, `Antrian`, `KamusBawaan`) | ❌ | 6 |
+| `itertools` / `functools` | `iterasi` / `fungsional` | 🟡 `daftar_peta` dkk | 6 |
+| `csv` | `csv` | ❌ | 6 |
+| `unittest` / `pytest` | `uji` (+ runner `indk uji`) | ❌ | 7 |
+| `logging` | `log` | ❌ | 6 |
+| `argparse` | `argparse` → `opsi` | ❌ | 6 |
+| `subprocess` | `proses` | ❌ | 6 |
+| `socket` | `soket` | ✅ (TCP, localhost) | — |
+| `http.server` / `urllib` | `http` | 🟡 parse/build | 6 |
+| `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | ❌ | 6 |
+| `sqlite3` | `sqlite` | ❌ | 8 (butuh FFI) |
+| `threading` / `asyncio` | `utas` / `asinkron` | ❌ | 7 |
+| `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | ❌ | 6 |
+| `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | ❌ | 6 |
+| `tkinter` / `turtle` | `kura` (turtle — sangat cocok untuk pendidikan!) | ❌ | 8 |
+
+> **Catatan pendidikan:** modul `turtle` adalah salah satu alasan Python
+> populer di sekolah. Modul `kura` (kura-kura) yang menggambar ke SVG/kanvas di
+> playground web bisa menjadi fitur unggulan Indonesiaku untuk pelajar.
+
+## I. Perkakas (tooling) di sekitar Python
+
+| Python | Indonesiaku | Status | Fase |
+|---|---|---|---|
+| Interpreter + REPL | `indk` | ✅ | — |
+| Traceback yang jelas | `[baris N] dalam f()` | 🟡 tanpa kolom/potongan kode | 1 |
+| Formatter (`black`) | `indk rapikan` | ❌ | 7 |
+| Linter (`pyflakes`) | `indk periksa` | ❌ | 7 |
+| Test runner | `indk uji` | ❌ | 7 |
+| Debugger (`pdb`) | `indk debug` / DAP | ❌ | 7 |
+| Language Server (LSP) + ekstensi VS Code | `indk-lsp` | ❌ | 7 |
+| Pewarnaan sintaks (VS Code, highlight.js) | | 🟡 situs saja | 7 |
+| Dokumentasi otomatis (`pydoc`) | `indk dok` | ❌ | 7 |
+| Playground web | `website/playground` | 🟡 UI ada, backend belum | 7 |
+| Disassembler (`dis`) | `DEBUG_PRINT_CODE` | 🟡 flag kompilasi | 7: `indk --dis` |

@@ -165,7 +165,7 @@ cd Indonesiaku
 
 ```powershell
 ls -la
-# Seharusnya melihat: src/, examples/, docs/, tests/, dll
+# Seharusnya melihat: src/, examples/, pustaka/, website/, docs/, tests/, dll
 ```
 
 #### Langkah 4: Build Project
@@ -560,7 +560,7 @@ cd Indonesiaku
 
 ```bash
 ls -la
-# Seharusnya melihat: src/, examples/, docs/, tests/, dll
+# Seharusnya melihat: src/, examples/, pustaka/, website/, docs/, tests/, dll
 ```
 
 ### Langkah 3: Build Project
@@ -682,7 +682,7 @@ cd Indonesiaku
 
 ```bash
 ls -la
-# Seharusnya melihat: src/, examples/, docs/, tests/, dll
+# Seharusnya melihat: src/, examples/, pustaka/, website/, docs/, tests/, dll
 ```
 
 ### Langkah 4: Build Project
@@ -1019,8 +1019,8 @@ gcc -Wall -Wextra -std=c11 -O3 -Isrc -o indk \
 ## Next Steps Setelah Install
 
 1. **Read Documentation**
-   - Baca `docs/01_PERKENALAN.md` untuk overview
-   - Baca `docs/02_PANDUAN_SINTAKS.md` untuk learn syntax
+   - Baca `website/panduan/01_PERKENALAN.md` untuk overview
+   - Baca `website/panduan/03_PANDUAN_SINTAKS.md` untuk learn syntax
 
 2. **Run Examples**
    ```bash
@@ -1040,7 +1040,7 @@ gcc -Wall -Wextra -std=c11 -O3 -Isrc -o indk \
    - Share feedback
 
 5. **Consider Contributing**
-   - Read `docs/03_KONTRIBUSI.md`
+   - Read `website/panduan/04_KONTRIBUSI.md`
    - Submit improvements
 
 ---
@@ -1065,7 +1065,7 @@ Jika mengalami masalah:
 
 1. **Check Dokumentasi**
    - Baca section Troubleshooting di atas
-   - Cek docs/ folder
+   - Cek `website/panduan/` folder
 
 2. **GitHub Issues**
    - Search existing issues

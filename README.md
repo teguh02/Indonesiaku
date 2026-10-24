@@ -6,18 +6,20 @@
 
 ## 📚 DOKUMENTASI LENGKAP
 
-**Dokumentasi terstruktur tersedia di folder `docs/`:**
+**Dokumentasi terstruktur tersedia di folder `website/panduan/`** (folder `website/` juga berisi situs dokumentasi & playground):
 
 | Dokumen | Deskripsi |
 |---------|-----------|
-| **[docs/README.md](docs/README.md)** | 📖 Hub utama dokumentasi |
-| **[docs/01_PERKENALAN.md](docs/01_PERKENALAN.md)** | 🎯 Visi, misi, fitur, roadmap |
-| **[docs/02_INSTALASI.md](docs/02_INSTALASI.md)** | 🔧 Instalasi untuk Windows, Linux, macOS |
-| **[docs/03_PANDUAN_SINTAKS.md](docs/03_PANDUAN_SINTAKS.md)** | 📝 Panduan syntax lengkap dengan contoh |
-| **[docs/04_KONTRIBUSI.md](docs/04_KONTRIBUSI.md)** | 🤝 Cara berkontribusi & setup dev |
-| **[docs/05_CREATOR.md](docs/05_CREATOR.md)** | 👤 Profile & motivasi creator |
-| **[docs/06_PENUTUP.md](docs/06_PENUTUP.md)** | ✅ Kesimpulan, FAQ, resources |
-| **[docs/07_PUSTAKA_STANDAR.md](docs/07_PUSTAKA_STANDAR.md)** | 📚 Referensi lengkap fungsi bawaan & pustaka standar |
+| **[website/panduan/README.md](website/panduan/README.md)** | 📖 Hub utama dokumentasi |
+| **[website/panduan/01_PERKENALAN.md](website/panduan/01_PERKENALAN.md)** | 🎯 Visi, misi, fitur |
+| **[website/panduan/02_INSTALASI.md](website/panduan/02_INSTALASI.md)** | 🔧 Instalasi untuk Windows, Linux, macOS |
+| **[website/panduan/03_PANDUAN_SINTAKS.md](website/panduan/03_PANDUAN_SINTAKS.md)** | 📝 Panduan syntax lengkap dengan contoh |
+| **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)** | 🤝 Cara berkontribusi & setup dev |
+| **[website/panduan/05_CREATOR.md](website/panduan/05_CREATOR.md)** | 👤 Profile & motivasi creator |
+| **[website/panduan/06_PENUTUP.md](website/panduan/06_PENUTUP.md)** | ✅ Kesimpulan, FAQ, resources |
+| **[website/panduan/07_PUSTAKA_STANDAR.md](website/panduan/07_PUSTAKA_STANDAR.md)** | 📚 Referensi lengkap fungsi bawaan & pustaka standar |
+
+Rencana pengembangan bahasa (internal, bukan panduan pengguna) ada di **[docs/](docs/README.md)**.
 
 ---
 
@@ -43,7 +45,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 
 ## ✨ Fitur
 
-### Saat Ini (v0.2)
+### Saat Ini (v0.4.0)
 - ✅ Ekspresi aritmatika (+, -, *, /, %, **) & assignment gabungan (+=, -=, dll)
 - ✅ Tipe data: angka, boolean (`benar`/`salah`), `kosong`, string
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
@@ -594,32 +596,11 @@ Semua kegagalan dapat ditangkap dengan `coba/kecuali`.
 
 ## 🗺️ Roadmap
 
-### v0.1 (Saat Ini) ✅
-- Ekspresi dan variabel
-- Percabangan (jika/jika_lain/selain)
-- Perulangan (selagi)
-- Fungsi dengan parameter dan return
-- Operator aritmatika dan logika
-- REPL
-
-### v0.2 (Dalam Pengembangan)
-- Perulangan `untuk...dalam`
-- List operations
-- `hentikan` (break) dan `lanjut` (continue)
-- Dictionary dan Set (dasar)
-- Operator assignment gabungan (+=, -=, dll)
-
-### v0.3 (Rencana)
-- Object-Oriented Programming (kelas, objek)
-- String methods
-- Garbage Collection
-- Error messages yang lebih baik
-
-### v0.4 (Rencana)
-- Import modul
-- Standard library
-- File I/O
-- Exception handling
+Roadmap **satu-satunya** ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** (status
+per fitur + rencana detail). Ringkasnya: semua fitur inti (closure, list/kamus,
+kelas & warisan, exception, modul, GC, file I/O, JSON, HTTP, soket TCP) sudah
+selesai di v0.4.0; kandidat berikutnya adalah `akhirnya`, literal kamus `{ }`,
+`lewati`, dan playground web.
 
 ## 🏗️ Arsitektur
 
@@ -647,16 +628,21 @@ Indonesiaku/
 │   ├── value.c/.h      # Value representation
 │   ├── object.c/.h     # Object system
 │   ├── table.c/.h      # Hash table
-│   ├── memory.c/.h     # Memory management
-│   └── debug.c/.h      # Debugging tools
-├── examples/           # Contoh program .idk
-├── .vscode/           # VS Code tasks
-└── Makefile           # Build system
+│   ├── memory.c/.h     # Memory management + GC
+│   ├── debug.c/.h      # Debugging tools
+│   └── native.c/.h     # Fungsi bawaan (builtin)
+├── pustaka/            # Pustaka standar (ditulis dalam Indonesiaku)
+├── examples/           # Contoh program .idk (sekaligus golden test)
+├── tests/              # Harness golden-output + integrasi
+├── website/            # Situs dokumentasi + panduan pengguna (website/panduan/)
+├── docs/               # Perencanaan bahasa (roadmap, rencana fitur)
+├── docker/             # Image Docker (indk)
+└── Makefile            # Build system
 ```
 
 ## 🤝 Kontribusi
 
-Kontribusi sangat diterima! Silakan baca panduan lengkap di **[docs/03_KONTRIBUSI.md](docs/03_KONTRIBUSI.md)**.
+Kontribusi sangat diterima! Silakan baca panduan lengkap di **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)**.
 
 Beberapa area yang bisa dikontribusikan:
 
@@ -686,7 +672,7 @@ git checkout -b feature/nama-fitur
 # 5. Buat perubahan, commit, dan submit PR
 ```
 
-Untuk detail lengkap, baca **[docs/03_KONTRIBUSI.md](docs/03_KONTRIBUSI.md)**.
+Untuk detail lengkap, baca **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)**.
 
 ## 📝 Lisensi
 

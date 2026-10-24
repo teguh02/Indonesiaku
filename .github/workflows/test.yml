@@ -345,6 +345,9 @@ jobs:
           test -f README.md && echo "[OK] README.md" || exit 1
           test -f CHANGELOG.md && echo "[OK] CHANGELOG.md" || exit 1
           test -f LICENSE && echo "[OK] LICENSE" || exit 1
+          test -d website && echo "[OK] website/" || exit 1
+          test -f website/docs.html && echo "[OK] website/docs.html" || exit 1
+          test -d website/panduan && echo "[OK] website/panduan/" || exit 1
           test -d docs && echo "[OK] docs/" || exit 1
           test -d examples && echo "[OK] examples/" || exit 1
           echo ""

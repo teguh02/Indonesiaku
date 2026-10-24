@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full scroll-pt-24">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playground — Indonesiaku</title>
+  <meta name="description" content="Tulis dan jalankan kode Indonesiaku langsung di browser, dieksekusi oleh interpreter indk." />
+  <meta name="color-scheme" content="light dark" />
+
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script src="../assets/tailwind-config.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/site.css" />
+
+  <script>
+    (function () {
+      try {
+        var tema = localStorage.getItem("indk-theme");
+        if (!tema) tema = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        if (tema === "dark") document.documentElement.classList.add("dark");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="../assets/app.js"></script>
+  <!-- Pustaka reader dokumentasi (dibutuhkan saat navigasi SPA ke docs.html) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+
+<body x-data="shell" class="min-h-full bg-paper font-sans text-ink antialiased dark:bg-night dark:text-paper">
+  <div id="konten">
+  <a href="#kode" data-senna-off class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-white">Lewati ke editor</a>
+
+  <header class="sticky top-0 z-50 border-b border-ink/10 bg-paper/85 backdrop-blur-md dark:border-white/10 dark:bg-night/85">
+    <div class="mx-auto flex h-16 max-w-wrap items-center gap-1 px-5">
+      <a href="../index.html" class="mr-4 flex items-center gap-2.5 text-[15px] font-extrabold tracking-tight">
+        <span class="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 font-mono text-[13px] font-bold text-white shadow-sm">In</span>
+        <span>Indonesiaku<span class="text-brand-600 dark:text-brand-400">.</span></span>
+      </a>
+      <nav class="hidden items-center gap-0.5 lg:flex" aria-label="Navigasi utama">
+        <a href="../index.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_home')">Beranda</a>
+        <a href="../about.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_about')">Tentang</a>
+        <a href="../author.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_author')">Penulis</a>
+        <a href="../docs.html" class="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] hover:text-ink dark:text-paper/70 dark:hover:bg-white/5 dark:hover:text-paper" x-text="t('nav_docs')">Dokumentasi</a>
+        <a href="index.html" class="rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 dark:text-brand-300" x-text="t('nav_playground')">Playground</a>
+      </nav>
+      <div class="ml-auto flex items-center gap-1.5">
+        <div class="hidden items-center rounded-full border border-ink/10 p-0.5 dark:border-white/15 sm:flex" role="group" aria-label="Bahasa / Language">
+          <button type="button" @click="setLang('id')" :aria-pressed="lang === 'id'" :class="lang === 'id' ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-ink-3 hover:text-ink dark:text-paper/60 dark:hover:text-paper'" class="rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-wide transition">ID</button>
+          <button type="button" @click="setLang('en')" :aria-pressed="lang === 'en'" :class="lang === 'en' ? 'bg-ink text-paper dark:bg-paper dark:text-ink' : 'text-ink-3 hover:text-ink dark:text-paper/60 dark:hover:text-paper'" class="rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-wide transition">EN</button>
+        </div>
+        <button type="button" @click="toggleTheme()" :aria-label="t('ui_theme')" :title="t('ui_theme')" class="grid h-9 w-9 place-items-center rounded-full border border-ink/10 text-ink-2 transition hover:bg-ink/[0.04] dark:border-white/15 dark:text-paper/70 dark:hover:bg-white/5">
+          <svg x-show="!dark" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>
+          <svg x-show="dark" x-cloak class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+        </button>
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener" class="hidden items-center gap-2 rounded-full border border-ink/10 px-3.5 py-1.5 text-sm font-semibold text-ink-2 transition hover:border-ink/25 hover:text-ink dark:border-white/15 dark:text-paper/70 dark:hover:border-white/30 dark:hover:text-paper md:flex">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+          GitHub
+        </a>
+        <button type="button" @click="menu = !menu" :aria-expanded="menu" :aria-label="t('nav_menu')" class="grid h-9 w-9 place-items-center rounded-full border border-ink/10 text-ink-2 dark:border-white/15 dark:text-paper/70 lg:hidden">
+          <svg x-show="!menu" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <svg x-show="menu" x-cloak class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div x-show="menu" x-cloak x-transition.opacity.duration.150ms class="border-t border-ink/10 bg-paper px-5 pb-4 pt-2 dark:border-white/10 dark:bg-night lg:hidden">
+      <nav class="grid gap-1" aria-label="Navigasi mobile">
+        <a href="../index.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_home')">Beranda</a>
+        <a href="../about.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_about')">Tentang</a>
+        <a href="../author.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_author')">Penulis</a>
+        <a href="../docs.html" class="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-ink/[0.04] dark:text-paper/80 dark:hover:bg-white/5" x-text="t('nav_docs')">Dokumentasi</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-wrap px-5 py-10 sm:py-14">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-brand-700 dark:text-brand-300">Playground</p>
+        <h1 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl" x-text="t('pg_title')">Playground</h1>
+        <p class="mt-2 max-w-2xl text-sm text-ink-2 dark:text-paper/60" x-text="t('pg_lead')">Tulis kode Indonesiaku lalu jalankan.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="jalankan"
+                class="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700 disabled:cursor-progress disabled:opacity-60">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
+          <span x-text="t('pg_run')">Jalankan</span>
+        </button>
+        <button type="button" id="bersihkan"
+                class="rounded-full border border-ink/15 px-4 py-2.5 text-sm font-semibold transition hover:border-ink/30 dark:border-white/20 dark:hover:border-white/35"
+                x-text="t('pg_clear')">Bersihkan</button>
+      </div>
+    </div>
+
+    <div class="mt-8 grid gap-5 lg:grid-cols-2">
+
+      <!-- EDITOR -->
+      <section class="overflow-hidden rounded-xl2 border border-ink/10 bg-white shadow-card dark:border-white/10 dark:bg-night-2">
+        <div class="flex items-center gap-2 border-b border-ink/10 bg-paper-2/50 px-4 py-2.5 dark:border-white/10 dark:bg-white/[0.03]">
+          <span class="h-2.5 w-2.5 rounded-full bg-brand-500/70"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-gold/70"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/70"></span>
+          <span class="ml-2 font-mono text-[11px] font-medium text-ink-3 dark:text-paper/45" x-text="t('pg_editor')">main.idk</span>
+          <span class="ml-auto hidden font-mono text-[10px] text-ink-3 dark:text-paper/35 sm:block" x-text="t('pg_hint')">Ctrl+Enter</span>
+        </div>
+        <label for="kode" class="sr-only">Kode Indonesiaku</label>
+        <textarea id="kode" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"
+                  class="pg-editor pg-scroll block h-[420px] w-full resize-y border-0 p-5 outline-none focus:ring-0"
+                  aria-label="Kode Indonesiaku"># Selamat datang di Playground Indonesiaku
+fungsi sapa(nama) {
+    kembalikan "Halo, " + nama + "!"
+}
+
+untuk orang dalam ["Budi", "Ani", "Citra"] {
+    cetak(sapa(orang))
+}
+
+angka = [3, 1, 4, 1, 5]
+cetak("Jumlah:", panjang(angka))
+cetak("Rata-rata:", (1 + 2 + 3) / 3)
+</textarea>
+      </section>
+
+      <!-- KELUARAN -->
+      <section class="overflow-hidden rounded-xl2 border border-ink/10 bg-white shadow-card dark:border-white/10 dark:bg-night-2">
+        <div class="flex items-center gap-2 border-b border-ink/10 bg-paper-2/50 px-4 py-2.5 dark:border-white/10 dark:bg-white/[0.03]">
+          <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-3 dark:text-paper/45" x-text="t('pg_output')">Keluaran</span>
+          <span id="status" class="ml-auto rounded-full border border-ink/10 px-2 py-0.5 font-mono text-[10px] text-ink-3 dark:border-white/15 dark:text-paper/50" x-text="t('pg_ready')">siap</span>
+        </div>
+        <pre id="output" class="pg-output pg-scroll block h-[420px] overflow-auto p-5"><span class="text-white/35 italic" x-text="t('pg_placeholder')">Keluaran program akan muncul di sini.</span></pre>
+      </section>
+    </div>
+
+    <!-- INPUT (stdin) -->
+    <section class="mt-5 overflow-hidden rounded-xl2 border border-ink/10 bg-white shadow-card dark:border-white/10 dark:bg-night-2">
+      <div class="flex items-center gap-2 border-b border-ink/10 bg-paper-2/50 px-4 py-2.5 dark:border-white/10 dark:bg-white/[0.03]">
+        <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-3 dark:text-paper/45" x-text="t('pg_input')">Input (stdin)</span>
+        <span class="ml-auto hidden text-[11px] text-ink-3 dark:text-paper/40 sm:block" x-text="t('pg_input_hint')">Satu baris untuk setiap pemanggilan input().</span>
+      </div>
+      <label for="stdin" class="sr-only" x-text="t('pg_input')">Input (stdin)</label>
+      <textarea id="stdin" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"
+                class="pg-editor pg-scroll block h-[110px] w-full resize-y border-0 p-4 outline-none focus:ring-0"
+                :placeholder="t('pg_input_placeholder')"></textarea>
+    </section>
+
+  </main>
+
+  <footer class="mt-8 border-t border-ink/10 dark:border-white/10">
+    <div class="mx-auto flex max-w-wrap flex-wrap items-center justify-between gap-3 px-5 py-6 text-xs text-ink-3 dark:text-paper/45">
+      <p>© 2026 Indonesiaku · <span x-text="t('foot_rights')">Dibuat di Indonesia</span> 🇮🇩</p>
+      <div class="flex items-center gap-4">
+        <a href="../docs.html" class="font-medium hover:text-brand-700 dark:hover:text-brand-300" x-text="t('nav_docs')">Dokumentasi</a>
+        <a href="https://github.com/teguh02/Indonesiaku" target="_blank" rel="noopener" class="font-medium hover:text-brand-700 dark:hover:text-brand-300">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+    "use strict";
+    // ---------------------------------------------------------------
+    // Backend playground (API Indonesiaku).
+    // Kontrak: POST /api/jalankan { kode, input } → { stdout, stderr, kode_keluar, ms }
+    //           `input` disalurkan sebagai stdin untuk input().
+    // ---------------------------------------------------------------
+    const API_URL = "/api/jalankan";
+    const BATAS_WAKTU_MS = 10000;
+
+    const kodeEl = document.getElementById("kode");
+    const stdinEl = document.getElementById("stdin");
+    const outputEl = document.getElementById("output");
+    const statusEl = document.getElementById("status");
+    const runBtn = document.getElementById("jalankan");
+    const clearBtn = document.getElementById("bersihkan");
+
+    const t = (k) => window.t18n(k);
+
+    function setStatus(teks, jenis) {
+      statusEl.textContent = teks;
+      statusEl.className =
+        "ml-auto rounded-full border px-2 py-0.5 font-mono text-[10px] " +
+        (jenis === "ok"
+          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          : jenis === "bad"
+          ? "border-brand-500/30 bg-brand-500/10 text-brand-700 dark:text-brand-300"
+          : "border-ink/10 text-ink-3 dark:border-white/15 dark:text-paper/50");
+    }
+
+    function cetakKeluaran(teks, kelas) {
+      outputEl.textContent = "";
+      const span = document.createElement("span");
+      if (!teks) {
+        span.className = "text-white/35 italic";
+        span.textContent = t("pg_empty");
+      } else {
+        if (kelas === "err") span.className = "text-[#ff9a9a]";
+        span.textContent = teks;
+      }
+      outputEl.appendChild(span);
+    }
+
+    async function jalankan() {
+      const kode = kodeEl.value;
+      if (!kode.trim()) {
+        setStatus(t("pg_nocode"), "bad");
+        cetakKeluaran(t("pg_nocode_out"), "err");
+        return;
+      }
+
+      runBtn.disabled = true;
+      setStatus(t("pg_running"));
+      outputEl.textContent = "";
+
+      const pembatal = new AbortController();
+      const timer = setTimeout(() => pembatal.abort(), BATAS_WAKTU_MS);
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kode, input: stdinEl.value }),
+          signal: pembatal.signal,
+        });
+
+        const teks = await res.text();
+        let data = null;
+        try {
+          data = teks ? JSON.parse(teks) : null;
+        } catch (e) {
+          data = null;
+        }
+
+        if (!res.ok) {
+          const pesan = (data && (data.pesan || data.error)) || teks || res.status + " " + res.statusText;
+          setStatus(t("pg_http") + " (" + res.status + ")", "bad");
+          cetakKeluaran(String(pesan), "err");
+          return;
+        }
+        if (!data) {
+          setStatus(t("pg_badjson"), "bad");
+          cetakKeluaran(t("pg_badjson") + ".", "err");
+          return;
+        }
+
+        const keluar = Number(data.kode_keluar || 0);
+        const bagian = [];
+        if (data.stdout) bagian.push(data.stdout);
+        if (data.stderr) bagian.push((data.stdout ? "\n" : "") + "[stderr]\n" + data.stderr);
+
+        cetakKeluaran(bagian.join(""), keluar !== 0 ? "err" : null);
+        setStatus(keluar === 0 ? t("pg_done") : t("pg_exit") + " " + keluar, keluar === 0 ? "ok" : "bad");
+
+        const ms = Number(data.ms || 0);
+        if (ms) {
+          const meta = document.createElement("div");
+          meta.className = "mt-2 text-white/40";
+          meta.textContent = "— " + ms + " ms · exit " + keluar;
+          outputEl.appendChild(meta);
+        }
+      } catch (err) {
+        if (err.name === "AbortError") {
+          setStatus(t("pg_timeout"), "bad");
+          cetakKeluaran(t("pg_client_timeout"), "err");
+        } else {
+          setStatus(t("pg_backend"), "bad");
+          cetakKeluaran(
+            "✕ " + API_URL + "\n" + t("pg_backend_hint") + "\n\n" + String(err.message || err),
+            "err"
+          );
+        }
+      } finally {
+        clearTimeout(timer);
+        runBtn.disabled = false;
+      }
+    }
+
+    // Tab menyisipkan 4 spasi; Ctrl/Cmd+Enter menjalankan.
+    kodeEl.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const { selectionStart: a, selectionEnd: b, value } = kodeEl;
+        kodeEl.value = value.slice(0, a) + "    " + value.slice(b);
+        kodeEl.selectionStart = kodeEl.selectionEnd = a + 4;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        jalankan();
+      }
+    });
+
+    runBtn.addEventListener("click", jalankan);
+    clearBtn.addEventListener("click", () => {
+      cetakKeluaran("");
+      setStatus(t("pg_ready"));
+    });
+    })();
+  </script>
+  </div><!-- /#konten -->
+
+  <!-- ================= Senna.js: navigasi SPA =================
+       Setiap halaman tetap HTML utuh dengan URL sendiri (crawlable / SEO),
+       tetapi navigasi antar-halaman tidak memuat ulang seluruh dokumen.
+       Surface = #konten; header/footer ikut diganti dari halaman tujuan. -->
+  <script src="https://cdn.jsdelivr.net/npm/senna@2.7.3/build/globals/senna.min.js" defer></script>
+  <script>
+    window.addEventListener("load", function () {
+      if (!window.senna) return;               // CDN gagal → situs tetap MPA biasa
+      var app = new senna.App();
+      window.__indkApp = app;   // untuk debugging navigasi
+      app.setBasePath("/");
+      app.addSurfaces("konten");
+      app.addRoutes(new senna.Route(/.*/, senna.HtmlScreen));
+    });
+  </script>
+</body>
+</html>

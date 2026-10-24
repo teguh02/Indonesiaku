@@ -157,9 +157,21 @@ jumlah = a + b        # 13 (penjumlahan)
 selisih = a - b       # 7  (pengurangan)
 kali = a * b          # 30 (perkalian)
 bagi = a / b          # 3.333... (pembagian)
+bagi_bulat = a // b   # 3  (pembagian bulat, dibulatkan ke bawah)
 sisa = a % b          # 1  (modulo/sisa bagi)
 pangkat = 2 ** 3      # 8  (perpangkatan)
 ```
+
+Aturannya sama dengan Python:
+
+```indonesiaku
+-7 // 2       # -4  (dibulatkan ke bawah, bukan ke arah nol)
+-7 % 3        # 2   (hasil % mengikuti tanda pembagi)
+2 ** 3 ** 2   # 512 (pangkat dihitung dari kanan: 2 ** 9)
+-2 ** 2       # -4  (sama dengan -(2 ** 2))
+```
+
+> Contoh: [`examples/operator_aritmetika.idk`](../examples/operator_aritmetika.idk)
 
 ### Operator Perbandingan
 
@@ -196,14 +208,15 @@ tidak b       # benar (NOT - kebalikan nilai)
 Urutan eksekusi dari tertinggi ke terendah:
 
 ```
-1. **       (pangkat)
-2. -, tidak (unary negation, NOT)
-3. *, /, %  (perkalian, pembagian, modulo)
-4. +, -     (penjumlahan, pengurangan)
+1. **           (pangkat, dihitung dari kanan)
+2. -            (minus unary)
+3. *, /, //, %  (perkalian, pembagian, pembagian bulat, modulo)
+4. +, -         (penjumlahan, pengurangan)
 5. <, <=, >, >= (perbandingan)
-6. ==, !=   (kesetaraan)
-7. dan      (AND)
-8. atau     (OR)
+6. ==, !=       (kesetaraan)
+7. tidak        (NOT: tidak a == b berarti tidak (a == b))
+8. dan          (AND)
+9. atau         (OR)
 ```
 
 **Contoh:**
@@ -472,6 +485,8 @@ x *= 2    # -> 24
 x /= 4    # -> 6
 x %= 4    # -> 2
 x **= 3   # -> 8
+x //= 3   # -> 2
+x *= 2 + 3  # -> 10 (sisi kanan dihitung utuh dulu: x = x * (2 + 3))
 ```
 > Contoh: [`examples/compound_operators.idk`](../examples/compound_operators.idk)
 
