@@ -101,9 +101,10 @@ cetak("Halo, dunia!")
 ```
 
 ### hitung.idk
-```python
-fungsi kali(a, b):
+```indonesiaku
+fungsi kali(a, b) {
     kembalikan a * b
+}
 
 hasil = kali(7, 6)
 cetak("7 x 6 =", hasil)

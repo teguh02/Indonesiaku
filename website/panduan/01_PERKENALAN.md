@@ -61,12 +61,17 @@ Menjadi bahasa pemrograman pertama yang fully mendukung pemrograman dalam Bahasa
 ## Roadmap Pengembangan
 
 Semua fitur inti (list, kamus, kelas/OOP, exception, modul, GC, File I/O, soket)
-sudah **terimplementasi** di v0.4.0. Kandidat pekerjaan berikutnya:
+sudah **terimplementasi** di v0.4.0, dan tahap stabilisasi (`akhirnya`,
+`lewati`, kesalahan yang bisa ditangkap, teks Unicode) sudah selesai.
+Kandidat pekerjaan berikutnya:
 
-- 🔮 `akhirnya` (finally) untuk `coba`/`kecuali`
-- 🔮 Kesadaran UTF-8 pada fungsi string (kini berbasis byte)
+- 🔮 `rentang()`, operator `dalam`, argumen bawaan & bernama
 - 🔮 Literal kamus `{ }` dan slicing `list[a:b]`
+- 🔮 Metode pada teks/list/kamus (`teks.huruf_besar()`)
 - 🔮 Standard library yang lebih luas & package manager
+
+Rencana lengkapnya ada di
+[ROADMAP](https://github.com/teguh02/Indonesiaku/blob/main/docs/ROADMAP.md).
 
 ---
 

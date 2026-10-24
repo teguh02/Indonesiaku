@@ -160,13 +160,16 @@ int count = 0;  // Initialize counter
 
 ### Indonesiaku Code (.idk)
 
-#### Indentasi
-```python
-# Gunakan 4 spasi untuk indentasi
-jika kondisi:
+#### Blok dan indentasi
+Blok ditandai kurung kurawal `{ }` (bukan indentasi seperti Python).
+Gunakan 4 spasi agar mudah dibaca:
+```indonesiaku
+jika kondisi {
     cetak("Level 1")
-    jika kondisi_lain:
+    jika kondisi_lain {
         cetak("Level 2")
+    }
+}
 ```
 
 #### Naming Variables
@@ -332,10 +335,11 @@ Penjelasan fitur yang diusulkan.
 Kapan dan mengapa fitur ini berguna.
 
 ## Syntax yang Diusulkan
-```python
+```indonesiaku
 # Contoh syntax
-untuk i dalam range(10):
+untuk i dalam rentang(10) {
     cetak(i)
+}
 ```
 
 ## Implementasi yang Mungkin
@@ -347,23 +351,11 @@ Fitur atau pendekatan alternatif yang sudah dipertimbangkan.
 
 ## 🎯 Area Kontribusi
 
-### High Priority
-- [ ] Implementasi for...in loop
-- [ ] List operations
-- [ ] Break dan continue
-- [ ] Better error messages
-- [ ] String concatenation
-
-### Medium Priority
-- [ ] Dictionary/object literals
-- [ ] Classes dan OOP
-- [ ] Import system
-- [ ] Standard library functions
-
-### Low Priority
-- [ ] Optimasi performa
-- [ ] Garbage collection
-- [ ] Advanced features
+Daftar pekerjaan dan prioritasnya ada di satu tempat:
+[`docs/ROADMAP.md`](docs/ROADMAP.md) (Fase 0–8 menuju 1.0). Untuk tugas kecil
+yang cocok bagi kontributor baru, lihat katalog fungsi yang belum ada di
+[`docs/ANALISIS/06_KATALOG_TIPE_BAWAAN.md`](docs/ANALISIS/06_KATALOG_TIPE_BAWAAN.md)
+dan [`docs/ANALISIS/07_KATALOG_PUSTAKA_STANDAR.md`](docs/ANALISIS/07_KATALOG_PUSTAKA_STANDAR.md).
 
 ## 📚 Resources
 

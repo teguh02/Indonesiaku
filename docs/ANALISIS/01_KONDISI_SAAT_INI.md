@@ -93,13 +93,17 @@ berbahaya bagi pemula karena mereka akan mengira logika merekalah yang salah.
 | B14 | **Penugasan majemuk memotong sisi kanan (diam)** | `x = 10` lalu `x *= 2 + 3` | `20` | `50` | Sisi kanan diparse pada `PREC_FACTOR`, jadi `+ 3` dihitung terpisah lalu dibuang |
 | B15 | **`tidak` terlalu kuat (diam)** | `tidak 1 == 2` | `salah` | `True` | `tidak` memakai `PREC_UNARY`, jadi terbaca `(tidak 1) == 2` |
 
-B14 dan B15 ditemukan saat memperbaiki B1–B6.
+| B16 | **Akhir baris tidak mengakhiri pernyataan** | `tidak b` lalu baris baru `(a atau b)` | Galat "Hanya dapat memanggil fungsi" — terbaca `b(a atau b)` | Dua pernyataan terpisah | Scanner membuang `\n`; parser menyambung baris yang diawali `(`, `[` atau `-` ke ekspresi sebelumnya. Perlu pernyataan yang diakhiri baris (di luar kurung) — Fase 1 |
+
+B14 dan B15 ditemukan saat memperbaiki B1–B6. B16 ditemukan saat menguji
+semua blok kode di dokumentasi; sementara ini ada catatan di panduan sintaks
+dan `;` bisa dipakai sebagai pemisah.
 
 **Status perbaikan (2026-10-24):** B1–B15 semuanya sudah diperbaiki dan
 diberi tes golden (`examples/`) atau tes galat (`tests/galat/`). Akar masalah
 B7 ternyata salah hitung panjang kata kunci `akhirnya` di `scanner.c`.
-Sisa batasan: `kembalikan`/`hentikan`/`lanjut` yang keluar dari `coba`
-ber-`akhirnya` masih ditolak saat kompilasi. Lihat Fase 0 di
+`kembalikan`/`hentikan`/`lanjut` yang keluar dari `coba` ber-`akhirnya` kini
+menjalankan blok akhirnya. B16 dijadwalkan di Fase 1. Lihat
 [`ROADMAP.md`](../ROADMAP.md).
 
 ## 5. Perbedaan semantik dengan Python (bukan bug, tapi keputusan yang belum dibuat)

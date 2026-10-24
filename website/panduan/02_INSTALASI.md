@@ -276,7 +276,7 @@ Halo dari Docker!
 > x = 10
 > cetak(x)
 10
-> exit()  # atau Ctrl+D
+> (tekan Ctrl+D untuk keluar)
 ```
 
 **Opsi B - Run dengan Custom Name:**

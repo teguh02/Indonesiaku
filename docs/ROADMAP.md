@@ -47,17 +47,18 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Cetak desimal *shortest round-trip* | B10 | ✅ |
 | `panjang`/indeks/`potong`/`ord`/`chr` per karakter Unicode | B11 | ✅ |
 | `cetak(a, b)` satu baris dipisah spasi; `cetak()` baris kosong | B12 | ✅ |
-| `kembalikan`/`hentikan`/`lanjut` keluar dari `coba` ber-`akhirnya` (sekarang ditolak saat kompilasi) | B7 lanjutan | ⬜ |
-| Hapus token mati `INDENT/DEDENT/COLON/SEMICOLON` | 01 §6 | ⬜ |
-| Selaraskan README/panduan dengan kenyataan (fitur yang belum ada ditandai jelas) | 01 §6 | ⬜ |
-| Tes golden untuk setiap bug di atas | — | ⬜ |
+| `kembalikan`/`hentikan`/`lanjut` keluar dari `coba` ber-`akhirnya` menjalankan blok akhirnya | B7 lanjutan | ✅ |
+| Hapus token mati (`INDENT`/`DEDENT`/`NEWLINE`); `;` jadi pemisah pernyataan; `:` dicadangkan untuk Fase 1 | 01 §6 | ✅ |
+| Selaraskan README/panduan dengan kenyataan (semua blok kode di dokumentasi diuji dengan `indk`) | 01 §6 | ✅ |
+| Tes golden untuk setiap bug di atas | — | ✅ |
 | Putuskan K1–K14 (keputusan desain) | 03 | ⬜ |
 
 ### Fase 1 — Inti mirip Python (0.6–0.7) — *"tutorial Python bab 1–5 bisa ditiru"*
 
 | Butir | Ref |
 |---|---|
-| Error runtime menjadi pengecualian yang bisa ditangkap; hierarki `Galat*`; `kecuali Tipe sebagai e` | K5, 06 §9 |
+| Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 |
+| Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 |
 | Truthiness Python | K1 |
 | Assignment di fungsi = lokal; `global`, `nonlokal` | K3 |
 | `rentang()`, `enumerasi()`, `untuk` atas teks/kamus/rentang | K9 |

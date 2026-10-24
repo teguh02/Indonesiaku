@@ -194,14 +194,19 @@ x <= y    # salah (lebih kecil atau sama)
 a = benar
 b = salah
 
-a dan b       # salah (AND - keduanya harus benar)
-a atau b      # benar (OR - salah satu harus benar)
-tidak a       # salah (NOT - kebalikan nilai)
-tidak b       # benar (NOT - kebalikan nilai)
+cetak(a dan b)    # salah (AND - keduanya harus benar)
+cetak(a atau b)   # benar (OR - salah satu harus benar)
+cetak(tidak a)    # salah (NOT - kebalikan nilai)
+cetak(tidak b)    # benar (NOT - kebalikan nilai)
 
 # Kombinasi
-(a atau b) dan (tidak b)  # benar
+cetak((a atau b) dan (tidak b))  # benar
 ```
+
+> **Perhatian:** akhir baris belum mengakhiri pernyataan. Baris yang diawali
+> `(` atau `-` bisa tersambung ke baris sebelumnya (`tidak b` lalu baris
+> `(a atau b)` terbaca sebagai pemanggilan `b(...)`). Pisahkan dengan `;` bila
+> perlu, atau hindari baris yang diawali kurung buka.
 
 ### Prioritas Operator
 
@@ -669,12 +674,24 @@ coba {
 }
 ```
 
-> Batasan saat ini: `kembalikan`, `hentikan`, dan `lanjut` belum boleh keluar
-> dari blok `coba` yang memiliki `akhirnya`.
+Blok `akhirnya` juga dijalankan saat `kembalikan`, `hentikan`, atau `lanjut`
+keluar dari `coba`. Nilai yang dikembalikan dihitung lebih dulu:
+
+```indonesiaku
+fungsi baca_angka() {
+    coba {
+        kembalikan 42
+    } akhirnya {
+        cetak("selalu dijalankan")
+    }
+}
+cetak(baca_angka())   # "selalu dijalankan", lalu 42
+```
 
 > Contoh: [`examples/coba_kecuali.idk`](../examples/coba_kecuali.idk),
 > [`examples/coba_akhirnya.idk`](../examples/coba_akhirnya.idk),
-> [`examples/galat_tertangkap.idk`](../examples/galat_tertangkap.idk)
+> [`examples/galat_tertangkap.idk`](../examples/galat_tertangkap.idk),
+> [`examples/coba_akhirnya_lompat.idk`](../examples/coba_akhirnya_lompat.idk)
 
 ### `lewati` — blok kosong
 

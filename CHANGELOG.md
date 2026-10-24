@@ -43,9 +43,15 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added — Fase 0
 - ✨ `lewati` (pass): pernyataan kosong, termasuk `kelas Kosong { lewati }`.
 - ✨ `akhirnya` (finally): `coba { } kecuali e { } akhirnya { }` dan
-  `coba { } akhirnya { }`; blok akhirnya selalu jalan, lalu galat yang belum
-  ditangkap diteruskan. Batasan: `kembalikan`/`hentikan`/`lanjut` yang keluar
-  dari `coba` ber-`akhirnya` ditolak saat kompilasi (belum didukung).
+  `coba { } akhirnya { }`; blok akhirnya selalu jalan — termasuk saat
+  `kembalikan`/`hentikan`/`lanjut` keluar dari `coba` — lalu galat yang belum
+  ditangkap diteruskan. Nilai `kembalikan` dihitung sebelum akhirnya berjalan.
+- ✨ `;` sebagai pemisah pernyataan dalam satu baris (`x = 1; cetak(x)`), dan
+  `kembalikan` tanpa nilai sebelum `}` (`jika x { kembalikan }`).
+
+### Removed — Fase 0
+- 🧹 Token mati `INDENT`/`DEDENT`/`NEWLINE` dari scanner (sisa desain lama
+  berbasis indentasi; tidak pernah dihasilkan).
 
 ### Changed — Fase 0 (merusak kompatibilitas)
 - ⚠️ `cetak(a, b, c)` kini mencetak semua argumen dalam **satu baris** dipisah
@@ -66,7 +72,8 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   gagal (exit ≠ 0 dan stderr persis sama). Dijalankan oleh kedua runner.
 - 🧪 Tes golden `operator_aritmetika`, `rekursi_dalam`, `coba_akhirnya`,
   `galat_tertangkap`, `teks_unicode`, `cetak_angka`, dan tes galat
-  `handler_basi`, `bagi_nol`, `akhirnya_teruskan`, `kembalikan_dalam_akhirnya`.
+  `handler_basi`, `bagi_nol`, `akhirnya_teruskan`; golden `coba_akhirnya_lompat`
+  dan `titik_koma`.
 - 📚 `docs/ANALISIS/`: audit v0.4.0, peta fitur Python → Indonesiaku, keputusan
   desain, teknik lanjutan, dan katalog fungsi/kelas yang akan diduplikasi.
   `docs/ROADMAP.md` disusun ulang menjadi Fase 0–8 menuju 1.0.
