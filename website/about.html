@@ -83,52 +83,50 @@
 
       <!-- ================= INDONESIA ================= -->
       <article x-show="lang === 'id'" class="mt-4">
-        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">Bahasa untuk berpikir<br class="hidden sm:block" /> dalam bahasa sendiri</h1>
+        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">Sebuah bahasa kecil<br class="hidden sm:block" /> untuk dibongkar dan dipelajari</h1>
         <p class="mt-5 text-lg leading-relaxed text-ink-2 dark:text-paper/70">
-          <strong>Indonesiaku</strong> adalah bahasa pemrograman yang dirancang agar programming bisa dipelajari dan dipakai dalam Bahasa Indonesia. Semua kata kunci — <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">jika</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">selagi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">fungsi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">kelas</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">cetak</code> — menghapus hambatan bahasa bagi pemula lokal.
+          <strong>Indonesiaku</strong> adalah interpreter yang saya buat dengan C11. Kata kuncinya memakai Bahasa Indonesia—<code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">jika</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">selagi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">fungsi</code>, <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">kelas</code>, dan <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">cetak</code>—supaya contoh program dasar dapat dibaca tanpa menerjemahkan tiap perintah.
         </p>
 
-        <h2 class="mt-12 text-2xl font-bold tracking-tight">Visi &amp; misi</h2>
+        <h2 class="mt-12 text-2xl font-bold tracking-tight">Kenapa dibuat</h2>
         <blockquote class="mt-4 border-l-4 border-brand-600 bg-brand-50/60 px-5 py-4 text-ink-2 dark:border-brand-400 dark:bg-brand-900/25 dark:text-paper/70">
-          Menjadi bahasa pemrograman yang membuka akses pendidikan programming untuk jutaan penutur Bahasa Indonesia — membuktikan bahwa bahasa pemrograman dapat didesain dengan kata kunci non-Inggris tanpa mengorbankan fitur.
+          Proyek ini adalah ruang belajar: bagaimana teks sumber dipindai, diurai, diubah menjadi bytecode, lalu dijalankan oleh virtual machine. Bahasa Indonesianya adalah pilihan desain, bukan sekadar lapisan terjemahan.
         </blockquote>
 
-        <h2 class="mt-12 text-2xl font-bold tracking-tight">Bagaimana cara kerjanya</h2>
-        <p class="mt-3 text-ink-2 dark:text-paper/70">Indonesiaku diimplementasikan sebagai <strong>bytecode virtual machine</strong> dalam C11, mengikuti arsitektur ala <em>Crafting Interpreters</em> (clox):</p>
+        <h2 class="mt-12 text-2xl font-bold tracking-tight">Cara kerjanya</h2>
+        <p class="mt-3 text-ink-2 dark:text-paper/70">Kode <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">.idk</code> dikompilasi dalam satu lintasan lalu dijalankan oleh VM berbasis stack. Arsitekturnya terinspirasi dari <em>Crafting Interpreters</em> (clox), tetapi implementasinya dapat dibaca langsung di repositori.</p>
         <div class="code-card mt-5 rounded-xl2 p-5 shadow-lift ring-1 ring-white/10">
           <pre><code>Kode sumber (.idk)
-  <span class="tok-p">↓</span>  Scanner (lexer)              <span class="tok-c"># token</span>
-  <span class="tok-p">↓</span>  Compiler single-pass        <span class="tok-c"># Pratt parser → bytecode, tanpa AST</span>
-  <span class="tok-p">↓</span>  Virtual machine (stack)     <span class="tok-c"># eksekusi + GC mark-sweep</span>
-  <span class="tok-p">↓</span>  Output</code></pre>
+  <span class="tok-p">↓</span>  Scanner                    <span class="tok-c"># token</span>
+  <span class="tok-p">↓</span>  Compiler single-pass       <span class="tok-c"># Pratt parser → bytecode</span>
+  <span class="tok-p">↓</span>  Virtual machine berbasis stack
+  <span class="tok-p">↓</span>  Keluaran</code></pre>
         </div>
 
-        <h2 class="mt-12 text-2xl font-bold tracking-tight">Fitur utama (v0.4.0)</h2>
+        <h2 class="mt-12 text-2xl font-bold tracking-tight">Yang sudah berjalan</h2>
         <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Tipe data</strong><br /><span class="text-ink-2 dark:text-paper/60">angka, boolean, string, kosong, list, kamus.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Kontrol alur</strong><br /><span class="text-ink-2 dark:text-paper/60">jika/jika_lain/selain, selagi, untuk ... dalam, hentikan/lanjut.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Fungsi</strong><br /><span class="text-ink-2 dark:text-paper/60">rekursi, closure, fungsi kelas-satu.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>OOP</strong><br /><span class="text-ink-2 dark:text-paper/60">kelas, init, diri, pewarisan (&lt;), super.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Kesalahan</strong><br /><span class="text-ink-2 dark:text-paper/60">naikkan, coba/kecuali.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Modul</strong><br /><span class="text-ink-2 dark:text-paper/60">impor "file.idk" dengan cache.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Pustaka standar</strong><br /><span class="text-ink-2 dark:text-paper/60">teks, daftar, matematika, kamus, JSON, HTTP.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Infrastruktur</strong><br /><span class="text-ink-2 dark:text-paper/60">GC mark-sweep, file I/O, waktu/tanggal, soket TCP.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Nilai dan koleksi</strong><br /><span class="text-ink-2 dark:text-paper/60">angka, boolean, string, kosong, list, dan kamus.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Alur program</strong><br /><span class="text-ink-2 dark:text-paper/60">jika, selagi, untuk ... dalam, hentikan, dan lanjut.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Fungsi</strong><br /><span class="text-ink-2 dark:text-paper/60">rekursi, closure, dan fungsi kelas-satu.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Objek</strong><br /><span class="text-ink-2 dark:text-paper/60">kelas, init, diri, pewarisan (&lt;), dan super.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Kesalahan</strong><br /><span class="text-ink-2 dark:text-paper/60">naikkan serta coba/kecuali.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Modul dan pustaka</strong><br /><span class="text-ink-2 dark:text-paper/60">impor, teks, daftar, matematika, kamus, JSON, dan HTTP.</span></li>
+          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Runtime</strong><br /><span class="text-ink-2 dark:text-paper/60">GC mark-sweep, file I/O, waktu/tanggal, dan soket TCP.</span></li>
         </ul>
 
-        <h2 class="mt-12 text-2xl font-bold tracking-tight">Contoh aplikasi nyata</h2>
-        <p class="mt-3 text-ink-2 dark:text-paper/70">Repositori menyertakan aplikasi <strong>Todo-list JSON DB</strong> dalam dua bentuk: CRUD berbasis command-line (<code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">examples/todo_cli.idk</code>) dan <strong>server REST API HTTP</strong> (<code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">examples/todo_server.idk</code>) — keduanya diuji otomatis di CI Linux, macOS, dan Windows.</p>
+        <h2 class="mt-12 text-2xl font-bold tracking-tight">Contoh yang ikut diuji</h2>
+        <p class="mt-3 text-ink-2 dark:text-paper/70">Ada todo-list berbasis command line di <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">examples/todo_cli.idk</code> dan server HTTP kecil di <code class="rounded bg-ink/[0.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/10">examples/todo_server.idk</code>. Keduanya bukan aplikasi produksi; keduanya dipakai untuk menguji fitur-fitur bahasa bekerja bersama pada Linux, macOS, dan Windows.</p>
 
-        <h2 class="mt-12 text-2xl font-bold tracking-tight">Untuk siapa?</h2>
+        <h2 class="mt-12 text-2xl font-bold tracking-tight">Untuk siapa</h2>
         <ul class="mt-4 space-y-2 text-ink-2 dark:text-paper/70">
-          <li>Pelajar Indonesia yang baru belajar programming.</li>
-          <li>Sekolah dan universitas yang mengajar dasar pemrograman.</li>
-          <li>Proyek edukasi dan penelitian tentang desain bahasa.</li>
-          <li>Siapa pun yang ingin menulis kode dalam bahasa sendiri.</li>
+          <li>Pelajar yang ingin melihat isi interpreter, bukan hanya memakai sintaksnya.</li>
+          <li>Pengajar yang membutuhkan contoh kecil untuk membahas compiler dan VM.</li>
+          <li>Orang yang tertarik pada desain bahasa pemrograman berbahasa Indonesia.</li>
         </ul>
 
         <div class="mt-12 flex flex-wrap gap-3">
-          <a href="docs.html" class="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700">Baca dokumentasi lengkap</a>
-          <a href="playground/" class="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold transition hover:border-ink/30 dark:border-white/20">Coba playground</a>
+          <a href="docs.html" class="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-700">Buka dokumentasi</a>
+          <a href="https://github.com/teguh02/Indonesiaku/tree/main/examples" target="_blank" rel="noopener" class="rounded-full border border-ink/15 px-5 py-2.5 text-sm font-semibold transition hover:border-ink/30 dark:border-white/20">Lihat contoh kode</a>
         </div>
       </article>
 

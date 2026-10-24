@@ -95,36 +95,28 @@
 
       <!-- ================= INDONESIA ================= -->
       <article x-show="lang === 'id'" class="mt-12">
-        <h2 class="text-2xl font-bold tracking-tight">Motivasi</h2>
+        <h2 class="text-2xl font-bold tracking-tight">Catatan dari pembuatnya</h2>
         <blockquote class="mt-4 border-l-4 border-brand-600 bg-brand-50/60 px-5 py-4 text-lg italic text-ink-2 dark:border-brand-400 dark:bg-brand-900/25 dark:text-paper/70">
-          “Bisakah kita membuat bahasa pemrograman yang mudah dipelajari dan menggunakan sintaks dalam Bahasa Indonesia?”
+          “Bagaimana kalau membuat interpreter kecil dengan kata kunci yang sejak awal terasa akrab bagi penutur Bahasa Indonesia?”
         </blockquote>
         <p class="mt-4 text-ink-2 dark:text-paper/70">
-          Dari pertanyaan itu lahir <strong>Indonesiaku</strong>. Sebagai developer Indonesia, Teguh ingin membuat sesuatu yang bermakna: bahasa pemrograman yang menghapus hambatan bahasa bagi pelajar lokal, sekaligus menjadi wadah belajar mendalam tentang <em>compiler design</em> dan <em>virtual machine</em>.
+          Pertanyaan itu menjadi titik awal Indonesiaku. Saya ingin memahami sendiri jalur dari kode sumber sampai program berjalan: scanner, parser, compiler bytecode, virtual machine, dan pengelolaan memori. Kata kunci Bahasa Indonesia membuat eksperimen ini punya karakter sendiri sekaligus lebih enak dipakai saat menjelaskan contoh dasar.
         </p>
 
-        <h2 class="mt-10 text-2xl font-bold tracking-tight">Tujuan proyek</h2>
-        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Aksesibilitas</strong><br /><span class="text-ink-2 dark:text-paper/60">programming lebih mudah diakses pelajar Indonesia.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Pembelajaran</strong><br /><span class="text-ink-2 dark:text-paper/60">memahami lexing, parsing, code generation, dan GC.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Komunitas</strong><br /><span class="text-ink-2 dark:text-paper/60">membangun komunitas seputar bahasa lokal.</span></li>
-          <li class="rounded-xl border border-ink/10 bg-white p-4 text-sm shadow-card dark:border-white/10 dark:bg-night-2"><strong>Inovasi</strong><br /><span class="text-ink-2 dark:text-paper/60">menunjukkan Indonesia bisa membuat teknologi berkualitas.</span></li>
+        <h2 class="mt-10 text-2xl font-bold tracking-tight">Yang ingin dijaga</h2>
+        <ul class="mt-4 space-y-2 text-ink-2 dark:text-paper/70">
+          <li><strong>Kecil dan terbaca.</strong> Implementasi harus cukup ringkas untuk ditelusuri saat belajar.</li>
+          <li><strong>Bahasa Indonesia sebagai bagian desain.</strong> Bukan terjemahan setengah jadi di atas sintaks lain.</li>
+          <li><strong>Contoh yang bisa dijalankan.</strong> Setiap fitur penting perlu punya contoh atau pengujian.</li>
+          <li><strong>Terbuka untuk dibongkar.</strong> Sumber, dokumentasi, dan riwayat perubahan tersedia di GitHub.</li>
         </ul>
 
-        <h2 class="mt-10 text-2xl font-bold tracking-tight">Filosofi desain</h2>
+        <h2 class="mt-10 text-2xl font-bold tracking-tight">Ruang belajar teknis</h2>
         <ul class="mt-4 space-y-2 text-ink-2 dark:text-paper/70">
-          <li><em>Simple, but not simplistic</em> — mudah untuk pemula, tetap powerful.</li>
-          <li><em>Indonesian first</em> — kata kunci dan dokumentasi dalam Bahasa Indonesia.</li>
-          <li><em>Educational</em> — dirancang untuk mengajarkan konsep pemrograman.</li>
-          <li><em>Open source</em> — semua orang bisa belajar dan berkontribusi.</li>
-        </ul>
-
-        <h2 class="mt-10 text-2xl font-bold tracking-tight">Keahlian teknis</h2>
-        <ul class="mt-4 space-y-2 text-ink-2 dark:text-paper/70">
-          <li>Compiler design — lexing, parsing, code generation.</li>
-          <li>Virtual machine — stack-based VM berbasis bytecode.</li>
-          <li>Memory management — garbage collection dan optimasi memori.</li>
-          <li>Open source — kontribusi ke berbagai proyek.</li>
+          <li>Scanner dan Pratt parser untuk mengubah teks menjadi bytecode.</li>
+          <li>VM berbasis stack untuk mengeksekusi instruction.</li>
+          <li>Garbage collector mark-sweep untuk objek runtime.</li>
+          <li>Pengujian contoh program di Linux, macOS, dan Windows.</li>
         </ul>
 
         <h2 class="mt-10 text-2xl font-bold tracking-tight">Kontak</h2>
