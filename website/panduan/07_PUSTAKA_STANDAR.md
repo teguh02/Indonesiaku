@@ -37,8 +37,12 @@ luar jangkauan.
 | `ganti(teks, cari, ganti)` | Ganti semua kemunculan substring |
 | `karakter(teks, i)` | Karakter (string 1 huruf) pada indeks `i` |
 | `potong(teks, mulai, jumlah)` | Substring mulai dari `mulai` sepanjang `jumlah` |
-| `ord(karakter)` | Kode byte (0-255) dari karakter |
-| `chr(kode)` | Karakter dari kode byte (0-255) |
+| `ord(karakter)` | Kode Unicode dari karakter (`ord("é") == 233`) |
+| `chr(kode)` | Karakter dari kode Unicode 0–1114111 (`chr(233) == "é"`) |
+
+Panjang, indeks, `karakter`, dan `potong` menghitung **karakter**, bukan byte,
+sehingga teks beraksen dan emoji aman: `panjang("héllo") == 5`,
+`"café"[3] == "é"`.
 
 Pengindeksan string juga tersedia: `teks[i]` mengembalikan karakter ke-`i`
 (string bersifat immutable — tidak dapat diubah lewat indeks).

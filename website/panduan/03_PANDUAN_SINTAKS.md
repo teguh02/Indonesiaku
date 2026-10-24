@@ -629,7 +629,7 @@ a.bersuara()   # Rex berkata: Guk
 
 ---
 
-## Penanganan Kesalahan (naikkan / coba / kecuali)
+## Penanganan Kesalahan (naikkan / coba / kecuali / akhirnya)
 
 ```indonesiaku
 coba {
@@ -644,8 +644,47 @@ coba {
 } kecuali e {
     cetak("gagal konversi:", e)
 }
+
+# Semua kesalahan saat program berjalan bisa ditangkap. Nilai `e` adalah
+# pesan kesalahannya:
+coba {
+    cetak(10 / 0)
+} kecuali e {
+    cetak(e)            # Pembagian dengan nol.
+}
 ```
-> Contoh: [`examples/coba_kecuali.idk`](../examples/coba_kecuali.idk)
+
+Blok `akhirnya` **selalu** dijalankan, baik terjadi kesalahan maupun tidak.
+Cocok untuk menutup berkas atau soket. Tanpa `kecuali`, kesalahan diteruskan
+ke luar setelah blok `akhirnya` selesai:
+
+```indonesiaku
+f = buka_berkas("data.txt", "b")
+coba {
+    cetak(baca(f))
+} kecuali e {
+    cetak("gagal membaca:", e)
+} akhirnya {
+    tutup(f)
+}
+```
+
+> Batasan saat ini: `kembalikan`, `hentikan`, dan `lanjut` belum boleh keluar
+> dari blok `coba` yang memiliki `akhirnya`.
+
+> Contoh: [`examples/coba_kecuali.idk`](../examples/coba_kecuali.idk),
+> [`examples/coba_akhirnya.idk`](../examples/coba_akhirnya.idk),
+> [`examples/galat_tertangkap.idk`](../examples/galat_tertangkap.idk)
+
+### `lewati` — blok kosong
+
+`lewati` adalah pernyataan yang tidak melakukan apa-apa (seperti `pass` di
+Python). Berguna sebagai penanda tempat kode yang belum ditulis:
+
+```indonesiaku
+fungsi nanti_saja() { lewati }
+kelas Kosong { lewati }
+```
 
 ---
 
@@ -680,9 +719,12 @@ Menampilkan output ke layar.
 # Satu argument
 cetak("Halo")
 
-# Multiple arguments
-cetak("Nama:", "Teguh")
-cetak("Umur:", 25)
+# Multiple arguments: dicetak dalam satu baris, dipisah spasi
+cetak("Nama:", "Teguh")   # Nama: Teguh
+cetak("Umur:", 25)        # Umur: 25
+
+# Tanpa argument: baris kosong
+cetak()
 
 # Expressions
 x = 10

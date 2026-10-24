@@ -53,13 +53,14 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **List** `[..]` + indexing, **Kamus** via `kamus()` + indexing string
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
-- ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`
+- ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
+  kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
+- ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
 - ✅ **Sistem modul**: `impor "file.idk"` (namespace global bersama, di-cache)
 - ✅ **Garbage Collector** mark-sweep
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 
 ### Akan Datang
-- 🔲 `akhirnya` (finally) untuk `coba`/`kecuali`
 - 🔲 Literal kamus `{ }`, Set
 - 🔲 String methods lanjutan & file I/O
 - 🔲 Standard library yang lebih lengkap
@@ -503,18 +504,18 @@ Dibangun di atas native soket TCP (`soket_dengar`/`soket_terima`/...) dan
 | `class` | `kelas` | Definisi kelas (v0.3+) |
 | `self` | `diri` | Self reference (v0.3+) |
 
-### Kata Kunci Tambahan (Untuk Versi Mendatang)
+### Kata Kunci Tambahan
 - `break` → `hentikan`
 - `continue` → `lanjut`
 - `pass` → `lewati`
 - `import` → `impor`
-- `from` → `dari`
-- `as` → `sebagai`
-- `with` → `dengan`
 - `try` → `coba`
 - `except` → `kecuali`
 - `finally` → `akhirnya`
 - `raise` → `naikkan`
+
+Dicadangkan untuk versi mendatang (belum bisa dipakai): `from` → `dari`,
+`as` → `sebagai`, `with` → `dengan`.
 
 ## 🧰 Fungsi Bawaan (Built-in)
 
@@ -599,8 +600,8 @@ Semua kegagalan dapat ditangkap dengan `coba/kecuali`.
 Roadmap **satu-satunya** ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** (status
 per fitur + rencana detail). Ringkasnya: semua fitur inti (closure, list/kamus,
 kelas & warisan, exception, modul, GC, file I/O, JSON, HTTP, soket TCP) sudah
-selesai di v0.4.0; kandidat berikutnya adalah `akhirnya`, literal kamus `{ }`,
-`lewati`, dan playground web.
+selesai di v0.4.0, dan Fase 0 (stabilisasi: operator, `akhirnya`, `lewati`,
+galat yang bisa ditangkap, teks Unicode) sedang menuju rilis berikutnya.
 
 ## 🏗️ Arsitektur
 

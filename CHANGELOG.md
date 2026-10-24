@@ -24,6 +24,35 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   dulu hanya mengalikan dengan `2`.
 - 🐛 `tidak` kini lebih lemah dari perbandingan: `tidak 1 == 2` bernilai `benar`
   (dulu `(tidak 1) == 2`).
+- 🐛 **Semua galat runtime bisa ditangkap** `coba/kecuali`: indeks di luar
+  jangkauan, variabel tak terdefinisi, tipe operand salah, memanggil
+  bukan-fungsi, rekursi terlalu dalam, dll. Nilai `e` adalah pesan galatnya.
+  Hanya kerusakan internal VM yang tetap fatal.
+- 🐛 `kembalikan`/`hentikan`/`lanjut` dari dalam `coba` kini melepas handler-nya
+  (dulu handler basi bisa "menangkap" galat setelah fungsinya selesai).
+- 🐛 **Bagi nol** (`/`, `//`, `%`, `0 ** -n`) kini galat "Pembagian dengan nol."
+  (dulu menghasilkan `takhingga`/`nan`).
+- 🐛 **Presisi cetak angka**: representasi terpendek yang tepat, seperti Python
+  (`0.1 + 0.2` → `0.30000000000000004`, `2 ** 0.5` → `1.4142135623730951`).
+- 🐛 **Teks Unicode**: `panjang`, `teks[i]`, `karakter`, dan `potong` menghitung
+  karakter, bukan byte (`panjang("héllo") == 5`). `ord`/`chr` memakai kode
+  Unicode (`ord("é") == 233`, `chr(128512)` → 😀).
+- 🐛 Kata kunci `akhirnya` tidak pernah dikenali scanner (salah hitung panjang),
+  sehingga terbaca sebagai nama variabel.
+
+### Added — Fase 0
+- ✨ `lewati` (pass): pernyataan kosong, termasuk `kelas Kosong { lewati }`.
+- ✨ `akhirnya` (finally): `coba { } kecuali e { } akhirnya { }` dan
+  `coba { } akhirnya { }`; blok akhirnya selalu jalan, lalu galat yang belum
+  ditangkap diteruskan. Batasan: `kembalikan`/`hentikan`/`lanjut` yang keluar
+  dari `coba` ber-`akhirnya` ditolak saat kompilasi (belum didukung).
+
+### Changed — Fase 0 (merusak kompatibilitas)
+- ⚠️ `cetak(a, b, c)` kini mencetak semua argumen dalam **satu baris** dipisah
+  spasi (seperti Python `print`); dulu tiap argumen di baris sendiri.
+  `cetak()` mencetak baris kosong.
+- ⚠️ `chr()` menerima kode Unicode hingga `0x10FFFF` dan menghasilkan UTF-8;
+  `chr(200)` kini `È`, bukan satu byte mentah.
 
 ### Changed
 - 📁 **Pemisahan dokumentasi**: isi `docs/` dipindah ke `website/` — situs statis
@@ -35,7 +64,9 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 - 🧪 **Tes galat** `tests/galat/*.idk` + `*.err`: menguji program yang *harus*
   gagal (exit ≠ 0 dan stderr persis sama). Dijalankan oleh kedua runner.
-- 🧪 Tes golden `operator_aritmetika` dan `rekursi_dalam`.
+- 🧪 Tes golden `operator_aritmetika`, `rekursi_dalam`, `coba_akhirnya`,
+  `galat_tertangkap`, `teks_unicode`, `cetak_angka`, dan tes galat
+  `handler_basi`, `bagi_nol`, `akhirnya_teruskan`, `kembalikan_dalam_akhirnya`.
 - 📚 `docs/ANALISIS/`: audit v0.4.0, peta fitur Python → Indonesiaku, keputusan
   desain, teknik lanjutan, dan katalog fungsi/kelas yang akan diduplikasi.
   `docs/ROADMAP.md` disusun ulang menjadi Fase 0–8 menuju 1.0.

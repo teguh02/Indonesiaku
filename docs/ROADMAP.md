@@ -41,9 +41,13 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Penugasan majemuk memakai seluruh ekspresi kanan (`x *= 2 + 3`) | B14 | ✅ |
 | `tidak` lebih lemah dari perbandingan | B15 | ✅ |
 | Harness tes galat `tests/galat/` (program yang harus gagal) | — | ✅ |
-| `lewati` dan `akhirnya` diimplementasikan, atau dikeluarkan dari scanner & README | B7 | ⬜ |
-| Bagi nol menjadi error | B9 | ⬜ |
-| Cetak desimal *shortest round-trip* | B10 | ⬜ |
+| `lewati` dan `akhirnya` diimplementasikan | B7 | ✅ |
+| Semua galat runtime bisa ditangkap `kecuali`; handler `coba` dilepas saat `kembalikan`/`hentikan`/`lanjut` | B8 | ✅ |
+| Bagi nol menjadi error | B9 | ✅ |
+| Cetak desimal *shortest round-trip* | B10 | ✅ |
+| `panjang`/indeks/`potong`/`ord`/`chr` per karakter Unicode | B11 | ✅ |
+| `cetak(a, b)` satu baris dipisah spasi; `cetak()` baris kosong | B12 | ✅ |
+| `kembalikan`/`hentikan`/`lanjut` keluar dari `coba` ber-`akhirnya` (sekarang ditolak saat kompilasi) | B7 lanjutan | ⬜ |
 | Hapus token mati `INDENT/DEDENT/COLON/SEMICOLON` | 01 §6 | ⬜ |
 | Selaraskan README/panduan dengan kenyataan (fitur yang belum ada ditandai jelas) | 01 §6 | ⬜ |
 | Tes golden untuk setiap bug di atas | — | ⬜ |

@@ -95,9 +95,11 @@ berbahaya bagi pemula karena mereka akan mengira logika merekalah yang salah.
 
 B14 dan B15 ditemukan saat memperbaiki B1–B6.
 
-**Status perbaikan (2026-10-24):** B1–B6 dan B13–B15 sudah diperbaiki dan
-diberi tes (`examples/operator_aritmetika.idk`, `examples/rekursi_dalam.idk`,
-`tests/galat/`). B7–B12 masih terbuka; lihat Fase 0 di
+**Status perbaikan (2026-10-24):** B1–B15 semuanya sudah diperbaiki dan
+diberi tes golden (`examples/`) atau tes galat (`tests/galat/`). Akar masalah
+B7 ternyata salah hitung panjang kata kunci `akhirnya` di `scanner.c`.
+Sisa batasan: `kembalikan`/`hentikan`/`lanjut` yang keluar dari `coba`
+ber-`akhirnya` masih ditolak saat kompilasi. Lihat Fase 0 di
 [`ROADMAP.md`](../ROADMAP.md).
 
 ## 5. Perbedaan semantik dengan Python (bukan bug, tapi keputusan yang belum dibuat)
