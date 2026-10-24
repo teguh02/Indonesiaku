@@ -2,6 +2,42 @@
 
 Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `0.4.0`).
 
+## Identity: Python semantics, PHP-style braces (NON-NEGOTIABLE)
+
+**Python is our reference for SEMANTICS, never for block syntax.** Copy
+Python's behavior — truthiness, operator rules, scoping, error model, string
+and collection semantics — but blocks are delimited by `{ }` like PHP/C, never
+by indentation.
+
+```indonesiaku
+fungsi sapa(nama) {        # PHP-style braces — no ':' , no indentation rule
+    jika nama == "" {
+        kembalikan "Halo, dunia!"
+    }
+    kembalikan "Halo, " + nama
+}
+```
+
+Consequences you must respect in every change:
+
+- The scanner has **no INDENT/DEDENT tokens and must never grow them** (K4).
+  Whitespace at line start carries no meaning. Statements end at a newline
+  outside `()`/`[]` (B16), but a block only ends at `}`.
+- No `:` to open a block. `fungsi f() {`, not `fungsi f():`.
+- `{` and `}` are *structural*. Any future Python construct that reuses braces
+  (dict literals `{"a": 1}`, set literals) is a genuine grammar conflict and
+  needs an explicit disambiguation rule plus a decision recorded in
+  `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — it also has to be taught to
+  `prescanFunctionBody` and `skipBalancedBraces` in `compiler.c`, which both
+  count raw braces.
+- When a doc, example, or error message explains syntax, show braces. Never
+  write Python-indented pseudo-code as if it were Indonesiaku.
+
+This is deliberate, not a shortcut: braces survive copy-paste from WhatsApp and
+the web, keep the REPL's multi-line buffering simple, and give beginners a
+clearer error (`Harapkan '}'`) than tab-vs-space mistakes. See K4 in
+`docs/ANALISIS/03_KEPUTUSAN_DESAIN.md`.
+
 ## Feature workflow (MANDATORY — read before writing code)
 
 The repo is ONE unit: interpreter, tests, user docs, and editor tooling must
