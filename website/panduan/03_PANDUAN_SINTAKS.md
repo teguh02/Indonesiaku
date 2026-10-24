@@ -679,12 +679,15 @@ untuk i dalam [0, 1, 2, 3] {
 ## Closure
 
 Gunakan kata kunci `variabel` untuk membuat variabel lokal fungsi yang dapat
-ditangkap oleh closure (fungsi bersarang).
+ditangkap oleh closure (fungsi bersarang). Untuk **mengubah** variabel fungsi
+pembungkus dari dalam closure, deklarasikan `nonlokal` lebih dulu — tanpa itu
+assignment hanya membuat variabel lokal baru di closure.
 
 ```indonesiaku
 fungsi buat_pencacah() {
     variabel hitung = 0
     fungsi naik() {
+        nonlokal hitung
         hitung = hitung + 1
         kembalikan hitung
     }
@@ -696,6 +699,63 @@ cetak(c())   # 1
 cetak(c())   # 2
 ```
 > Contoh: [`examples/closure.idk`](../examples/closure.idk)
+
+---
+
+## Lingkup Assignment: `global` dan `nonlokal`
+
+Di tingkat skrip, `x = 5` membuat/mengubah variabel global. **Di dalam fungsi,
+`x = 5` membuat variabel lokal fungsi** — seperti Python. Nama yang hanya
+dibaca (tidak di-assign) tetap dicari ke fungsi pembungkus lalu global.
+
+```indonesiaku
+variabel pesan = "skrip"
+
+fungsi lokal_saja() {
+    pesan = "lokal"       # lokal fungsi; global 'pesan' tidak berubah
+    kembalikan pesan
+}
+cetak(lokal_saja(), pesan)   # lokal skrip
+```
+
+Untuk menulis ke variabel di luar fungsi, deklarasikan lingkupnya:
+
+| Deklarasi | Efek |
+|---|---|
+| `global nama` | assignment menulis ke variabel tingkat skrip |
+| `nonlokal nama` | assignment menulis ke variabel fungsi pembungkus |
+
+```indonesiaku
+variabel pesan = "skrip"
+
+fungsi ubah_global() {
+    global pesan
+    pesan = "diubah"
+}
+ubah_global()
+cetak(pesan)          # diubah
+```
+
+Keduanya menerima beberapa nama sekaligus (`global a, b`), berlaku untuk
+seluruh badan fungsi, dan hanya boleh muncul di dalam fungsi. `nonlokal` harus
+menemukan variabel pada fungsi pembungkus; merujuk global adalah galat kompilasi.
+
+Variabel yang dibuat lewat assignment di dalam blok (`jika`, `selagi`, `untuk`)
+hidup sampai akhir fungsi, bukan hanya sampai akhir blok:
+
+```indonesiaku
+fungsi jumlahkan(batas) {
+    total = 0
+    untuk n dalam rentang(1, batas) {
+        total = total + n
+    }
+    kembalikan total      # 10 untuk batas 5
+}
+```
+
+`variabel x = ...` tetap sah dan merujuk variabel lokal yang sama.
+
+> Contoh: [`examples/lingkup_assignment.idk`](../examples/lingkup_assignment.idk)
 
 ---
 

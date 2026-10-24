@@ -43,7 +43,7 @@ Prinsip penamaan:
 | `not in` | `tidak dalam` | ✅ | — |
 | `is` / `is not` | `adalah` / `bukan` | ❌ | 1 |
 | `lambda` | `fungsi(x) { ... }` anonim / `lambda` | ❌ | 1 |
-| `global` / `nonlocal` | `global` / `nonlokal` | ❌ | 1 |
+| `global` / `nonlocal` | `global` / `nonlokal` | ✅ | — |
 | `del` | `buang` | ❌ | 2 |
 | `assert` | `pastikan` | ❌ | 1 |
 | `with` | `dengan ... sebagai` | ❌ (token ada) | 4 |

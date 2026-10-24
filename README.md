@@ -374,6 +374,7 @@ untuk x dalam [1, 2, 3, 4, 5] {
 fungsi buat_pencacah() {
     variabel n = 0             # 'variabel' wajib agar bisa ditangkap closure
     fungsi naik() {
+        nonlokal n             # tanpa 'nonlokal', n = n + 1 jadi lokal baru
         n = n + 1
         kembalikan n
     }
@@ -382,6 +383,20 @@ fungsi buat_pencacah() {
 c = buat_pencacah()
 cetak(c())  # 1
 cetak(c())  # 2
+```
+
+### Lingkup Assignment (`global` / `nonlokal`)
+Di tingkat skrip `x = 5` membuat global; **di dalam fungsi `x = 5` membuat
+variabel lokal** (seperti Python). Pakai `global`/`nonlokal` untuk menulis ke
+luar fungsi. Keduanya menerima beberapa nama: `global a, b`.
+```python
+variabel pesan = "skrip"
+fungsi ubah() {
+    global pesan
+    pesan = "diubah"
+}
+ubah()
+cetak(pesan)       # diubah
 ```
 
 ### Kelas & Pewarisan

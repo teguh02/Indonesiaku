@@ -33,6 +33,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   list multiline. Titik koma tetap dapat memisahkan pernyataan pada satu baris.
 
 ### Changed — Fase 1 (merusak kompatibilitas)
+- ⚠️ **Assignment di dalam fungsi membuat variabel lokal (K3)**, seperti Python.
+  Dulu `x = 5` di dalam fungsi menulis ke global. Untuk menulis ke luar fungsi,
+  deklarasikan `global nama` (variabel tingkat skrip) atau `nonlokal nama`
+  (variabel fungsi pembungkus); keduanya menerima beberapa nama sekaligus dan
+  hanya boleh di dalam fungsi. Variabel hasil assignment di dalam blok
+  `jika`/`selagi`/`untuk` hidup sampai akhir fungsi. `variabel x = ...` tetap sah.
+  Closure yang **mengubah** variabel tangkapannya kini wajib `nonlokal`.
 - ⚠️ **Truthiness mengikuti Python (K1)**: `0`, `""`, `[]`, kamus kosong, dan
   rentang kosong kini bernilai **salah** dalam `jika`/`selagi`/`dan`/`atau`/
   `tidak` (dulu hanya `salah` dan `kosong`). `selagi antrian { ... }` dan
