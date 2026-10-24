@@ -2,6 +2,42 @@
 
 Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `0.4.0`).
 
+## Feature workflow (MANDATORY — read before writing code)
+
+The repo is ONE unit: interpreter, tests, user docs, and editor tooling must
+never drift apart. A feature is not done when it compiles; it is done when all
+four are in sync.
+
+**1. Plan in `docs/` FIRST.** Every language change — new syntax, new builtin,
+changed semantics, breaking change — starts as a plan file in
+`docs/RENCANA_FITUR/<nama>.md`, copied from `docs/RENCANA_FITUR/TEMPLATE.md`
+(masalah, sintaks, semantik, berkas tersentuh, rencana uji). No planning,
+roadmap, or design notes anywhere else: not in `README.md`, not in
+`CHANGELOG.md`, not in `website/`. `docs/ROADMAP.md` is the single source of
+truth for status.
+
+**2. When the feature works, update ALL of these in the same change** — this
+list is a checklist, not a suggestion:
+
+| Target | What to update |
+|---|---|
+| `examples/` + `tests/expected/` | one golden example exercising the feature (stdout only, stderr empty) |
+| `tests/galat/` | `.idk` + `.err` pair for anything that must fail |
+| `website/panduan/` | `03_PANDUAN_SINTAKS.md` for syntax, `07_PUSTAKA_STANDAR.md` for new builtins — these ARE the live site |
+| `editors/vscode-indonesiaku/` | new keywords → `extension.js` KEYWORDS + `syntaxes/indonesiaku.tmLanguage.json`; new builtins → BUILTINS; new syntax worth a snippet → `snippets/indonesiaku.code-snippets` |
+| `CHANGELOG.md` | entry, marked ⚠️ when it breaks compatibility |
+| `docs/ROADMAP.md`, `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` | flip status to ✅ |
+| `README.md`, this `AGENTS.md` | user-visible syntax and new pitfalls |
+| plan file | status → `selesai`, then `git mv` into `docs/RENCANA_FITUR/selesai/` |
+
+**3. A breaking change must also fix every consumer in-repo:** `examples/`,
+`pustaka/`, and the integration test scripts. Grep, don't guess — the golden
+suite catches most of it, but `pustaka/*.idk` is imported by examples and fails
+far from the edit.
+
+**4. Only then commit**, code+tests separate from docs (see Conventions), run
+the full verification matrix, `git fetch` + rebase, re-test, push.
+
 ## Build
 
 - `make` → produces `indk` (Linux/macOS) or `indk.exe` (Windows). C11, `-Isrc`, links `-lm`.
@@ -77,7 +113,7 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 
 ## Website (`website/`) vs language planning (`docs/`)
 
-- **Two separate folders, two separate jobs.** `website/` = everything users see (usage docs, site, playground). `docs/` = internal language planning (roadmap, spec, per-feature plans). Never put user guides in `docs/` and never put roadmap/planning in `website/panduan/`.
+- **Two separate folders, two separate jobs.** `website/` = everything users see (usage docs, site, playground). `docs/` = internal language planning (roadmap, spec, per-feature plans) — **all development planning goes here, nowhere else**. Never put user guides in `docs/` and never put roadmap/planning in `website/panduan/`. Both must be updated when a feature lands: `docs/` records the decision, `website/panduan/` teaches the user.
 - `website/` pages: `index.html` (landing), `about.html`, `author.html`, `docs.html` (markdown reader), `playground/index.html`, shared `assets/`, and the user guides in `website/panduan/*.md`. There is no Netlify anymore — the site is self-hosted.
 - **Frontend stack (no build step):** Tailwind Play CDN + tokens in `assets/tailwind-config.js`, Alpine.js components in `assets/app.js`, and **Senna.js 2.7.3** (globals build) as the SPA engine. Every page is still a complete HTML document with its own URL (crawlable/SEO); Senna only swaps the `#konten` surface. Navigation must never rely on `#konten` being re-parsed by hand — Senna evaluates inline scripts inside the surface, so page scripts MUST be wrapped in an IIFE.
 - **Bilingual:** all UI strings live in `assets/i18n.json` (`id` + `en`, identical keys). `app.js` fetches it **before** loading Alpine and only then calls `Alpine.data('shell', …)`; never add an Alpine `<script>` tag to a page. Long-form prose on `/about` and `/author` is duplicated as two `<article>` blocks toggled by `x-show="lang === 'id'"`.
@@ -99,7 +135,7 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 - `website/docs.html` renders the `.md` files at runtime with marked.js (fetched relative to `website/`, so entries are `panduan/<file>.md`) and syntax-highlights with highlight.js. To add a doc to the reader's sidebar, edit the `DOCS` array in `docs.html`; the `mdMatch` regex in `fixLinks()` must keep accepting `/` in paths.
 - **Embedding example code in docs:** put a marker `{{embed:examples/foo.idk}}` on its own line in a `.md`. The reader fetches that file from `raw.githubusercontent.com/teguh02/Indonesiaku/main/...` so it always mirrors the repo — `examples/` is NOT copied into `docs/`. This means an embedded example must be committed+pushed to `main` before it shows on the live site.
 - Deployment target is our own server, as ONE Docker bundle: the `website/` static files (docs + site) and the playground run together in a container; no Netlify, no `.netlify/`. Whatever serves the static files MUST send `text/markdown; charset=utf-8` for `*.md` and `text/plain; charset=utf-8` for `*.idk`, otherwise `fetch()` in the reader fails. The reader requires HTTP — it does not work over `file://`. For local preview: `python -m http.server 8000 -d website`.
-- When language features change, keep these in sync: `README.md`, `CHANGELOG.md`, `website/panduan/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), `docs/ROADMAP.md`, this `AGENTS.md`, and the Dockerfile `LABEL version`.
+- When language features change, keep these in sync — see the mandatory checklist in **Feature workflow** at the top: `README.md`, `CHANGELOG.md`, `website/panduan/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), `editors/vscode-indonesiaku/` (keywords, builtins, snippets), `docs/ROADMAP.md`, this `AGENTS.md`, and the Dockerfile `LABEL version`.
 
 ## Conventions
 
