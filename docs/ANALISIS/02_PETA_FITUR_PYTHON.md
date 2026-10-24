@@ -182,7 +182,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | Atribut kelas (bukan per instansi) | ❌ | 4 |
 | `@property`, `@staticmethod`, `@classmethod` | ❌ | 4 |
 | Kelas abstrak, `dataclass`, `enum` | ❌ | 6 |
-| Hierarki pengecualian berbasis kelas (`class GalatSaya(Galat)`) | ❌ | 1 |
+| Hierarki pengecualian berbasis kelas (`class GalatSaya(Galat)`) | 🟡 `Galat*` bawaan dan `kecuali Tipe sebagai e`; kelas galat pengguna menyusul | 1 |
 
 ## F. Pengecualian bawaan (usulan hierarki Indonesia)
 

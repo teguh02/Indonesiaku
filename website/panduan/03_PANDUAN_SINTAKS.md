@@ -201,6 +201,24 @@ cetak(1 < x < 3)
 cetak("apel" dalam buah == buah)
 ```
 
+### Penanganan galat bertipe
+
+Semua galat runtime dan fungsi bawaan dapat ditangkap sebagai objek dengan properti `.pesan`. Gunakan kelas induk atau beberapa kelas untuk memilih galat yang ditangani.
+
+```indonesiaku
+coba {
+    cetak(1 / 0)
+} kecuali GalatAritmetika sebagai e {
+    cetak(e.pesan)
+} kecuali (GalatNilai, GalatTipe) sebagai e {
+    cetak("masukan tidak sah:", e)
+} kecuali e {  # tetap menangkap semua
+    cetak(e)
+}
+```
+
+Kelas bawaan mencakup `Galat`, `GalatAritmetika`, `GalatBagiNol`, `GalatPencarian`, `GalatIndeks`, `GalatKunci`, `GalatTipe`, `GalatNilai`, `GalatNama`, dan `GalatAtribut`.
+
 ### Operator Logika
 
 ```indonesiaku

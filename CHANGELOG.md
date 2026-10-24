@@ -23,6 +23,11 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   pasangan `[indeks, nilai]`; `untuk k dalam kamus` mengiterasi kunci menurut
   urutan penyisipan.
 
+- ✨ **Hierarki `Galat*` dan handler bertipe:** galat runtime/native sekarang berupa
+  instansi galat dengan `.pesan`; `kecuali GalatTipe sebagai e` dan
+  `kecuali (GalatTipe, GalatNilai) sebagai e` didukung. `kecuali e` lama tetap
+  kompatibel dan mencetak pesannya.
+
 ### Changed — Fase 1 (merusak kompatibilitas)
 - ⚠️ **Truthiness mengikuti Python (K1)**: `0`, `""`, `[]`, kamus kosong, dan
   rentang kosong kini bernilai **salah** dalam `jika`/`selagi`/`dan`/`atau`/

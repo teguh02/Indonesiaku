@@ -71,6 +71,7 @@ Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as
 
 - `compiler/` is **not** the language compiler — it's the Windows installer (Inno Setup `.iss` + assets). `dist/` holds prebuilt `Indonesiaku-Setup-*.exe`. All language implementation lives in `src/`.
 - Root-level `test_*.idk` files are ad-hoc scratch scripts (git-ignored), not the test suite.
+- Typed errors use `kecuali GalatTipe sebagai e` or `kecuali (GalatTipe, GalatNilai) sebagai e`; instances carry `.pesan`. Keep the legacy `kecuali e` form working when changing VM error paths, and root newly created error instances/message strings until their fields own them.
 - `src/` map: `main.c` CLI/REPL · `scanner.c` lexer · `compiler.c` single-pass parser+codegen (Pratt) · `chunk.c` bytecode · `vm.c` interpreter loop + native registration + import · `native.c` builtins · `value.c`/`object.c` values & heap objects · `table.c` hash table · `memory.c` allocation + GC · `debug.c` disassembler.
 - `docker/images/Dockerfile` is multi-stage (build → slim Alpine runtime, ~12.6 MB); it bundles the `indk` binary + `pustaka/` + `examples/`. Image is `teguh02/indonesiaku:<version>` and `:latest` on Docker Hub. Keep the `LABEL version` in sync with `INDK_VERSION`.
 

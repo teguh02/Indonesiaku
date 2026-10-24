@@ -62,7 +62,7 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Operator `dalam` / `tidak dalam` ([rencana](RENCANA_FITUR/selesai/operator_dalam.md)) | 02 §A | ✅ |
 | `enumerasi()`, `untuk` atas kamus | K9 | ✅ |
 | `adalah` / `bukan`, rantai perbandingan (`1 < x < 3`, `a dalam b == c`) | 02 §A–B | ✅ |
-| Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 | ⬜ |
+| Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 | ✅ |
 | Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 | ⬜ |
 | Assignment di fungsi = lokal; `global`, `nonlokal` | K3 | ⬜ |
 | Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B | ⬜ |
