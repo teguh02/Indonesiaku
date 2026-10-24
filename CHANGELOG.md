@@ -25,6 +25,16 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - ⚠️ `tidak` yang muncul tepat setelah sebuah ekspresi (di baris berikutnya)
   kini dibaca sebagai awal `tidak dalam` (lihat B16).
 
+### Fixed — CI
+- 🐛 Build gagal di GCC 14 (Linux CI): `usleep` tidak dideklarasikan di bawah
+  `-std=c11`; `native.c` kini mendefinisikan `_DEFAULT_SOURCE`.
+- 🐛 Tes `http_pakai` gagal di Linux/macOS: keluarannya memuat `\r` mentah
+  sehingga git menyimpan golden-nya sebagai biner berisi CRLF Windows. Contoh
+  kini menampilkan `\r` sebagai teks.
+- 🐛 Ditemukan fuzzer (ASan): blok `akhirnya` yang berisi `coba ... akhirnya`
+  sendiri menimpa data blok luar saat dikompilasi ulang inline, sehingga
+  `kembalikan` berikutnya menjalankan blok yang salah atau membaca memori basi.
+
 ### Fixed — Fase 0 (stabilisasi)
 - 🐛 **`//` (pembagian bulat) rusak**: compiler tidak menghasilkan opcode,
   sehingga `1 + 10 // 3` menjadi `13`. Kini `OP_FLOOR_DIVIDE` membulatkan ke

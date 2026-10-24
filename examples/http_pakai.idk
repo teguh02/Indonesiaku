@@ -25,8 +25,13 @@ cetak("metode:", d["metode"])
 cetak("path:", d["path"])
 
 cetak("=== bangun response ===")
-cetak(http_response(200, "text/plain", "halo"))
+# Response HTTP memakai akhir baris \r\n. Tampilkan \r sebagai teks agar
+# keluarannya sama di semua OS (stdout Windows menambah \r sendiri).
+fungsi tampilkan(response) {
+    cetak(ganti(response, "\r", "\\r"))
+}
+tampilkan(http_response(200, "text/plain", "halo"))
 cetak("---")
-cetak(http_response_json(404, "{\"kesalahan\":\"tidak ditemukan\"}"))
+tampilkan(http_response_json(404, "{\"kesalahan\":\"tidak ditemukan\"}"))
 cetak("---")
-cetak(http_response(201, "application/json", "{\"id\":1}"))
+tampilkan(http_response(201, "application/json", "{\"id\":1}"))

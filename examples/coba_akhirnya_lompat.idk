@@ -79,3 +79,35 @@ fungsi h() {
 }
 cetak(h())
 coba { naikkan "setelah semua" } kecuali e { cetak("handler bersih:", e) }
+
+# Regresi (fuzz): akhirnya yang berisi coba...akhirnya sendiri tidak boleh
+# menimpa data blok luar; kembalikan kedua harus tetap menjalankan "luar".
+fungsi bersarang(x) {
+    coba {
+        jika x { kembalikan 1 }
+        kembalikan 2
+    } akhirnya {
+        selagi benar {
+            coba { hentikan } akhirnya { cetak("dalam") }
+        }
+        cetak("luar")
+    }
+}
+cetak(bersarang(benar))
+cetak(bersarang(salah))
+
+# Regresi (fuzz, ASan stack-use-after-return): hentikan di akhirnya bagian
+# dalam tidak boleh memakai data perulangan dari kompilasi inline sebelumnya.
+fungsi bersarang_hentikan(x) {
+    coba {
+        jika x { kembalikan 1 }
+        kembalikan 2
+    } akhirnya {
+        selagi benar {
+            coba { lewati } akhirnya { hentikan }
+        }
+        cetak("luar")
+    }
+}
+cetak(bersarang_hentikan(benar))
+cetak(bersarang_hentikan(salah))

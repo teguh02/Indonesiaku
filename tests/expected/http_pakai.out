@@ -13,23 +13,23 @@ badan: {"teks":"beli susu"}
 metode: DELETE
 path: /todos/42
 === bangun response ===
-HTTP/1.1 200 OK
-Content-Type: text/plain
-Content-Length: 4
-Connection: close
-
+HTTP/1.1 200 OK\r
+Content-Type: text/plain\r
+Content-Length: 4\r
+Connection: close\r
+\r
 halo
 ---
-HTTP/1.1 404 Not Found
-Content-Type: application/json
-Content-Length: 31
-Connection: close
-
+HTTP/1.1 404 Not Found\r
+Content-Type: application/json\r
+Content-Length: 31\r
+Connection: close\r
+\r
 {"kesalahan":"tidak ditemukan"}
 ---
-HTTP/1.1 201 Created
-Content-Type: application/json
-Content-Length: 8
-Connection: close
-
+HTTP/1.1 201 Created\r
+Content-Type: application/json\r
+Content-Length: 8\r
+Connection: close\r
+\r
 {"id":1}

@@ -1156,20 +1156,26 @@ static void inlineFinallyBlock(FinallyRegion* region) {
 static void exitTryBlocks(int targetTryDepth, int targetFinallies) {
     int savedTryDepth = current->tryDepth;
     int savedFinallyCount = current->finallyCount;
+    // Compiling an inlined block may push its own 'coba ... akhirnya'
+    // regions into the slots we are walking (finallyCount is lowered to i),
+    // so work from a snapshot and restore the real entries afterwards.
+    FinallyRegion saved[FINALLY_MAX];
+    memcpy(saved, current->finallies, sizeof(FinallyRegion) * savedFinallyCount);
 
     for (int i = savedFinallyCount - 1; i >= targetFinallies; i--) {
-        FinallyRegion* region = &current->finallies[i];
-        for (int d = current->tryDepth; d > region->tryDepth; d--) {
+        FinallyRegion region = saved[i];
+        for (int d = current->tryDepth; d > region.tryDepth; d--) {
             emitByte(OP_TRY_END);
         }
-        current->tryDepth = region->tryDepth;
+        current->tryDepth = region.tryDepth;
         current->finallyCount = i;  // a jump inside it must not re-run it
-        inlineFinallyBlock(region);
+        inlineFinallyBlock(&region);
     }
     for (int d = current->tryDepth; d > targetTryDepth; d--) {
         emitByte(OP_TRY_END);
     }
 
+    memcpy(current->finallies, saved, sizeof(FinallyRegion) * savedFinallyCount);
     current->tryDepth = savedTryDepth;
     current->finallyCount = savedFinallyCount;
 }

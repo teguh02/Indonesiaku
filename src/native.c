@@ -1,3 +1,10 @@
+// usleep() is POSIX, not C11: glibc hides it under -std=c11 unless a
+// feature-test macro is set before the first system header (GCC 14 treats
+// the implicit declaration as an error).
+#if !defined(_WIN32)
+#define _DEFAULT_SOURCE
+#endif
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
