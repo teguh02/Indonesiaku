@@ -115,7 +115,9 @@ Sebagian besar cocok untuk kontributor baru.
 
 ### Fase 7 — Perkakas & kinerja
 
-`indk uji`, `indk rapikan` (formatter), `indk periksa` (linter), LSP +
+`indk uji`, `indk rapikan` (formatter), `indk periksa` (linter — lihat
+[`RENCANA_FITUR/deteksi_tidak_terpakai.md`](RENCANA_FITUR/deteksi_tidak_terpakai.md)
+untuk deteksi variabel/fungsi tidak terpakai), LSP +
 ekstensi VS Code, debugger, `indk --dis`, playground via **WebAssembly**,
 cache `.idkc`, computed goto, superinstruksi, inline cache, NaN-boxing, GC
 generasional, utas/asinkron. Ref: 04 §1, §8–10, §12.
