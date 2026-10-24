@@ -26,7 +26,7 @@ Prinsip penamaan:
 | `and` / `or` / `not` | `dan` / `atau` / `tidak` | ✅ | — |
 | `if` / `elif` / `else` | `jika` / `jika_lain` / `selain` | ✅ | — |
 | `while` | `selagi` | ✅ | — |
-| `for ... in` | `untuk ... dalam` | 🟡 hanya list | 1 |
+| `for ... in` | `untuk ... dalam` | 🟡 list, teks, rentang (kamus belum) | 1 |
 | `break` / `continue` | `hentikan` / `lanjut` | ✅ | — |
 | `def` | `fungsi` | ✅ | — |
 | `return` | `kembalikan` | ✅ | — |
@@ -39,8 +39,8 @@ Prinsip penamaan:
 | `import` | `impor "berkas"` | 🟡 tanpa namespace | 3 |
 | `from ... import` / `as` | `dari ... impor` / `sebagai` | ❌ (token ada) | 3 |
 | `pass` | `lewati` | ❌ (token ada) | 0 |
-| `in` (operator) | `dalam` | ❌ | 1 |
-| `not in` | `tidak dalam` | ❌ | 1 |
+| `in` (operator) | `dalam` | ✅ | — |
+| `not in` | `tidak dalam` | ✅ | — |
 | `is` / `is not` | `adalah` / `bukan` | ❌ | 1 |
 | `lambda` | `fungsi(x) { ... }` anonim / `lambda` | ❌ | 1 |
 | `global` / `nonlocal` | `global` / `nonlokal` | ❌ | 1 |
@@ -93,7 +93,7 @@ Prinsip penamaan:
 | `tuple` | `tupel` | ❌ | 2 | |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; tanpa literal |
 | `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
-| `range` | `rentang` | ❌ | 1 | Penting untuk pemula! |
+| `range` | `rentang` | ✅ | — | Objek malas, seperti Python 3 |
 | `bytes` / `bytearray` | `bita` / `larik_bita` | ❌ | 6 | Diperlukan untuk berkas biner, jaringan |
 | Fungsi, kelas, metode terikat | | ✅ | — | |
 | Iterator / generator | | ❌ | 5 | |
@@ -142,7 +142,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `type` | `jenis` | 🟡 nama string | 2 |
 | `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_angka`, `ke_teks` | 1 |
 | `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus` | 2 |
-| `range` | `rentang` | ❌ | **1** |
+| `range` | `rentang` | ✅ | — |
 | `enumerate` | `enumerasi` | ❌ | 1 |
 | `zip` | `pasangkan` | ❌ | 2 |
 | `map` / `filter` | `peta` / `saring` | 🟡 `daftar_peta`, `daftar_saring` | 2 |

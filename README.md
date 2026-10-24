@@ -56,6 +56,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
 - ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
+- ✅ `rentang()`, operator `dalam`/`tidak dalam`, truthiness seperti Python
 - ✅ **Sistem modul**: `impor "file.idk"` (namespace global bersama, di-cache)
 - ✅ **Garbage Collector** mark-sweep
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`

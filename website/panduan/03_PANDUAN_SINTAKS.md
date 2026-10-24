@@ -208,6 +208,23 @@ cetak((a atau b) dan (tidak b))  # benar
 > `(a atau b)` terbaca sebagai pemanggilan `b(...)`). Pisahkan dengan `;` bila
 > perlu, atau hindari baris yang diawali kurung buka.
 
+### Operator Keanggotaan (`dalam`, `tidak dalam`)
+
+```indonesiaku
+buah = ["apel", "jeruk"]
+cetak("apel" dalam buah)          # benar  (elemen list)
+cetak("mangga" tidak dalam buah)  # benar
+cetak("ana" dalam "pisang")       # salah  (substring teks)
+cetak("san" dalam "pisang")       # benar
+cetak(5 dalam rentang(10))        # benar
+
+harga = kamus()
+harga["apel"] = 5000
+cetak("apel" dalam harga)         # benar  (kunci kamus)
+```
+
+> Contoh: [`examples/operator_dalam.idk`](../examples/operator_dalam.idk)
+
 ### Prioritas Operator
 
 Urutan eksekusi dari tertinggi ke terendah:
@@ -217,7 +234,7 @@ Urutan eksekusi dari tertinggi ke terendah:
 2. -            (minus unary)
 3. *, /, //, %  (perkalian, pembagian, pembagian bulat, modulo)
 4. +, -         (penjumlahan, pengurangan)
-5. <, <=, >, >= (perbandingan)
+5. <, <=, >, >=, dalam, tidak dalam (perbandingan & keanggotaan)
 6. ==, !=       (kesetaraan)
 7. tidak        (NOT: tidak a == b berarti tidak (a == b))
 8. dan          (AND)
@@ -244,6 +261,22 @@ jika kondisi {
     # code jika kondisi benar
 }
 ```
+
+Kondisi tidak harus `benar`/`salah`. Seperti Python, nilai berikut dianggap
+**salah**: `salah`, `kosong`, `0`, `""` (teks kosong), `[]` (list kosong),
+kamus kosong, dan `rentang(0)`. Semua nilai lain dianggap **benar**:
+
+```indonesiaku
+antrian = [1, 2, 3]
+selagi antrian {                 # berhenti saat list kosong
+    cetak(hapus_pada(antrian, 0))
+}
+
+nama = ""
+cetak(nama atau "tanpa nama")    # tanpa nama
+```
+
+> Contoh: [`examples/kebenaran.idk`](../examples/kebenaran.idk)
 
 **Contoh sederhana:**
 ```indonesiaku
@@ -548,8 +581,32 @@ untuk n dalam [1, 2, 3, 4, 5] {
     total = total + n
 }
 cetak("total:", total)   # 15
+
+# Teks diiterasi per karakter
+untuk huruf dalam "halo" {
+    cetak(huruf)
+}
 ```
 > Contoh: [`examples/untuk_dalam.idk`](../examples/untuk_dalam.idk)
+
+### Perulangan angka dengan `rentang()`
+
+`rentang()` menghasilkan deret bilangan bulat, seperti `range()` di Python:
+
+```indonesiaku
+untuk i dalam rentang(5) { cetak(i) }          # 0 1 2 3 4
+untuk i dalam rentang(2, 6) { cetak(i) }       # 2 3 4 5
+untuk i dalam rentang(0, 10, 3) { cetak(i) }   # 0 3 6 9
+untuk i dalam rentang(5, 0, -1) { cetak(i) }   # 5 4 3 2 1
+
+r = rentang(0, 10, 2)
+cetak(r, panjang(r), r[1])                     # rentang(0, 10, 2) 5 2
+```
+
+`akhir` tidak termasuk. Rentang tidak membuat list, jadi `rentang(1000000)`
+tetap hemat memori.
+
+> Contoh: [`examples/rentang.idk`](../examples/rentang.idk)
 
 ---
 

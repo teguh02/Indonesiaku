@@ -55,22 +55,24 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 ### Fase 1 — Inti mirip Python (0.6–0.7) — *"tutorial Python bab 1–5 bisa ditiru"*
 
-| Butir | Ref |
-|---|---|
-| Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 |
-| Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 |
-| Truthiness Python | K1 |
-| Assignment di fungsi = lokal; `global`, `nonlokal` | K3 |
-| `rentang()`, `enumerasi()`, `untuk` atas teks/kamus/rentang | K9 |
-| Operator `dalam` / `tidak dalam`, `adalah` / `bukan`, rantai perbandingan | 02 §A–B |
-| Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B |
-| Argumen bawaan & bernama; `cetak` jadi fungsi (`pisah=`, `akhir=`) | K12 |
-| Fungsi anonim (ekspresi `fungsi(x) { ... }`), ekspresi kondisional | 02 §B |
-| f-string, string `"""` multi-baris, literal `1e3`, `0x`, `0b`, `1_000` | 02 §B |
-| Metode pada `teks`/`daftar`/`kamus` (P1 dari katalog 06) | K10, 06 §1–3 |
-| `+`/`*` untuk teks & daftar, `==` struktural | K7 |
-| `pastikan` (assert) | 02 §A |
-| Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" | 04 §5, 05 §5 |
+| Butir | Ref | Status |
+|---|---|---|
+| Truthiness Python ([rencana](RENCANA_FITUR/selesai/kebenaran_python.md)) | K1 | ✅ |
+| `rentang()` ([rencana](RENCANA_FITUR/selesai/rentang.md)); `untuk` atas teks dan rentang | K9 | ✅ |
+| Operator `dalam` / `tidak dalam` ([rencana](RENCANA_FITUR/selesai/operator_dalam.md)) | 02 §A | ✅ |
+| `enumerasi()`, `untuk` atas kamus | K9 | ⬜ |
+| `adalah` / `bukan`, rantai perbandingan (`1 < x < 3`, `a dalam b == c`) | 02 §A–B | ⬜ |
+| Hierarki kelas `Galat*` dan `kecuali Tipe sebagai e` (semua galat runtime sudah bisa ditangkap sejak Fase 0) | K5, 06 §9 | ⬜ |
+| Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 | ⬜ |
+| Assignment di fungsi = lokal; `global`, `nonlokal` | K3 | ⬜ |
+| Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B | ⬜ |
+| Argumen bawaan & bernama; `cetak` jadi fungsi (`pisah=`, `akhir=`) | K12 | ⬜ |
+| Fungsi anonim (ekspresi `fungsi(x) { ... }`), ekspresi kondisional | 02 §B | ⬜ |
+| f-string, string `"""` multi-baris, literal `1e3`, `0x`, `0b`, `1_000` | 02 §B | ⬜ |
+| Metode pada `teks`/`daftar`/`kamus` (P1 dari katalog 06) | K10, 06 §1–3 | ⬜ |
+| `+`/`*` untuk teks & daftar, `==` struktural | K7 | ⬜ |
+| `pastikan` (assert) | 02 §A | ⬜ |
+| Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" | 04 §5, 05 §5 | ⬜ |
 
 ### Fase 2 — Tipe data lengkap (0.8)
 

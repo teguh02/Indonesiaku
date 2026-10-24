@@ -31,7 +31,8 @@ luar jangkauan.
 
 | Fungsi | Deskripsi |
 |--------|-----------|
-| `panjang(x)` | Panjang string, list, atau kamus |
+| `panjang(x)` | Panjang teks (karakter), list, kamus, atau rentang |
+| `rentang([awal,] akhir[, langkah])` | Deret bilangan bulat malas: `rentang(5)` → 0, 1, 2, 3, 4. Dipakai di `untuk`, bisa `panjang()`, `r[i]`, `x dalam r` |
 | `huruf_besar(s)` | Ubah ke huruf kapital |
 | `huruf_kecil(s)` | Ubah ke huruf kecil |
 | `ganti(teks, cari, ganti)` | Ganti semua kemunculan substring |

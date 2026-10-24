@@ -7,6 +7,24 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 1
+- ✨ **`rentang()`** (range): `rentang(akhir)`, `rentang(awal, akhir)`,
+  `rentang(awal, akhir, langkah)`. Objek rentang malas (tidak membuat list):
+  bisa diiterasi `untuk`, diukur `panjang()`, diindeks `r[i]`, dan dicetak
+  `rentang(0, 5)`. Argumen bukan bilangan bulat atau langkah nol → galat.
+- ✨ **Operator `dalam` / `tidak dalam`** (in / not in) untuk list (elemen),
+  teks (substring), kamus (kunci), dan rentang; presedensi sama dengan
+  perbandingan.
+- ✨ `untuk huruf dalam "teks"` mengiterasi per karakter.
+
+### Changed — Fase 1 (merusak kompatibilitas)
+- ⚠️ **Truthiness mengikuti Python (K1)**: `0`, `""`, `[]`, kamus kosong, dan
+  rentang kosong kini bernilai **salah** dalam `jika`/`selagi`/`dan`/`atau`/
+  `tidak` (dulu hanya `salah` dan `kosong`). `selagi antrian { ... }` dan
+  `nama atau "bawaan"` kini bekerja seperti di Python.
+- ⚠️ `tidak` yang muncul tepat setelah sebuah ekspresi (di baris berikutnya)
+  kini dibaca sebagai awal `tidak dalam` (lihat B16).
+
 ### Fixed — Fase 0 (stabilisasi)
 - 🐛 **`//` (pembagian bulat) rusak**: compiler tidak menghasilkan opcode,
   sehingga `1 + 10 // 3` menjadi `13`. Kini `OP_FLOOR_DIVIDE` membulatkan ke

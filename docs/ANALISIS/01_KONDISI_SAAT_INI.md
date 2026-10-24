@@ -110,7 +110,7 @@ menjalankan blok akhirnya. B16 dijadwalkan di Fase 1. Lihat
 
 | Hal | Indonesiaku sekarang | Python | Rekomendasi |
 |---|---|---|---|
-| Truthiness | `0`, `""`, `[]`, kamus kosong = **benar** (gaya Lox) | semuanya **salah** | Ikuti Python (lihat `03_KEPUTUSAN_DESAIN.md` K1) |
+| Truthiness | ✅ Sudah mengikuti Python sejak Fase 1 (dulu `0`, `""`, `[]` = benar) | semuanya **salah** | Selesai (K1) |
 | Tipe angka | Hanya `double` → `2**64` jadi `1.84467440737096e+19` | `int` presisi tak terbatas + `float` | Tambah `bulat` (int64 → bignum) K2 |
 | `[1,2] == [1,2]` | `salah` (identitas) | `True` | Kesetaraan struktural K7 |
 | Assignment di dalam fungsi | `x = 5` di fungsi membuat/ubah **global** | membuat **lokal** | Ikuti Python + `global`/`nonlokal` K3 |

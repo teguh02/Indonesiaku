@@ -17,6 +17,7 @@ Ini dokumentasi internal untuk pengembang, **bukan** panduan pengguna.
 | [`ANALISIS/`](ANALISIS/README.md) | Audit kondisi saat ini, peta fitur Python → Indonesiaku, keputusan desain, teknik lanjutan, katalog lengkap fungsi/kelas yang akan diduplikasi |
 | [`RENCANA_FITUR/TEMPLATE.md`](RENCANA_FITUR/TEMPLATE.md) | Template rencana per fitur |
 | `RENCANA_FITUR/<nama>.md` | Rencana satu fitur (dibuat saat fitur mulai dikerjakan) |
+| `RENCANA_FITUR/selesai/` | Arsip rencana fitur yang sudah selesai (catatan keputusan dan semantiknya) |
 
 ## Aturan
 
@@ -30,7 +31,8 @@ Ini dokumentasi internal untuk pengembang, **bukan** panduan pengguna.
 4. Setiap fitur wajib punya rencana uji golden (`examples/*.idk` +
    `tests/expected/*.out`) dan catatan pembaruan dokumentasi.
 5. Kalau fitur selesai: pindahkan ringkasannya ke `CHANGELOG.md`, perbarui
-   `ROADMAP.md`, dan hapus/arsipkan file rencananya.
+   `ROADMAP.md`, ubah statusnya menjadi "selesai", lalu pindahkan ke
+   `RENCANA_FITUR/selesai/`.
 
 ## Konteks singkat
 
