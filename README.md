@@ -52,6 +52,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
+- ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
@@ -360,6 +361,12 @@ cetak(panjang(angka))    # 4
 orang = {"nama": "Budi", "umur": 25}
 cetak(orang["nama"])         # Budi
 cetak(punya(orang, "kota"))  # salah
+
+# Gabung, ulang, dan perbandingan isi
+cetak([1, 2] + [3])          # [1, 2, 3]
+cetak("-" * 20)              # garis pemisah
+cetak([1, 2] == [1, 2])      # benar  (== membandingkan isi)
+cetak([1, 2] adalah [1, 2])  # salah  (adalah = identitas objek)
 ```
 
 `{` di posisi ekspresi = literal kamus, di posisi pernyataan = blok. Jadi

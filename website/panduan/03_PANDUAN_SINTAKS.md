@@ -192,16 +192,59 @@ x <= y    # salah (lebih kecil atau sama)
 
 ### Identitas dan rantai perbandingan
 
-`adalah` membandingkan identitas objek; `bukan adalah` adalah kebalikannya. Perbandingan dapat dirantai seperti Python: operand tengah dihitung sekali dan evaluasi berhenti saat salah.
+`==` membandingkan **isi** (struktural): dua daftar/kamus/rentang sama bila
+isinya sama, meski objeknya berbeda. `adalah` membandingkan **identitas
+objek**; `bukan adalah` adalah kebalikannya.
 
 ```indonesiaku
+cetak([1, 2] == [1, 2])            # benar  — isi sama
+cetak([1, [2]] == [1, [2]])        # benar  — rekursif
+cetak({"a": 1, "b": 2} == {"b": 2, "a": 1})   # benar — urutan tak berpengaruh
+cetak(rentang(3) == rentang(3))    # benar
+
 variabel daftar = [1]
 variabel alias = daftar
-cetak(daftar adalah alias)       # benar
+cetak(daftar adalah alias)       # benar  — objek yang sama
+cetak(daftar adalah [1])         # salah  — isi sama, objek berbeda
 cetak(daftar bukan adalah [1])   # benar
+```
+
+Instansi kelas (dan fungsi, berkas, soket) tetap dibandingkan berdasarkan
+identitas, bukan isi. Operator `dalam` ikut memakai kesetaraan struktural,
+jadi `[1, 2] dalam [[1, 2]]` bernilai `benar`.
+
+Perbandingan dapat dirantai seperti Python: operand tengah dihitung sekali dan evaluasi berhenti saat salah.
+
+```indonesiaku
 cetak(1 < x < 3)
 cetak("apel" dalam buah == buah)
 ```
+
+### Gabung (`+`) dan Ulang (`*`)
+
+`+` menggabungkan dua teks atau dua daftar; `*` mengulang teks/daftar sebanyak
+n kali (urutan operand bebas).
+
+```indonesiaku
+cetak([1, 2] + [3])        # [1, 2, 3]
+cetak("ha" + "lo")         # halo
+
+cetak([0] * 3)             # [0, 0, 0]
+cetak(3 * [0])             # [0, 0, 0]
+cetak("-" * 20)            # garis pemisah
+cetak("ab" * 2)            # abab
+```
+
+Catatan:
+
+- Hasilnya selalu objek **baru**; sumbernya tidak berubah.
+- Pengali harus bilangan bulat. Nol atau negatif menghasilkan hasil kosong
+  (seperti Python); pecahan → `GalatTipe`.
+- Hasil dibatasi 65535 elemen/karakter agar `[0] * 999999` tidak menghabiskan
+  memori diam-diam; melebihi batas → `GalatNilai`.
+- Mencampur tipe (`[1] + "a"`) → `GalatTipe`.
+
+> Contoh: [`examples/gabung_sama.idk`](../examples/gabung_sama.idk)
 
 ### Penanganan galat bertipe
 

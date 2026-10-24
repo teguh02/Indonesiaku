@@ -8,6 +8,11 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✨ **Gabung dan ulang untuk teks & daftar:** `[1, 2] + [3]` menggabungkan dua
+  daftar (hasil selalu objek baru); `[0] * 3`, `3 * [0]`, `"-" * 20`, dan
+  `2 * "ab"` mengulang. Pengali harus bilangan bulat — nol/negatif memberi
+  hasil kosong seperti Python, pecahan → `GalatTipe`. Hasil dibatasi 65535
+  elemen/karakter → `GalatNilai`.
 - ✨ **`rentang()`** (range): `rentang(akhir)`, `rentang(awal, akhir)`,
   `rentang(awal, akhir, langkah)`. Objek rentang malas (tidak membuat list):
   bisa diiterasi `untuk`, diukur `panjang()`, diindeks `r[i]`, dan dicetak
@@ -40,6 +45,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   adalah literal kamus; di posisi pernyataan tetap blok.
 
 ### Changed — Fase 1 (merusak kompatibilitas)
+- ⚠️ **`==` membandingkan isi, bukan identitas (K7).** `[1, 2] == [1, 2]`,
+  `{"a": 1} == {"a": 1}`, dan `rentang(3) == rentang(3)` kini bernilai
+  **benar**; perbandingan daftar/kamus bersifat rekursif dan urutan penyisipan
+  kamus tidak berpengaruh. Operator `dalam` ikut berubah, jadi
+  `[1, 2] dalam [[1, 2]]` kini benar. Untuk membandingkan **objek yang sama**
+  gunakan `adalah` / `bukan adalah` — keduanya tetap identitas. Instansi kelas,
+  fungsi, berkas, dan soket tetap dibandingkan berdasarkan identitas.
 - ⚠️ **Assignment di dalam fungsi membuat variabel lokal (K3)**, seperti Python.
   Dulu `x = 5` di dalam fungsi menulis ke global. Untuk menulis ke luar fungsi,
   deklarasikan `global nama` (variabel tingkat skrip) atau `nonlokal nama`

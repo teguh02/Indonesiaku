@@ -64,10 +64,12 @@ Prinsip penamaan:
 | Literal himpunan `{1, 2}` | | ❌ | 2 |
 | Indeks negatif `a[-1]` | | ✅ | — |
 | Irisan `a[1:3]`, `a[::-1]` | | ✅ daftar & teks | — |
+| Gabung `+` / ulang `*` teks & daftar | | ✅ | — |
+| `==` struktural pada daftar/kamus/rentang | | ✅ `adalah` tetap identitas | — |
 | Penugasan berganda `a, b = 1, 2` / tukar | | ❌ | 2 |
 | Unpacking `a, *sisa = daftar` | | ❌ | 2 |
 | Ekspresi kondisional `x jika c selain y` | | ❌ | 1 |
-| Rantai perbandingan `1 < x < 3` | | ❌ | 1 |
+| Rantai perbandingan `1 < x < 3` | | ✅ | — |
 | Floor division `//`, `//=` | | ❌ **rusak** (B1) | 0 |
 | Operator bitwise `& \| ^ ~ << >>` | | ❌ | 2 |
 | List comprehension | `[x*2 untuk x dalam a jika x > 0]` | ❌ | 2 |
@@ -89,7 +91,7 @@ Prinsip penamaan:
 | `float` | `desimal` | 🟡 | — | Presisi cetak salah (B10) |
 | `complex` | `kompleks` | ❌ | 8 | Prioritas rendah |
 | `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); tanpa metode |
-| `list` | `daftar` | 🟡 | 1 | Irisan sudah ada; tanpa metode, `+`, `*` |
+| `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; tanpa metode |
 | `tuple` | `tupel` | ❌ | 2 | |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
 | `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
