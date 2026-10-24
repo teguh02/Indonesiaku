@@ -199,6 +199,7 @@ void initVM() {
     defineNative("chr", nativeFnChr);
     defineNative("hapus_pada", nativeFnHapusPada);
     defineNative("sisip", nativeFnSisip);
+    defineNative("rentang", nativeFnRentang);
 
     defineNative("soket_dengar", nativeFnSoketDengar);
     defineNative("soket_terima", nativeFnSoketTerima);
@@ -489,8 +490,68 @@ static void closeUpvalues(Value* last) {
     }
 }
 
+// Does `haystack` contain `needle` as a substring? Byte comparison is exact
+// for UTF-8: a valid sequence can only match at character boundaries.
+static bool stringContains(ObjString* haystack, ObjString* needle) {
+    if (needle->length == 0) return true;
+    for (int i = 0; i + needle->length <= haystack->length; i++) {
+        if (memcmp(haystack->chars + i, needle->chars, needle->length) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// `item dalam container` (Python 'in'). Returns false after raising a
+// runtime error when the container type does not support membership.
+static bool containsValue(Value container, Value item, bool* found) {
+    if (IS_LIST(container)) {
+        ObjList* list = AS_LIST(container);
+        *found = false;
+        for (int i = 0; i < list->items.count && !*found; i++) {
+            *found = valuesEqual(list->items.values[i], item);
+        }
+        return true;
+    }
+    if (IS_STRING(container)) {
+        if (!IS_STRING(item)) {
+            runtimeError("'dalam' pada teks memerlukan teks di sebelah kiri.");
+            return false;
+        }
+        *found = stringContains(AS_STRING(container), AS_STRING(item));
+        return true;
+    }
+    if (IS_DICT(container)) {
+        Value ignored;
+        *found = IS_STRING(item) &&
+                 tableGet(&AS_DICT(container)->table, AS_STRING(item), &ignored);
+        return true;
+    }
+    if (IS_RANGE(container)) {
+        *found = IS_NUMBER(item) && rangeContains(AS_RANGE(container), AS_NUMBER(item));
+        return true;
+    }
+    runtimeError("Operand kanan 'dalam' harus list, teks, kamus, atau rentang.");
+    return false;
+}
+
+// Python truthiness (K1): salah, kosong, 0, "" and empty list/kamus/rentang
+// are false; everything else (including nan and every instance) is true.
 static bool isFalsey(Value value) {
-    return IS_KOSONG(value) || (IS_BOOL(value) && !AS_BOOL(value));
+    switch (value.type) {
+        case VAL_KOSONG: return true;
+        case VAL_BOOL:   return !AS_BOOL(value);
+        case VAL_NUMBER: return AS_NUMBER(value) == 0;
+        case VAL_OBJ:
+            switch (OBJ_TYPE(value)) {
+                case OBJ_STRING: return AS_STRING(value)->length == 0;
+                case OBJ_LIST:   return AS_LIST(value)->items.count == 0;
+                case OBJ_DICT:   return dictLength(AS_DICT(value)) == 0;
+                case OBJ_RANGE:  return rangeLength(AS_RANGE(value)) == 0;
+                default:         return false;
+            }
+    }
+    return false;
 }
 
 static void concatenate() {
@@ -680,6 +741,15 @@ static InterpretResult run() {
                 push(NUMBER_VAL(r));
                 break;
             }
+            case OP_IN: {
+                bool found;
+                if (!containsValue(peek(0), peek(1), &found)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                vm.stackTop -= 2;
+                push(BOOL_VAL(found));
+                break;
+            }
             case OP_FLOOR_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
                     runtimeError("Operand harus berupa angka.");
@@ -817,6 +887,16 @@ static InterpretResult run() {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     push(list->items.values[index]);
+                } else if (IS_RANGE(peek(1)) && IS_NUMBER(peek(0))) {
+                    double index = AS_NUMBER(pop());
+                    ObjRange* range = AS_RANGE(pop());
+                    double length = rangeLength(range);
+                    if (index != floor(index) || index < 0 || index >= length) {
+                        runtimeError("Indeks rentang di luar jangkauan (indeks %.15g, panjang %.15g).",
+                                     index, length);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    push(NUMBER_VAL(range->start + index * range->step));
                 } else if (IS_DICT(peek(1)) && IS_STRING(peek(0))) {
                     ObjString* key = AS_STRING(pop());
                     ObjDict* dict = AS_DICT(pop());
@@ -882,12 +962,19 @@ static InterpretResult run() {
                 break;
             }
             case OP_LIST_LEN: {
-                if (!IS_LIST(peek(0))) {
-                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi list.");
+                // Length of what 'untuk' iterates; elements are then read
+                // with OP_INDEX_GET, so any indexable sequence works.
+                Value seq = pop();
+                if (IS_LIST(seq)) {
+                    push(NUMBER_VAL(AS_LIST(seq)->items.count));
+                } else if (IS_RANGE(seq)) {
+                    push(NUMBER_VAL(rangeLength(AS_RANGE(seq))));
+                } else if (IS_STRING(seq)) {
+                    push(NUMBER_VAL(AS_STRING(seq)->charCount));
+                } else {
+                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi list, teks, atau rentang.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                ObjList* list = AS_LIST(pop());
-                push(NUMBER_VAL(list->items.count));
                 break;
             }
             case OP_CLASS:

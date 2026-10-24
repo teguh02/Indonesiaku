@@ -1,0 +1,49 @@
+# rentang(): deret bilangan bulat malas, seperti range di Python 3.
+
+cetak("== rentang(akhir) ==")
+untuk i dalam rentang(5) { cetak(i) }
+
+cetak("== rentang(awal, akhir) ==")
+untuk i dalam rentang(2, 6) { cetak(i) }
+
+cetak("== rentang(awal, akhir, langkah) ==")
+untuk i dalam rentang(0, 10, 3) { cetak(i) }
+untuk i dalam rentang(10, 0, -3) { cetak(i) }
+
+cetak("== Rentang kosong tidak menjalankan badan ==")
+untuk i dalam rentang(3, 1) { cetak("tidak tercetak") }
+untuk i dalam rentang(0) { cetak("tidak tercetak") }
+cetak("selesai")
+
+cetak("== Objek rentang ==")
+r = rentang(0, 10, 2)
+cetak(r, rentang(5), rentang(-3, 3))
+cetak(panjang(r), panjang(rentang(10, 0, -3)), panjang(rentang(5, 1)))
+cetak(r[0], r[1], r[4])
+cetak(jenis(r))
+
+cetak("== hentikan / lanjut / bersarang ==")
+untuk i dalam rentang(10) {
+    jika i % 2 == 0 { lanjut }
+    jika i > 7 { hentikan }
+    cetak("ganjil", i)
+}
+untuk baris dalam rentang(1, 4) {
+    variabel teks = ""
+    untuk kolom dalam rentang(baris) { teks = teks + "*" }
+    cetak(teks)
+}
+
+cetak("== Rentang besar tidak membuat list ==")
+total = 0
+untuk i dalam rentang(1000000) { total += i }
+cetak(total)
+
+cetak("== untuk atas teks (per karakter) ==")
+untuk huruf dalam "café" { cetak(huruf) }
+
+cetak("== Galat argumen dapat ditangkap ==")
+coba { rentang(1, 10, 0) } kecuali e { cetak(e) }
+coba { rentang(2.5) } kecuali e { cetak(e) }
+coba { rentang() } kecuali e { cetak(e) }
+coba { cetak(r[5]) } kecuali e { cetak(e) }

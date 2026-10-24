@@ -775,6 +775,20 @@ static void unary(bool canAssign) {
     }
 }
 
+// x dalam koleksi — membership, same precedence as comparisons (Python 'in').
+static void in_(bool canAssign) {
+    parsePrecedence((Precedence)(PREC_COMPARISON + 1));
+    emitByte(OP_IN);
+}
+
+// x tidak dalam koleksi — 'tidak' used as an infix operator must be followed
+// by 'dalam' (Python 'not in'). Prefix 'tidak x' is handled by unary().
+static void notIn(bool canAssign) {
+    consume(TOKEN_DALAM, "Harapkan 'dalam' setelah 'tidak' (operator 'tidak dalam').");
+    parsePrecedence((Precedence)(PREC_COMPARISON + 1));
+    emitBytes(OP_IN, OP_NOT);
+}
+
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
@@ -819,7 +833,8 @@ ParseRule rules[] = {
   [TOKEN_BENAR]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_VARIABEL]      = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SELAGI]        = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_TIDAK]         = {unary,    NULL,   PREC_NONE},
+  [TOKEN_TIDAK]         = {unary,    notIn,  PREC_COMPARISON},
+  [TOKEN_DALAM]         = {NULL,     in_,    PREC_COMPARISON},
   [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
   [TOKEN_SLASH_SLASH_EQUAL] = {NULL, NULL,   PREC_NONE},
   [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},

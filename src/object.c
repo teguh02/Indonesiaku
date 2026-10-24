@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "memory.h"
 #include "object.h"
@@ -64,6 +65,37 @@ ObjDict* newDict() {
     ObjDict* dict = ALLOCATE_OBJ(ObjDict, OBJ_DICT);
     initTable(&dict->table);
     return dict;
+}
+
+// Number of live keys (the table's count also includes tombstones).
+int dictLength(ObjDict* dict) {
+    int n = 0;
+    for (int i = 0; i < dict->table.capacity; i++) {
+        if (dict->table.entries[i].key != NULL) n++;
+    }
+    return n;
+}
+
+ObjRange* newRange(double start, double stop, double step) {
+    ObjRange* range = ALLOCATE_OBJ(ObjRange, OBJ_RANGE);
+    range->start = start;
+    range->stop = stop;
+    range->step = step;
+    return range;
+}
+
+// Python's len(range): ceil((stop - start) / step), never negative.
+double rangeLength(ObjRange* range) {
+    double count = ceil((range->stop - range->start) / range->step);
+    return count > 0 ? count : 0;
+}
+
+bool rangeContains(ObjRange* range, double value) {
+    if (value != floor(value)) return false;
+    bool inBounds = range->step > 0
+        ? (value >= range->start && value < range->stop)
+        : (value <= range->start && value > range->stop);
+    return inBounds && fmod(value - range->start, range->step) == 0;
 }
 
 ObjClass* newClass(ObjString* name) {
@@ -252,6 +284,20 @@ void printObject(Value value) {
         case OBJ_SOCKET: {
             ObjSocket* sock = AS_SOCKET(value);
             printf("<soket%s>", sock->isOpen ? "" : " (tertutup)");
+            break;
+        }
+        case OBJ_RANGE: {
+            // Printed like Python: range(0, 5) / range(0, 10, 2).
+            ObjRange* range = AS_RANGE(value);
+            char start[32], stop[32], step[32];
+            numberToString(range->start, start, sizeof(start));
+            numberToString(range->stop, stop, sizeof(stop));
+            if (range->step == 1) {
+                printf("rentang(%s, %s)", start, stop);
+            } else {
+                numberToString(range->step, step, sizeof(step));
+                printf("rentang(%s, %s, %s)", start, stop, step);
+            }
             break;
         }
     }

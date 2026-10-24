@@ -1,0 +1,47 @@
+== rentang(akhir) ==
+0
+1
+2
+3
+4
+== rentang(awal, akhir) ==
+2
+3
+4
+5
+== rentang(awal, akhir, langkah) ==
+0
+3
+6
+9
+10
+7
+4
+1
+== Rentang kosong tidak menjalankan badan ==
+selesai
+== Objek rentang ==
+rentang(0, 10, 2) rentang(0, 5) rentang(-3, 3)
+5 4 0
+0 2 8
+rentang
+== hentikan / lanjut / bersarang ==
+ganjil 1
+ganjil 3
+ganjil 5
+ganjil 7
+*
+**
+***
+== Rentang besar tidak membuat list ==
+499999500000
+== untuk atas teks (per karakter) ==
+c
+a
+f
+é
+== Galat argumen dapat ditangkap ==
+rentang() langkah tidak boleh nol
+rentang() hanya menerima bilangan bulat
+rentang() memerlukan 1 sampai 3 argumen, bukan 0
+Indeks rentang di luar jangkauan (indeks 5, panjang 5).

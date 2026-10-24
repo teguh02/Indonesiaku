@@ -145,6 +145,7 @@ Value nativeFnOrd(int argCount, Value* args);       // ord(karakter)
 Value nativeFnChr(int argCount, Value* args);       // chr(kode)
 Value nativeFnHapusPada(int argCount, Value* args); // hapus_pada(list, i)
 Value nativeFnSisip(int argCount, Value* args);     // sisip(list, i, nilai)
+Value nativeFnRentang(int argCount, Value* args);   // rentang([awal,] akhir[, langkah])
 
 // ============================================================================
 // SOKET (TCP) — untuk server HTTP sederhana

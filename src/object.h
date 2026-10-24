@@ -19,6 +19,7 @@
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define IS_FILE(value)         isObjType(value, OBJ_FILE)
 #define IS_SOCKET(value)       isObjType(value, OBJ_SOCKET)
+#define IS_RANGE(value)        isObjType(value, OBJ_RANGE)
 
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
@@ -32,6 +33,7 @@
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod*)AS_OBJ(value))
 #define AS_FILE(value)         ((ObjFile*)AS_OBJ(value))
 #define AS_SOCKET(value)       ((ObjSocket*)AS_OBJ(value))
+#define AS_RANGE(value)        ((ObjRange*)AS_OBJ(value))
 
 typedef enum {
     OBJ_STRING,
@@ -46,6 +48,7 @@ typedef enum {
     OBJ_BOUND_METHOD,
     OBJ_FILE,
     OBJ_SOCKET,
+    OBJ_RANGE,
 } ObjType;
 
 struct Obj {
@@ -101,6 +104,15 @@ typedef struct {
     Table table;
 } ObjDict;
 
+// rentang(awal, akhir, langkah): a lazy arithmetic sequence (Python range).
+// Elements are computed on demand; no list is allocated.
+typedef struct {
+    Obj obj;
+    double start;
+    double stop;
+    double step;
+} ObjRange;
+
 typedef struct {
     Obj obj;
     ObjString* name;
@@ -138,6 +150,10 @@ ObjClosure* newClosure(ObjFunction* function);
 ObjUpvalue* newUpvalue(Value* slot);
 ObjList* newList();
 ObjDict* newDict();
+int dictLength(ObjDict* dict);
+ObjRange* newRange(double start, double stop, double step);
+double rangeLength(ObjRange* range);
+bool rangeContains(ObjRange* range, double value);
 ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method);

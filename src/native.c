@@ -178,15 +178,12 @@ Value nativeFnPanjang(int argCount, Value* args) {
         return NUMBER_VAL(AS_LIST(args[0])->items.count);
     }
     if (IS_DICT(args[0])) {
-        // table.count includes tombstones; count live entries instead.
-        ObjDict* dict = AS_DICT(args[0]);
-        int n = 0;
-        for (int i = 0; i < dict->table.capacity; i++) {
-            if (dict->table.entries[i].key != NULL) n++;
-        }
-        return NUMBER_VAL(n);
+        return NUMBER_VAL(dictLength(AS_DICT(args[0])));
     }
-    nativeRaise("panjang() hanya menerima string, list, atau kamus");
+    if (IS_RANGE(args[0])) {
+        return NUMBER_VAL(rangeLength(AS_RANGE(args[0])));
+    }
+    nativeRaise("panjang() hanya menerima string, list, kamus, atau rentang");
     return NUMBER_VAL(0);
 }
 
@@ -410,6 +407,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("berkas", 6));
     } else if (IS_SOCKET(args[0])) {
         return OBJ_VAL(copyString("soket", 5));
+    } else if (IS_RANGE(args[0])) {
+        return OBJ_VAL(copyString("rentang", 7));
     } else if (IS_FUNCTION(args[0]) || IS_CLOSURE(args[0]) ||
                IS_NATIVE(args[0]) || IS_BOUND_METHOD(args[0])) {
         return OBJ_VAL(copyString("fungsi", 6));
@@ -1047,6 +1046,33 @@ Value nativeFnChr(int argCount, Value* args) {
     char bytes[4];
     int length = encodeUtf8((uint32_t)code, bytes);
     return OBJ_VAL(copyString(bytes, length));
+}
+
+// Largest |value| for which rentang() arithmetic stays exact in a double.
+#define RENTANG_MAKS 9007199254740992.0  // 2^53
+
+// rentang(akhir) / rentang(awal, akhir) / rentang(awal, akhir, langkah) -
+// Deret bilangan bulat yang malas (seperti range di Python 3).
+Value nativeFnRentang(int argCount, Value* args) {
+    if (argCount < 1 || argCount > 3) {
+        nativeRaise("rentang() memerlukan 1 sampai 3 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    for (int i = 0; i < argCount; i++) {
+        if (!IS_NUMBER(args[i]) || AS_NUMBER(args[i]) != floor(AS_NUMBER(args[i])) ||
+            fabs(AS_NUMBER(args[i])) > RENTANG_MAKS) {
+            nativeRaise("rentang() hanya menerima bilangan bulat");
+            return KOSONG_VAL;
+        }
+    }
+    double start = argCount == 1 ? 0 : AS_NUMBER(args[0]);
+    double stop = argCount == 1 ? AS_NUMBER(args[0]) : AS_NUMBER(args[1]);
+    double step = argCount == 3 ? AS_NUMBER(args[2]) : 1;
+    if (step == 0) {
+        nativeRaise("rentang() langkah tidak boleh nol");
+        return KOSONG_VAL;
+    }
+    return OBJ_VAL(newRange(start, stop, step));
 }
 
 // hapus_pada(list, i) - Hapus & kembalikan elemen pada indeks i, geser sisanya.

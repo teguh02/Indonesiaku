@@ -1,0 +1,54 @@
+# Truthiness ala Python (K1): nilai "kosong" dianggap salah dalam kondisi.
+
+fungsi uji(label, nilai) {
+    jika nilai {
+        cetak(label, "-> benar")
+    } selain {
+        cetak(label, "-> salah")
+    }
+}
+
+cetak("== Nilai yang dianggap salah ==")
+uji("salah", salah)
+uji("kosong", kosong)
+uji("0", 0)
+uji("0.0", 0.0)
+uji("teks kosong", "")
+uji("list kosong", [])
+uji("kamus kosong", kamus())
+uji("rentang(0)", rentang(0))
+
+cetak("== Nilai yang dianggap benar ==")
+uji("1", 1)
+uji("-1", -1)
+uji("0.5", 0.5)
+uji("teks spasi", " ")
+uji("teks \"0\"", "0")
+uji("list [0]", [0])
+uji("list [kosong]", [kosong])
+d = kamus()
+d["a"] = 0
+uji("kamus berisi", d)
+uji("rentang(3)", rentang(3))
+uji("fungsi", uji)
+
+cetak("== dan / atau mengembalikan operand ==")
+cetak("" atau "bawaan")
+cetak(0 atau 5)
+cetak([] atau kosong)
+cetak([1] dan "lanjut")
+cetak(0 dan "tidak dievaluasi")
+
+cetak("== tidak ==")
+cetak(tidak "", tidak "isi", tidak 0, tidak [], tidak [1])
+
+cetak("== Pola umum ==")
+antrian = [1, 2, 3]
+selagi antrian {
+    cetak("proses", hapus_pada(antrian, 0))
+}
+cetak("antrian habis:", antrian)
+
+nama = ""
+tampil = nama atau "tanpa nama"
+cetak(tampil)

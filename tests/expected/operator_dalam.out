@@ -1,0 +1,27 @@
+== list ==
+benar
+salah
+benar
+benar salah benar
+== teks (substring) ==
+benar salah
+benar
+benar benar
+== kamus (kunci) ==
+benar salah salah
+benar
+== rentang ==
+benar salah
+benar benar salah
+== presedensi seperti perbandingan ==
+salah
+benar
+benar
+benar
+== di dalam kondisi ==
+ada jeruk
+tidak ada anggur
+vokal: 4
+== galat dapat ditangkap ==
+Operand kanan 'dalam' harus list, teks, kamus, atau rentang.
+'dalam' pada teks memerlukan teks di sebelah kiri.

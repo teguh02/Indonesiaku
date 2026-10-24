@@ -1,0 +1,42 @@
+# Operator dalam / tidak dalam (in / not in di Python).
+
+buah = ["apel", "jeruk", "pisang"]
+cetak("== list ==")
+cetak("apel" dalam buah)
+cetak("mangga" dalam buah)
+cetak("mangga" tidak dalam buah)
+cetak(2 dalam [1, 2, 3], 4 dalam [1, 2, 3], kosong dalam [kosong])
+
+cetak("== teks (substring) ==")
+cetak("pis" dalam "pisang", "xyz" dalam "pisang")
+cetak("" dalam "apa saja")
+cetak("é" dalam "café", "z" tidak dalam "café")
+
+cetak("== kamus (kunci) ==")
+harga = kamus()
+harga["apel"] = 5000
+cetak("apel" dalam harga, "durian" dalam harga, 5000 dalam harga)
+cetak("durian" tidak dalam harga)
+
+cetak("== rentang ==")
+cetak(5 dalam rentang(10), 10 dalam rentang(10))
+cetak(6 dalam rentang(0, 10, 3), 7 dalam rentang(10, 0, -3), 2.5 dalam rentang(5))
+
+cetak("== presedensi seperti perbandingan ==")
+cetak(tidak 1 dalam [1])
+cetak(1 + 1 dalam [2])
+cetak(2 dalam [2] dan "x" dalam "xyz")
+cetak(3 dalam [1] atau 1 dalam [1])
+
+cetak("== di dalam kondisi ==")
+jika "jeruk" dalam buah { cetak("ada jeruk") }
+jika "anggur" tidak dalam buah { cetak("tidak ada anggur") }
+huruf_vokal = 0
+untuk h dalam "pemrograman" {
+    jika h dalam "aiueo" { huruf_vokal += 1 }
+}
+cetak("vokal:", huruf_vokal)
+
+cetak("== galat dapat ditangkap ==")
+coba { cetak(1 dalam 5) } kecuali e { cetak(e) }
+coba { cetak(1 dalam "abc") } kecuali e { cetak(e) }

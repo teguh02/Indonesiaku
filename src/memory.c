@@ -131,6 +131,8 @@ static void blackenObject(Obj* object) {
             break;
         case OBJ_SOCKET:
             break;
+        case OBJ_RANGE:   // holds only numbers
+            break;
         case OBJ_NATIVE:
         case OBJ_STRING:
             break;
@@ -212,6 +214,9 @@ static void freeObject(Obj* object) {
             FREE(ObjSocket, object);
             break;
         }
+        case OBJ_RANGE:
+            FREE(ObjRange, object);
+            break;
         case OBJ_NATIVE: {
             FREE(ObjNative, object);
             break;

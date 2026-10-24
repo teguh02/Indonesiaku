@@ -1,0 +1,34 @@
+== Nilai yang dianggap salah ==
+salah -> salah
+kosong -> salah
+0 -> salah
+0.0 -> salah
+teks kosong -> salah
+list kosong -> salah
+kamus kosong -> salah
+rentang(0) -> salah
+== Nilai yang dianggap benar ==
+1 -> benar
+-1 -> benar
+0.5 -> benar
+teks spasi -> benar
+teks "0" -> benar
+list [0] -> benar
+list [kosong] -> benar
+kamus berisi -> benar
+rentang(3) -> benar
+fungsi -> benar
+== dan / atau mengembalikan operand ==
+bawaan
+5
+kosong
+lanjut
+0
+== tidak ==
+benar salah benar benar salah
+== Pola umum ==
+proses 1
+proses 2
+proses 3
+antrian habis: []
+tanpa nama

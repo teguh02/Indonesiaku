@@ -1,7 +1,7 @@
 === Tangkap Kesalahan Native ===
 tertangkap: akar() tidak dapat menerima angka negatif
 tertangkap: min() memerlukan minimal 2 argumen
-tertangkap: panjang() hanya menerima string, list, atau kamus
+tertangkap: panjang() hanya menerima string, list, kamus, atau rentang
 === Program Tetap Berjalan ===
 4
 2
