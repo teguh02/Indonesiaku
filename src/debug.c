@@ -141,10 +141,14 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_CLOSE_UPVALUE", offset);
         case OP_BUILD_LIST:
             return byteInstruction("OP_BUILD_LIST", chunk, offset);
+        case OP_BUILD_DICT:
+            return byteInstruction("OP_BUILD_DICT", chunk, offset);
         case OP_INDEX_GET:
             return simpleInstruction("OP_INDEX_GET", offset);
         case OP_INDEX_SET:
             return simpleInstruction("OP_INDEX_SET", offset);
+        case OP_SLICE:
+            return simpleInstruction("OP_SLICE", offset);
         case OP_LIST_LEN:
             return simpleInstruction("OP_LIST_LEN", offset);
         case OP_CLASS:

@@ -82,5 +82,19 @@
     "prefix": "cetak",
     "body": "cetak(${0})",
     "description": "Cetak nilai"
+  },
+  "Kamus literal": {
+    "prefix": "kamus",
+    "body": [
+      "{\"${1:kunci}\": ${2:nilai}}${0}"
+    ],
+    "description": "Literal kamus Indonesiaku (kunci harus teks)"
+  },
+  "Irisan": {
+    "prefix": "irisan",
+    "body": [
+      "${1:daftar}[${2:awal}:${3:akhir}]${0}"
+    ],
+    "description": "Irisan daftar/teks a[awal:akhir]"
   }
 }

@@ -652,6 +652,50 @@ static bool isFalsey(Value value) {
     return false;
 }
 
+// Python slice bounds: resolve negative indices, clamp to the sequence, and
+// honour the step's direction. Returns false when a bound is not a number or
+// the step is 0; *msg then holds the error text.
+static bool resolveSlice(Value startV, Value stopV, Value stepV, int length,
+                         int* start, int* stop, int* step, const char** msg) {
+    *step = 1;
+    if (!IS_KOSONG(stepV)) {
+        if (!IS_NUMBER(stepV)) { *msg = "Langkah irisan harus berupa angka."; return false; }
+        *step = (int)AS_NUMBER(stepV);
+        if (*step == 0) { *msg = "Langkah irisan tidak boleh nol."; return false; }
+    }
+
+    if (IS_KOSONG(startV)) {
+        *start = *step > 0 ? 0 : length - 1;
+    } else {
+        if (!IS_NUMBER(startV)) { *msg = "Batas irisan harus berupa angka."; return false; }
+        *start = (int)AS_NUMBER(startV);
+        if (*start < 0) *start += length;
+        if (*step > 0) {
+            if (*start < 0) *start = 0;
+            if (*start > length) *start = length;
+        } else {
+            if (*start < -1) *start = -1;
+            if (*start > length - 1) *start = length - 1;
+        }
+    }
+
+    if (IS_KOSONG(stopV)) {
+        *stop = *step > 0 ? length : -1;
+    } else {
+        if (!IS_NUMBER(stopV)) { *msg = "Batas irisan harus berupa angka."; return false; }
+        *stop = (int)AS_NUMBER(stopV);
+        if (*stop < 0) *stop += length;
+        if (*step > 0) {
+            if (*stop < 0) *stop = 0;
+            if (*stop > length) *stop = length;
+        } else {
+            if (*stop < -1) *stop = -1;
+            if (*stop > length - 1) *stop = length - 1;
+        }
+    }
+    return true;
+}
+
 static void concatenate() {
     // Keep operands on the stack (via peek) so a GC triggered by the
     // allocations below cannot free them mid-concatenation.
@@ -996,14 +1040,37 @@ static InterpretResult run() {
                 push(OBJ_VAL(list));
                 break;
             }
+            case OP_BUILD_DICT: {
+                int count = READ_BYTE();
+                // Stack: key1, val1, ... keyN, valN
+                ObjDict* dict = newDict();
+                // Keep the dict reachable: dictSet can grow both the table and
+                // the insertion-order key array, either of which may GC.
+                push(OBJ_VAL(dict));
+                for (int i = count; i >= 1; i--) {
+                    Value key = peek(i * 2);        // +1 for the dict itself
+                    Value value = peek(i * 2 - 1);
+                    if (!IS_STRING(key)) {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("Kunci kamus harus berupa teks.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    dictSet(dict, AS_STRING(key), value);
+                }
+                pop();                          // the dict
+                vm.stackTop -= count * 2;       // the pairs
+                push(OBJ_VAL(dict));
+                break;
+            }
             case OP_INDEX_GET: {
                 if (IS_LIST(peek(1)) && IS_NUMBER(peek(0))) {
-                    int index = (int)AS_NUMBER(pop());
+                    int given = (int)AS_NUMBER(pop());
                     ObjList* list = AS_LIST(pop());
+                    int index = given < 0 ? given + list->items.count : given;
                     if (index < 0 || index >= list->items.count) {
                         vm.runtimeErrorClass = vm.galatIndeks;
                         runtimeError("Indeks list di luar jangkauan (indeks %d, panjang %d).",
-                                     index, list->items.count);
+                                     given, list->items.count);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     push(list->items.values[index]);
@@ -1011,6 +1078,7 @@ static InterpretResult run() {
                     double index = AS_NUMBER(pop());
                     ObjRange* range = AS_RANGE(pop());
                     double length = rangeLength(range);
+                    if (index < 0) index += length;
                     if (index != floor(index) || index < 0 || index >= length) {
                         runtimeError("Indeks rentang di luar jangkauan (indeks %.15g, panjang %.15g).",
                                      index, length);
@@ -1039,9 +1107,11 @@ static InterpretResult run() {
                     // copyString allocates (a GC could otherwise free it).
                     int index = (int)AS_NUMBER(peek(0));
                     ObjString* str = AS_STRING(peek(1));
+                    int given = index;
+                    if (index < 0) index += str->charCount;
                     if (index < 0 || index >= str->charCount) {
                         runtimeError("Indeks string di luar jangkauan (indeks %d, panjang %d).",
-                                     index, str->charCount);
+                                     given, str->charCount);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     int offset = utf8ByteOffset(str, index);
@@ -1058,12 +1128,13 @@ static InterpretResult run() {
                 // Stack: target, index/key, value
                 if (IS_LIST(peek(2)) && IS_NUMBER(peek(1))) {
                     Value value = pop();
-                    int index = (int)AS_NUMBER(pop());
+                    int given = (int)AS_NUMBER(pop());
                     ObjList* list = AS_LIST(pop());
+                    int index = given < 0 ? given + list->items.count : given;
                     if (index < 0 || index >= list->items.count) {
                         vm.runtimeErrorClass = vm.galatIndeks;
                         runtimeError("Indeks list di luar jangkauan (indeks %d, panjang %d).",
-                                     index, list->items.count);
+                                     given, list->items.count);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     list->items.values[index] = value;
@@ -1086,6 +1157,60 @@ static InterpretResult run() {
                     } else {
                         runtimeError("Pengindeksan tidak valid: gunakan list[angka] atau kamus[string].");
                     }
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_SLICE: {
+                // Stack: target, start, stop, step (omitted parts are kosong).
+                // Operands stay on the stack while the result allocates.
+                Value target = peek(3);
+                int start, stop, step;
+                const char* msg = NULL;
+
+                if (IS_LIST(target)) {
+                    ObjList* src = AS_LIST(target);
+                    if (!resolveSlice(peek(2), peek(1), peek(0), src->items.count,
+                                      &start, &stop, &step, &msg)) {
+                        vm.runtimeErrorClass = vm.galatNilai;
+                        runtimeError("%s", msg);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    ObjList* out = newList();
+                    push(OBJ_VAL(out));   // root: writeValueArray may GC
+                    for (int i = start; step > 0 ? i < stop : i > stop; i += step) {
+                        writeValueArray(&out->items, src->items.values[i]);
+                    }
+                    pop();
+                    vm.stackTop -= 4;
+                    push(OBJ_VAL(out));
+                } else if (IS_STRING(target)) {
+                    ObjString* src = AS_STRING(target);
+                    if (!resolveSlice(peek(2), peek(1), peek(0), src->charCount,
+                                      &start, &stop, &step, &msg)) {
+                        vm.runtimeErrorClass = vm.galatNilai;
+                        runtimeError("%s", msg);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    // Build the byte buffer first; src stays rooted on the stack.
+                    int count = 0;
+                    for (int i = start; step > 0 ? i < stop : i > stop; i += step) count++;
+                    // Worst case: every character is 4 UTF-8 bytes.
+                    char* buffer = ALLOCATE(char, (size_t)count * 4 + 1);
+                    int len = 0;
+                    for (int i = start; step > 0 ? i < stop : i > stop; i += step) {
+                        int offset = utf8ByteOffset(src, i);
+                        int bytes = utf8CharBytes(src, offset);
+                        memcpy(buffer + len, src->chars + offset, bytes);
+                        len += bytes;
+                    }
+                    ObjString* out = copyString(buffer, len);
+                    FREE_ARRAY(char, buffer, (size_t)count * 4 + 1);
+                    vm.stackTop -= 4;
+                    push(OBJ_VAL(out));
+                } else {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Irisan hanya untuk daftar dan teks.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;

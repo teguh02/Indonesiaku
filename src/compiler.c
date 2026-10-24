@@ -562,6 +562,10 @@ static void dot(bool canAssign) {
     }
 }
 
+static void skipNewlines() {
+    while (match(TOKEN_NEWLINE)) { }
+}
+
 static void listLiteral(bool canAssign) {
     // '[' already consumed. Parse comma-separated elements.
     int count = 0;
@@ -580,10 +584,76 @@ static void listLiteral(bool canAssign) {
     emitBytes(OP_BUILD_LIST, (uint8_t)count);
 }
 
+// '{' in EXPRESSION position is a dict literal; in statement position
+// statement() consumed it as a block first (see AGENTS.md: PHP-style braces).
+// '{' does not raise the scanner's groupingDepth, so skip newlines by hand to
+// allow multi-line literals.
+static void dictLiteral(bool canAssign) {
+    (void)canAssign;
+    int count = 0;
+    skipNewlines();
+    if (!check(TOKEN_RIGHT_BRACE)) {
+        do {
+            skipNewlines();
+            if (check(TOKEN_RIGHT_BRACE)) break;   // trailing comma
+            expression();                          // key
+            consume(TOKEN_COLON, "Harapkan ':' setelah kunci kamus.");
+            skipNewlines();
+            expression();                          // value
+            if (count == 255) {
+                error("Tidak boleh lebih dari 255 pasangan dalam literal kamus.");
+            }
+            count++;
+            skipNewlines();
+        } while (match(TOKEN_COMMA));
+    }
+    skipNewlines();
+    consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah isi literal kamus.");
+    emitBytes(OP_BUILD_DICT, (uint8_t)count);
+}
+
 static void subscript(bool canAssign) {
-    // The list/target is already on the stack. '[' already consumed.
-    expression();
+    // The target is already on the stack. '[' already consumed.
+    // Either a[i], a[i] = v, or a slice a[awal:akhir:langkah] where every part
+    // may be omitted. Omitted parts are emitted as 'kosong' so the VM can tell
+    // "not given" from a real value.
+    bool isSlice = false;
+
+    if (check(TOKEN_COLON)) {
+        emitByte(OP_KOSONG);     // start omitted
+        isSlice = true;
+    } else {
+        expression();
+    }
+
+    if (match(TOKEN_COLON)) {
+        isSlice = true;
+        if (check(TOKEN_RIGHT_BRACKET) || check(TOKEN_COLON)) {
+            emitByte(OP_KOSONG); // stop omitted
+        } else {
+            expression();
+        }
+        if (match(TOKEN_COLON)) {
+            if (check(TOKEN_RIGHT_BRACKET)) {
+                emitByte(OP_KOSONG);  // step omitted
+            } else {
+                expression();
+            }
+        } else {
+            emitByte(OP_KOSONG);      // no step given
+        }
+    }
+
     consume(TOKEN_RIGHT_BRACKET, "Harapkan ']' setelah indeks.");
+
+    if (isSlice) {
+        if (canAssign && match(TOKEN_EQUAL)) {
+            semanticError("Irisan tidak dapat menjadi sasaran assignment.");
+            expression();   // consume the right side to avoid a cascade
+        }
+        emitByte(OP_SLICE);
+        return;
+    }
 
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
@@ -878,7 +948,7 @@ static void comparison(bool canAssign) {
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LEFT_BRACE]    = {dictLiteral, NULL,  PREC_NONE},
   [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACKET]  = {listLiteral, subscript, PREC_CALL},
   [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE},
