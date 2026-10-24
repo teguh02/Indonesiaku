@@ -187,7 +187,9 @@
     <span class="tok-f">cetak</span>(<span class="tok-s">"Halo,"</span>, nama)
 <span class="tok-p">}</span>
 
-<span class="tok-k">untuk</span> orang <span class="tok-k">dalam</span> [<span class="tok-s">"Budi"</span>, <span class="tok-s">"Ani"</span>, <span class="tok-s">"Citra"</span>] <span class="tok-p">{</span>
+<span class="tok-k">untuk</span> orang <span class="tok-k">dalam</span> [
+    <span class="tok-s">"Budi"</span>, <span class="tok-s">"Ani"</span>, <span class="tok-s">"Citra"</span>
+] <span class="tok-p">{</span>
     <span class="tok-f">sapa</span>(orang)
 <span class="tok-p">}</span></code></pre>
               <div class="border-t border-white/10 bg-white/[0.02] px-5 py-3 font-mono text-[12px] leading-relaxed text-white/45">
@@ -283,16 +285,22 @@
     <span class="tok-p">}</span>
 
     <span class="tok-f">bersuara</span>() <span class="tok-p">{</span>
-        <span class="tok-f">cetak</span>(<span class="tok-k">diri</span>.nama, <span class="tok-s">"berkata:"</span>, <span class="tok-k">diri</span>.suara)
+        <span class="tok-f">cetak</span>(
+            <span class="tok-k">diri</span>.nama, <span class="tok-s">"berkata:"</span>,
+            <span class="tok-k">diri</span>.suara
+        )
     <span class="tok-p">}</span>
 <span class="tok-p">}</span>
 
-<span class="tok-k">kelas</span> <span class="tok-f">Anjing</span> <span class="tok-p">&lt;</span> <span class="tok-f">Hewan</span> <span class="tok-p">{</span>          <span class="tok-c"># pewarisan</span>
-    <span class="tok-k">init</span>(nama) <span class="tok-p">{</span> <span class="tok-k">super</span>.<span class="tok-f">init</span>(nama, <span class="tok-s">"Guk"</span>) <span class="tok-p">}</span>
+<span class="tok-c"># Pewarisan dan konstruktor turunan</span>
+<span class="tok-k">kelas</span> <span class="tok-f">Anjing</span> <span class="tok-p">&lt;</span> <span class="tok-f">Hewan</span> <span class="tok-p">{</span>
+    <span class="tok-k">init</span>(nama) <span class="tok-p">{</span>
+        <span class="tok-k">super</span>.<span class="tok-f">init</span>(nama, <span class="tok-s">"Guk"</span>)
+    <span class="tok-p">}</span>
 <span class="tok-p">}</span>
 
 <span class="tok-k">coba</span> <span class="tok-p">{</span>
-    <span class="tok-f">Anjing</span>(<span class="tok-s">"Rex"</span>).<span class="tok-f">bersuara</span>()    <span class="tok-c"># Rex berkata: Guk</span>
+    <span class="tok-f">Anjing</span>(<span class="tok-s">"Rex"</span>).<span class="tok-f">bersuara</span>()
 <span class="tok-p">}</span> <span class="tok-k">kecuali</span> e <span class="tok-p">{</span>
     <span class="tok-f">cetak</span>(<span class="tok-s">"gagal:"</span>, e)
 <span class="tok-p">}</span></code></pre>

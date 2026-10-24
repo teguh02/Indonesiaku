@@ -46,12 +46,26 @@ body {
 .code-card .tok-n { color: #9ec1ff; }   /* angka */
 .code-card .tok-c { color: #6d7391; font-style: italic; } /* komentar */
 .code-card .tok-p { color: #a9aec9; }   /* tanda baca */
+.code-card {
+  max-width: 100%;
+  min-width: 0;
+}
 .code-card pre {
   margin: 0;
   font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
   font-size: 0.875rem;
   line-height: 1.7;
   tab-size: 4;
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 639px) {
+  .code-card pre {
+    font-size: 0.75rem;
+    line-height: 1.6;
+    padding: 1rem !important;
+  }
 }
 
 /* ------------------------------------------------------------
