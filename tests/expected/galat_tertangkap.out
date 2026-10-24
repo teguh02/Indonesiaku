@@ -5,7 +5,7 @@
 5: Pembagian dengan nol. x tetap 10
 6: Variabel tidak terdefinisi 'tidak_ada'.
 7: Indeks list di luar jangkauan (indeks 5, panjang 1).
-8: Operand harus dua angka atau dua string.
+8: Operand '+' harus dua angka, dua teks, atau dua daftar.
 9: Hanya dapat memanggil fungsi dan kelas.
 10: Indeks list di luar jangkauan (indeks 2, panjang 1).
 11: rekursi tertangkap

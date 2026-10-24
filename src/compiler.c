@@ -902,10 +902,10 @@ static ChainCompare comparisonKind(TokenType type) {
 
 static void emitComparison(ChainCompare op) {
     switch (op) {
-        case CHAIN_EQUAL:
-        case CHAIN_IDENTITY: emitByte(OP_EQUAL); break;
-        case CHAIN_NOT_EQUAL:
-        case CHAIN_NOT_IDENTITY: emitBytes(OP_EQUAL, OP_NOT); break;
+        case CHAIN_EQUAL: emitByte(OP_EQUAL); break;
+        case CHAIN_IDENTITY: emitByte(OP_IDENTICAL); break;
+        case CHAIN_NOT_EQUAL: emitBytes(OP_EQUAL, OP_NOT); break;
+        case CHAIN_NOT_IDENTITY: emitBytes(OP_IDENTICAL, OP_NOT); break;
         case CHAIN_GREATER: emitByte(OP_GREATER); break;
         case CHAIN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
         case CHAIN_LESS: emitByte(OP_LESS); break;

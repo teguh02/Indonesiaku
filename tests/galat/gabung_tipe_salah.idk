@@ -1,0 +1,3 @@
+# '+' tidak mencampur daftar dengan teks.
+variabel a = [1, 2]
+cetak(a + "tiga")

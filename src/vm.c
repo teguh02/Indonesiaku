@@ -596,12 +596,16 @@ static bool containsValue(Value container, Value item, bool* found) {
 static bool chainCompare(ChainCompare op, Value left, Value right, bool* result) {
     switch (op) {
         case CHAIN_EQUAL:
-        case CHAIN_IDENTITY:
             *result = valuesEqual(left, right);
             return true;
+        case CHAIN_IDENTITY:
+            *result = valuesIdentical(left, right);   // 'adalah' stays identity
+            return true;
         case CHAIN_NOT_EQUAL:
-        case CHAIN_NOT_IDENTITY:
             *result = !valuesEqual(left, right);
+            return true;
+        case CHAIN_NOT_IDENTITY:
+            *result = !valuesIdentical(left, right);
             return true;
         case CHAIN_IN:
         case CHAIN_NOT_IN:
@@ -714,6 +718,46 @@ static void concatenate() {
     push(OBJ_VAL(result));
 }
 
+// daftar + daftar: a fresh list holding shallow copies of both sides.
+// Both operands stay on the stack while the result grows (writeValueArray
+// can allocate and trigger a GC).
+static void concatenateLists() {
+    ObjList* b = AS_LIST(peek(0));
+    ObjList* a = AS_LIST(peek(1));
+    ObjList* result = newList();
+    push(OBJ_VAL(result));
+    for (int i = 0; i < a->items.count; i++) writeValueArray(&result->items, a->items.values[i]);
+    for (int i = 0; i < b->items.count; i++) writeValueArray(&result->items, b->items.values[i]);
+    pop();              // result
+    pop(); pop();       // operands
+    push(OBJ_VAL(result));
+}
+
+// Shared guard for 'daftar * n' and 'teks * n'. Returns false (after raising)
+// when the count is not a whole number or the result would be absurdly large.
+#define REPEAT_MAX 65535
+
+static bool repeatCount(Value value, int* out) {
+    if (!IS_NUMBER(value)) {
+        vm.runtimeErrorClass = vm.galatTipe;
+        runtimeError("Pengali harus berupa angka bulat.");
+        return false;
+    }
+    double n = AS_NUMBER(value);
+    if (n != floor(n)) {
+        vm.runtimeErrorClass = vm.galatTipe;
+        runtimeError("Pengali harus berupa angka bulat.");
+        return false;
+    }
+    if (n > REPEAT_MAX) {
+        vm.runtimeErrorClass = vm.galatNilai;
+        runtimeError("Hasil pengulangan terlalu besar (maksimum %d).", REPEAT_MAX);
+        return false;
+    }
+    *out = n < 0 ? 0 : (int)n;   // negative repeats give an empty result, as in Python
+    return true;
+}
+
 static InterpretResult run() {
     CallFrame* frame = &vm.frames[vm.frameCount - 1];
 
@@ -812,6 +856,12 @@ static InterpretResult run() {
                 push(BOOL_VAL(valuesEqual(a, b)));
                 break;
             }
+            case OP_IDENTICAL: {
+                Value b = pop();
+                Value a = pop();
+                push(BOOL_VAL(valuesIdentical(a, b)));
+                break;
+            }
             case OP_GREATER: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                     ObjString* b = AS_STRING(pop());
@@ -835,18 +885,77 @@ static InterpretResult run() {
             case OP_ADD: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                     concatenate();
+                } else if (IS_LIST(peek(0)) && IS_LIST(peek(1))) {
+                    concatenateLists();
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     double b = AS_NUMBER(pop());
                     double a = AS_NUMBER(pop());
                     push(NUMBER_VAL(a + b));
                 } else {
-                    runtimeError("Operand harus dua angka atau dua string.");
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Operand '+' harus dua angka, dua teks, atau dua daftar.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
-            case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
+            case OP_MULTIPLY: {
+                // daftar * n, n * daftar, teks * n, n * teks, angka * angka
+                Value b = peek(0);
+                Value a = peek(1);
+                if (IS_NUMBER(a) && IS_NUMBER(b)) {
+                    double y = AS_NUMBER(pop());
+                    double x = AS_NUMBER(pop());
+                    push(NUMBER_VAL(x * y));
+                    break;
+                }
+
+                Value seq = IS_NUMBER(b) ? a : b;    // the repeated operand
+                Value times = IS_NUMBER(b) ? b : a;
+                if (!IS_LIST(seq) && !IS_STRING(seq)) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Operand '*' harus dua angka, atau daftar/teks dengan angka.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int n;
+                if (!repeatCount(times, &n)) return INTERPRET_RUNTIME_ERROR;
+
+                if (IS_LIST(seq)) {
+                    ObjList* src = AS_LIST(seq);
+                    if ((long)src->items.count * n > REPEAT_MAX) {
+                        vm.runtimeErrorClass = vm.galatNilai;
+                        runtimeError("Hasil pengulangan terlalu besar (maksimum %d).", REPEAT_MAX);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    ObjList* result = newList();
+                    push(OBJ_VAL(result));   // root while writeValueArray allocates
+                    for (int r = 0; r < n; r++) {
+                        for (int i = 0; i < src->items.count; i++) {
+                            writeValueArray(&result->items, src->items.values[i]);
+                        }
+                    }
+                    pop();
+                    vm.stackTop -= 2;
+                    push(OBJ_VAL(result));
+                } else {
+                    ObjString* src = AS_STRING(seq);
+                    if ((long)src->length * n > REPEAT_MAX) {
+                        vm.runtimeErrorClass = vm.galatNilai;
+                        runtimeError("Hasil pengulangan terlalu besar (maksimum %d).", REPEAT_MAX);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    int length = src->length * n;
+                    char* chars = ALLOCATE(char, length + 1);
+                    for (int r = 0; r < n; r++) {
+                        memcpy(chars + (size_t)r * src->length, src->chars, src->length);
+                    }
+                    chars[length] = '\0';
+                    ObjString* result = takeString(chars, length);
+                    vm.stackTop -= 2;
+                    push(OBJ_VAL(result));
+                }
+                break;
+            }
             case OP_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
                     runtimeError("Operand harus berupa angka.");
