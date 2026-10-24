@@ -68,6 +68,17 @@ typedef enum {
     TYPE_SCRIPT
 } FunctionType;
 
+#define FINALLY_MAX 32
+
+struct LoopCtx;
+
+// A 'coba ... akhirnya' whose body or 'kecuali' block is being compiled.
+typedef struct {
+    int tryDepth;               // Compiler.tryDepth before its handler
+    ScannerState finallyBlock;  // scanner positioned just before its '{'
+    struct LoopCtx* loop;       // loop enclosing the 'coba' statement
+} FinallyRegion;
+
 typedef struct Compiler {
     struct Compiler* enclosing;
     ObjFunction* function;
@@ -78,7 +89,11 @@ typedef struct Compiler {
     Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
     int tryDepth;      // 'coba' handlers active at this point in the function
-    int finallyDepth;  // ...of which belong to a 'coba' with 'akhirnya'
+    // Enclosing 'coba' blocks that have an 'akhirnya', innermost last.
+    // 'kembalikan'/'hentikan'/'lanjut' re-compile their finally blocks
+    // inline before jumping out (see exitTryBlocks).
+    FinallyRegion finallies[FINALLY_MAX];
+    int finallyCount;
 } Compiler;
 
 Parser parser;
@@ -101,7 +116,7 @@ typedef struct LoopCtx {
     int continueTarget;   // bytecode offset to jump to for 'lanjut'
     int scopeDepth;       // scope depth of the loop body
     int tryDepth;         // Compiler.tryDepth when the loop started
-    int finallyDepth;     // Compiler.finallyDepth when the loop started
+    int finallyCount;     // Compiler.finallyCount when the loop started
     int breakJumps[UINT8_COUNT];
     int breakCount;
 } LoopCtx;
@@ -112,9 +127,15 @@ static Chunk* currentChunk() {
     return &current->function->chunk;
 }
 
+// > 0 while an 'akhirnya' block is being re-compiled inline. Its errors are
+// already reported when the block is compiled in place, so stay silent.
+static int inlineFinallyDepth = 0;
+
 static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
+    parser.hadError = true;
+    if (inlineFinallyDepth > 0) return;
     fprintf(stderr, "[baris %d] Kesalahan", token->line);
 
     if (token->type == TOKEN_EOF) {
@@ -263,7 +284,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
     compiler->tryDepth = 0;
-    compiler->finallyDepth = 0;
+    compiler->finallyCount = 0;
     compiler->function = newFunction();
     current = compiler;
     if (type != TYPE_SCRIPT) {
@@ -534,14 +555,12 @@ static void listLiteral(bool canAssign) {
     if (!check(TOKEN_RIGHT_BRACKET)) {
         do {
             // Allow trailing newlines inside list literals.
-            while (match(TOKEN_NEWLINE)) {}
             if (check(TOKEN_RIGHT_BRACKET)) break;
             expression();
             if (count == 255) {
                 error("Tidak boleh lebih dari 255 elemen dalam literal list.");
             }
             count++;
-            while (match(TOKEN_NEWLINE)) {}
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_BRACKET, "Harapkan ']' setelah elemen list.");
@@ -801,7 +820,6 @@ ParseRule rules[] = {
   [TOKEN_VARIABEL]      = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SELAGI]        = {NULL,     NULL,   PREC_NONE},
   [TOKEN_TIDAK]         = {unary,    NULL,   PREC_NONE},
-  [TOKEN_NEWLINE]       = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
   [TOKEN_SLASH_SLASH_EQUAL] = {NULL, NULL,   PREC_NONE},
   [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
@@ -945,11 +963,9 @@ static void classDeclaration() {
     namedVariable(className, false);  // push the class for OP_METHOD
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' sebelum badan kelas.");
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-        while (match(TOKEN_NEWLINE)) {}
         if (check(TOKEN_RIGHT_BRACE)) break;
         if (match(TOKEN_LEWATI)) continue;  // kelas Kosong { lewati }
         method();
-        while (match(TOKEN_NEWLINE)) {}
     }
     consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah badan kelas.");
     emitByte(OP_POP);  // pop the class
@@ -970,13 +986,11 @@ static void varDeclaration() {
         emitByte(OP_KOSONG);
     }
 
-    // consume(TOKEN_SEMICOLON, "Harapkan ';' setelah deklarasi variabel.");
     defineVariable(global);
 }
 
 static void expressionStatement() {
     expression();
-    // consume(TOKEN_SEMICOLON, "Harapkan ';' setelah ekspresi.");
     emitByte(OP_POP);
 }
 
@@ -1064,7 +1078,7 @@ static void beginLoop(LoopCtx* loop, int continueTarget) {
     loop->continueTarget = continueTarget;
     loop->scopeDepth = current->scopeDepth;
     loop->tryDepth = current->tryDepth;
-    loop->finallyDepth = current->finallyDepth;
+    loop->finallyCount = current->finallyCount;
     loop->breakCount = 0;
     currentLoop = loop;
 }
@@ -1088,22 +1102,61 @@ static void popLocalsToDepth(int depth) {
     }
 }
 
-// Before 'hentikan'/'lanjut' jumps out of 'coba' blocks inside the loop,
-// unregister their handlers. Jumping out of a 'coba' that has 'akhirnya'
-// would skip the finally block, so it is rejected for now.
-static bool exitTryBlocksForLoopJump(const char* keyword) {
-    if (current->finallyDepth > currentLoop->finallyDepth) {
-        char message[128];
-        snprintf(message, sizeof(message),
-                 "'%s' keluar dari 'coba' yang memiliki 'akhirnya' belum didukung.",
-                 keyword);
-        semanticError(message);
-        return false;
+static void block();
+
+// Compile an 'akhirnya' block again at the current position (the code that
+// jumps out of its 'coba'). The single-pass compiler cannot jump to the
+// block's normal copy, so — like CPython — the block is duplicated: rewind
+// the scanner to it, compile it, then restore the parser exactly.
+static void inlineFinallyBlock(FinallyRegion* region) {
+    Parser savedParser = parser;
+    ScannerState savedScanner = saveScanner();
+    LoopCtx* savedLoop = currentLoop;
+    const char* savedArgStart = callArgStart;
+
+    restoreScanner(region->finallyBlock);
+    currentLoop = region->loop;   // 'hentikan' in it targets the loop around 'coba'
+    callArgStart = NULL;
+    inlineFinallyDepth++;
+    advance();  // load the block's '{'
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah 'akhirnya'.");
+    beginScope();
+    block();
+    endScope();
+    inlineFinallyDepth--;
+
+    bool hadError = parser.hadError;
+    parser = savedParser;
+    parser.hadError = parser.hadError || hadError;
+    restoreScanner(savedScanner);
+    currentLoop = savedLoop;
+    callArgStart = savedArgStart;
+}
+
+// Emit what must happen before jumping out of 'coba' blocks: run the
+// 'akhirnya' blocks of finally regions [targetFinallies, finallyCount),
+// innermost first, and unregister handlers down to targetTryDepth. Each
+// finally block runs with only the handlers outside its own 'coba' active,
+// so an error inside it propagates outward (as in Python).
+static void exitTryBlocks(int targetTryDepth, int targetFinallies) {
+    int savedTryDepth = current->tryDepth;
+    int savedFinallyCount = current->finallyCount;
+
+    for (int i = savedFinallyCount - 1; i >= targetFinallies; i--) {
+        FinallyRegion* region = &current->finallies[i];
+        for (int d = current->tryDepth; d > region->tryDepth; d--) {
+            emitByte(OP_TRY_END);
+        }
+        current->tryDepth = region->tryDepth;
+        current->finallyCount = i;  // a jump inside it must not re-run it
+        inlineFinallyBlock(region);
     }
-    for (int i = currentLoop->tryDepth; i < current->tryDepth; i++) {
+    for (int d = current->tryDepth; d > targetTryDepth; d--) {
         emitByte(OP_TRY_END);
     }
-    return true;
+
+    current->tryDepth = savedTryDepth;
+    current->finallyCount = savedFinallyCount;
 }
 
 static void breakStatement() {
@@ -1111,7 +1164,7 @@ static void breakStatement() {
         error("'hentikan' hanya boleh di dalam perulangan.");
         return;
     }
-    if (!exitTryBlocksForLoopJump("hentikan")) return;
+    exitTryBlocks(currentLoop->tryDepth, currentLoop->finallyCount);
     popLocalsToDepth(currentLoop->scopeDepth);
     if (currentLoop->breakCount == UINT8_COUNT) {
         error("Terlalu banyak 'hentikan' dalam satu perulangan.");
@@ -1125,7 +1178,7 @@ static void continueStatement() {
         error("'lanjut' hanya boleh di dalam perulangan.");
         return;
     }
-    if (!exitTryBlocksForLoopJump("lanjut")) return;
+    exitTryBlocks(currentLoop->tryDepth, currentLoop->finallyCount);
     popLocalsToDepth(currentLoop->scopeDepth);
     emitLoop(currentLoop->continueTarget);
 }
@@ -1175,12 +1228,6 @@ static void importStatement() {
     emitByte(OP_POP);  // discard the module's return value (kosong)
 }
 
-// Next token from the scanner, skipping newlines (lookahead only).
-static Token scanSignificant() {
-    Token token = scanToken();
-    while (token.type == TOKEN_NEWLINE) token = scanToken();
-    return token;
-}
 
 // Lookahead helper: having just scanned a '{', skip to its matching '}'.
 static bool skipBalancedBraces() {
@@ -1197,22 +1244,24 @@ static bool skipBalancedBraces() {
 // The compiler is single-pass, but the bytecode for 'coba' depends on what
 // follows the body: an 'akhirnya' needs an outer handler registered BEFORE the
 // body. Peek ahead (parser.current is the body's '{') and restore the scanner.
-static void scanTryClauses(bool* hasCatch, bool* hasFinally) {
+static void scanTryClauses(bool* hasCatch, bool* hasFinally,
+                           ScannerState* finallyBlock) {
     *hasCatch = false;
     *hasFinally = false;
     if (parser.current.type != TOKEN_LEFT_BRACE) return;
 
     ScannerState saved = saveScanner();
     if (skipBalancedBraces()) {
-        Token next = scanSignificant();
+        Token next = scanToken();
         if (next.type == TOKEN_KECUALI) {
             *hasCatch = true;
-            scanSignificant();  // the catch variable
-            if (scanSignificant().type == TOKEN_LEFT_BRACE && skipBalancedBraces()) {
-                next = scanSignificant();
+            scanToken();  // the catch variable
+            if (scanToken().type == TOKEN_LEFT_BRACE && skipBalancedBraces()) {
+                next = scanToken();
             }
         }
         *hasFinally = next.type == TOKEN_AKHIRNYA;
+        if (*hasFinally) *finallyBlock = saveScanner();
     }
     restoreScanner(saved);
 }
@@ -1264,7 +1313,8 @@ static void finallyClause() {
 // which rethrows; the normal path enters the finally block with no error.
 static void tryStatement() {
     bool hasCatch, hasFinally;
-    scanTryClauses(&hasCatch, &hasFinally);
+    ScannerState finallyBlock;
+    scanTryClauses(&hasCatch, &hasFinally, &finallyBlock);
     if (!hasCatch && !hasFinally) {
         // Let consume() below report the problem at the right token.
         hasCatch = true;
@@ -1272,9 +1322,17 @@ static void tryStatement() {
 
     int finallyHandler = -1;
     if (hasFinally) {
-        finallyHandler = emitJump(OP_TRY_BEGIN);
-        current->tryDepth++;
-        current->finallyDepth++;
+        if (current->finallyCount == FINALLY_MAX) {
+            error("Terlalu banyak 'coba ... akhirnya' bersarang.");
+            hasFinally = false;
+        } else {
+            FinallyRegion* region = &current->finallies[current->finallyCount++];
+            region->tryDepth = current->tryDepth;
+            region->finallyBlock = finallyBlock;
+            region->loop = currentLoop;
+            finallyHandler = emitJump(OP_TRY_BEGIN);
+            current->tryDepth++;
+        }
     }
     int catchHandler = -1;
     if (hasCatch) {
@@ -1299,7 +1357,7 @@ static void tryStatement() {
     if (hasFinally) {
         emitByte(OP_TRY_END);
         current->tryDepth--;
-        current->finallyDepth--;
+        current->finallyCount--;
         emitByte(OP_KOSONG);                // no error...
         emitByte(OP_SALAH);                 // ...so do not rethrow
         int toFinally = emitJump(OP_JUMP);
@@ -1333,21 +1391,39 @@ static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
     }
-    // Returning from inside 'coba' is fine (OP_RETURN drops the frame's
-    // handlers), but it would skip an 'akhirnya' block.
-    if (current->finallyDepth > 0) {
-        semanticError("'kembalikan' dari dalam 'coba' yang memiliki 'akhirnya' belum didukung.");
+
+    // OP_RETURN drops the frame's 'coba' handlers by itself; only enclosing
+    // 'akhirnya' blocks need code here (exitTryBlocks).
+    bool hasFinally = current->finallyCount > 0;
+    if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE) || check(TOKEN_SEMICOLON)) {
+        if (hasFinally) exitTryBlocks(current->tryDepth, 0);
+        emitReturn();
+        return;
     }
 
-    if (match(TOKEN_NEWLINE) || check(TOKEN_EOF)) {
-        emitReturn();
-    } else {
-        if (current->type == TYPE_INITIALIZER) {
-            error("Tidak dapat mengembalikan nilai dari 'init'.");
-        }
+    if (current->type == TYPE_INITIALIZER) {
+        error("Tidak dapat mengembalikan nilai dari 'init'.");
+    }
+    if (!hasFinally) {
         expression();
         emitByte(OP_RETURN);
+        return;
     }
+
+    // Python evaluates the return value BEFORE the finally blocks run. Keep
+    // it in a hidden local so the inlined blocks' own locals get the right
+    // stack slots, then return it.
+    beginScope();
+    expression();
+    addLocal(syntheticToken(" kembali"));
+    markInitialized();
+    uint8_t slot = (uint8_t)(current->localCount - 1);
+    exitTryBlocks(current->tryDepth, 0);
+    emitBytes(OP_GET_LOCAL, slot);
+    emitByte(OP_RETURN);
+    // Code after OP_RETURN never runs: drop the local without emitting a pop.
+    current->localCount--;
+    current->scopeDepth--;
 }
 
 static void whileStatement() {
@@ -1376,7 +1452,7 @@ static void synchronize() {
     parser.panicMode = false;
 
     while (parser.current.type != TOKEN_EOF) {
-        if (parser.previous.type == TOKEN_NEWLINE) return;
+        if (parser.previous.type == TOKEN_SEMICOLON) return;
         switch (parser.current.type) {
             case TOKEN_KELAS:
             case TOKEN_FUNGSI:
@@ -1398,7 +1474,6 @@ static void synchronize() {
 
 static void declaration() {
     // Skip stray newlines between declarations
-    while (match(TOKEN_NEWLINE)) {}
 
     if (match(TOKEN_FUNGSI)) {
         funDeclaration();
@@ -1409,6 +1484,9 @@ static void declaration() {
     } else {
         statement();
     }
+    // Optional ';' separates statements on one line, as in Python:
+    // x = 1; cetak(x)
+    match(TOKEN_SEMICOLON);
 
     if (parser.panicMode) synchronize();
 }
@@ -1445,7 +1523,6 @@ static void statement() {
     }
     
     // Consume optional newlines after statements
-    while (match(TOKEN_NEWLINE)) {}
 }
 
 ObjFunction* compile(const char* source) {

@@ -336,8 +336,6 @@ Token scanToken() {
             advance();
             return makeToken(TOKEN_STRING);
         }
-        case '\n':
-            return makeToken(TOKEN_NEWLINE);
     }
 
     return errorToken("Karakter tidak dikenal.");

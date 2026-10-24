@@ -1,0 +1,6 @@
+# ';' memisahkan beberapa pernyataan dalam satu baris (seperti Python).
+x = 1; y = 2; cetak(x + y)
+jika x == 1 { cetak("a"); cetak("b") }
+fungsi kosongkan() { kembalikan; }
+cetak(kosongkan())
+cetak("titik koma di akhir boleh");

@@ -1,9 +1,0 @@
-# Batasan Fase 0: 'kembalikan' dari dalam 'coba' yang punya 'akhirnya' akan
-# melewati blok akhirnya, jadi ditolak saat kompilasi (belum didukung).
-fungsi f() {
-    coba {
-        kembalikan 1
-    } akhirnya {
-        cetak("bersih-bersih")
-    }
-}

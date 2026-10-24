@@ -1,0 +1,81 @@
+# Regresi: blok akhirnya dijalankan saat kembalikan/hentikan/lanjut keluar
+# dari coba (seperti finally di Python). Nilai kembali dihitung SEBELUM
+# akhirnya berjalan; akhirnya bersarang dijalankan dari yang terdalam.
+
+fungsi a() {
+    coba { kembalikan "nilai a" } akhirnya { cetak("a: akhirnya") }
+}
+cetak(a())
+
+fungsi b() {
+    variabel x = 1
+    coba {
+        x = 2
+        kembalikan x * 10
+    } akhirnya {
+        x = 99
+        cetak("b: akhirnya, x =", x)
+    }
+}
+cetak(b())
+
+fungsi c() {
+    coba {
+        coba { kembalikan "dalam" } akhirnya { cetak("c: akhirnya dalam") }
+    } akhirnya {
+        cetak("c: akhirnya luar")
+    }
+}
+cetak(c())
+
+fungsi d() {
+    coba { naikkan "x" } kecuali e { kembalikan "dari kecuali" } akhirnya { cetak("d: akhirnya") }
+}
+cetak(d())
+
+fungsi e2() {
+    coba { kembalikan } akhirnya { cetak("e: akhirnya") }
+}
+cetak(e2())
+
+i = 0
+selagi i < 5 {
+    i += 1
+    coba {
+        jika i == 2 { lanjut }
+        jika i == 4 { hentikan }
+        cetak("badan", i)
+    } akhirnya {
+        cetak("akhirnya", i)
+    }
+}
+cetak("loop selesai", i)
+
+untuk n dalam [1, 2, 3] {
+    coba {
+        coba { jika n == 2 { hentikan } } akhirnya { cetak("dalam", n) }
+    } akhirnya { cetak("luar", n) }
+}
+
+fungsi f() {
+    coba { kembalikan 1 } akhirnya { naikkan "galat di akhirnya" }
+}
+coba { f() } kecuali e { cetak("f:", e) }
+
+fungsi g() {
+    untuk n dalam [1, 2, 3] {
+        coba { kembalikan n } akhirnya { cetak("g akhirnya", n) }
+    }
+}
+cetak(g())
+
+fungsi h() {
+    coba {
+        untuk n dalam [1, 2, 3] {
+            coba { jika n == 2 { kembalikan "h" + ke_teks(n) } } akhirnya { variabel t = n * 100
+                cetak("h dalam", t) }
+        }
+    } akhirnya { cetak("h luar") }
+}
+cetak(h())
+coba { naikkan "setelah semua" } kecuali e { cetak("handler bersih:", e) }
