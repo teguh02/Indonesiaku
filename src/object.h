@@ -114,9 +114,10 @@ typedef struct {
     double step;
 } ObjRange;
 
-typedef struct {
+typedef struct ObjClass {
     Obj obj;
     ObjString* name;
+    struct ObjClass* superclass;
     Table methods;
 } ObjClass;
 

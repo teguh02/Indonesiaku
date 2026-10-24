@@ -1,0 +1,30 @@
+coba {
+    cetak(1 / 0)
+} kecuali GalatAritmetika sebagai e {
+    cetak("aritmetika:", e.pesan)
+}
+
+coba {
+    enumerasi(1)
+} kecuali GalatNilai sebagai e {
+    cetak("nilai:", e)
+}
+
+coba {
+    cetak(1 / 0)
+} kecuali (GalatNilai, GalatAritmetika) sebagai e {
+    cetak("pilihan:", e.pesan)
+}
+
+coba {
+    variabel daftar = [1]
+    cetak(daftar[5])
+} kecuali GalatPencarian sebagai e {
+    cetak("pencarian:", e.pesan)
+}
+
+coba {
+    cetak(tidak_ada)
+} kecuali Galat sebagai e {
+    cetak("umum:", e.pesan)
+}

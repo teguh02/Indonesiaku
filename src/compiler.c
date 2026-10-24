@@ -1340,8 +1340,10 @@ static void scanTryClauses(bool* hasCatch, bool* hasFinally,
         Token next = scanToken();
         if (next.type == TOKEN_KECUALI) {
             *hasCatch = true;
-            scanToken();  // the catch variable
-            if (scanToken().type == TOKEN_LEFT_BRACE && skipBalancedBraces()) {
+            do {
+                next = scanToken();
+            } while (next.type != TOKEN_LEFT_BRACE && next.type != TOKEN_EOF);
+            if (next.type == TOKEN_LEFT_BRACE && skipBalancedBraces()) {
                 next = scanToken();
             }
         }
@@ -1351,16 +1353,66 @@ static void scanTryClauses(bool* hasCatch, bool* hasFinally,
     restoreScanner(saved);
 }
 
-// kecuali <nama> { ... } — the VM has pushed the raised value on the stack.
+// kecuali e { ... }, kecuali Tipe sebagai e { ... }, or
+// kecuali (TipeA, TipeB) sebagai e { ... }. The VM has pushed the error.
 static void catchClause() {
     consume(TOKEN_KECUALI, "Harapkan 'kecuali' atau 'akhirnya' setelah blok 'coba'.");
+    bool typed = false;
+    Token caught;
+    int successJumps[UINT8_COUNT];
+    int successCount = 0;
+
+    if (match(TOKEN_LEFT_PAREN)) {
+        typed = true;
+        do {
+            consume(TOKEN_IDENTIFIER, "Harapkan kelas galat di dalam 'kecuali (...)'.");
+            namedVariable(parser.previous, false);
+            emitByte(OP_IS_INSTANCE);
+            if (!check(TOKEN_RIGHT_PAREN)) {
+                int tryNext = emitJump(OP_JUMP_IF_FALSE);
+                successJumps[successCount++] = emitJump(OP_JUMP);
+                patchJump(tryNext);
+                emitByte(OP_POP);
+            }
+        } while (match(TOKEN_COMMA));
+        consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah kelas galat.");
+        consume(TOKEN_SEBAGAI, "Harapkan 'sebagai' setelah kelas galat.");
+        consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'sebagai'.");
+        caught = parser.previous;
+    } else {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama galat atau tipe setelah 'kecuali'.");
+        Token first = parser.previous;
+        typed = match(TOKEN_SEBAGAI);
+        caught = first;
+        if (typed) {
+            namedVariable(first, false);
+            emitByte(OP_IS_INSTANCE);
+            consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'sebagai'.");
+            caught = parser.previous;
+        }
+    }
+
+    for (int i = 0; i < successCount; i++) patchJump(successJumps[i]);
+    int rethrow = -1;
+    if (typed) {
+        rethrow = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP);
+    }
+
     beginScope();
-    consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'kecuali'.");
-    addLocal(parser.previous);
+    addLocal(caught);
     markInitialized();
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah nama variabel 'kecuali'.");
     block();
-    endScope();  // pops the catch variable (the raised value)
+    endScope();
+
+    if (typed) {
+        int done = emitJump(OP_JUMP);
+        patchJump(rethrow);
+        emitByte(OP_POP);
+        emitByte(OP_THROW);
+        patchJump(done);
+    }
 }
 
 // akhirnya { ... } — entered with two values on the stack: the raised value

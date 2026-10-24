@@ -131,6 +131,7 @@ bool rangeContains(ObjRange* range, double value) {
 ObjClass* newClass(ObjString* name) {
     ObjClass* klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
+    klass->superclass = NULL;
     initTable(&klass->methods);
     return klass;
 }
@@ -299,9 +300,20 @@ void printObject(Value value) {
         case OBJ_CLASS:
             printf("<kelas %s>", AS_CLASS(value)->name->chars);
             break;
-        case OBJ_INSTANCE:
-            printf("<objek %s>", AS_INSTANCE(value)->klass->name->chars);
+        case OBJ_INSTANCE: {
+            ObjInstance* instance = AS_INSTANCE(value);
+            if (strncmp(instance->klass->name->chars, "Galat", 5) == 0) {
+                for (int i = 0; i < instance->fields.capacity; i++) {
+                    Entry* entry = &instance->fields.entries[i];
+                    if (entry->key != NULL && strcmp(entry->key->chars, "pesan") == 0) {
+                        printValue(entry->value);
+                        return;
+                    }
+                }
+            }
+            printf("<objek %s>", instance->klass->name->chars);
             break;
+        }
         case OBJ_BOUND_METHOD:
             printFunction(AS_BOUND_METHOD(value)->method->function);
             break;

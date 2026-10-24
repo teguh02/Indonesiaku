@@ -18,6 +18,7 @@
 VM vm;
 
 static void closeUpvalues(Value* last);
+static ObjInstance* newError(ObjClass* klass, const char* message);
 
 static Value clockNative(int argCount, Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -83,6 +84,7 @@ void runtimeError(const char* format, ...) {
         // once the stack has been unwound to the handler.
         vm.hadError = true;
         vm.runtimeErrorPending = true;
+        vm.runtimeErrorClass = vm.runtimeErrorClass != NULL ? vm.runtimeErrorClass : vm.galat;
         return;
     }
     reportError(vm.runtimeErrorMessage);
@@ -110,8 +112,34 @@ void nativeRaise(const char* format, ...) {
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
-    vm.nativeErrorValue = OBJ_VAL(copyString(buffer, (int)strlen(buffer)));
+    vm.nativeErrorValue = OBJ_VAL(newError(vm.galatNilai, buffer));
     vm.nativeErrorPending = true;
+}
+
+static ObjClass* defineErrorClass(const char* name, ObjClass* superclass) {
+    ObjString* className = copyString(name, (int)strlen(name));
+    push(OBJ_VAL(className));
+    ObjClass* klass = newClass(className);
+    klass->superclass = superclass;
+    push(OBJ_VAL(klass));
+    tableSet(&vm.globals, className, OBJ_VAL(klass));
+    pop();
+    pop();
+    return klass;
+}
+
+static ObjInstance* newError(ObjClass* klass, const char* message) {
+    ObjInstance* error = newInstance(klass);
+    push(OBJ_VAL(error));
+    ObjString* key = copyString("pesan", 5);
+    push(OBJ_VAL(key));
+    ObjString* text = copyString(message, (int)strlen(message));
+    push(OBJ_VAL(text));
+    tableSet(&error->fields, key, OBJ_VAL(text));
+    pop();
+    pop();
+    pop();
+    return error;
 }
 
 static void defineNative(const char* name, NativeFn function) {
@@ -144,6 +172,24 @@ void initVM() {
 
     vm.initString = NULL;
     vm.initString = copyString("init", 4);
+    vm.runtimeErrorClass = NULL;
+    vm.galat = defineErrorClass("Galat", NULL);
+    vm.galatAritmetika = defineErrorClass("GalatAritmetika", vm.galat);
+    vm.galatBagiNol = defineErrorClass("GalatBagiNol", vm.galatAritmetika);
+    ObjClass* galatPencarian = defineErrorClass("GalatPencarian", vm.galat);
+    vm.galatIndeks = defineErrorClass("GalatIndeks", galatPencarian);
+    defineErrorClass("GalatKunci", galatPencarian);
+    vm.galatTipe = defineErrorClass("GalatTipe", vm.galat);
+    vm.galatNilai = defineErrorClass("GalatNilai", vm.galat);
+    vm.galatNama = defineErrorClass("GalatNama", vm.galat);
+    defineErrorClass("GalatAtribut", vm.galat);
+    defineErrorClass("GalatBerkas", vm.galat);
+    defineErrorClass("GalatOS", vm.galat);
+    defineErrorClass("GalatImpor", vm.galat);
+    defineErrorClass("GalatRekursi", vm.galat);
+    defineErrorClass("GalatPenegasan", vm.galat);
+    defineErrorClass("HentiIterasi", vm.galat);
+    defineErrorClass("GalatSintaks", vm.galat);
 
     defineNative("jam", clockNative);
     defineNative("min", nativeFnMin);
@@ -448,6 +494,17 @@ static int resolveNativeError() {
     if (!throwValue(error)) {
         if (IS_STRING(error)) {
             runtimeError("%s", AS_CSTRING(error));
+        } else if (IS_INSTANCE(error)) {
+            ObjInstance* instance = AS_INSTANCE(error);
+            for (int i = 0; i < instance->fields.capacity; i++) {
+                Entry* entry = &instance->fields.entries[i];
+                if (entry->key != NULL && strcmp(entry->key->chars, "pesan") == 0 &&
+                    IS_STRING(entry->value)) {
+                    runtimeError("%s", AS_CSTRING(entry->value));
+                    return -1;
+                }
+            }
+            runtimeError("Kesalahan tak tertangani dari fungsi bawaan.");
         } else {
             runtimeError("Kesalahan tak tertangani dari fungsi bawaan.");
         }
@@ -752,6 +809,7 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (AS_NUMBER(peek(0)) == 0) {
+                    vm.runtimeErrorClass = vm.galatBagiNol;
                     runtimeError("Pembagian dengan nol.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -766,6 +824,7 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (AS_NUMBER(peek(0)) == 0) {
+                    vm.runtimeErrorClass = vm.galatBagiNol;
                     runtimeError("Pembagian dengan nol.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -815,6 +874,7 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (AS_NUMBER(peek(0)) == 0) {
+                    vm.runtimeErrorClass = vm.galatBagiNol;
                     runtimeError("Pembagian dengan nol.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -941,6 +1001,7 @@ static InterpretResult run() {
                     int index = (int)AS_NUMBER(pop());
                     ObjList* list = AS_LIST(pop());
                     if (index < 0 || index >= list->items.count) {
+                        vm.runtimeErrorClass = vm.galatIndeks;
                         runtimeError("Indeks list di luar jangkauan (indeks %d, panjang %d).",
                                      index, list->items.count);
                         return INTERPRET_RUNTIME_ERROR;
@@ -1000,6 +1061,7 @@ static InterpretResult run() {
                     int index = (int)AS_NUMBER(pop());
                     ObjList* list = AS_LIST(pop());
                     if (index < 0 || index >= list->items.count) {
+                        vm.runtimeErrorClass = vm.galatIndeks;
                         runtimeError("Indeks list di luar jangkauan (indeks %d, panjang %d).",
                                      index, list->items.count);
                         return INTERPRET_RUNTIME_ERROR;
@@ -1056,6 +1118,7 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 ObjClass* subclass = AS_CLASS(peek(0));
+                subclass->superclass = AS_CLASS(superclass);
                 tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
                 pop();  // subclass
                 break;
@@ -1155,6 +1218,23 @@ static InterpretResult run() {
                 push(error);  // make the raised value available to 'kecuali'
                 break;
             }
+            case OP_IS_INSTANCE: {
+                Value target = pop();
+                Value value = peek(0);
+                bool matches = false;
+                if (IS_INSTANCE(value) && IS_CLASS(target)) {
+                    ObjClass* actual = AS_INSTANCE(value)->klass;
+                    ObjClass* expected = AS_CLASS(target);
+                    for (; actual != NULL; actual = actual->superclass) {
+                        if (actual == expected) {
+                            matches = true;
+                            break;
+                        }
+                    }
+                }
+                push(BOOL_VAL(matches));
+                break;
+            }
             case OP_IMPORT: {
                 ObjString* path = AS_STRING(pop());
                 bool alreadyLoaded = false;
@@ -1228,7 +1308,9 @@ InterpretResult interpret(const char* source) {
             break;
         }
         const char* message = vm.runtimeErrorMessage;
-        push(OBJ_VAL(copyString(message, (int)strlen(message))));
+        ObjClass* klass = vm.runtimeErrorClass != NULL ? vm.runtimeErrorClass : vm.galat;
+        vm.runtimeErrorClass = NULL;
+        push(OBJ_VAL(newError(klass, message)));
         result = run();
     }
     return result;

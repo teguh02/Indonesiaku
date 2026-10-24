@@ -54,6 +54,7 @@ typedef enum {
     OP_TRY_BEGIN,
     OP_TRY_END,
     OP_THROW,
+    OP_IS_INSTANCE,
     OP_IMPORT,
     OP_RETURN,
 } OpCode;

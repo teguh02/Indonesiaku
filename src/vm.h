@@ -63,6 +63,13 @@ typedef struct {
     Table strings;
     Table loadedModules;
     ObjString* initString;
+    ObjClass* galat;
+    ObjClass* galatAritmetika;
+    ObjClass* galatBagiNol;
+    ObjClass* galatTipe;
+    ObjClass* galatNilai;
+    ObjClass* galatIndeks;
+    ObjClass* galatNama;
     ObjUpvalue* openUpvalues;
     Obj* objects;
     bool hadError;
@@ -76,6 +83,7 @@ typedef struct {
     // caught instead of aborting. interpret() unwinds to the handler and
     // resumes run() with the message as the caught value.
     bool runtimeErrorPending;
+    ObjClass* runtimeErrorClass;
     char runtimeErrorMessage[512];
 
     // Garbage collector bookkeeping
