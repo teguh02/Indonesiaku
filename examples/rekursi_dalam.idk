@@ -1,0 +1,27 @@
+# Regresi batas rekursi (Fase 0: B3). Dulu batasnya 64 panggilan;
+# sekarang 1000, sama dengan batas bawaan Python.
+
+fungsi hitung_turun(n) {
+    jika n == 0 {
+        kembalikan 0
+    }
+    kembalikan 1 + hitung_turun(n - 1)
+}
+
+cetak(hitung_turun(100))
+cetak(hitung_turun(990))
+
+fungsi jumlah_rekursif(daftar, i) {
+    jika i == panjang(daftar) {
+        kembalikan 0
+    }
+    kembalikan daftar[i] + jumlah_rekursif(daftar, i + 1)
+}
+
+angka = []
+i = 1
+selagi i <= 500 {
+    tambah(angka, i)
+    i += 1
+}
+cetak(jumlah_rekursif(angka, 0))

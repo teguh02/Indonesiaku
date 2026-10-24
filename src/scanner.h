@@ -16,6 +16,7 @@ typedef enum {
     TOKEN_GREATER, TOKEN_GREATER_EQUAL,
     TOKEN_LESS, TOKEN_LESS_EQUAL,
     TOKEN_SLASH_SLASH,  // Pembagian bulat
+    TOKEN_SLASH_SLASH_EQUAL,
     TOKEN_PLUS_EQUAL, TOKEN_MINUS_EQUAL,
     TOKEN_STAR_EQUAL, TOKEN_SLASH_EQUAL,
     TOKEN_PERCENT_EQUAL, TOKEN_POWER_EQUAL,
@@ -44,7 +45,16 @@ typedef struct {
     int line;
 } Token;
 
+// Opaque snapshot of the scanner position, for bounded lookahead.
+typedef struct {
+    const char* start;
+    const char* current;
+    int line;
+} ScannerState;
+
 void initScanner(const char* source);
 Token scanToken();
+ScannerState saveScanner();
+void restoreScanner(ScannerState state);
 
 #endif

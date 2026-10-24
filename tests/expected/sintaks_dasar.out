@@ -13,12 +13,8 @@
 fungsi
 5
 === percabangan ===
--2
-negatif
-0
-nol
-5
-positif
+-2 negatif
+0 nol
+5 positif
 === perulangan selagi ===
-jumlah 1..5:
-15
+jumlah 1..5: 15

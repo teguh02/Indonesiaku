@@ -1,28 +1,17 @@
 === urai request GET ===
-metode:
-GET
-path:
-/todos
-versi:
-HTTP/1.1
-host:
-localhost
-badan kosong:
-benar
+metode: GET
+path: /todos
+versi: HTTP/1.1
+host: localhost
+badan kosong: benar
 === urai request POST dengan badan ===
-metode:
-POST
-path:
-/todos
-content-type:
-application/json
-badan:
-{"teks":"beli susu"}
+metode: POST
+path: /todos
+content-type: application/json
+badan: {"teks":"beli susu"}
 === urai path dengan id ===
-metode:
-DELETE
-path:
-/todos/42
+metode: DELETE
+path: /todos/42
 === bangun response ===
 HTTP/1.1 200 OK
 Content-Type: text/plain

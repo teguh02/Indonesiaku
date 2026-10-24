@@ -65,9 +65,8 @@ expected="[ ] #1 Beli roti
 check "daftar akhir (2 item)" "$expected" "$out"
 
 # Error handling: delete non-existent id is reported, not crash
-# (cetak prints each argument on its own line)
-check "hapus id tak ada" "Kesalahan:
-todo dengan id 99 tidak ditemukan" "$("$BIN" "$APP" hapus 99 2>&1)"
+# (cetak prints its arguments on one line, separated by spaces)
+check "hapus id tak ada" "Kesalahan: todo dengan id 99 tidak ditemukan" "$("$BIN" "$APP" hapus 99 2>&1)"
 
 rm -f "$DB"
 

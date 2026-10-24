@@ -1,0 +1,8 @@
+# 'kembalikan' dari dalam 'coba' dulu meninggalkan handler terdaftar, sehingga
+# galat berikutnya (di luar coba mana pun) "tertangkap" oleh fungsi yang sudah
+# selesai. Sekarang galat itu harus tak tertangani.
+fungsi pertama() {
+    coba { kembalikan 1 } kecuali e { cetak("handler basi!") }
+}
+pertama()
+naikkan "galat di luar coba"

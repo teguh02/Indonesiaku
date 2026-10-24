@@ -46,7 +46,7 @@ Check "hapus 3" "Dihapus." (& $exe $app hapus 3 2>&1)
 
 Check "daftar akhir (2 item)" "[ ] #1 Beli roti`n[x] #2 Cuci baju" (& $exe $app daftar 2>&1)
 
-Check "hapus id tak ada" "Kesalahan:`ntodo dengan id 99 tidak ditemukan" (& $exe $app hapus 99 2>&1)
+Check "hapus id tak ada" "Kesalahan: todo dengan id 99 tidak ditemukan" (& $exe $app hapus 99 2>&1)
 
 Remove-Item $db -ErrorAction SilentlyContinue
 

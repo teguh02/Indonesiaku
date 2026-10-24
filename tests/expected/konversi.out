@@ -15,5 +15,4 @@ Halo Budi, selamat datang!
 2 + 3 = 5
 Nilai: 90 (benar)
 === ke_angka gagal dapat ditangkap ===
-gagal konversi:
-ke_angka() gagal: 'bukan angka' bukan angka valid
+gagal konversi: ke_angka() gagal: 'bukan angka' bukan angka valid

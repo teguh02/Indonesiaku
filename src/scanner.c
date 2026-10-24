@@ -18,6 +18,17 @@ void initScanner(const char* source) {
     scanner.line = 1;
 }
 
+ScannerState saveScanner() {
+    ScannerState state = {scanner.start, scanner.current, scanner.line};
+    return state;
+}
+
+void restoreScanner(ScannerState state) {
+    scanner.start = state.start;
+    scanner.current = state.current;
+    scanner.line = state.line;
+}
+
 static bool isAlpha(char c) {
     return (c >= 'a' && c <= 'z') ||
            (c >= 'A' && c <= 'Z') ||
@@ -108,7 +119,7 @@ static TokenType identifierType() {
         case 'a':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
-                    case 'k': return checkKeyword(2, 7, "hirnya", TOKEN_AKHIRNYA);
+                    case 'k': return checkKeyword(2, 6, "hirnya", TOKEN_AKHIRNYA);
                     case 't': return checkKeyword(2, 2, "au", TOKEN_ATAU);
                 }
             }
@@ -192,7 +203,8 @@ static TokenType identifierType() {
                             switch (scanner.start[2]) {
                                 case 'b': return checkKeyword(3, 4, "agai", TOKEN_SEBAGAI);
                                 case 'l':
-                                    if (scanner.current - scanner.start == 6) {
+                                    if (scanner.current - scanner.start == 6 &&
+                                        scanner.start[3] == 'a') {
                                         // Disambiguate 'selagi' vs 'selain'
                                         if (scanner.start[4] == 'g' && scanner.start[5] == 'i') return TOKEN_SELAGI;
                                         if (scanner.start[4] == 'i' && scanner.start[5] == 'n') return TOKEN_SELAIN;
@@ -281,7 +293,8 @@ Token scanToken() {
                 match('=') ? TOKEN_PLUS_EQUAL : TOKEN_PLUS);
         case '/':
             if (match('/')) {
-                return makeToken(TOKEN_SLASH_SLASH);
+                return makeToken(
+                    match('=') ? TOKEN_SLASH_SLASH_EQUAL : TOKEN_SLASH_SLASH);
             } else if (match('=')) {
                 return makeToken(TOKEN_SLASH_EQUAL);
             }

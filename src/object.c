@@ -108,9 +108,42 @@ ObjNative* newNative(NativeFn function) {
     return native;
 }
 
+// A UTF-8 continuation byte has the form 10xxxxxx; every other byte starts a
+// character. Invalid sequences still count one character per lead byte.
+static bool isContinuationByte(char c) {
+    return ((unsigned char)c & 0xC0) == 0x80;
+}
+
+static int countChars(const char* chars, int length) {
+    int count = 0;
+    for (int i = 0; i < length; i++) {
+        if (!isContinuationByte(chars[i])) count++;
+    }
+    return count;
+}
+
+int utf8ByteOffset(ObjString* string, int charIndex) {
+    if (string->charCount == string->length) return charIndex;  // ASCII: O(1)
+    int seen = 0;
+    for (int i = 0; i < string->length; i++) {
+        if (!isContinuationByte(string->chars[i])) {
+            if (seen == charIndex) return i;
+            seen++;
+        }
+    }
+    return string->length;
+}
+
+int utf8CharBytes(ObjString* string, int byteOffset) {
+    int end = byteOffset + 1;
+    while (end < string->length && isContinuationByte(string->chars[end])) end++;
+    return end - byteOffset;
+}
+
 static ObjString* allocateString(char* chars, int length, uint32_t hash) {
     ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
     string->length = length;
+    string->charCount = countChars(chars, length);
     string->chars = chars;
     string->hash = hash;
     // Push onto the VM stack so the string is reachable if tableSet below

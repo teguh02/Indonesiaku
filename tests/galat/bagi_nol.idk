@@ -1,0 +1,5 @@
+# B9: pembagian dengan nol di luar 'coba' menghentikan program.
+fungsi rata_rata(daftar) {
+    kembalikan 10 / panjang(daftar)
+}
+cetak(rata_rata([]))

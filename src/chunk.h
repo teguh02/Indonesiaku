@@ -24,6 +24,7 @@ typedef enum {
     OP_DIVIDE,
     OP_MODULO,
     OP_POWER,
+    OP_FLOOR_DIVIDE,
     OP_NOT,
     OP_NEGATE,
     OP_PRINT,

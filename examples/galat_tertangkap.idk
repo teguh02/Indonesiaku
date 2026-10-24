@@ -1,0 +1,24 @@
+# Regresi Fase 0: B8 (galat runtime bisa ditangkap) dan B9 (bagi nol).
+
+coba { cetak(1 / 0) } kecuali e { cetak("1:", e) }
+coba { cetak(7 // 0) } kecuali e { cetak("2:", e) }
+coba { cetak(7 % 0) } kecuali e { cetak("3:", e) }
+coba { cetak(0 ** -1) } kecuali e { cetak("4:", e) }
+x = 10
+coba { x /= 0 } kecuali e { cetak("5:", e, "x tetap", x) }
+
+coba { cetak(tidak_ada) } kecuali e { cetak("6:", e) }
+a = [1]
+coba { cetak(a[5]) } kecuali e { cetak("7:", e) }
+coba { cetak("x" + 1) } kecuali e { cetak("8:", e) }
+coba { x() } kecuali e { cetak("9:", e) }
+
+# Galat dari dalam fungsi ditangkap oleh pemanggil
+fungsi ambil_ketiga(daftar) { kembalikan daftar[2] }
+coba { ambil_ketiga([1]) } kecuali e { cetak("10:", e) }
+
+# Rekursi tak terbatas pun bisa ditangkap
+fungsi terus(n) { kembalikan terus(n + 1) }
+coba { terus(0) } kecuali e { cetak("11: rekursi tertangkap") }
+
+cetak("program tetap berjalan")

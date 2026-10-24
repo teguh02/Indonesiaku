@@ -30,29 +30,73 @@ static void resetStack() {
     vm.tryCount = 0;
 }
 
-void runtimeError(const char* format, ...) {
+// Print an uncaught error with its traceback and reset the VM.
+static void reportError(const char* message) {
     vm.hadError = true;
+    fprintf(stderr, "%s\n", message);
 
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    fputs("\n", stderr);
-
+    // Identical consecutive frames (deep recursion) are collapsed into one
+    // summary line, like Python's "[Previous line repeated N more times]".
+    ObjFunction* lastFunction = NULL;
+    int lastLine = -1;
+    int repeated = 0;
     for (int i = vm.frameCount - 1; i >= 0; i--) {
         CallFrame* frame = &vm.frames[i];
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
-        fprintf(stderr, "[baris %d] dalam ",
-                function->chunk.lines[instruction]);
+        int line = function->chunk.lines[instruction];
+        if (function == lastFunction && line == lastLine) {
+            repeated++;
+            continue;
+        }
+        if (repeated > 0) {
+            fprintf(stderr, "[baris sebelumnya diulang %d kali lagi]\n", repeated);
+            repeated = 0;
+        }
+        lastFunction = function;
+        lastLine = line;
+        fprintf(stderr, "[baris %d] dalam ", line);
         if (function->name == NULL) {
             fprintf(stderr, "skrip\n");
         } else {
             fprintf(stderr, "%s()\n", function->name->chars);
         }
     }
+    if (repeated > 0) {
+        fprintf(stderr, "[baris sebelumnya diulang %d kali lagi]\n", repeated);
+    }
 
     resetStack();
+}
+
+// Raise a runtime error. Inside a 'coba' block it is caught (the message
+// becomes the 'kecuali' value); otherwise it is printed and aborts the run.
+// Callers must still return INTERPRET_RUNTIME_ERROR so run() unwinds.
+void runtimeError(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(vm.runtimeErrorMessage, sizeof(vm.runtimeErrorMessage), format, args);
+    va_end(args);
+
+    if (vm.tryCount > 0) {
+        // No allocation here: the error string is created in interpret()
+        // once the stack has been unwound to the handler.
+        vm.hadError = true;
+        vm.runtimeErrorPending = true;
+        return;
+    }
+    reportError(vm.runtimeErrorMessage);
+}
+
+// An internal VM failure (corrupted stack, bad jump). Never catchable.
+void fatalError(const char* format, ...) {
+    char message[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(message, sizeof(message), format, args);
+    va_end(args);
+    vm.runtimeErrorPending = false;
+    reportError(message);
 }
 
 // Raise a *catchable* error from a native function. Formats a message string
@@ -84,6 +128,7 @@ void initVM() {
     vm.hadError = false;
     vm.nativeErrorPending = false;
     vm.nativeErrorValue = KOSONG_VAL;
+    vm.runtimeErrorPending = false;
 
     srand((unsigned int)time(NULL));
 
@@ -199,7 +244,7 @@ void push(Value value) {
 
 Value pop() {
     if (vm.stackTop <= vm.stack) {
-        runtimeError("Stack underflow: mencoba mengambil nilai dari stack kosong");
+        fatalError("Stack underflow: mencoba mengambil nilai dari stack kosong");
         return KOSONG_VAL;
     }
     vm.stackTop--;
@@ -599,20 +644,64 @@ static InterpretResult run() {
             }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
-            case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
+            case OP_DIVIDE: {
+                if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    runtimeError("Operand harus berupa angka.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                if (AS_NUMBER(peek(0)) == 0) {
+                    runtimeError("Pembagian dengan nol.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                double b = AS_NUMBER(pop());
+                double a = AS_NUMBER(pop());
+                push(NUMBER_VAL(a / b));
+                break;
+            }
             case OP_MODULO: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                if (AS_NUMBER(peek(0)) == 0) {
+                    runtimeError("Pembagian dengan nol.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 double b = AS_NUMBER(pop());
                 double a = AS_NUMBER(pop());
-                push(NUMBER_VAL(fmod(a, b)));
+                // Python semantics: the result takes the sign of the divisor,
+                // so -7 % 3 == 2 (C's fmod would give -1).
+                double r = fmod(a, b);
+                if (r == 0) {
+                    r = 0;  // avoid printing "-0" for -6 % 3
+                } else if ((r < 0) != (b < 0)) {
+                    r += b;
+                }
+                push(NUMBER_VAL(r));
+                break;
+            }
+            case OP_FLOOR_DIVIDE: {
+                if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    runtimeError("Operand harus berupa angka.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                if (AS_NUMBER(peek(0)) == 0) {
+                    runtimeError("Pembagian dengan nol.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                double b = AS_NUMBER(pop());
+                double a = AS_NUMBER(pop());
+                // Rounds toward negative infinity, like Python: -7 // 2 == -4.
+                push(NUMBER_VAL(floor(a / b)));
                 break;
             }
             case OP_POWER: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
                     runtimeError("Operand harus berupa angka.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                if (AS_NUMBER(peek(1)) == 0 && AS_NUMBER(peek(0)) < 0) {
+                    runtimeError("0 tidak dapat dipangkatkan dengan bilangan negatif.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 double b = AS_NUMBER(pop());
@@ -631,8 +720,13 @@ static InterpretResult run() {
                 push(NUMBER_VAL(-AS_NUMBER(pop())));
                 break;
             case OP_PRINT: {
-                printValue(pop());
+                int count = READ_BYTE();
+                for (int i = count - 1; i >= 0; i--) {
+                    printValue(peek(i));
+                    if (i > 0) printf(" ");
+                }
                 printf("\n");
+                vm.stackTop -= count;
                 break;
             }
             case OP_LOOP: {
@@ -641,7 +735,7 @@ static InterpretResult run() {
                 uint8_t* newIp = frame->ip - offset;
                 if (newIp < frame->closure->function->chunk.code ||
                     newIp >= frame->closure->function->chunk.code + frame->closure->function->chunk.count) {
-                    runtimeError("Invalid loop jump offset: offset=%d, ip was %td",
+                    fatalError("Invalid loop jump offset: offset=%d, ip was %td",
                                  offset, (frame->ip - frame->closure->function->chunk.code));
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -733,14 +827,19 @@ static InterpretResult run() {
                         push(value);
                     }
                 } else if (IS_STRING(peek(1)) && IS_NUMBER(peek(0))) {
-                    int index = (int)AS_NUMBER(pop());
-                    ObjString* str = AS_STRING(pop());
-                    if (index < 0 || index >= str->length) {
+                    // Index by character; keep the string on the stack while
+                    // copyString allocates (a GC could otherwise free it).
+                    int index = (int)AS_NUMBER(peek(0));
+                    ObjString* str = AS_STRING(peek(1));
+                    if (index < 0 || index >= str->charCount) {
                         runtimeError("Indeks string di luar jangkauan (indeks %d, panjang %d).",
-                                     index, str->length);
+                                     index, str->charCount);
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    push(OBJ_VAL(copyString(str->chars + index, 1)));
+                    int offset = utf8ByteOffset(str, index);
+                    ObjString* ch = copyString(str->chars + offset, utf8CharBytes(str, offset));
+                    vm.stackTop -= 2;
+                    push(OBJ_VAL(ch));
                 } else {
                     runtimeError("Pengindeksan tidak valid: gunakan list[angka], kamus[string], atau teks[angka].");
                     return INTERPRET_RUNTIME_ERROR;
@@ -923,6 +1022,13 @@ static InterpretResult run() {
             case OP_RETURN: {
                 Value result = pop();
                 closeUpvalues(frame->slots);
+                // 'kembalikan' from inside 'coba' skips OP_TRY_END; drop the
+                // handlers registered by this frame so a later error cannot
+                // jump back into a function that has already returned.
+                while (vm.tryCount > 0 &&
+                       vm.tryHandlers[vm.tryCount - 1].frameCount >= vm.frameCount) {
+                    vm.tryCount--;
+                }
                 vm.frameCount--;
                 if (vm.frameCount == 0) {
                     pop();
@@ -955,5 +1061,19 @@ InterpretResult interpret(const char* source) {
     push(OBJ_VAL(closure));
     call(closure, 0);
 
-    return run();
+    InterpretResult result = run();
+    // A runtimeError() inside 'coba' stops run() with a pending error:
+    // unwind to the handler, hand it the message, and keep running.
+    while (result == INTERPRET_RUNTIME_ERROR && vm.runtimeErrorPending) {
+        vm.runtimeErrorPending = false;
+        vm.hadError = false;
+        if (!throwValue(KOSONG_VAL)) {  // unreachable: a handler existed
+            reportError(vm.runtimeErrorMessage);
+            break;
+        }
+        const char* message = vm.runtimeErrorMessage;
+        push(OBJ_VAL(copyString(message, (int)strlen(message))));
+        result = run();
+    }
+    return result;
 }

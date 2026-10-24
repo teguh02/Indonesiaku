@@ -3,10 +3,8 @@
 [ ] #2 Cuci baju
 [ ] #3 Belajar Indonesiaku
 === SIMPAN ke JSON & MUAT kembali ===
-jumlah todo setelah muat:
-3
-id_berikut:
-4
+jumlah todo setelah muat: 3
+id_berikut: 4
 === UPDATE (tandai #2 selesai) ===
 [ ] #1 Beli susu
 [x] #2 Cuci baju
@@ -15,11 +13,7 @@ id_berikut:
 [x] #2 Cuci baju
 [ ] #3 Belajar Indonesiaku
 === SIMPAN akhir & verifikasi persistensi ===
-sisa todo:
-2
-todo tersisa id:
-2
-todo tersisa selesai:
-benar
-berkas dibersihkan:
-benar
+sisa todo: 2
+todo tersisa id: 2
+todo tersisa selesai: benar
+berkas dibersihkan: benar

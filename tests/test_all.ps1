@@ -73,6 +73,45 @@ foreach ($exp in Get-ChildItem -Path $expectedDir -Filter *.out | Sort-Object Na
     }
 }
 
+# Error tests: tests/galat/<name>.idk must exit non-zero and print exactly
+# tests/galat/<name>.err to stderr (compile errors, uncatchable runtime errors).
+$errorDir = Join-Path $repo "tests\galat"
+if (Test-Path $errorDir) {
+    Write-Host "  -- tes galat (tests/galat) --" -ForegroundColor Cyan
+    foreach ($exp in Get-ChildItem -Path $errorDir -Filter *.err | Sort-Object Name) {
+        $name = $exp.BaseName
+        $total++
+        $src = Join-Path $errorDir "$name.idk"
+        if (-Not (Test-Path $src)) {
+            Write-Host "  x galat/$name  (no matching .idk source)" -ForegroundColor Red
+            $failed++; $failures += "galat/$name"; continue
+        }
+
+        $outFile = [System.IO.Path]::GetTempFileName()
+        $errFile = [System.IO.Path]::GetTempFileName()
+        $proc = Start-Process -FilePath $exe -ArgumentList $src -NoNewWindow -Wait -PassThru `
+            -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+        $code = $proc.ExitCode
+        $stderr = Get-Content -Raw -Path $errFile -ErrorAction SilentlyContinue
+        Remove-Item $outFile, $errFile -Force -ErrorAction SilentlyContinue
+        if ($null -eq $stderr) { $stderr = "" }
+        $expectedText = Get-Content -Raw -Path $exp.FullName
+        if ($null -eq $expectedText) { $expectedText = "" }
+
+        $a = ($stderr -replace "`r`n", "`n").TrimEnd("`n")
+        $e = ($expectedText -replace "`r`n", "`n").TrimEnd("`n")
+
+        if ($code -ne 0 -and $a -eq $e) {
+            Write-Host "  + galat/$name" -ForegroundColor Green
+            $passed++
+        } else {
+            $reason = if ($code -eq 0) { "exit=0, expected an error" } else { "stderr mismatch: $($a)" }
+            Write-Host "  x galat/$name  ($reason)" -ForegroundColor Red
+            $failed++; $failures += "galat/$name"
+        }
+    }
+}
+
 Write-Host "=================================================" -ForegroundColor Cyan
 Write-Host "TOTAL: $passed/$total PASSED" -ForegroundColor Cyan
 if ($failed -eq 0) {

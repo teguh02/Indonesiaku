@@ -5,7 +5,10 @@
 #include "table.h"
 #include "value.h"
 
-#define FRAMES_MAX 64
+// Maximum call depth, matching Python's default recursion limit. The value
+// stack is sized for the worst case (256 slots per frame) and lives in the
+// global `vm`, so it costs static memory, not C stack.
+#define FRAMES_MAX 1000
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 #define TRY_MAX 64
 
@@ -13,7 +16,7 @@
 #define STACK_UNDERFLOW_CHECK(count) \
     do { \
         if (vm.stackTop - vm.stack < (count)) { \
-            runtimeError("Stack underflow: attempted to pop %d values but only %td available", \
+            fatalError("Stack underflow: attempted to pop %d values but only %td available", \
                         (count), (vm.stackTop - vm.stack)); \
             return INTERPRET_RUNTIME_ERROR; \
         } \
@@ -69,6 +72,12 @@ typedef struct {
     bool nativeErrorPending;
     Value nativeErrorValue;
 
+    // Set by runtimeError() when a 'coba' handler is active: the error is
+    // caught instead of aborting. interpret() unwinds to the handler and
+    // resumes run() with the message as the caught value.
+    bool runtimeErrorPending;
+    char runtimeErrorMessage[512];
+
     // Garbage collector bookkeeping
     size_t bytesAllocated;
     size_t nextGC;
@@ -92,6 +101,7 @@ InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
 void runtimeError(const char* format, ...);
+void fatalError(const char* format, ...);
 void nativeRaise(const char* format, ...);
 
 #endif

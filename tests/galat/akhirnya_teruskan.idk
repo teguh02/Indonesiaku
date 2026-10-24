@@ -1,0 +1,6 @@
+# B7: tanpa 'kecuali', blok 'akhirnya' dijalankan lalu galat diteruskan.
+coba {
+    naikkan "tidak ditangkap"
+} akhirnya {
+    cetak("akhirnya tetap jalan")
+}

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -46,20 +47,25 @@ void printValue(Value value) {
 }
 
 // Format a double the way the language prints numbers: whole values without a
-// trailing ".0", and other values with enough precision to round-trip while
-// avoiding accidental scientific notation for ordinary magnitudes.
+// trailing ".0", and other values with the SHORTEST representation that reads
+// back as the same double (Python's repr): 0.1 + 0.2 prints
+// 0.30000000000000004, and 2 ** 0.5 prints 1.4142135623730951.
 void numberToString(double value, char* buf, size_t size) {
     if (isnan(value)) { snprintf(buf, size, "nan"); return; }
     if (isinf(value)) { snprintf(buf, size, value < 0 ? "-takhingga" : "takhingga"); return; }
 
-    // Integer-valued and within a range that %.0f prints exactly.
-    if (value == floor(value) && fabs(value) < 1e15) {
-        snprintf(buf, size, "%.0f", value);
+    // Integer-valued below 1e16 (where Python's repr switches to exponent
+    // form): %.0f prints these doubles exactly. "+ 0.0" turns -0 into 0.
+    if (value == floor(value) && fabs(value) < 1e16) {
+        snprintf(buf, size, "%.0f", value + 0.0);
         return;
     }
 
-    // Non-integer: use up to 15 significant digits, then trim trailing zeros.
-    snprintf(buf, size, "%.15g", value);
+    // 17 significant digits always round-trip; try fewer first.
+    for (int precision = 1; precision <= 17; precision++) {
+        snprintf(buf, size, "%.*g", precision, value);
+        if (strtod(buf, NULL) == value) return;
+    }
 }
 
 bool valuesEqual(Value a, Value b) {

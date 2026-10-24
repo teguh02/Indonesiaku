@@ -172,7 +172,7 @@ Value nativeFnPanjang(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     if (IS_STRING(args[0])) {
-        return NUMBER_VAL(AS_STRING(args[0])->length);
+        return NUMBER_VAL(AS_STRING(args[0])->charCount);
     }
     if (IS_LIST(args[0])) {
         return NUMBER_VAL(AS_LIST(args[0])->items.count);
@@ -934,11 +934,12 @@ Value nativeFnKarakter(int argCount, Value* args) {
     }
     ObjString* s = AS_STRING(args[0]);
     int i = (int)AS_NUMBER(args[1]);
-    if (i < 0 || i >= s->length) {
-        nativeRaise("karakter() indeks di luar jangkauan (indeks %d, panjang %d)", i, s->length);
+    if (i < 0 || i >= s->charCount) {
+        nativeRaise("karakter() indeks di luar jangkauan (indeks %d, panjang %d)", i, s->charCount);
         return KOSONG_VAL;
     }
-    return OBJ_VAL(copyString(s->chars + i, 1));
+    int offset = utf8ByteOffset(s, i);
+    return OBJ_VAL(copyString(s->chars + offset, utf8CharBytes(s, offset)));
 }
 
 // potong(teks, mulai, jumlah) - Substring mulai dari 'mulai' sepanjang 'jumlah'.
@@ -955,20 +956,62 @@ Value nativeFnPotong(int argCount, Value* args) {
     ObjString* s = AS_STRING(args[0]);
     int start = (int)AS_NUMBER(args[1]);
     int count = (int)AS_NUMBER(args[2]);
-    if (start < 0 || start > s->length) {
-        nativeRaise("potong() 'mulai' di luar jangkauan (%d, panjang %d)", start, s->length);
+    if (start < 0 || start > s->charCount) {
+        nativeRaise("potong() 'mulai' di luar jangkauan (%d, panjang %d)", start, s->charCount);
         return KOSONG_VAL;
     }
     if (count < 0) count = 0;
-    if (start + count > s->length) count = s->length - start;
-    return OBJ_VAL(copyString(s->chars + start, count));
+    if (start + count > s->charCount) count = s->charCount - start;
+    int from = utf8ByteOffset(s, start);
+    int to = utf8ByteOffset(s, start + count);
+    return OBJ_VAL(copyString(s->chars + from, to - from));
 }
 
 // ============================================================================
 // PRIMITIF KARAKTER & LIST TAMBAHAN
 // ============================================================================
 
-// ord(karakter) - Kode byte (0-255) dari string 1 karakter.
+// Decode the first UTF-8 character of `chars`. Malformed input falls back to
+// the value of the lead byte.
+static uint32_t decodeUtf8(const char* chars, int length) {
+    const unsigned char* s = (const unsigned char*)chars;
+    if (s[0] < 0x80 || length < 2) return s[0];
+    if ((s[0] & 0xE0) == 0xC0) return ((s[0] & 0x1Fu) << 6) | (s[1] & 0x3Fu);
+    if ((s[0] & 0xF0) == 0xE0 && length >= 3) {
+        return ((s[0] & 0x0Fu) << 12) | ((s[1] & 0x3Fu) << 6) | (s[2] & 0x3Fu);
+    }
+    if ((s[0] & 0xF8) == 0xF0 && length >= 4) {
+        return ((s[0] & 0x07u) << 18) | ((s[1] & 0x3Fu) << 12) |
+               ((s[2] & 0x3Fu) << 6) | (s[3] & 0x3Fu);
+    }
+    return s[0];
+}
+
+// Encode a code point as UTF-8 into `out` (4 bytes max); returns the length.
+static int encodeUtf8(uint32_t code, char* out) {
+    if (code < 0x80) {
+        out[0] = (char)code;
+        return 1;
+    }
+    if (code < 0x800) {
+        out[0] = (char)(0xC0 | (code >> 6));
+        out[1] = (char)(0x80 | (code & 0x3F));
+        return 2;
+    }
+    if (code < 0x10000) {
+        out[0] = (char)(0xE0 | (code >> 12));
+        out[1] = (char)(0x80 | ((code >> 6) & 0x3F));
+        out[2] = (char)(0x80 | (code & 0x3F));
+        return 3;
+    }
+    out[0] = (char)(0xF0 | (code >> 18));
+    out[1] = (char)(0x80 | ((code >> 12) & 0x3F));
+    out[2] = (char)(0x80 | ((code >> 6) & 0x3F));
+    out[3] = (char)(0x80 | (code & 0x3F));
+    return 4;
+}
+
+// ord(karakter) - Kode Unicode (code point) dari string 1 karakter.
 Value nativeFnOrd(int argCount, Value* args) {
     if (argCount != 1) {
         nativeRaise("ord() memerlukan 1 argumen (karakter)");
@@ -979,14 +1022,14 @@ Value nativeFnOrd(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     ObjString* s = AS_STRING(args[0]);
-    if (s->length != 1) {
-        nativeRaise("ord() memerlukan string tepat 1 karakter (panjang %d)", s->length);
+    if (s->charCount != 1) {
+        nativeRaise("ord() memerlukan string tepat 1 karakter (panjang %d)", s->charCount);
         return NUMBER_VAL(0);
     }
-    return NUMBER_VAL((double)(unsigned char)s->chars[0]);
+    return NUMBER_VAL((double)decodeUtf8(s->chars, s->length));
 }
 
-// chr(kode) - Karakter (string 1 byte) dari kode 0-255.
+// chr(kode) - Karakter dari kode Unicode 0-0x10FFFF (dikodekan sebagai UTF-8).
 Value nativeFnChr(int argCount, Value* args) {
     if (argCount != 1) {
         nativeRaise("chr() memerlukan 1 argumen (kode)");
@@ -997,12 +1040,13 @@ Value nativeFnChr(int argCount, Value* args) {
         return KOSONG_VAL;
     }
     int code = (int)AS_NUMBER(args[0]);
-    if (code < 0 || code > 255) {
-        nativeRaise("chr() kode di luar jangkauan 0-255 (%d)", code);
+    if (code < 0 || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF)) {
+        nativeRaise("chr() kode di luar jangkauan Unicode (%d)", code);
         return KOSONG_VAL;
     }
-    char c = (char)code;
-    return OBJ_VAL(copyString(&c, 1));
+    char bytes[4];
+    int length = encodeUtf8((uint32_t)code, bytes);
+    return OBJ_VAL(copyString(bytes, length));
 }
 
 // hapus_pada(list, i) - Hapus & kembalikan elemen pada indeks i, geser sisanya.

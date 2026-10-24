@@ -1,0 +1,38 @@
+# Regresi operator aritmetika (Fase 0: B1, B4, B5, B6, B13, B14).
+# Setiap hasil harus sama dengan Python 3.
+
+# Pembagian bulat // membulatkan ke bawah (ke arah minus tak hingga)
+cetak(10 // 3)          # 3
+cetak(1 + 10 // 3)      # 4  (dulu 13: // tidak menghasilkan opcode)
+cetak(-7 // 2)          # -4
+cetak(7 // -2)          # -4
+cetak(7.5 // 2)         # 3
+
+# Sisa bagi % mengikuti tanda pembagi
+cetak(7 % 3)            # 1
+cetak(-7 % 3)           # 2
+cetak(7 % -3)           # -2
+cetak(-6 % 3)           # 0
+
+# Pangkat ** asosiatif kanan dan lebih kuat dari minus unary
+cetak(2 ** 3 ** 2)      # 512
+cetak(-2 ** 2)          # -4
+cetak((-2) ** 2)        # 4
+cetak(2 ** -1)          # 0.5
+
+# 'tidak' lebih lemah dari perbandingan
+cetak(tidak 1 == 2)     # benar
+cetak(tidak benar dan salah)  # salah
+
+# Penugasan majemuk: sisi kanan adalah ekspresi utuh
+x = 10
+x //= 3
+cetak(x)                # 3
+x *= 2 + 3
+cetak(x)                # 15
+x -= 1 + 1
+cetak(x)                # 13
+x %= 2 * 3
+cetak(x)                # 1
+x **= 1 + 1
+cetak(x)                # 1

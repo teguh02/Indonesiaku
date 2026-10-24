@@ -1,0 +1,50 @@
+# Regresi Fase 0: B7 (lewati, akhirnya) dan pembersihan handler 'coba'.
+
+# lewati = pernyataan kosong (pass)
+jika benar { lewati }
+kelas Kosong { lewati }
+fungsi nanti() { lewati }
+cetak("lewati:", nanti())
+
+# akhirnya selalu dijalankan
+coba { cetak("A badan") } kecuali e { cetak("A tangkap") } akhirnya { cetak("A akhirnya") }
+coba { naikkan "x" } kecuali e { cetak("B tangkap", e) } akhirnya { cetak("B akhirnya") }
+
+# Tanpa kecuali: akhirnya jalan, lalu galat diteruskan ke luar
+coba {
+    coba { naikkan "dalam" } akhirnya { cetak("C akhirnya jalan") }
+} kecuali e {
+    cetak("C luar menangkap", e)
+}
+
+# Galat baru di dalam kecuali tetap melewati akhirnya
+coba {
+    coba { naikkan "satu" } kecuali e { naikkan e + "+dua" } akhirnya { cetak("D akhirnya") }
+} kecuali e {
+    cetak("D luar", e)
+}
+
+# Variabel lokal di dalam akhirnya
+coba {
+    coba { cetak(1 / 0) } akhirnya {
+        variabel t = "lokal"
+        cetak("E", t)
+    }
+} kecuali e {
+    cetak("E luar", e)
+}
+
+# hentikan/lanjut dari dalam coba melepas handler-nya
+i = 0
+selagi i < 5 {
+    i += 1
+    coba {
+        jika i == 2 { lanjut }
+        jika i == 4 { hentikan }
+    } kecuali e {
+        cetak("tidak boleh tercetak")
+    }
+}
+cetak("loop berhenti di", i)
+coba { naikkan "baru" } kecuali e { cetak("ditangkap dengan benar:", e) }
+# (kembalikan dari dalam coba: lihat tests/galat/handler_basi.idk)

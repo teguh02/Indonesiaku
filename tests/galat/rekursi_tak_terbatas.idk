@@ -1,0 +1,6 @@
+# B3: rekursi tak terbatas berhenti di 1000 panggilan dengan jejak yang
+# diringkas (frame berulang tidak dicetak 1000 kali).
+fungsi terus(n) {
+    kembalikan terus(n + 1)
+}
+terus(0)

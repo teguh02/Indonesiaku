@@ -2,36 +2,25 @@
 
 --- Circle 1 ---
 Shape: Circle
-Radius:
-5
-Area:
-78.53975
+Radius: 5
+Area: 78.53975
 
 --- Rectangle 1 ---
 Shape: Rectangle
-Panjang:
-4
-Lebar:
-6
-Area:
-24
+Panjang: 4
+Lebar: 6
+Area: 24
 
 --- Triangle 1 ---
 Shape: Triangle
-Alas:
-8
-Tinggi:
-5
-Area:
-20
+Alas: 8
+Tinggi: 5
+Area: 20
 
 --- Circle 2 ---
 Shape: Circle
-Radius:
-3
-Area:
-28.27431
+Radius: 3
+Area: 28.274309999999996
 
 === Total Areas ===
-Total area of all shapes:
-150.81406
+Total area of all shapes: 150.81405999999998

@@ -31,12 +31,13 @@ typedef enum {
     PREC_ASSIGNMENT,  // =
     PREC_OR,          // atau
     PREC_AND,         // dan
+    PREC_NOT,         // tidak (lebih lemah dari perbandingan, seperti Python)
     PREC_EQUALITY,    // == !=
     PREC_COMPARISON,  // < > <= >=
     PREC_TERM,        // + -
-    PREC_FACTOR,      // * / %
-    PREC_POWER,       // **
-    PREC_UNARY,       // tidak -
+    PREC_FACTOR,      // * / % //
+    PREC_UNARY,       // - !
+    PREC_POWER,       // ** (lebih kuat dari unary: -2 ** 2 == -4)
     PREC_CALL,        // . ()
     PREC_PRIMARY
 } Precedence;
@@ -76,10 +77,15 @@ typedef struct Compiler {
     int localCount;
     Upvalue upvalues[UINT8_COUNT];
     int scopeDepth;
+    int tryDepth;      // 'coba' handlers active at this point in the function
+    int finallyDepth;  // ...of which belong to a 'coba' with 'akhirnya'
 } Compiler;
 
 Parser parser;
 Compiler* current = NULL;
+// First token of the call argument being compiled (NULL outside a call).
+// Used to reject Python-style keyword arguments, which are not supported yet.
+static const char* callArgStart = NULL;
 
 typedef struct ClassCompiler {
     struct ClassCompiler* enclosing;
@@ -94,6 +100,8 @@ typedef struct LoopCtx {
     struct LoopCtx* enclosing;
     int continueTarget;   // bytecode offset to jump to for 'lanjut'
     int scopeDepth;       // scope depth of the loop body
+    int tryDepth;         // Compiler.tryDepth when the loop started
+    int finallyDepth;     // Compiler.finallyDepth when the loop started
     int breakJumps[UINT8_COUNT];
     int breakCount;
 } LoopCtx;
@@ -123,6 +131,14 @@ static void errorAt(Token* token, const char* message) {
 
 static void error(const char* message) {
     errorAt(&parser.previous, message);
+}
+
+// Report code that parses fine but is not allowed. The parser is not out of
+// sync, so skip panic-mode recovery to avoid cascading follow-on errors.
+static void semanticError(const char* message) {
+    if (parser.panicMode) return;
+    errorAt(&parser.previous, message);
+    parser.panicMode = false;
 }
 
 static void errorAtCurrent(const char* message) {
@@ -246,6 +262,8 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->type = type;
     compiler->localCount = 0;
     compiler->scopeDepth = 0;
+    compiler->tryDepth = 0;
+    compiler->finallyDepth = 0;
     compiler->function = newFunction();
     current = compiler;
     if (type != TYPE_SCRIPT) {
@@ -436,8 +454,10 @@ static void defineVariable(uint8_t global) {
 
 static uint8_t argumentList() {
     uint8_t argCount = 0;
+    const char* enclosingArgStart = callArgStart;
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
+            callArgStart = parser.current.start;
             expression();
             if (argCount == 255) {
                 error("Tidak boleh lebih dari 255 argumen.");
@@ -445,6 +465,7 @@ static uint8_t argumentList() {
             argCount++;
         } while (match(TOKEN_COMMA));
     }
+    callArgStart = enclosingArgStart;
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah argumen.");
     return argCount;
 }
@@ -461,7 +482,12 @@ static void and_(bool canAssign) {
 static void binary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
     ParseRule* rule = getRule(operatorType);
-    parsePrecedence((Precedence)(rule->precedence + 1));
+    // '**' is right-associative (2 ** 3 ** 2 == 2 ** 9); the rest are left.
+    if (operatorType == TOKEN_POWER) {
+        parsePrecedence(PREC_POWER);
+    } else {
+        parsePrecedence((Precedence)(rule->precedence + 1));
+    }
 
     switch (operatorType) {
         case TOKEN_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
@@ -476,6 +502,7 @@ static void binary(bool canAssign) {
         case TOKEN_SLASH:         emitByte(OP_DIVIDE); break;
         case TOKEN_PERCENT:       emitByte(OP_MODULO); break;
         case TOKEN_POWER:         emitByte(OP_POWER); break;
+        case TOKEN_SLASH_SLASH:   emitByte(OP_FLOOR_DIVIDE); break;
         default: return; // Unreachable.
     }
 }
@@ -600,8 +627,29 @@ static void string(bool canAssign) {
     emitConstant(OBJ_VAL(str));
 }
 
+// If the current token is a compound assignment (+=, -=, ...), consume it and
+// store the arithmetic opcode it stands for.
+static bool matchCompoundAssign(uint8_t* op) {
+    static const struct { TokenType token; uint8_t op; } COMPOUND_OPS[] = {
+        {TOKEN_PLUS_EQUAL,        OP_ADD},
+        {TOKEN_MINUS_EQUAL,       OP_SUBTRACT},
+        {TOKEN_STAR_EQUAL,        OP_MULTIPLY},
+        {TOKEN_SLASH_EQUAL,       OP_DIVIDE},
+        {TOKEN_SLASH_SLASH_EQUAL, OP_FLOOR_DIVIDE},
+        {TOKEN_PERCENT_EQUAL,     OP_MODULO},
+        {TOKEN_POWER_EQUAL,       OP_POWER},
+    };
+    for (size_t i = 0; i < sizeof(COMPOUND_OPS) / sizeof(COMPOUND_OPS[0]); i++) {
+        if (match(COMPOUND_OPS[i].token)) {
+            *op = COMPOUND_OPS[i].op;
+            return true;
+        }
+    }
+    return false;
+}
+
 static void namedVariable(Token name, bool canAssign) {
-    uint8_t getOp, setOp;
+    uint8_t getOp, setOp, compoundOp;
     int arg = resolveLocal(current, &name);
     if (arg != -1) {
         getOp = OP_GET_LOCAL;
@@ -616,6 +664,13 @@ static void namedVariable(Token name, bool canAssign) {
     }
 
     if (canAssign && match(TOKEN_EQUAL)) {
+        if (name.start == callArgStart) {
+            // f(b=1) looks like a Python keyword argument. Compiling it as
+            // an assignment would silently pass the values positionally and
+            // create globals, so reject it until keyword arguments exist.
+            semanticError("Argumen bernama (nama=nilai) belum didukung. "
+                  "Kirim nilainya sesuai urutan parameter.");
+        }
         parsePrecedence(PREC_ASSIGNMENT);
         // Assignment to a name that resolves to a global is treated as an
         // implicit definition (create-or-update), at ANY scope depth. This
@@ -631,41 +686,12 @@ static void namedVariable(Token name, bool canAssign) {
         } else {
             emitBytes(setOp, (uint8_t)arg);
         }
-    } else if (canAssign && match(TOKEN_PLUS_EQUAL)) {
-        // x += 5 becomes x = x + 5
+    } else if (canAssign && matchCompoundAssign(&compoundOp)) {
+        // x op= expr becomes x = x op (expr). The right side is a full
+        // expression, so x *= 2 + 3 multiplies by 5 (as in Python).
         emitBytes(getOp, (uint8_t)arg);
-        parsePrecedence(PREC_TERM);
-        emitByte(OP_ADD);
-        emitBytes(setOp, (uint8_t)arg);
-    } else if (canAssign && match(TOKEN_MINUS_EQUAL)) {
-        // x -= 5 becomes x = x - 5
-        emitBytes(getOp, (uint8_t)arg);
-        parsePrecedence(PREC_TERM);
-        emitByte(OP_SUBTRACT);
-        emitBytes(setOp, (uint8_t)arg);
-    } else if (canAssign && match(TOKEN_STAR_EQUAL)) {
-        // x *= 5 becomes x = x * 5
-        emitBytes(getOp, (uint8_t)arg);
-        parsePrecedence(PREC_FACTOR);
-        emitByte(OP_MULTIPLY);
-        emitBytes(setOp, (uint8_t)arg);
-    } else if (canAssign && match(TOKEN_SLASH_EQUAL)) {
-        // x /= 5 becomes x = x / 5
-        emitBytes(getOp, (uint8_t)arg);
-        parsePrecedence(PREC_FACTOR);
-        emitByte(OP_DIVIDE);
-        emitBytes(setOp, (uint8_t)arg);
-    } else if (canAssign && match(TOKEN_PERCENT_EQUAL)) {
-        // x %= 5 becomes x = x % 5
-        emitBytes(getOp, (uint8_t)arg);
-        parsePrecedence(PREC_FACTOR);
-        emitByte(OP_MODULO);
-        emitBytes(setOp, (uint8_t)arg);
-    } else if (canAssign && match(TOKEN_POWER_EQUAL)) {
-        // x **= 5 becomes x = x ** 5
-        emitBytes(getOp, (uint8_t)arg);
-        parsePrecedence(PREC_POWER);
-        emitByte(OP_POWER);
+        expression();
+        emitByte(compoundOp);
         emitBytes(setOp, (uint8_t)arg);
     } else {
         emitBytes(getOp, (uint8_t)arg);
@@ -717,8 +743,9 @@ static void super_(bool canAssign) {
 static void unary(bool canAssign) {
     TokenType operatorType = parser.previous.type;
 
-    // Compile the operand.
-    parsePrecedence(PREC_UNARY);
+    // Compile the operand. 'tidak' binds looser than comparisons, like
+    // Python's 'not': tidak a == b means tidak (a == b).
+    parsePrecedence(operatorType == TOKEN_TIDAK ? PREC_NOT : PREC_UNARY);
 
     // Emit the operator instruction.
     switch (operatorType) {
@@ -776,6 +803,7 @@ ParseRule rules[] = {
   [TOKEN_TIDAK]         = {unary,    NULL,   PREC_NONE},
   [TOKEN_NEWLINE]       = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_SLASH_SLASH_EQUAL] = {NULL, NULL,   PREC_NONE},
   [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_MINUS_EQUAL]   = {NULL,     NULL,   PREC_NONE},
   [TOKEN_STAR_EQUAL]    = {NULL,     NULL,   PREC_NONE},
@@ -919,6 +947,7 @@ static void classDeclaration() {
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         while (match(TOKEN_NEWLINE)) {}
         if (check(TOKEN_RIGHT_BRACE)) break;
+        if (match(TOKEN_LEWATI)) continue;  // kelas Kosong { lewati }
         method();
         while (match(TOKEN_NEWLINE)) {}
     }
@@ -1034,6 +1063,8 @@ static void beginLoop(LoopCtx* loop, int continueTarget) {
     loop->enclosing = currentLoop;
     loop->continueTarget = continueTarget;
     loop->scopeDepth = current->scopeDepth;
+    loop->tryDepth = current->tryDepth;
+    loop->finallyDepth = current->finallyDepth;
     loop->breakCount = 0;
     currentLoop = loop;
 }
@@ -1057,11 +1088,30 @@ static void popLocalsToDepth(int depth) {
     }
 }
 
+// Before 'hentikan'/'lanjut' jumps out of 'coba' blocks inside the loop,
+// unregister their handlers. Jumping out of a 'coba' that has 'akhirnya'
+// would skip the finally block, so it is rejected for now.
+static bool exitTryBlocksForLoopJump(const char* keyword) {
+    if (current->finallyDepth > currentLoop->finallyDepth) {
+        char message[128];
+        snprintf(message, sizeof(message),
+                 "'%s' keluar dari 'coba' yang memiliki 'akhirnya' belum didukung.",
+                 keyword);
+        semanticError(message);
+        return false;
+    }
+    for (int i = currentLoop->tryDepth; i < current->tryDepth; i++) {
+        emitByte(OP_TRY_END);
+    }
+    return true;
+}
+
 static void breakStatement() {
     if (currentLoop == NULL) {
         error("'hentikan' hanya boleh di dalam perulangan.");
         return;
     }
+    if (!exitTryBlocksForLoopJump("hentikan")) return;
     popLocalsToDepth(currentLoop->scopeDepth);
     if (currentLoop->breakCount == UINT8_COUNT) {
         error("Terlalu banyak 'hentikan' dalam satu perulangan.");
@@ -1075,6 +1125,7 @@ static void continueStatement() {
         error("'lanjut' hanya boleh di dalam perulangan.");
         return;
     }
+    if (!exitTryBlocksForLoopJump("lanjut")) return;
     popLocalsToDepth(currentLoop->scopeDepth);
     emitLoop(currentLoop->continueTarget);
 }
@@ -1124,51 +1175,168 @@ static void importStatement() {
     emitByte(OP_POP);  // discard the module's return value (kosong)
 }
 
+// Next token from the scanner, skipping newlines (lookahead only).
+static Token scanSignificant() {
+    Token token = scanToken();
+    while (token.type == TOKEN_NEWLINE) token = scanToken();
+    return token;
+}
+
+// Lookahead helper: having just scanned a '{', skip to its matching '}'.
+static bool skipBalancedBraces() {
+    int depth = 1;
+    while (depth > 0) {
+        Token token = scanToken();
+        if (token.type == TOKEN_EOF) return false;
+        if (token.type == TOKEN_LEFT_BRACE) depth++;
+        if (token.type == TOKEN_RIGHT_BRACE) depth--;
+    }
+    return true;
+}
+
+// The compiler is single-pass, but the bytecode for 'coba' depends on what
+// follows the body: an 'akhirnya' needs an outer handler registered BEFORE the
+// body. Peek ahead (parser.current is the body's '{') and restore the scanner.
+static void scanTryClauses(bool* hasCatch, bool* hasFinally) {
+    *hasCatch = false;
+    *hasFinally = false;
+    if (parser.current.type != TOKEN_LEFT_BRACE) return;
+
+    ScannerState saved = saveScanner();
+    if (skipBalancedBraces()) {
+        Token next = scanSignificant();
+        if (next.type == TOKEN_KECUALI) {
+            *hasCatch = true;
+            scanSignificant();  // the catch variable
+            if (scanSignificant().type == TOKEN_LEFT_BRACE && skipBalancedBraces()) {
+                next = scanSignificant();
+            }
+        }
+        *hasFinally = next.type == TOKEN_AKHIRNYA;
+    }
+    restoreScanner(saved);
+}
+
+// kecuali <nama> { ... } — the VM has pushed the raised value on the stack.
+static void catchClause() {
+    consume(TOKEN_KECUALI, "Harapkan 'kecuali' atau 'akhirnya' setelah blok 'coba'.");
+    beginScope();
+    consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'kecuali'.");
+    addLocal(parser.previous);
+    markInitialized();
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah nama variabel 'kecuali'.");
+    block();
+    endScope();  // pops the catch variable (the raised value)
+}
+
+// akhirnya { ... } — entered with two values on the stack: the raised value
+// and a flag saying whether we arrived because of an error. After the block,
+// a pending error is raised again (Python's finally semantics).
+static void finallyClause() {
+    consume(TOKEN_AKHIRNYA, "Harapkan 'akhirnya'.");
+    beginScope();
+    addLocal(syntheticToken(" galat"));   // names no identifier can match
+    markInitialized();
+    addLocal(syntheticToken(" lempar"));
+    markInitialized();
+    uint8_t errorSlot = (uint8_t)(current->localCount - 2);
+    uint8_t rethrowSlot = (uint8_t)(current->localCount - 1);
+
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah 'akhirnya'.");
+    beginScope();
+    block();
+    endScope();
+
+    emitBytes(OP_GET_LOCAL, rethrowSlot);
+    int noRethrow = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    emitBytes(OP_GET_LOCAL, errorSlot);
+    emitByte(OP_THROW);
+    patchJump(noRethrow);
+    emitByte(OP_POP);
+    endScope();  // pops the two hidden locals
+}
+
+// coba { ... } [kecuali e { ... }] [akhirnya { ... }]
+//
+// With 'akhirnya', an outer handler (registered first) catches errors from
+// the body or the 'kecuali' block and routes them through the finally block,
+// which rethrows; the normal path enters the finally block with no error.
 static void tryStatement() {
-    // coba { body } kecuali <var> { handler }
-    int tryJump = emitJump(OP_TRY_BEGIN);  // operand = offset to catch handler
+    bool hasCatch, hasFinally;
+    scanTryClauses(&hasCatch, &hasFinally);
+    if (!hasCatch && !hasFinally) {
+        // Let consume() below report the problem at the right token.
+        hasCatch = true;
+    }
+
+    int finallyHandler = -1;
+    if (hasFinally) {
+        finallyHandler = emitJump(OP_TRY_BEGIN);
+        current->tryDepth++;
+        current->finallyDepth++;
+    }
+    int catchHandler = -1;
+    if (hasCatch) {
+        catchHandler = emitJump(OP_TRY_BEGIN);
+        current->tryDepth++;
+    }
 
     beginScope();
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah 'coba'.");
     block();
     endScope();
 
-    emitByte(OP_TRY_END);                  // normal path: unregister handler
-    int endJump = emitJump(OP_JUMP);       // skip over the catch handler
+    if (hasCatch) {
+        emitByte(OP_TRY_END);               // normal path: unregister handler
+        current->tryDepth--;
+        int skipCatch = emitJump(OP_JUMP);
+        patchJump(catchHandler);
+        catchClause();
+        patchJump(skipCatch);
+    }
 
-    // Catch handler starts here. The VM has pushed the raised value on top.
-    patchJump(tryJump);
-
-    consume(TOKEN_KECUALI, "Harapkan 'kecuali' setelah blok 'coba'.");
-
-    beginScope();
-    // Bind the raised value (already on the stack) to the catch variable.
-    consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'kecuali'.");
-    addLocal(parser.previous);
-    markInitialized();
-
-    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah nama variabel 'kecuali'.");
-    block();
-    endScope();  // pops the catch variable (the raised value)
-
-    patchJump(endJump);
+    if (hasFinally) {
+        emitByte(OP_TRY_END);
+        current->tryDepth--;
+        current->finallyDepth--;
+        emitByte(OP_KOSONG);                // no error...
+        emitByte(OP_SALAH);                 // ...so do not rethrow
+        int toFinally = emitJump(OP_JUMP);
+        patchJump(finallyHandler);          // error path: VM pushed the value
+        emitByte(OP_BENAR);                 // rethrow after the finally block
+        patchJump(toFinally);
+        finallyClause();
+    }
 }
 
 static void printStatement() {
+    // cetak(a, b, c) prints all values on one line separated by spaces, like
+    // Python's print(); cetak() prints an empty line.
     consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah 'cetak'.");
+    int count = 0;
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             expression();
-            emitByte(OP_PRINT);
+            if (count == 255) {
+                error("Tidak boleh lebih dari 255 argumen untuk 'cetak'.");
+            }
+            count++;
         } while (match(TOKEN_COMMA));
     }
-    
+
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah argumen.");
+    emitBytes(OP_PRINT, (uint8_t)count);
 }
 
 static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
+    }
+    // Returning from inside 'coba' is fine (OP_RETURN drops the frame's
+    // handlers), but it would skip an 'akhirnya' block.
+    if (current->finallyDepth > 0) {
+        semanticError("'kembalikan' dari dalam 'coba' yang memiliki 'akhirnya' belum didukung.");
     }
 
     if (match(TOKEN_NEWLINE) || check(TOKEN_EOF)) {
@@ -1246,7 +1414,9 @@ static void declaration() {
 }
 
 static void statement() {
-    if (match(TOKEN_CETAK)) {
+    if (match(TOKEN_LEWATI)) {
+        // 'lewati' (Python's pass): an explicit no-op statement.
+    } else if (match(TOKEN_CETAK)) {
         printStatement();
     } else if (match(TOKEN_UNTUK)) {
         forStatement();
@@ -1285,6 +1455,7 @@ ObjFunction* compile(const char* source) {
 
     parser.hadError = false;
     parser.panicMode = false;
+    callArgStart = NULL;
 
     advance();
 

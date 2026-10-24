@@ -1,0 +1,22 @@
+# Regresi Fase 0: B11 - panjang, indeks, dan potong menghitung karakter,
+# bukan byte (sama dengan Python).
+
+t = "héllo wörld 😀"
+cetak(panjang(t))           # 13
+cetak(t[1], t[7], t[12])    # é ö 😀
+cetak(karakter(t, 7))       # ö
+cetak(potong(t, 6, 5))      # wörld
+cetak(ord("é"), chr(233))   # 233 é
+cetak(ord("😀"), chr(128512))
+
+# Menelusuri per karakter tetap benar untuk teks non-ASCII
+huruf = []
+i = 0
+selagi i < panjang("café") {
+    tambah(huruf, "café"[i])
+    i += 1
+}
+cetak(huruf)
+
+# Teks ASCII tidak berubah perilakunya
+cetak(panjang("halo"), "halo"[0], potong("halo dunia", 5, 5))

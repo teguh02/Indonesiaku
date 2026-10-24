@@ -67,6 +67,35 @@ for exp in "$EXPECTED_DIR"/*.out; do
     fi
 done
 
+# Error tests: tests/galat/<name>.idk must exit non-zero and print exactly
+# tests/galat/<name>.err to stderr (compile errors, uncatchable runtime errors).
+if [ -d tests/galat ]; then
+    echo -e "${BLUE}  -- tes galat (tests/galat) --${NC}"
+    for exp in tests/galat/*.err; do
+        [ -e "$exp" ] || continue
+        name="$(basename "$exp" .err)"
+        TOTAL=$((TOTAL+1))
+        src="tests/galat/$name.idk"
+        if [ ! -f "$src" ]; then
+            echo -e "  ${RED}x${NC} galat/$name  (no matching .idk source)"
+            FAILED=$((FAILED+1)); FAILURES="$FAILURES galat/$name"; continue
+        fi
+
+        stderr="$(./indk "$src" 2>&1 >/dev/null)"; code=$?
+        expected="$(cat "$exp")"
+
+        if [ "$code" -ne 0 ] && [ "$stderr" = "$expected" ]; then
+            echo -e "  ${GREEN}+${NC} galat/$name"
+            PASSED=$((PASSED+1))
+        else
+            if [ "$code" -eq 0 ]; then reason="exit=0, expected an error"
+            else reason="stderr mismatch: $stderr"; fi
+            echo -e "  ${RED}x${NC} galat/$name  ($reason)"
+            FAILED=$((FAILED+1)); FAILURES="$FAILURES galat/$name"
+        fi
+    done
+fi
+
 echo -e "${BLUE}=================================================${NC}"
 echo -e "TOTAL: ${GREEN}$PASSED/$TOTAL PASSED${NC}"
 if [ "$FAILED" -eq 0 ]; then

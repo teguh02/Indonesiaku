@@ -56,7 +56,8 @@ struct Obj {
 
 struct ObjString {
     Obj obj;
-    int length;
+    int length;      // bytes (UTF-8)
+    int charCount;   // characters (code points); == length for pure ASCII
     char* chars;
     uint32_t hash;
 };
@@ -144,6 +145,10 @@ ObjFile* newFile(void* handle, ObjString* path);
 ObjSocket* newSocket(long long fd);
 ObjString* takeString(char* chars, int length);
 ObjString* copyString(const char* chars, int length);
+// Character-based (code point) access to UTF-8 strings. Lengths, indexes and
+// substrings in the language count characters, not bytes.
+int utf8ByteOffset(ObjString* string, int charIndex);
+int utf8CharBytes(ObjString* string, int byteOffset);
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
