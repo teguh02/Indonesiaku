@@ -1,1 +1,3 @@
-[baris 2] Kesalahan di '1__000': Garis bawah hanya boleh di antara digit.
+[baris 2, kolom 7] Kesalahan di '1__000': Garis bawah hanya boleh di antara digit.
+    cetak(1__000)
+          ^^^^^^

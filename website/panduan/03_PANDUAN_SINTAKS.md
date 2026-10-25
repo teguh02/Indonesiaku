@@ -1255,6 +1255,39 @@ Contoh lengkap: [`examples/pastikan.idk`](../examples/pastikan.idk)
 
 ---
 
+## Membaca Pesan Kesalahan
+
+Galat saat kompilasi menyebut baris **dan kolom**, lalu menunjuk bagian yang
+bermasalah:
+
+```
+[baris 2, kolom 11] Kesalahan di '+': Harapkan ekspresi.
+    cetak(a + + 2)
+              ^
+```
+
+Baris yang sangat panjang dipotong di sekitar titik galat dengan penanda `…`,
+jadi tanda `^` tetap lurus di bawah token yang dimaksud.
+
+Kalau nama yang dipakai mirip dengan sesuatu yang sudah ada, pesannya
+menyertakan saran:
+
+```
+Variabel tidak terdefinisi 'cetk'. Mungkin maksudmu 'cetak'?
+```
+
+Saran hanya muncul bila ejaannya memang dekat; nama yang tidak mirip apa pun
+tidak akan ditebak-tebak.
+
+Galat saat program berjalan masih menyebut baris saja (belum kolom):
+
+```
+Operand '+' harus dua angka, dua teks, atau dua daftar.
+[baris 2] dalam skrip
+```
+
+---
+
 ## Penanganan Kesalahan (naikkan / coba / kecuali / akhirnya)
 
 ```indonesiaku

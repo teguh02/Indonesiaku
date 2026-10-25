@@ -449,6 +449,68 @@ static bool call(ObjClosure* closure, int argCount, ObjList* names) {
 
 // Natives that read vm.nativeArgNames. Everything else still rejects keyword
 // arguments, so an unsupported `pisah=` is an error rather than a no-op.
+// Levenshtein distance, capped: returns > max as soon as it's clear the
+// strings are too far apart. Two rolling rows instead of a full matrix.
+static int editDistance(const char* a, int alen, const char* b, int blen, int max) {
+    if (abs(alen - blen) > max) return max + 1;
+    if (alen > 64 || blen > 64) return max + 1;
+
+    int prev[65], curr[65];
+    for (int j = 0; j <= blen; j++) prev[j] = j;
+
+    for (int i = 1; i <= alen; i++) {
+        curr[0] = i;
+        int rowBest = curr[0];
+        for (int j = 1; j <= blen; j++) {
+            int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+            int d = prev[j] + 1;
+            if (curr[j - 1] + 1 < d) d = curr[j - 1] + 1;
+            if (prev[j - 1] + cost < d) d = prev[j - 1] + cost;
+            curr[j] = d;
+            if (d < rowBest) rowBest = d;
+        }
+        if (rowBest > max) return max + 1;
+        for (int j = 0; j <= blen; j++) prev[j] = curr[j];
+    }
+    return prev[blen];
+}
+
+// Closest defined global name to `name`, or NULL when nothing is close
+// enough. Only runs when an error is already being raised, so the linear
+// scan over the globals table costs nothing in the happy path.
+static ObjString* namaTerdekat(ObjString* name) {
+    // Allow at most 2 edits, and never more than a third of the name, so
+    // short names don't get wild suggestions ("xyz" -> "abs").
+    int max = name->length / 3;
+    if (max > 2) max = 2;
+    if (max < 1) return NULL;
+
+    ObjString* best = NULL;
+    int bestDistance = max + 1;
+    for (int i = 0; i < vm.globals.capacity; i++) {
+        Entry* entry = &vm.globals.entries[i];
+        if (entry->key == NULL) continue;
+        int d = editDistance(name->chars, name->length,
+                             entry->key->chars, entry->key->length, max);
+        if (d < bestDistance) {
+            bestDistance = d;
+            best = entry->key;
+        }
+    }
+    return bestDistance <= max ? best : NULL;
+}
+
+// Raise "undefined variable", appending a suggestion when one is close.
+static void undefinedVariable(ObjString* name) {
+    ObjString* suggestion = namaTerdekat(name);
+    if (suggestion != NULL) {
+        runtimeError("Variabel tidak terdefinisi '%s'. Mungkin maksudmu '%s'?",
+                     name->chars, suggestion->chars);
+    } else {
+        runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+    }
+}
+
 static bool nativeTakesKeywords(NativeFn fn) {
     return fn == nativeFnCetak;
 }
@@ -1057,7 +1119,7 @@ static InterpretResult run() {
                 ObjString* name = READ_STRING();
                 Value value;
                 if (!tableGet(&vm.globals, name, &value)) {
-                    runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+                    undefinedVariable(name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 push(value);
@@ -1073,7 +1135,7 @@ static InterpretResult run() {
                 ObjString* name = READ_STRING();
                 if (tableSet(&vm.globals, name, peek(0))) {
                     tableDelete(&vm.globals, name);
-                    runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+                    undefinedVariable(name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 // Don't pop - leave value on stack (assignment is an expression)

@@ -136,22 +136,83 @@ static Chunk* currentChunk() {
 // already reported when the block is compiled in place, so stay silent.
 static int inlineFinallyDepth = 0;
 
+// Walk back to the start of the token's line. Returns NULL when the token
+// doesn't belong to the buffer currently being scanned.
+static const char* lineStartOf(Token* token) {
+    const char* source = scannerSourceStart();
+    if (source == NULL || token->start < source) return NULL;
+    const char* lineStart = token->start;
+    while (lineStart > source && lineStart[-1] != '\n') lineStart--;
+    return lineStart;
+}
+
+// Print the offending source line with a caret under the token. Long lines
+// are windowed around the token so a 500-character line doesn't flood the
+// terminal. Tabs are copied verbatim into the caret line so the caret stays
+// aligned whatever the terminal's tab width is.
+static void printSourceSnippet(Token* token, const char* lineStart) {
+    if (lineStart == NULL) return;
+
+    const char* lineEnd = token->start;
+    while (*lineEnd != '\0' && *lineEnd != '\n') lineEnd++;
+
+    // Window a long line around the token.
+    const int kWindow = 40;
+    const char* from = lineStart;
+    const char* to = lineEnd;
+    bool cutLeft = false, cutRight = false;
+    if (token->start - from > kWindow) {
+        from = token->start - kWindow;
+        cutLeft = true;
+    }
+    if (to - token->start > kWindow) {
+        to = token->start + kWindow;
+        cutRight = true;
+    }
+
+    fprintf(stderr, "    %s%.*s%s\n",
+            cutLeft ? "…" : "", (int)(to - from), from, cutRight ? "…" : "");
+
+    // Caret line: same leading whitespace, tabs preserved.
+    fprintf(stderr, "    %s", cutLeft ? " " : "");
+    for (const char* p = from; p < token->start; p++) {
+        fputc(*p == '\t' ? '\t' : ' ', stderr);
+    }
+    int caretLen = token->length > 0 ? token->length : 1;
+    if (token->start + caretLen > to) caretLen = (int)(to - token->start);
+    if (caretLen < 1) caretLen = 1;
+    for (int i = 0; i < caretLen; i++) fputc('^', stderr);
+    fputc('\n', stderr);
+}
+
 static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
     parser.hadError = true;
     if (inlineFinallyDepth > 0) return;
-    fprintf(stderr, "[baris %d] Kesalahan", token->line);
+
+    const char* lineStart = lineStartOf(token);
+
+    if (lineStart != NULL) {
+        fprintf(stderr, "[baris %d, kolom %d] Kesalahan", token->line,
+                (int)(token->start - lineStart) + 1);
+    } else {
+        fprintf(stderr, "[baris %d] Kesalahan", token->line);
+    }
 
     if (token->type == TOKEN_EOF) {
         fprintf(stderr, " di akhir");
     } else if (token->type == TOKEN_ERROR) {
         // Nothing.
+    } else if (token->length == 1 && *token->start == '\n') {
+        // A newline token would break the message across lines.
+        fprintf(stderr, " di akhir baris");
     } else {
         fprintf(stderr, " di '%.*s'", token->length, token->start);
     }
 
     fprintf(stderr, ": %s\n", message);
+    printSourceSnippet(token, lineStart);
     parser.hadError = true;
 }
 

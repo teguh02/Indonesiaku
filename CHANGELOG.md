@@ -8,6 +8,11 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **Pesan galat kompilasi dengan kolom, potongan baris, dan caret** —
+  `[baris 2, kolom 11] ...` diikuti baris sumber dan `^` di bawah token.
+  Baris panjang dipotong dengan `…`, tab disalin apa adanya agar caret lurus.
+- ✅ **Saran "Mungkin maksudmu ...?"** untuk nama global yang salah ketik,
+  memakai jarak edit terbatas (≤ 2 dan ≤ sepertiga panjang nama).
 - ✅ **`cetak` menjadi fungsi biasa (K12)** — bukan lagi pernyataan/opcode.
   Mendukung `pisah=` dan `akhir=`, serta dapat diperlakukan sebagai nilai
   (disimpan, dioper, `bisa_dipanggil(cetak)`). `OP_PRINT`, `TOKEN_CETAK`, dan

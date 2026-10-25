@@ -1,1 +1,3 @@
-[baris 3] Kesalahan di '}': '}' tidak punya '{' yang cocok.
+[baris 3, kolom 1] Kesalahan di '}': '}' tidak punya '{' yang cocok.
+    }
+    ^

@@ -9,6 +9,9 @@ typedef struct {
     const char* current;
     int line;
     int groupingDepth;
+    // Start of the buffer being scanned, kept so error reporting can walk
+    // back to the beginning of a line and compute a column.
+    const char* source;
 } Scanner;
 
 Scanner scanner;
@@ -16,6 +19,7 @@ Scanner scanner;
 void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
+    scanner.source = source;
     scanner.line = 1;
     scanner.groupingDepth = 0;
 }
@@ -28,6 +32,7 @@ ScannerState saveScanner() {
 void initScannerAt(const char* source, int line) {
     scanner.start = source;
     scanner.current = source;
+    scanner.source = source;
     scanner.line = line;
     scanner.groupingDepth = 0;
 }
@@ -439,4 +444,8 @@ Token scanToken() {
     }
 
     return errorToken("Karakter tidak dikenal.");
+}
+
+const char* scannerSourceStart(void) {
+    return scanner.source;
 }

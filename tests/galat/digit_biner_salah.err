@@ -1,1 +1,3 @@
-[baris 2] Kesalahan di '0b2': Digit biner tidak sah.
+[baris 2, kolom 7] Kesalahan di '0b2': Digit biner tidak sah.
+    cetak(0b2)
+          ^^^

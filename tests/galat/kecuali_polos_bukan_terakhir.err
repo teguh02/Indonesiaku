@@ -1,1 +1,3 @@
-[baris 6] Kesalahan di '}': 'kecuali' tanpa tipe harus menjadi yang terakhir.
+[baris 6, kolom 1] Kesalahan di '}': 'kecuali' tanpa tipe harus menjadi yang terakhir.
+    } kecuali GalatAritmetika sebagai e {
+    ^

@@ -75,7 +75,8 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Metode pada `teks`/`daftar`/`kamus` (P1 dari katalog 06) ([rencana](RENCANA_FITUR/selesai/metode_tipe.md)) | K10, 06 §1–3 | ✅ |
 | `+`/`*` untuk teks & daftar, `==` struktural | K7 | ✅ |
 | `pastikan` (assert) ([rencana](RENCANA_FITUR/selesai/pastikan.md)) | 02 §A | ✅ |
-| Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" | 04 §5, 05 §5 | ⬜ |
+| Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" ([rencana](RENCANA_FITUR/selesai/traceback_kolom.md)) | 04 §5, 05 §5 | ✅ |
+| Kolom pada galat *runtime* (butuh kolom per-bytecode + sumber tetap hidup) | 04 §5 | ⬜ |
 
 ### Fase 2 — Tipe data lengkap (0.8)
 

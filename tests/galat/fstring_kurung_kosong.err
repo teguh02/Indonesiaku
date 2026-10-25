@@ -1,1 +1,3 @@
-[baris 2] Kesalahan di 'f"nilai: {}"': Ekspresi kosong di dalam f-string.
+[baris 2, kolom 7] Kesalahan di 'f"nilai: {}"': Ekspresi kosong di dalam f-string.
+    cetak(f"nilai: {}")
+          ^^^^^^^^^^^^

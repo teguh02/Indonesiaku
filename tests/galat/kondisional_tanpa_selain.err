@@ -1,2 +1,3 @@
-[baris 4] Kesalahan di '
-': Harapkan 'selain' pada ekspresi kondisional.
+[baris 4, kolom 42] Kesalahan di akhir baris: Harapkan 'selain' pada ekspresi kondisional.
+    …ariabel label = "lulus" jika nilai >= 60
+                                             ^

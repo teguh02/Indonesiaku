@@ -63,4 +63,8 @@ void restoreScanner(ScannerState state);
 // number (used to compile f-string expressions without losing their line).
 void initScannerAt(const char* source, int line);
 
+// Start of the buffer currently being scanned. Error reporting uses it to
+// find the beginning of a line; NULL before the first initScanner call.
+const char* scannerSourceStart(void);
+
 #endif
