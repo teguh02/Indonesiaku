@@ -31,6 +31,7 @@ kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
 | K12 | `cetak` | Fungsi biasa, argumen dipisah spasi | Ya (multi-arg) | disetujui — multi-argumen ✅ (Fase 0); `pisah=`/`akhir=` di Fase 1 |
 | K13 | String | UTF-8 di memori, indeks & panjang per karakter (code point) | Ya | selesai ✅ (Fase 0) |
 | K14 | Kebijakan stabilitas & versi | SemVer + periode deprecation 1 minor | — | disetujui |
+| K15 | Nilai bawaan parameter | Dievaluasi **tiap panggilan**, bukan sekali saat definisi | Ya (beda dari Python) | disetujui — selesai ✅ (Fase 1) |
 
 ---
 
@@ -189,3 +190,35 @@ selain itu indeks O(n) atau tabel offset tersimpan.
 - **Spesifikasi:** setelah K1–K13 diputuskan, tulis
   `docs/SPESIFIKASI.md` (tata bahasa EBNF + semantik). Tes golden menjadi
   *conformance suite* untuk spesifikasi itu.
+
+## K15 — Nilai bawaan parameter dievaluasi tiap panggilan
+
+Python mengevaluasi nilai bawaan **sekali**, saat `def` dijalankan. Akibatnya
+`def f(a=[])` berbagi satu list untuk semua panggilan — jebakan *mutable
+default argument* yang menghabiskan waktu pemula setiap tahun.
+
+Indonesiaku mengevaluasi nilai bawaan **setiap kali fungsi dipanggil**:
+
+```indonesiaku
+fungsi kumpul(x, daftar=[]) {
+    tambah(daftar, x)
+    kembalikan daftar
+}
+cetak(kumpul(1))     # [1]
+cetak(kumpul(2))     # [2]   — di Python [1, 2]
+```
+
+Konsekuensi yang diterima sadar:
+
+- Nilai bawaan yang mahal dihitung ulang tiap panggilan.
+- `fungsi f(x=waktu())` memberi waktu **saat panggil**, bukan saat definisi —
+  justru yang biasanya diinginkan orang.
+- Nilai bawaan boleh merujuk parameter di kirinya (`fungsi f(a, b=a)`), karena
+  ia dijalankan di dalam frame yang slot sebelumnya sudah terisi.
+
+Implementasi: prolog bertingkat. Kode tiap nilai bawaan dipancarkan berurutan
+di awal chunk fungsi, dan `call()` melompat ke titik masuk yang sesuai dengan
+jumlah argumen yang diberikan (`ObjFunction.entryPoints`). Tidak ada opcode
+baru dan tidak ada nilai sentinel.
+
+**Jangan "perbaiki" ini menjadi perilaku Python.**

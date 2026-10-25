@@ -8,6 +8,12 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✨ **Parameter dengan nilai bawaan:** `fungsi sapa(nama, salam="Halo") { }`,
+  juga untuk `init` dan metode kelas. Nilai bawaan boleh ekspresi apa pun dan
+  boleh merujuk parameter di kirinya (`fungsi f(a, b=a)`). Parameter wajib
+  setelah parameter berdefault ditolak saat kompilasi. **Berbeda dari Python
+  (K15):** nilai bawaan dievaluasi setiap kali fungsi dipanggil, jadi
+  `fungsi f(x, daftar=[])` tidak pernah membawa isi panggilan sebelumnya.
 - ✨ **Gabung dan ulang untuk teks & daftar:** `[1, 2] + [3]` menggabungkan dua
   daftar (hasil selalu objek baru); `[0] * 3`, `3 * [0]`, `"-" * 20`, dan
   `2 * "ab"` mengulang. Pengali harus bilangan bulat — nol/negatif memberi

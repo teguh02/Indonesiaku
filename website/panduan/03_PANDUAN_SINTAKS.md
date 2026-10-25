@@ -572,6 +572,52 @@ sapa_nama("Teguh")      # Output: Halo, Teguh
 sapa_nama("Budi")       # Output: Halo, Budi
 ```
 
+### Parameter dengan Nilai Bawaan
+
+Parameter boleh punya nilai bawaan, sehingga argumennya opsional saat dipanggil.
+
+```indonesiaku
+fungsi sapa(nama, salam="Halo") {
+    cetak(salam + ", " + nama)
+}
+
+sapa("Budi")            # Halo, Budi
+sapa("Budi", "Hai")     # Hai, Budi
+```
+
+Nilai bawaan boleh berupa ekspresi apa pun, termasuk merujuk parameter di
+sebelah kirinya:
+
+```indonesiaku
+fungsi kotak(lebar, tinggi=lebar) {   # bujur sangkar bila tinggi tak diisi
+    kembalikan lebar * tinggi
+}
+cetak(kotak(3))        # 9
+cetak(kotak(3, 4))     # 12
+```
+
+Parameter wajib tidak boleh ditulis setelah parameter yang punya nilai
+bawaan — `fungsi f(a=1, b)` adalah galat.
+
+> **Berbeda dari Python:** nilai bawaan di Indonesiaku dievaluasi **setiap
+> kali fungsi dipanggil**, bukan sekali saat fungsi didefinisikan. Jadi
+> daftar bawaan tidak pernah terbawa ke panggilan berikutnya:
+>
+> ```indonesiaku
+> fungsi kumpul(x, daftar=[]) {
+>     tambah(daftar, x)
+>     kembalikan daftar
+> }
+> cetak(kumpul(1))     # [1]
+> cetak(kumpul(2))     # [2]   — di Python hasilnya [1, 2]
+> ```
+>
+> Jebakan *mutable default argument* yang terkenal di Python tidak ada di sini.
+
+Nilai bawaan juga berlaku untuk `init` dan metode kelas.
+
+> Contoh: [`examples/argumen_bawaan.idk`](../examples/argumen_bawaan.idk)
+
 ### Fungsi dengan Multiple Parameters
 
 ```indonesiaku

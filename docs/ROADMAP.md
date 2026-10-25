@@ -66,7 +66,8 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | Akhir baris mengakhiri pernyataan (di luar kurung), seperti Python | B16 | ✅ |
 | Assignment di fungsi = lokal; `global`, `nonlokal` | K3 | ✅ |
 | Literal kamus `{ }`, indeks negatif, irisan `[a:b:c]` | 02 §B | ✅ |
-| Argumen bawaan & bernama; `cetak` jadi fungsi (`pisah=`, `akhir=`) | K12 | ⬜ |
+| Argumen bawaan (nilai default parameter) | K15 | ✅ |
+| Argumen bernama; `cetak` jadi fungsi (`pisah=`, `akhir=`) | K12 | ⬜ |
 | Fungsi anonim (ekspresi `fungsi(x) { ... }`), ekspresi kondisional | 02 §B | ⬜ |
 | f-string, string `"""` multi-baris, literal `1e3`, `0x`, `0b`, `1_000` | 02 §B | ⬜ |
 | Metode pada `teks`/`daftar`/`kamus` (P1 dari katalog 06) | K10, 06 §1–3 | ⬜ |

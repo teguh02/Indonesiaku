@@ -50,6 +50,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ Tipe data: angka, boolean (`benar`/`salah`), `kosong`, string
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
 - ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
+- ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
@@ -264,6 +265,14 @@ fungsi sapa_nama(nama) {
 }
 
 sapa_nama("Budi")
+
+# Parameter dengan nilai bawaan (dievaluasi tiap panggilan, beda dari Python)
+fungsi sapa_bawaan(nama, salam="Halo") {
+    cetak(salam + ", " + nama)
+}
+
+sapa_bawaan("Budi")          # Halo, Budi
+sapa_bawaan("Budi", "Hai")   # Hai, Budi
 
 # Fungsi dengan return
 fungsi tambah(a, b) {
