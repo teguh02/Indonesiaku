@@ -96,5 +96,21 @@
       "${1:daftar}[${2:awal}:${3:akhir}]${0}"
     ],
     "description": "Irisan daftar/teks a[awal:akhir]"
+  },
+  "Fungsi dengan nilai bawaan": {
+    "prefix": "fungsibawaan",
+    "body": [
+      "fungsi ${1:nama}(${2:wajib}, ${3:opsional}=${4:nilai}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Fungsi dengan parameter bernilai bawaan (dievaluasi tiap panggilan)"
+  },
+  "Panggil dengan argumen bernama": {
+    "prefix": "panggilbernama",
+    "body": [
+      "${1:fungsi}(${2:nilai}, ${3:parameter}=${4:nilai})$0"
+    ],
+    "description": "Panggilan dengan argumen bernama; posisional harus mendahului yang bernama"
   }
 }

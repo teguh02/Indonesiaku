@@ -108,12 +108,14 @@ Plus suite penuh, `-DDEBUG_STRESS_GC`, ASan+UBSan, build C11.
 
 ## 6. Dampak dokumentasi
 
-- [ ] `website/panduan/03_PANDUAN_SINTAKS.md` (seksi Fungsi)
-- [ ] `README.md`
-- [ ] `CHANGELOG.md` + `docs/ROADMAP.md` + `docs/ANALISIS/02_PETA_FITUR_PYTHON.md`
-- [ ] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — keputusan baru: default per-panggilan
-- [ ] `AGENTS.md` — prolog bertingkat & `entryPoints`
-- [ ] `editors/vscode-indonesiaku/` — tidak ada keyword baru
+- [x] `website/panduan/03_PANDUAN_SINTAKS.md` (seksi Fungsi)
+- [x] `README.md`
+- [x] `CHANGELOG.md` + `docs/ROADMAP.md` + `docs/ANALISIS/02_PETA_FITUR_PYTHON.md`
+- [x] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — keputusan baru: default per-panggilan
+- [x] `AGENTS.md` — mekanisme nilai bawaan (prolog bertingkat; kemudian
+      diganti penanda `VAL_TAKTERISI` + `OP_ISI_BAWAAN` saat argumen bernama
+      masuk — lihat `selesai/argumen_bernama.md`)
+- [x] `editors/vscode-indonesiaku/` — tidak ada keyword baru
 
 ## 7. Risiko & alternatif
 

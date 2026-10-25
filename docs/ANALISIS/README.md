@@ -19,9 +19,11 @@ folder ini berisi alasan dan rinciannya.
 
 1. **Fondasi sudah benar**, infrastruktur uji sangat baik, dan kinerja
    setara CPython untuk skrip sederhana.
-2. **Belum stabil**: `//` dan argumen bernama memberi jawaban salah tanpa
-   error; rekursi dibatasi 64; sebagian besar error tidak bisa ditangkap.
-   → **Fase 0** harus didahulukan sebelum fitur baru.
+2. ~~**Belum stabil**: `//` dan argumen bernama memberi jawaban salah tanpa
+   error; rekursi dibatasi 64; sebagian besar error tidak bisa ditangkap.~~
+   → **Fase 0 selesai.** `//` membulatkan ke bawah, argumen bernama bekerja
+   (K16), batas rekursi `FRAMES_MAX` 1000, dan semua galat runtime bisa
+   ditangkap `kecuali`.
 3. **Semantik perlu diselaraskan dengan Python sekarang** (truthiness,
    bulat vs desimal, scope lokal), selagi pengguna masih sedikit. Setelah
    1.0 perubahan seperti ini tidak mungkin lagi.
