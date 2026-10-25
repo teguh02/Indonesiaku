@@ -140,7 +140,11 @@ jobs:
       - name: Extract version from tag
         id: meta
         run: |
+          # Tag git memakai awalan 'v' (v1.0.0), tag image TIDAK (1.0.0) —
+          # samakan dengan tag yang sudah ada di Docker Hub (0.4.0, 1.0.0),
+          # jika tidak setiap rilis menghasilkan dua tag untuk versi yang sama.
           VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Building Docker image for version: ${VERSION}"
 
