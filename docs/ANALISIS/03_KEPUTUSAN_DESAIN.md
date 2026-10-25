@@ -176,7 +176,7 @@ memuat `ObjClosure`. Ditolak dengan pesan yang menyebut cara benarnya.
 `jenis(x) == bulat` dan `adalah_instansi(x, bulat)` berfungsi. Tipe bawaan
 menjadi objek kelas sungguhan (lihat 04 §4).
 
-## K12 — `cetak` menjadi fungsi biasa (terlaksana sebagian 0.7.0)
+## K12 — `cetak` menjadi fungsi biasa (terlaksana 0.7.0)
 
 `cetak(1, 2)` → `1 2`; `cetak()` → baris kosong;
 `cetak("a", "b", pisah="-", akhir="")`. Butuh argumen bernama (fase 1).
@@ -193,8 +193,14 @@ terdaftar di `nativeTakesKeywords()` — native lain tetap menolak keyword,
 sehingga `pisah=` pada fungsi yang tidak mengenalnya menjadi galat, bukan
 diam-diam diabaikan.
 
-**Sisa yang belum:** `repr` untuk elemen koleksi (`cetak(["a"])` masih `[a]`,
-belum `["a"]`). Itu menyentuh banyak golden dan menjadi butir tersendiri.
+**Selesai juga:** `repr` untuk elemen koleksi. Ternyata ada **dua** jalur
+cetak (`printObject` di `object.c` dan `appendValueText` di `native.c`) plus
+`repr`; memperbaiki satu saja akan membuat `cetak(x)` dan `ke_teks(x)`
+berbeda. Ketiganya kini memakai satu helper `stringEscape()`.
+
+Sekalian diperbaiki: kedua jalur mengiterasi tabel hash padahal `ObjDict`
+menyimpan `keys` untuk urutan sisip, sehingga `cetak(d)` bisa berbeda urutan
+dari `kunci(d)` dan dari iterasi pada kamus yang sama.
 
 ## K13 — String berbasis karakter
 

@@ -15,7 +15,7 @@ setelah hapus_pada: [1, 2, 3]
 benar
 benar
 benar
-[a, b]
+["a", "b"]
 2
 setelah hapus_kunci: {"b": 2}
 A-B

@@ -425,20 +425,22 @@ Value nativeFnBisaDipanggil(int argCount, Value* args) {
 }
 
 // repr(x) - repr(): teks diberi tanda kutip, sisanya seperti ke_teks().
+// Defined further down, next to the other text-building helpers.
+static void appendStringRepr(ObjString* str, char* buf, size_t size, size_t* pos);
+
 Value nativeFnRepr(int argCount, Value* args) {
     if (argCount != 1) {
         nativeRaiseKelas(vm.galatTipe, "repr() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
     if (IS_STRING(args[0])) {
-        ObjString* teks = AS_STRING(args[0]);
-        int len = teks->length;
-        char* buf = ALLOCATE(char, len + 3);
-        buf[0] = '"';
-        memcpy(buf + 1, teks->chars, len);
-        buf[len + 1] = '"';
-        buf[len + 2] = '\0';
-        return OBJ_VAL(takeString(buf, len + 2));
+        // Quote and escape via the shared rule, so repr() agrees with the
+        // way collections print their elements.
+        char buf[512];
+        size_t pos = 0;
+        buf[0] = '\0';
+        appendStringRepr(AS_STRING(args[0]), buf, sizeof(buf), &pos);
+        return OBJ_VAL(copyString(buf, (int)pos));
     }
     return nativeFnKeTeks(argCount, args);
 }
@@ -838,6 +840,8 @@ Value nativeFnHenti(int argCount, Value* args) {
 // ============================================================================
 
 static void appendValueText(Value v, char* buf, size_t size, size_t* pos);
+// `repr`: quote and escape strings, for values printed inside a collection.
+static void appendValueRepr(Value v, char* buf, size_t size, size_t* pos);
 
 // Append a literal string, respecting the buffer bound.
 static void appendRaw(const char* s, char* buf, size_t size, size_t* pos) {
@@ -851,6 +855,30 @@ static void appendRaw(const char* s, char* buf, size_t size, size_t* pos) {
 // Lists, dicts and ranges recurse so ke_teks()/format()/repr() agree with
 // cetak() instead of printing "<objek>". Kept self-contained (no
 // open_memstream / stdout redirection) because this must build on Windows.
+// Append a string in quoted/escaped form. Uses the shared stringEscape() so
+// this matches printObject() and repr() exactly.
+static void appendStringRepr(ObjString* str, char* buf, size_t size, size_t* pos) {
+    appendRaw("\"", buf, size, pos);
+    for (int i = 0; i < str->length; i++) {
+        const char* esc = stringEscape(str->chars[i]);
+        if (esc != NULL) {
+            appendRaw(esc, buf, size, pos);
+        } else if (*pos + 1 < size) {
+            buf[(*pos)++] = str->chars[i];
+            buf[*pos] = '\0';
+        }
+    }
+    appendRaw("\"", buf, size, pos);
+}
+
+static void appendValueRepr(Value v, char* buf, size_t size, size_t* pos) {
+    if (IS_STRING(v)) {
+        appendStringRepr(AS_STRING(v), buf, size, pos);
+    } else {
+        appendValueText(v, buf, size, pos);
+    }
+}
+
 static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
     char tmp[64];
     const char* s = NULL;
@@ -872,7 +900,7 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
         appendRaw("[", buf, size, pos);
         for (int i = 0; i < list->items.count; i++) {
             if (i > 0) appendRaw(", ", buf, size, pos);
-            appendValueText(list->items.values[i], buf, size, pos);
+            appendValueRepr(list->items.values[i], buf, size, pos);
         }
         appendRaw("]", buf, size, pos);
         return;
@@ -880,15 +908,17 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
         ObjDict* dict = AS_DICT(v);
         appendRaw("{", buf, size, pos);
         bool first = true;
-        for (int i = 0; i < dict->table.capacity; i++) {
-            Entry* entry = &dict->table.entries[i];
-            if (entry->key == NULL) continue;
+        // Insertion order, matching printObject and kunci().
+        for (int i = 0; i < dict->keys.count; i++) {
+            if (!IS_STRING(dict->keys.values[i])) continue;  // deleted
+            ObjString* key = AS_STRING(dict->keys.values[i]);
+            Value val;
+            if (!tableGet(&dict->table, key, &val)) continue;
             if (!first) appendRaw(", ", buf, size, pos);
             first = false;
-            appendRaw("\"", buf, size, pos);
-            appendRaw(entry->key->chars, buf, size, pos);
-            appendRaw("\": ", buf, size, pos);
-            appendValueText(entry->value, buf, size, pos);
+            appendStringRepr(key, buf, size, pos);
+            appendRaw(": ", buf, size, pos);
+            appendValueRepr(val, buf, size, pos);
         }
         appendRaw("}", buf, size, pos);
         return;

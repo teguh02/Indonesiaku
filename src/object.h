@@ -186,6 +186,9 @@ ObjString* copyString(const char* chars, int length);
 // substrings in the language count characters, not bytes.
 int utf8ByteOffset(ObjString* string, int charIndex);
 int utf8CharBytes(ObjString* string, int byteOffset);
+// Escape sequence for a character inside a quoted string, NULL if none is
+// needed. Shared by every path that prints a string inside a collection.
+const char* stringEscape(char c);
 void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {

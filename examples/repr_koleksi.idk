@@ -1,0 +1,47 @@
+# Teks di dalam koleksi dicetak dengan kutip (repr), seperti Python.
+
+# --- Beda cetak langsung vs di dalam koleksi -------------------------------
+
+cetak("a")              # tanpa kutip
+cetak(["a"])            # dengan kutip
+
+# Jadi teks dan angka tidak lagi tertukar.
+cetak(["1", 1])
+cetak(["a", 1, benar, kosong])
+
+# Teks kosong dan teks berkoma tidak lagi menyesatkan.
+cetak([""])
+cetak(["a, b"])
+
+# --- Kamus -----------------------------------------------------------------
+
+cetak({"k": "v", "n": 1})
+cetak([["a"], {"x": "y"}])
+
+# --- Karakter khusus di-escape ---------------------------------------------
+
+cetak(["a\"b"])
+cetak(["a\\b"])
+cetak(["baris1\nbaris2"])
+cetak(["tab\there"])
+
+# Kunci kamus ikut di-escape.
+cetak({"kunci\"aneh": "nilai\nbaru"})
+
+# --- repr --------------------------------------------------------------
+
+cetak(repr("a"))
+cetak(repr("a\"b"))
+cetak(repr(5), repr(benar), repr(kosong))
+cetak(repr([1, "a"]))
+
+# --- Semua jalur cetak sepakat ---------------------------------------------
+
+variabel isi = ["a", 1]
+cetak(isi)
+cetak(ke_teks(isi))
+cetak(f"{isi}")
+cetak(format("{}", isi))
+
+# Teks biasa tetap tanpa kutip di semua jalur.
+cetak("a", ke_teks("a"), f"{"a"}")

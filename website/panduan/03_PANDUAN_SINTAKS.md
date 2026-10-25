@@ -1255,6 +1255,37 @@ Contoh lengkap: [`examples/pastikan.idk`](../examples/pastikan.idk)
 
 ---
 
+## Teks di Dalam Koleksi
+
+Teks yang dicetak langsung tampil apa adanya, tetapi teks **di dalam** daftar
+atau kamus tampil dengan kutip — seperti Python:
+
+```indonesiaku
+cetak("a")              # a
+cetak(["a"])            # ["a"]
+cetak(["1", 1])         # ["1", 1]   <- teks dan angka terbedakan
+cetak([""])             # [""]       <- bukan daftar kosong
+```
+
+Karakter khusus ikut di-escape, jadi isinya tidak menyesatkan:
+
+```indonesiaku
+cetak(["a\"b"])          # ["a\"b"]
+cetak(["baris1\nbaris2"]) # ["baris1\nbaris2"]
+```
+
+Aturan yang sama berlaku untuk `ke_teks`, `format`, f-string, dan `repr`,
+sehingga semuanya menghasilkan teks yang sama untuk nilai yang sama.
+
+Kamus dicetak sesuai **urutan penambahan**, sama dengan `kunci()` dan
+perulangan `untuk ... dalam`.
+
+Contoh lengkap: [`examples/repr_koleksi.idk`](../examples/repr_koleksi.idk)
+
+{{embed:examples/repr_koleksi.idk}}
+
+---
+
 ## Membaca Pesan Kesalahan
 
 Galat saat kompilasi menyebut baris **dan kolom**, lalu menunjuk bagian yang
@@ -1368,7 +1399,7 @@ kelas Kosong { lewati }
 impor "pustaka/teks.idk"
 impor "pustaka/daftar.idk"
 
-cetak(teks_pisah("a,b,c", ","))        # [a, b, c]
+cetak(teks_pisah("a,b,c", ","))        # ["a", "b", "c"]
 cetak(daftar_urutkan([3, 1, 2]))       # [1, 2, 3]
 ```
 > Contoh: [`examples/impor.idk`](../examples/impor.idk)

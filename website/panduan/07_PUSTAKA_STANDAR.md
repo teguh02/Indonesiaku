@@ -213,9 +213,9 @@ d = [3, 1, 2]
 cetak(terurut(d))               # [1, 2, 3]
 cetak(terurut(d, benar))        # [3, 2, 1]
 cetak(d)                        # [3, 1, 2]  -- argumen asli tetap utuh
-cetak(terurut(["pisang", "apel"]))  # [apel, pisang]
+cetak(terurut(["pisang", "apel"]))  # ["apel", "pisang"]
 cetak(terbalik([1, 2, 3]))      # [3, 2, 1]
-cetak(terbalik("halo"))         # [o, l, a, h]
+cetak(terbalik("halo"))         # ["o", "l", "a", "h"]
 coba {
     terurut([1, "dua"])
 } kecuali e {
@@ -235,9 +235,9 @@ mengembalikan daftar karakter, bukan teks; gunakan `teks_balik` dari
 
 ```indonesiaku
 cetak(pasangkan([1, 2, 3], ["a", "b"]))
-# [[1, a], [2, b]]
+# [[1, "a"], [2, "b"]]
 cetak(pasangkan([1, 2], ["a", "b"], [benar, salah]))
-# [[1, a, benar], [2, b, salah]]
+# [[1, "a", benar], [2, "b", salah]]
 
 untuk p dalam pasangkan(["Ani", "Budi"], [80, 95]) {
     cetak(p[0], "mendapat nilai", p[1])
@@ -332,7 +332,7 @@ cetak(ke_teks("halo"))   # halo
 cetak(repr("halo"))      # "halo"
 cetak(repr(5))           # 5
 cetak(repr(benar), repr(kosong))   # benar kosong
-cetak(repr([1, "a"]))    # [1, a]
+cetak(repr([1, "a"]))    # [1, "a"]
 ```
 
 Pakai `ke_teks` untuk ditampilkan ke pengguna, dan `repr` saat men-*debug* —

@@ -263,6 +263,45 @@ static void printFunction(ObjFunction* function) {
     }
 }
 
+// Escape sequence for a character inside a quoted string, or NULL when the
+// character can be emitted as-is. Single source of truth: printObject,
+// appendValueText (native.c) and repr() all use it, so the three printing
+// paths cannot drift apart.
+const char* stringEscape(char c) {
+    switch (c) {
+        case '"':  return "\\\"";
+        case '\\': return "\\\\";
+        case '\n': return "\\n";
+        case '\t': return "\\t";
+        case '\r': return "\\r";
+        default:   return NULL;
+    }
+}
+
+// Print a string the way it appears *inside* a collection: quoted, escaped.
+static void printStringRepr(ObjString* str) {
+    putchar('"');
+    for (int i = 0; i < str->length; i++) {
+        const char* esc = stringEscape(str->chars[i]);
+        if (esc != NULL) {
+            fputs(esc, stdout);
+        } else {
+            putchar(str->chars[i]);
+        }
+    }
+    putchar('"');
+}
+
+// Like printValue, but strings are quoted. Used for collection elements so
+// ["a", 1] is distinguishable from [a, 1].
+static void printValueRepr(Value value) {
+    if (IS_STRING(value)) {
+        printStringRepr(AS_STRING(value));
+    } else {
+        printValue(value);
+    }
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_STRING:
@@ -282,7 +321,7 @@ void printObject(Value value) {
             printf("[");
             for (int i = 0; i < list->items.count; i++) {
                 if (i > 0) printf(", ");
-                printValue(list->items.values[i]);
+                printValueRepr(list->items.values[i]);
             }
             printf("]");
             break;
@@ -291,13 +330,18 @@ void printObject(Value value) {
             ObjDict* dict = AS_DICT(value);
             printf("{");
             bool first = true;
-            for (int i = 0; i < dict->table.capacity; i++) {
-                Entry* entry = &dict->table.entries[i];
-                if (entry->key == NULL) continue;
+            // Insertion order, like Python and like kunci()/iteration -- the
+            // hash table's own order would differ from both.
+            for (int i = 0; i < dict->keys.count; i++) {
+                if (!IS_STRING(dict->keys.values[i])) continue;  // deleted
+                ObjString* key = AS_STRING(dict->keys.values[i]);
+                Value val;
+                if (!tableGet(&dict->table, key, &val)) continue;
                 if (!first) printf(", ");
                 first = false;
-                printf("\"%s\": ", entry->key->chars);
-                printValue(entry->value);
+                printStringRepr(key);
+                printf(": ");
+                printValueRepr(val);
             }
             printf("}");
             break;

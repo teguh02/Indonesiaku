@@ -13,4 +13,4 @@ benar
 [4, 3, 2, 1]
 === urutkan (angka & string) ===
 [1, 2, 3, 5, 8, 9]
-[apel, belimbing, ceri, mangga]
+["apel", "belimbing", "ceri", "mangga"]

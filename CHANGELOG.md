@@ -8,6 +8,9 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **Teks di dalam koleksi dicetak dengan kutip (`repr`)** — `cetak(["a"])`
+  kini `["a"]`, bukan `[a]`. Aturan escape tunggal dipakai bersama oleh
+  `cetak`, `ke_teks`, `format`, f-string, dan `repr`.
 - ✅ **Pesan galat kompilasi dengan kolom, potongan baris, dan caret** —
   `[baris 2, kolom 11] ...` diikuti baris sumber dan `^` di bawah token.
   Baris panjang dipotong dengan `…`, tab disalin apa adanya agar caret lurus.
@@ -71,6 +74,9 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Ukuran biner naik ~140 KB → ~1,2 MB.
 
 ### Fixed
+- 🐛 **Kamus dicetak sesuai urutan penambahan**, bukan urutan tabel hash.
+  Sebelumnya `cetak(d)` bisa berbeda urutan dari `kunci(d)` dan dari
+  perulangan `untuk ... dalam d` pada kamus yang sama.
 - 🐛 **Kompilator menggantung selamanya pada `}` yang tidak punya pasangan.**
   Berkas yang hanya berisi `}` pun membuat `indk` berputar tanpa henti
   (exit 124) alih-alih melaporkan galat. `declaration()` sengaja kembali
