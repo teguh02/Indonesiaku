@@ -175,7 +175,7 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 | `uuid` | `uuid` | `uuid4()` | | P2 |
 | `secrets` | `rahasia` | `token_heksa`, `token_url`, `pilih` | | P2 |
 | `zipfile` / `gzip` | `zip` / `gzip` | | | P3 (embed miniz) |
-| `sqlite3` | `sqlite` | `sambung`, `eksekusi`, `ambil_semua`, `simpan` | | P3 (embed sqlite amalgamation — public domain) |
+| `sqlite3` | `sqlite` | `db_buka`, `db_eksekusi`, `db_ambil_semua`, `db_ambil_satu`, `db_mulai/komit/batal`, `db_tutup` | | P1 — Fase 3 (embed amalgamation, public domain) |
 | `html` / `xml` | `html` / `xml` | `lolos`, pengurai sederhana | `json_escape` analog | P3 |
 | `tomllib` | `toml` | `muat` | | P3 |
 

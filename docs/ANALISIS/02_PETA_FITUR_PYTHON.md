@@ -256,7 +256,7 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 | `socket` | `soket` | ✅ (TCP, localhost) | — |
 | `http.server` / `urllib` | `http` | 🟡 parse/build | 6 |
 | `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | ❌ | 6 |
-| `sqlite3` | `sqlite` | ❌ | 8 (butuh FFI) |
+| `sqlite3` | `sqlite` (`db_*`) | ❌ | 3 (amalgamation, tanpa FFI — RENCANA_FITUR/basis_data_sqlite.md) |
 | `threading` / `asyncio` | `utas` / `asinkron` | ❌ | 7 |
 | `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | ❌ | 6 |
 | `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | ❌ | 6 |

@@ -81,14 +81,21 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 `bulat` int64 (+ bignum), `tupel`, `himpunan`, penugasan berganda & unpacking,
 `*args`/`**kwargs`, list comprehension, operator bitwise, `buang` (del),
 kunci kamus non-teks, string per karakter (Unicode), `jenis()` mengembalikan
-kelas, builtin P1–P2 dari 02 §D. Ref: K2, K8, K11, K13, 06 §4–6.
+kelas, builtin P1–P2 dari 02 §D — lihat
+[`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md)
+(`jumlah`, `terurut`, `semua`, `pasangkan`, `bulatkan`, …; sebagian bisa
+masuk lebih awal di Fase 1 karena tidak butuh tipe baru).
+Ref: K2, K8, K11, K13, 06 §4–6.
 
 ### Fase 3 — Modul & pustaka inti (0.9)
 
 `ObjModule` dengan namespace, `impor x`, `dari x impor y sebagai z`, paket,
 jalur pencarian (`INDK_PATH`), `__utama__`; modul P1 dari katalog 07:
 `matematika`, `acak`, `teks`, `sistem`, `waktu`, `tanggal_waktu`, `json`
-(native). Ref: 04 §6, 07 §1–5.
+(native). Ditambah **basis data SQLite** — lihat
+[`RENCANA_FITUR/basis_data_sqlite.md`](RENCANA_FITUR/basis_data_sqlite.md)
+(dimajukan dari Fase 8: amalgamation adalah satu berkas `.c`, tidak butuh FFI).
+Ref: 04 §6, 07 §1–5.
 
 ### ★ Rilis 1.0 — "Stabil untuk umum"
 
@@ -126,7 +133,8 @@ generasional, utas/asinkron. Ref: 04 §1, §8–10, §12.
 
 ### Fase 8 — Ekosistem
 
-Manajer paket + registri, API embedding C, FFI, `sqlite`, TLS/HTTPS, GUI,
+Manajer paket + registri, API embedding C, FFI, MySQL/PostgreSQL (klien
+jaringan — `sqlite` sendiri sudah dimajukan ke Fase 3), TLS/HTTPS, GUI,
 AOT/bundel executable, anotasi tipe opsional, mode sandbox untuk sekolah.
 Ref: 04 §11–13, 05.
 
