@@ -27,7 +27,6 @@ jobs:
             
           - os: windows-latest
             artifact_name: indk-windows.exe
-            build_cmd: "make clean && make"
 
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +50,12 @@ jobs:
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: powershell
-        run: ${{ matrix.build_cmd }}
+        run: |
+          # PowerShell 5 (bawaan windows-latest) TIDAK mengenal '&&' sebagai
+          # pemisah perintah, jadi 'make clean && make' gagal parse sebelum
+          # kompilasi dimulai. Dipisah jadi dua baris.
+          make clean
+          make
 
       - name: Verify binary
         if: runner.os != 'Windows'
