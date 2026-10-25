@@ -80,13 +80,14 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 ✅ ``bulat`` int64 ([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md));
 ✅ penugasan berganda & unpacking ([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md));
-✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md)).
+✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md));
+✅ kunci kamus bukan cuma teks — `Value`-based (`himpunan()`/`tupel()`/bitwise masih tunggu) ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md)).
 
-Sisa butir Fase 2 yang **belum selesai**:
-- ``tupel`` dan ``himpunan``, operator bitwise ``& | ^ ~ << >>``, builtin
-  ``himpunan()``, ``tupel()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
-  ``ke_desimal``, ``daftar()`` — lihat
-  [`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md).
+> Fase 2 **baru sebagian selesai** — yang tersisa masuk Fase berikutnya:
+> ``tupel``, ``himpunan``, operator bitwise ``& | ^ ~ << >>``, builtin
+> ``himpunan()``, ``tupel()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
+> ``ke_desimal``, ``daftar()`` — lihat
+> [`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md).
 
 Ref: K2, K8, K11, K13, 06 §4–6.
 
