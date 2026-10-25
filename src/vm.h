@@ -116,13 +116,14 @@ Value pop();
 void runtimeError(const char* format, ...);
 void fatalError(const char* format, ...);
 void nativeRaise(const char* format, ...);
-void nativeRaiseTipe(const char* format, ...);
+void nativeRaiseKelas(ObjClass* klass, const char* format, ...);
 // Call an Indonesiaku callable from inside a native function. `callee` and
 // `argCount` arguments must already be on the VM stack (callee first); on
 // success they are replaced by the single result value, which is also
 // returned. Returns false after flagging the error (nativeRaise-style) when
 // the call fails or raises.
 bool callFromNative(int argCount, Value* result);
-bool valueIsFalsey(Value value);
+bool valueIsInstanceOf(Value value, Value klass);
+bool isFalsey(Value value);
 
 #endif

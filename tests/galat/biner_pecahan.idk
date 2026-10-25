@@ -1,0 +1,2 @@
+# biner() hanya untuk bilangan bulat.
+cetak(biner(1.5))

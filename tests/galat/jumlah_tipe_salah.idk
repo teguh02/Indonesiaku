@@ -1,0 +1,2 @@
+# jumlah hanya menerima angka.
+cetak(jumlah(["a", "b"]))

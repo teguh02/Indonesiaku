@@ -1,0 +1,2 @@
+# max() dari urutan kosong tidak punya jawaban.
+cetak(max([]))

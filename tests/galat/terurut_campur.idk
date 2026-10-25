@@ -1,0 +1,2 @@
+# Angka dan teks tidak bisa dibandingkan.
+cetak(terurut([1, "a"]))

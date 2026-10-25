@@ -42,6 +42,22 @@ Value nativeFnAtap(int argCount, Value* args);
 Value nativeFnAcak(int argCount, Value* args);
 
 // ============================================================================
+// ANGKA & TIPE
+// ============================================================================
+
+Value nativeFnBulatkan(int argCount, Value* args);        // bulatkan(x[, digit])
+Value nativeFnBagiSisa(int argCount, Value* args);        // bagi_sisa(a, b)
+Value nativeFnBiner(int argCount, Value* args);           // biner(n)
+Value nativeFnOktal(int argCount, Value* args);           // oktal(n)
+Value nativeFnHeksa(int argCount, Value* args);           // heksa(n)
+Value nativeFnKeBulat(int argCount, Value* args);         // ke_bulat(x)
+Value nativeFnKeLogika(int argCount, Value* args);        // ke_logika(x)
+Value nativeFnAdalahInstansi(int argCount, Value* args);  // adalah_instansi(o, K)
+Value nativeFnBisaDipanggil(int argCount, Value* args);   // bisa_dipanggil(x)
+Value nativeFnRepr(int argCount, Value* args);            // repr(x)
+Value nativeFnId(int argCount, Value* args);              // id(x)
+
+// ============================================================================
 // FUNGSI STRING
 // ============================================================================
 

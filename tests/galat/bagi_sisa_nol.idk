@@ -1,0 +1,2 @@
+# Pembagi nol.
+cetak(bagi_sisa(10, 0))

@@ -1,0 +1,67 @@
+# Builtin inti: agregasi, urutan, transformasi, angka, dan tipe.
+
+fungsi kuadrat(n) {
+    kembalikan n * n
+}
+
+fungsi genap(n) {
+    kembalikan n % 2 == 0
+}
+
+# --- Agregasi ---
+cetak(jumlah([1, 2, 3]), jumlah([1, 2], 10), jumlah([]))
+cetak(jumlah(rentang(5)))
+
+# Daftar kosong mengikuti Python: semua([]) benar, ada_yang([]) salah.
+cetak(semua([benar, benar]), semua([1, 0]), semua([]))
+cetak(ada_yang([salah, benar]), ada_yang([0, 0]), ada_yang([]))
+
+# --- Urutan ---
+variabel asli = [3, 1, 2]
+cetak(terurut(asli), terurut(asli, benar))
+cetak(asli)                      # terurut tidak mengubah argumennya
+cetak(terurut(["pisang", "apel"]))
+cetak(terbalik([1, 2, 3]))
+
+# Teks dan rentang juga bisa diurutkan/dibalik.
+cetak(terurut("halo"))
+cetak(terbalik(rentang(4)))
+
+# --- Pasangan dan transformasi ---
+cetak(pasangkan([1, 2], ["a", "b"]))
+cetak(pasangkan([1, 2, 3], ["a"]))     # panjang mengikuti yang terpendek
+cetak(peta(kuadrat, [1, 2, 3]))
+cetak(saring(genap, [1, 2, 3, 4]))
+cetak(jumlah(peta(kuadrat, terurut([3, 1, 2]))))
+
+# --- Angka ---
+# bulatkan memakai banker's rounding seperti Python: 0.5 dan 2.5 membulat ke genap.
+cetak(bulatkan(0.5), bulatkan(1.5), bulatkan(2.5), bulatkan(3.5))
+cetak(bulatkan(-0.5), bulatkan(-1.5), bulatkan(-2.5))
+cetak(bulatkan(3.14159, 2), bulatkan(1250, -2), bulatkan(1350, -2))
+
+# bagi_sisa konsisten dengan // dan % (sisa mengikuti tanda pembagi).
+cetak(bagi_sisa(17, 5), bagi_sisa(-7, 2), bagi_sisa(7, -2))
+
+cetak(biner(10), oktal(10), heksa(255))
+cetak(biner(-255), biner(0))
+
+# ke_bulat memotong ke arah nol, bukan ke bawah.
+cetak(ke_bulat(3.9), ke_bulat(-3.9), ke_bulat("12"))
+cetak(ke_logika(0), ke_logika([]), ke_logika("a"))
+
+# max/min kini menerima satu daftar, bentuk lama tetap jalan.
+cetak(max([3, 1, 2]), min([3, 1, 2]))
+cetak(max(3, 1, 2), min(3, 1, 2))
+
+# --- Tipe dan identitas ---
+kelas Hewan { }
+kelas Kucing < Hewan { }
+
+variabel c = Kucing()
+cetak(adalah_instansi(c, Kucing), adalah_instansi(c, Hewan), adalah_instansi(5, Hewan))
+cetak(bisa_dipanggil(kuadrat), bisa_dipanggil(Hewan), bisa_dipanggil(5))
+cetak(repr("halo"), repr(5))
+
+variabel d = [1, 2]
+cetak(id(d) == id(d), id(d) == id([1, 2]))
