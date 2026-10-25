@@ -33,6 +33,7 @@ kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
 | K14 | Kebijakan stabilitas & versi | SemVer + periode deprecation 1 minor | — | disetujui |
 | K15 | Nilai bawaan parameter | Dievaluasi **tiap panggilan**, bukan sekali saat definisi | Ya (beda dari Python) | disetujui — selesai ✅ (Fase 1) |
 | K16 | Argumen bernama | `f(b=2)`, boleh melewati parameter di tengah | Ya | disetujui — selesai ✅ (Fase 1) |
+| K17 | Sintaks tupel & himpunan | Tupel `(1, 2)`/`(1,)`/`()` seperti Python; himpunan **hanya** lewat `himpunan([...])`, tanpa literal `{1, 2}` | Tidak | disetujui (2026-10-25) |
 
 ---
 
@@ -274,6 +275,57 @@ bernama 'warna'.`, `Parameter 'a' diisi lebih dari sekali.`
 
 Fungsi bawaan (native) belum menerima argumen bernama dan menolaknya dengan
 pesan jelas. `cetak(pisah=, akhir=)` menunggu K12.
+
+## K17 — Sintaks tupel dan himpunan
+
+**Disetujui pemilik proyek, 2026-10-25.**
+
+Kedua tipe ini memakai simbol yang sudah punya arti di Indonesiaku: kurung
+`( )` untuk pengelompokan dan kurung kurawal `{ }` untuk blok serta literal
+kamus. Keputusannya:
+
+**Tupel — persis seperti Python:**
+
+| Tulisan | Arti |
+|---|---|
+| `(1, 2)` | tupel dua elemen |
+| `(1,)` | tupel satu elemen — **koma wajib** |
+| `()` | tupel kosong |
+| `(1)` | **bukan** tupel: tetap pengelompokan, nilainya `1` |
+| `(1, 2,)` | koma di akhir boleh |
+
+Dicetak juga seperti Python: `(1, 2)`, `(1,)`, `()`. Aturan `(1,)` memang
+mengejutkan pemula, tetapi mengikuti Python berarti apa yang dipelajari di
+sini langsung berlaku di sana — dan tanpa koma tidak ada cara membedakan
+tupel satu elemen dari pengelompokan.
+
+**Belum diputuskan — tupel tanpa kurung** (`x = 1, 2`, `kembalikan a, b`).
+Di Python keduanya membuat tupel. Di Indonesiaku saat ini keduanya galat
+kompilasi; hanya penugasan berganda `a, b = 1, 2` yang menerima koma tanpa
+kurung. Ini usulan terpisah (paling berguna: `kembalikan a, b` untuk
+mengembalikan beberapa nilai) dan baru dikerjakan setelah ada keputusan.
+
+**Himpunan — hanya lewat konstruktor:**
+
+```indonesiaku
+kosong = himpunan()
+angka = himpunan([1, 2, 2, 3])     # himpunan berisi 1, 2, 3
+```
+
+**Tidak ada literal `{1, 2}`.** Kurung kurawal di Indonesiaku sudah dipakai
+untuk dua hal (blok dan literal kamus `{"a": 1}`, dibedakan oleh posisi —
+lihat `AGENTS.md`). Arti ketiga akan membuat `{x}` ambigu (blok berisi `x`?
+himpunan berisi `x`?) dan memaksa aturan pembeda tambahan di `dictLiteral`,
+`prescanFunctionBody`, dan `skipBalancedBraces`, yang semuanya menghitung
+kurung kurawal mentah. Python sendiri pun tidak punya literal himpunan
+kosong (`{}` adalah kamus), jadi pemula memang harus belajar `set()`.
+
+Karena tidak ada literal, himpunan **dicetak sebagai pemanggilan
+konstruktor**: `himpunan({1, 2})` di Python menjadi `himpunan([1, 2])` di
+Indonesiaku, supaya hasil cetaknya selalu kode yang sah untuk ditulis ulang.
+
+**Dampak:** tidak ada perubahan pada aturan `{ }` (K4); pembeda tupel
+cukup di `grouping()` (koma setelah ekspresi pertama).
 
 ## K18 — SQLite di-*vendor* sebagai amalgamation, bukan lewat FFI
 
