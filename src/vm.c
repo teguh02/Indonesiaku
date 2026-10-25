@@ -1106,6 +1106,69 @@ static bool repeatCount(Value value, int* out) {
     return true;
 }
 
+// Operand of a bitwise operator: bulat, or logika as 0/1 (Python's bool is an
+// int subclass). Anything else, desimal included, is rejected.
+static bool bitwiseOperand(Value value, int64_t* out) {
+    if (IS_INT(value)) { *out = AS_INT(value); return true; }
+    if (IS_BOOL(value)) { *out = AS_BOOL(value) ? 1 : 0; return true; }
+    return false;
+}
+
+static const char* bitwiseSymbol(uint8_t op) {
+    switch (op) {
+        case OP_BIT_AND:     return "&";
+        case OP_BIT_OR:      return "|";
+        case OP_BIT_XOR:     return "^";
+        case OP_SHIFT_LEFT:  return "<<";
+        case OP_SHIFT_RIGHT: return ">>";
+        default:             return "?";
+    }
+}
+
+// a OP b for & | ^ << >>, replacing the two operands on the stack. Dispatches
+// on operand type so set union/intersection (himpunan | himpunan) can be added
+// here later without new opcodes. Returns false after raising a runtime error.
+static bool bitwiseBinary(uint8_t op) {
+    Value left = peek(1);
+    Value right = peek(0);
+    int64_t a, b;
+    if (!bitwiseOperand(left, &a) || !bitwiseOperand(right, &b)) {
+        vm.runtimeErrorClass = vm.galatTipe;
+        runtimeError("Operand '%s' harus bilangan bulat.", bitwiseSymbol(op));
+        return false;
+    }
+
+    int64_t result;
+    switch (op) {
+        case OP_BIT_AND: result = a & b; break;
+        case OP_BIT_OR:  result = a | b; break;
+        case OP_BIT_XOR: result = a ^ b; break;
+        default: {  // shifts
+            if (b < 0) {
+                vm.runtimeErrorClass = vm.galatNilai;
+                runtimeError("Jumlah geseran tidak boleh negatif.");
+                return false;
+            }
+            if (op == OP_SHIFT_RIGHT) {
+                result = intShiftRight(a, b);
+            } else if (!intShiftLeft(a, b, &result)) {
+                vm.runtimeErrorClass = vm.galatLuapan;
+                runtimeError("Hasil geser kiri melebihi jangkauan bilangan bulat.");
+                return false;
+            }
+            break;
+        }
+    }
+
+    // logika & logika stays logika (benar & salah -> salah), as with Python's
+    // bool; shifts and any mix with bulat give bulat.
+    bool keepsBool = IS_BOOL(left) && IS_BOOL(right) &&
+                     (op == OP_BIT_AND || op == OP_BIT_OR || op == OP_BIT_XOR);
+    vm.stackTop -= 2;
+    push(keepsBool ? BOOL_VAL(result != 0) : INT_VAL(result));
+    return true;
+}
+
 static InterpretResult run() {
     CallFrame* frame = &vm.frames[vm.frameCount - 1];
 
@@ -1539,6 +1602,27 @@ static InterpretResult run() {
                 Value result = pop();
                 pop();
                 push(result);
+                break;
+            }
+            case OP_BIT_AND:
+            case OP_BIT_OR:
+            case OP_BIT_XOR:
+            case OP_SHIFT_LEFT:
+            case OP_SHIFT_RIGHT:
+                if (!bitwiseBinary(instruction)) return INTERPRET_RUNTIME_ERROR;
+                break;
+            case OP_BIT_NOT: {
+                // ~logika is rejected: Python 3.12 deprecated it and its value
+                // (~True == -2) only confuses. 'tidak' is the logical NOT.
+                if (!IS_INT(peek(0))) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError(IS_BOOL(peek(0))
+                        ? "Operand '~' harus bilangan bulat (untuk logika pakai 'tidak')."
+                        : "Operand '~' harus bilangan bulat.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int64_t value = AS_INT(pop());
+                push(INT_VAL(~value));  // never overflows: ~INT64_MIN == INT64_MAX
                 break;
             }
             case OP_FLOOR_DIVIDE: {

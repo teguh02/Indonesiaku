@@ -88,6 +88,11 @@ bool intMulOverflow(int64_t a, int64_t b, int64_t* out);
 // return false for a zero divisor; intFloorDiv also refuses INT64_MIN / -1.
 bool intFloorDiv(int64_t a, int64_t b, int64_t* out);
 bool intModulo(int64_t a, int64_t b, int64_t* out);
+// a << n without undefined behaviour; false when the result leaves int64.
+// n must be >= 0 (callers reject negative counts first).
+bool intShiftLeft(int64_t a, int64_t n, int64_t* out);
+// Python's a >> n for n >= 0: floors toward -inf, and n >= 64 gives 0 or -1.
+int64_t intShiftRight(int64_t a, int64_t n);
 // Exponentiation by squaring. `exp` must be >= 0; *overflow is set instead of
 // wrapping. Negative exponents are handled by the caller as doubles.
 int64_t intPow(int64_t base, int64_t exp, bool* overflow);

@@ -434,11 +434,30 @@ Token scanToken() {
             return makeToken(
                 match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
         case '<':
+            if (match('<')) {
+                return makeToken(
+                    match('=') ? TOKEN_LESS_LESS_EQUAL : TOKEN_LESS_LESS);
+            }
             return makeToken(
                 match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
         case '>':
+            if (match('>')) {
+                return makeToken(
+                    match('=') ? TOKEN_GREATER_GREATER_EQUAL : TOKEN_GREATER_GREATER);
+            }
             return makeToken(
                 match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+        case '&':
+            return makeToken(
+                match('=') ? TOKEN_AMPERSAND_EQUAL : TOKEN_AMPERSAND);
+        case '|':
+            return makeToken(
+                match('=') ? TOKEN_PIPE_EQUAL : TOKEN_PIPE);
+        case '^':
+            return makeToken(
+                match('=') ? TOKEN_CARET_EQUAL : TOKEN_CARET);
+        case '~':
+            return makeToken(TOKEN_TILDE);
         case '"': return string();
         case '\'': {
             // Single quote strings

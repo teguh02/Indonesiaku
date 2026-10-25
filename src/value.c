@@ -208,6 +208,26 @@ bool intModulo(int64_t a, int64_t b, int64_t* out) {
     return true;
 }
 
+bool intShiftLeft(int64_t a, int64_t n, int64_t* out) {
+    if (a == 0) { *out = 0; return true; }
+    if (n >= 64) return false;  // any non-zero a overflows; shifting by 64 is UB
+    // a fits after shifting iff it lies within [INT64_MIN >> n, INT64_MAX >> n]
+    // (for n == 63 that admits only -1: -1 << 63 == INT64_MIN).
+    // (INT64_MIN >> n is written as -(INT64_MAX >> n) - 1: same value, but no
+    // implementation-defined shift of a negative number.)
+    if (a > (INT64_MAX >> n) || a < -(INT64_MAX >> n) - 1) return false;
+    *out = (int64_t)((uint64_t)a << n);  // unsigned shift: no UB on negatives
+    return true;
+}
+
+int64_t intShiftRight(int64_t a, int64_t n) {
+    if (n >= 63) return a < 0 ? -1 : 0;
+    // Floor division by 2^n, written without relying on implementation-
+    // defined right shifts of negative values.
+    if (a >= 0) return a >> n;
+    return -(int64_t)(((uint64_t)(-(a + 1)) >> n)) - 1;
+}
+
 int64_t intPow(int64_t base, int64_t exp, bool* overflow) {
     int64_t result = 1;
     int64_t factor = base;

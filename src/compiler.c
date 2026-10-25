@@ -35,6 +35,10 @@ typedef enum {
     PREC_NOT,         // tidak (lebih lemah dari perbandingan, seperti Python)
     PREC_EQUALITY,    // == !=
     PREC_COMPARISON,  // < > <= >=
+    PREC_BIT_OR,      // |   (bitwise: Python's order, all above comparisons)
+    PREC_BIT_XOR,     // ^
+    PREC_BIT_AND,     // &
+    PREC_SHIFT,       // << >>
     PREC_TERM,        // + -
     PREC_FACTOR,      // * / % //
     PREC_UNARY,       // - !
@@ -681,6 +685,11 @@ static void binary(bool canAssign) {
         case TOKEN_PERCENT:       emitByte(OP_MODULO); break;
         case TOKEN_POWER:         emitByte(OP_POWER); break;
         case TOKEN_SLASH_SLASH:   emitByte(OP_FLOOR_DIVIDE); break;
+        case TOKEN_AMPERSAND:     emitByte(OP_BIT_AND); break;
+        case TOKEN_PIPE:          emitByte(OP_BIT_OR); break;
+        case TOKEN_CARET:         emitByte(OP_BIT_XOR); break;
+        case TOKEN_LESS_LESS:     emitByte(OP_SHIFT_LEFT); break;
+        case TOKEN_GREATER_GREATER: emitByte(OP_SHIFT_RIGHT); break;
         default: return; // Unreachable.
     }
 }
@@ -1389,6 +1398,11 @@ static bool isCompoundAssign(TokenType type) {
         case TOKEN_SLASH_SLASH_EQUAL:
         case TOKEN_PERCENT_EQUAL:
         case TOKEN_POWER_EQUAL:
+        case TOKEN_AMPERSAND_EQUAL:
+        case TOKEN_PIPE_EQUAL:
+        case TOKEN_CARET_EQUAL:
+        case TOKEN_LESS_LESS_EQUAL:
+        case TOKEN_GREATER_GREATER_EQUAL:
             return true;
         default:
             return false;
@@ -1404,6 +1418,11 @@ static bool matchCompoundAssign(uint8_t* op) {
         {TOKEN_SLASH_SLASH_EQUAL, OP_FLOOR_DIVIDE},
         {TOKEN_PERCENT_EQUAL,     OP_MODULO},
         {TOKEN_POWER_EQUAL,       OP_POWER},
+        {TOKEN_AMPERSAND_EQUAL,   OP_BIT_AND},
+        {TOKEN_PIPE_EQUAL,        OP_BIT_OR},
+        {TOKEN_CARET_EQUAL,       OP_BIT_XOR},
+        {TOKEN_LESS_LESS_EQUAL,   OP_SHIFT_LEFT},
+        {TOKEN_GREATER_GREATER_EQUAL, OP_SHIFT_RIGHT},
     };
     for (size_t i = 0; i < sizeof(COMPOUND_OPS) / sizeof(COMPOUND_OPS[0]); i++) {
         if (match(COMPOUND_OPS[i].token)) {
@@ -1521,6 +1540,7 @@ static void unary(bool canAssign) {
         case TOKEN_BANG:
         case TOKEN_TIDAK: emitByte(OP_NOT); break;
         case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+        case TOKEN_TILDE: emitByte(OP_BIT_NOT); break;
         default: return; // Unreachable.
     }
 }
@@ -1652,6 +1672,12 @@ ParseRule rules[] = {
   [TOKEN_ADALAH]        = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_BUKAN]         = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_AMPERSAND]     = {NULL,     binary, PREC_BIT_AND},
+  [TOKEN_PIPE]          = {NULL,     binary, PREC_BIT_OR},
+  [TOKEN_CARET]         = {NULL,     binary, PREC_BIT_XOR},
+  [TOKEN_TILDE]         = {unary,    NULL,   PREC_NONE},
+  [TOKEN_LESS_LESS]     = {NULL,     binary, PREC_SHIFT},
+  [TOKEN_GREATER_GREATER] = {NULL,   binary, PREC_SHIFT},
   [TOKEN_SLASH_SLASH_EQUAL] = {NULL, NULL,   PREC_NONE},
   [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_MINUS_EQUAL]   = {NULL,     NULL,   PREC_NONE},
