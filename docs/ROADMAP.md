@@ -83,13 +83,17 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 ✅ ``bulat`` int64 ([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md));
 ✅ penugasan berganda & unpacking ([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md));
 ✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md));
-✅ kunci kamus bukan cuma teks — `Value`-based (`himpunan()`/`tupel()`/bitwise masih tunggu) ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md)).
+✅ kunci kamus bukan cuma teks — `Value`-based (`himpunan()`/`tupel()` masih tunggu) ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md));
+✅ operator bitwise `& | ^ ~ << >>` + `&= |= ^= <<= >>=` ([rencana](RENCANA_FITUR/selesai/operator_bitwise.md)).
 
-> Fase 2 **baru sebagian selesai** — yang tersisa masuk Fase berikutnya:
-> ``tupel``, ``himpunan``, operator bitwise ``& | ^ ~ << >>``, builtin
+> Fase 2 **baru sebagian selesai** — yang tersisa:
+> ``tupel``, ``himpunan`` (keduanya butuh keputusan sintaks dulu: `(1,)`
+> berbenturan dengan kurung pengelompokan, `{1, 2}` dengan blok `{ }` dan
+> literal kamus — catat di `ANALISIS/03_KEPUTUSAN_DESAIN.md`), builtin
 > ``himpunan()``, ``tupel()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
 > ``ke_desimal``, ``daftar()`` — lihat
-> [`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md).
+> [`RENCANA_FITUR/selesai/builtin_inti.md`](RENCANA_FITUR/selesai/builtin_inti.md)
+> (rencana itu selesai sebagian; builtin di atas belum ada).
 
 Ref: K2, K8, K11, K13, 06 §4–6.
 

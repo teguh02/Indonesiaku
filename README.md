@@ -64,7 +64,7 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)
 - ✅ **Argumen bernama** `gambar("Judul", tengah=benar)` (boleh melewati parameter di tengah)
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
-- ✅ **Dukungan tipe immutable & koleksi** (KUNCI Fase 2): **tupel** `(1, 2)` immutable berurutan, **himpunan/set** `{1, 2, 3}` koleksi unik, operator bitwise `& | ^ ~ << >>` pada angka
+- ✅ **Operator bitwise** `& | ^ ~ << >>` (dan `&= |= ^= <<= >>=`) pada `bulat`, presedensi seperti Python
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
@@ -89,12 +89,10 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 
 ### Akan Datang
+- 🔲 **Tupel** (immutable, hashable, bisa jadi kunci kamus) dan **himpunan/set**
+  (koleksi anggota unik) — sisa Fase 2, lihat [docs/ROADMAP.md](docs/ROADMAP.md)
 - 🔲 String methods lanjutan & file I/O
 - 🔲 Standard library yang lebih lengkap
-
-> **Catatan Fase 2:** pengembangan saat ini mencakup penyelesaian tupel
-> (immutable, hashable, jadi kunci kamus), himpunan/set (koleksi anggota unik
-> dengan semantik Python), dan operator bitwise (`& | ^ ~ << >>`) pada angka.
 
 ## 🔧 Instalasi
 

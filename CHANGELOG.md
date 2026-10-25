@@ -57,6 +57,12 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Iterasi `untuk k dalam kamus` tetap urutan penyisipan (opcode `OP_SEQ_GET`).
 
 ### Added — Fase 2
+- 🔣 **Operator bitwise** `&`, `|`, `^`, `~`, `<<`, `>>` dan
+  `&= |= ^= <<= >>=` (`examples/operator_bitwise.idk`), presedensi seperti
+  Python (di atas perbandingan, di bawah `+ -`). Hanya untuk `bulat`;
+  `desimal` → `GalatTipe`, geser negatif → `GalatNilai`, `<<` di luar int64 →
+  `GalatLuapan`. `benar & salah` tetap logika seperti `bool` Python; `~benar`
+  ditolak (pakai `tidak`). `^` adalah XOR, bukan pangkat.
 - 🔁 **List comprehension** `[ekspresi untuk x dalam urutan jika syarat]`
   (`examples/komprehensi.idk`). Satu `untuk` dan satu `jika` opsional; boleh
   bersarang. Variabel loop hanya hidup di dalam comprehension, dan nama luar

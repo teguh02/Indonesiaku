@@ -248,6 +248,42 @@ Aturannya sama dengan Python:
 
 > Contoh: [`examples/operator_aritmetika.idk`](../examples/operator_aritmetika.idk)
 
+### Operator Bitwise
+
+Bekerja pada bit-bit bilangan `bulat`, sama seperti di Python:
+
+```indonesiaku
+cetak(5 & 3)      # 1   (AND: bit yang menyala di keduanya)
+cetak(5 | 3)      # 7   (OR: bit yang menyala di salah satu)
+cetak(5 ^ 3)      # 6   (XOR: menyala di salah satu saja)
+cetak(~5)         # -6  (NOT: ~a sama dengan -a - 1)
+cetak(1 << 4)     # 16  (geser kiri = kali 2 sebanyak 4 kali)
+cetak(-8 >> 1)    # -4  (geser kanan, dibulatkan ke bawah)
+
+x = 0b1010
+x |= 0b0101       # 15  (ada juga &=, ^=, <<=, >>=)
+```
+
+Contoh nyata — izin sebagai *flag*:
+
+```indonesiaku
+BACA = 1
+TULIS = 2
+izin = BACA | TULIS
+jika izin & TULIS { cetak("boleh menulis") }
+```
+
+Aturan penting:
+
+- `^` adalah XOR, **bukan** pangkat. Pangkat tetap `**`.
+- Hanya untuk `bulat`. Memakai `desimal` (mis. `2.5 & 1`) menaikkan `GalatTipe`.
+- `benar & salah` menghasilkan logika (`salah`), seperti Python. Untuk
+  membalik logika pakai `tidak`, bukan `~`.
+- Geser dengan jumlah negatif menaikkan `GalatNilai`; hasil `<<` yang melebihi
+  jangkauan bulat 64-bit menaikkan `GalatLuapan`.
+
+> Contoh: [`examples/operator_bitwise.idk`](../examples/operator_bitwise.idk)
+
 > **Akhir baris adalah pemisah pernyataan.** Gunakan satu pernyataan per baris tanpa `;`. Newline di dalam `()` atau `[]` diabaikan sehingga argumen dan list dapat ditulis multi-baris; `{}` tetap digunakan untuk blok.
 
 ### Operator Perbandingan
@@ -388,15 +424,19 @@ cetak("apel" dalam harga)         # benar  (kunci kamus)
 Urutan eksekusi dari tertinggi ke terendah:
 
 ```
-1. **           (pangkat, dihitung dari kanan)
-2. -            (minus unary)
-3. *, /, //, %  (perkalian, pembagian, pembagian bulat, modulo)
-4. +, -         (penjumlahan, pengurangan)
-5. <, <=, >, >=, dalam, tidak dalam (perbandingan & keanggotaan)
-6. ==, !=       (kesetaraan)
-7. tidak        (NOT: tidak a == b berarti tidak (a == b))
-8. dan          (AND)
-9. atau         (OR)
+1.  **           (pangkat, dihitung dari kanan)
+2.  -, ~         (minus unary, NOT bitwise)
+3.  *, /, //, %  (perkalian, pembagian, pembagian bulat, modulo)
+4.  +, -         (penjumlahan, pengurangan)
+5.  <<, >>       (geser bit)
+6.  &            (AND bitwise)
+7.  ^            (XOR bitwise)
+8.  |            (OR bitwise)
+9.  <, <=, >, >=, dalam, tidak dalam (perbandingan & keanggotaan)
+10. ==, !=       (kesetaraan)
+11. tidak        (NOT: tidak a == b berarti tidak (a == b))
+12. dan          (AND)
+13. atau         (OR)
 ```
 
 **Contoh:**

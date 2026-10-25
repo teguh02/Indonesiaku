@@ -71,7 +71,7 @@ Prinsip penamaan:
 | Ekspresi kondisional `x jika c selain y` | | ✅ | 1 — selesai; kondisi dinilai lebih dulu |
 | Rantai perbandingan `1 < x < 3` | | ✅ | — |
 | Floor division `//`, `//=` | | ❌ **rusak** (B1) | 0 |
-| Operator bitwise `& \| ^ ~ << >>` | | ❌ | 2 |
+| Operator bitwise `& \| ^ ~ << >>` | `& \| ^ ~ << >>` (sama) | ✅ | — |
 | List comprehension | `[x*2 untuk x dalam a jika x > 0]` | ❌ | 2 |
 | Dict/set comprehension, generator expression | | ❌ | 5 |
 | Argumen bawaan `def f(a, b=2)` | | ✅ dievaluasi tiap panggilan (K15) | — |
