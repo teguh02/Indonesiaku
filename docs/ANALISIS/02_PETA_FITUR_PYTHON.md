@@ -36,8 +36,8 @@ Prinsip penamaan:
 | `try` / `except` | `coba` / `kecuali` | 🟡 belum ada filter tipe | 1 |
 | `finally` | `akhirnya` | ❌ (token ada) | 0 |
 | `raise` | `naikkan` | ✅ | — |
-| `import` | `impor "berkas"` | 🟡 tanpa namespace | 3 |
-| `from ... import` / `as` | `dari ... impor` / `sebagai` | ❌ (token ada) | 3 |
+| `import` | `impor nama` / `impor "berkas"` | ✅ namespace per modul; bentuk berkas tetap berbagi namespace | 3 |
+| `from ... import` / `as` | `dari ... impor` / `sebagai` | ✅ | 3 |
 | `pass` | `lewati` | ❌ (token ada) | 0 |
 | `in` (operator) | `dalam` | ✅ | — |
 | `not in` | `tidak dalam` | ✅ | — |
@@ -228,8 +228,8 @@ coba {
 
 | Python | Status | Fase |
 |---|---|---|
-| `import modul` dengan namespace (`modul.fungsi`) | ❌ (semua global bercampur) | 3 |
-| `from modul import a, b` / `as` | ❌ | 3 |
+| `import modul` dengan namespace (`modul.fungsi`) | ✅ | 3 |
+| `from modul import a, b` / `as` | ✅ | 3 |
 | Paket (folder + `__init__`) | ❌ | 3 |
 | Jalur pencarian modul (`sys.path`, `INDK_PATH`) | ❌ (relatif ke cwd) | 3 |
 | `if __name__ == "__main__"` | ❌ → `jika __nama__ == "__utama__"` | 3 |

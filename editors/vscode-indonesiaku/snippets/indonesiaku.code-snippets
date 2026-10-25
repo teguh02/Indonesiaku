@@ -222,5 +222,35 @@
       "cetak(lanjutkan($1, ${3:\"habis\"}))"
     ],
     "description": "Iterator eksplisit dengan iter() dan lanjutkan()"
+  },
+  "Impor modul": {
+    "prefix": "impor",
+    "body": [
+      "impor ${1:modul}"
+    ],
+    "description": "Impor modul sebagai namespace"
+  },
+  "Impor modul dengan alias": {
+    "prefix": "imporsebagai",
+    "body": [
+      "impor ${1:modul} sebagai ${2:alias}"
+    ],
+    "description": "Impor modul dengan nama lain"
+  },
+  "Dari modul impor": {
+    "prefix": "dari",
+    "body": [
+      "dari ${1:modul} impor ${2:nama}"
+    ],
+    "description": "Impor anggota tertentu dari modul"
+  },
+  "Jalankan jika utama": {
+    "prefix": "utama",
+    "body": [
+      "jika __nama__ == \"__utama__\" {",
+      "\t${1:utama()}",
+      "}"
+    ],
+    "description": "Blok yang hanya jalan saat berkas dijalankan langsung"
   }
 }

@@ -1712,8 +1712,82 @@ kelas Kosong { lewati }
 
 ## Modul (impor)
 
-`impor "file.idk"` menjalankan file lain dalam namespace global yang sama
-(di-cache, sehingga impor ulang diabaikan).
+Ada dua bentuk impor. Bentuk **bermodul** (`impor nama`) memberi tiap berkas
+namespace sendiri; bentuk **berkas** (`impor "file.idk"`) menjalankan berkas
+lain dalam namespace yang sama. Keduanya di-cache: berkas yang sama tidak
+pernah dijalankan dua kali.
+
+### `impor nama` — tiap modul punya namespace sendiri
+
+```indonesiaku
+impor matematika
+
+cetak(matematika.mat_fpb(12, 18))      # 6
+```
+
+Nama modul ditulis tanpa tanda kutip dan tanpa `.idk`. Berkas dicari
+berurutan di: direktori berkas yang mengimpor, lalu setiap direktori di
+variabel lingkungan `INDK_PATH`, lalu `pustaka/`.
+
+Modul yang diimpor **tidak** mencemari variabel Anda. Dua modul boleh memakai
+nama yang sama tanpa saling menimpa:
+
+```indonesiaku
+impor matematika
+
+variabel mat_fpb = "punya saya"
+cetak(mat_fpb)                         # punya saya
+cetak(matematika.mat_fpb(12, 18))      # 6
+```
+
+### Alias dengan `sebagai`
+
+```indonesiaku
+impor matematika sebagai mtk
+
+cetak(mtk.mat_kpk(4, 6))               # 12
+```
+
+### `dari ... impor ...`
+
+Mengambil anggota tertentu langsung ke namespace Anda:
+
+```indonesiaku
+dari matematika impor mat_fpb
+cetak(mat_fpb(12, 18))                 # 6
+
+dari matematika impor mat_fpb sebagai fpb
+cetak(fpb(9, 6))                       # 3
+
+dari matematika impor mat_fpb, mat_kpk
+cetak(mat_fpb(8, 12), mat_kpk(4, 6))   # 4 12
+```
+
+### Paket (modul di dalam folder)
+
+Titik berarti subfolder, jadi `impor alat.teks` memuat `alat/teks.idk`.
+Nama yang didefinisikan adalah komponen terakhir (`teks`).
+
+### `__nama__` dan `__utama__`
+
+Setiap berkas punya variabel `__nama__`. Isinya `"__utama__"` bila berkas
+dijalankan langsung, dan nama modulnya bila diimpor. Gunakan ini agar sebuah
+berkas bisa jadi program sekaligus modul:
+
+```indonesiaku
+fungsi utama() {
+    cetak("berjalan sebagai program")
+}
+
+jika __nama__ == "__utama__" {
+    utama()
+}
+```
+
+### Bentuk berkas: `impor "file.idk"`
+
+Bentuk lama tetap berlaku dan **tidak berubah**: berkas dijalankan dalam
+namespace yang sama, sehingga semua namanya langsung tersedia tanpa awalan.
 
 ```indonesiaku
 impor "pustaka/teks.idk"
@@ -1722,7 +1796,12 @@ impor "pustaka/daftar.idk"
 cetak(teks_pisah("a,b,c", ","))        # ["a", "b", "c"]
 cetak(daftar_urutkan([3, 1, 2]))       # [1, 2, 3]
 ```
-> Contoh: [`examples/impor.idk`](../examples/impor.idk)
+
+Pilih `impor nama` untuk kode baru — namespace terpisah mencegah tabrakan
+nama. Bentuk berkas berguna bila Anda memang ingin isinya menyatu.
+
+> Contoh: [`examples/modul.idk`](../examples/modul.idk),
+> [`examples/impor.idk`](../examples/impor.idk)
 > Lihat daftar pustaka standar di [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).
 
 ---

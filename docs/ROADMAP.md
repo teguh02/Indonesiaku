@@ -129,17 +129,28 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 Ref: K2, K8, K11, K13, 06 §4–6.
 
-### Fase 3 — Modul & pustaka inti (0.9)
+### Fase 3 — Modul & pustaka inti (0.9) — ✅ **selesai**
 
-`ObjModule` dengan namespace, `impor x`, `dari x impor y sebagai z`, paket,
-jalur pencarian (`INDK_PATH`), `__utama__`; modul P1 dari katalog 07:
-`matematika`, `acak`, `teks`, `sistem`, `waktu`, `tanggal_waktu`, `json`
-(native). Ditambah **basis data SQLite** — ✅ **selesai**, lihat
+✅ `ObjModule` dengan namespace sendiri per berkas;
+✅ `impor x`, `impor x sebagai y`, `dari x impor y`, `dari x impor y sebagai z`;
+✅ paket (`impor a.b` → `a/b.idk`);
+✅ jalur pencarian (direktori pengimpor → `INDK_PATH` → `pustaka/`);
+✅ `__nama__` / `__utama__`
+([rencana](RENCANA_FITUR/selesai/modul_namespace.md)).
+✅ **Basis data SQLite**, lihat
 [`RENCANA_FITUR/selesai/basis_data_sqlite.md`](RENCANA_FITUR/selesai/basis_data_sqlite.md)
 (dimajukan dari Fase 8: amalgamation adalah satu berkas `.c`, tidak butuh FFI).
 SQLite 3.50.4 di-*vendor*; 10 fungsi `db_*` dengan parameter `?` wajib dan
-satu pernyataan per panggilan. Sisa Fase 3 (`ObjModule`, `impor x`, paket)
-belum dikerjakan.
+satu pernyataan per panggilan.
+
+Bentuk lama `impor "file.idk"` sengaja dipertahankan apa adanya (namespace
+bersama) demi kompatibilitas K14 — itu yang dipakai `pustaka/*.idk`.
+
+**Sisa yang disengaja:** modul P1 katalog 07 (`matematika`, `acak`, `teks`,
+`sistem`, `waktu`, `tanggal_waktu`, `json`) belum ditulis ulang sebagai modul
+**native C**. Isinya sudah tersedia sebagai `pustaka/*.idk` dan kini dapat
+diimpor bermodul (`impor matematika`), sehingga penulisan ulang ke C adalah
+optimasi, bukan fitur yang hilang.
 Ref: 04 §6, 07 §1–5.
 
 ### ★ Rilis 1.0 — "Stabil untuk umum"

@@ -180,6 +180,19 @@ Before committing:
 
 - Mark-sweep GC is always on. To verify GC correctness after touching allocation/stack code, build with `-DDEBUG_STRESS_GC` (collects on every allocation) and run all examples — output must be unchanged. This is the single most valuable check for VM changes.
 - Other flags in `src/common.h`: `DEBUG_LOG_GC`, `DEBUG_PRINT_CODE`, `DEBUG_TRACE_EXECUTION`.
+- **Modules own their globals (Fase 3).** `vm.globals` is now the BUILTIN table
+  only; each `ObjModule` has its own `globals`. Resolution goes through
+  `frameGlobals(frame)` / `getGlobalValue()` in `vm.c` and follows
+  `frame->closure->function->module` — the CALLEE, never the caller, so a
+  function defined in module A still reads A's globals when B calls it. Any new
+  global-touching opcode must use those helpers, not `&vm.globals` directly, or
+  it silently writes into the builtin table. `OP_SET_GLOBAL` deliberately
+  shadows a builtin in the module table instead of mutating the shared one.
+  `compileInModule()` stamps `function->module`; `compile()` is the no-module
+  wrapper. Both `compilingModule` and `function->module` are GC roots.
+- **A module name is an identifier, so language keywords cannot be path
+  components:** `impor paket.dalam` fails because `dalam` is the `in` operator.
+  Name module files accordingly.
 - GC-safety rule: any C code that allocates while holding an unrooted object must keep it reachable (push it on the VM stack, or use `peek` instead of `pop`). See `makeConstant`, `concatenate`, `allocateString`, and the `kunci`/`OP_BUILD_LIST` handlers for the pattern.
 
 ## Language reality (differs from older docs)

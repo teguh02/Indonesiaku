@@ -89,7 +89,10 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ **`pastikan`** (assert) dengan pesan opsional → `GalatPenegasan`
 - ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
 - ✅ `rentang()`, operator `dalam`/`tidak dalam`, truthiness seperti Python
-- ✅ **Sistem modul**: `impor "file.idk"` (namespace global bersama, di-cache)
+- ✅ **Sistem modul**: `impor matematika` (namespace sendiri per modul),
+  `impor x sebagai y`, `dari x impor y`, paket `impor a.b`, jalur pencarian
+  `INDK_PATH`, dan `__nama__`/`__utama__`. Bentuk lama `impor "file.idk"`
+  (namespace bersama) tetap berlaku
 - ✅ **Garbage Collector** mark-sweep
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 

@@ -7,6 +7,27 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 3: modul & namespace
+- ✨ **`ObjModule`**: setiap berkas kini punya namespace global sendiri, jadi
+  dua modul boleh memakai nama yang sama tanpa saling menimpa.
+- ✨ **`impor nama`**, `impor nama sebagai alias`, `dari nama impor x`,
+  `dari nama impor x sebagai y`, dan impor banyak nama sekaligus.
+- ✨ **Paket**: `impor a.b` memuat `a/b.idk`.
+- ✨ **Jalur pencarian modul**: direktori berkas pengimpor → `INDK_PATH` →
+  `pustaka/`. Modul di-cache berdasar jalur hasil resolusi, jadi berkas yang
+  sama hanya dieksekusi sekali walau diimpor lewat dua nama.
+- ✨ **`__nama__` / `__utama__`**: `jika __nama__ == "__utama__" { ... }`
+  membuat sebuah berkas bisa menjadi program sekaligus modul.
+- ✨ `jenis(modul)` → `"modul"`.
+
+### Fixed
+- 🐛 Penggunaan-setelah-bebas saat kunci `__nama__` dibuat tanpa di-*root*
+  sebelum `tableSet` yang mengalokasi (ditemukan ASan + `DEBUG_STRESS_GC`).
+
+### Compatibility
+- `impor "file.idk"` **tidak berubah**: tetap berbagi namespace dengan
+  pemanggil, sehingga seluruh `pustaka/*.idk` dan contoh lama jalan apa adanya.
+
 ### Added — Fase 2 tuntas
 - ✨ **Tupel tanpa kurung** — `x = 1, 2` dan `kembalikan a, b` membentuk tupel
   tanpa tanda kurung, termasuk `y = 1,` untuk satu elemen. Hanya berlaku di
