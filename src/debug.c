@@ -162,6 +162,21 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return byteInstruction("OP_BUILD_LIST", chunk, offset);
         case OP_BUILD_DICT:
             return byteInstruction("OP_BUILD_DICT", chunk, offset);
+        case OP_APPEND:
+            return simpleInstruction("OP_APPEND", offset);
+        case OP_DELETE_GLOBAL:
+            return constantInstruction("OP_DELETE_GLOBAL", chunk, offset);
+        case OP_DELETE_LOCAL:
+        case OP_DELETE_UPVALUE:
+            return byteInstruction(chunk->code[offset] == OP_DELETE_LOCAL
+                                       ? "OP_DELETE_LOCAL" : "OP_DELETE_UPVALUE",
+                                   chunk, offset);
+        case OP_INDEX_DELETE:
+            return simpleInstruction("OP_INDEX_DELETE", offset);
+        case OP_UNPACK:
+            return byteInstruction("OP_UNPACK", chunk, offset);
+        case OP_DELETE_PROPERTY:
+            return constantInstruction("OP_DELETE_PROPERTY", chunk, offset);
         case OP_INDEX_GET:
             return simpleInstruction("OP_INDEX_GET", offset);
         case OP_INDEX_SET:

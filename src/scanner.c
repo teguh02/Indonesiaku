@@ -130,10 +130,13 @@ static TokenType identifierType() {
             }
             break;
         case 'b':
-            if (scanner.current - scanner.start > 1 && scanner.start[1] == 'u') {
-                return checkKeyword(1, 4, "ukan", TOKEN_BUKAN);
+            // benar / bukan / buang are all exactly five characters.
+            if (scanner.current - scanner.start == 5) {
+                if (memcmp(scanner.start, "benar", 5) == 0) return TOKEN_BENAR;
+                if (memcmp(scanner.start, "bukan", 5) == 0) return TOKEN_BUKAN;
+                if (memcmp(scanner.start, "buang", 5) == 0) return TOKEN_BUANG;
             }
-            return checkKeyword(1, 4, "enar", TOKEN_BENAR);
+            break;
         case 'c':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {

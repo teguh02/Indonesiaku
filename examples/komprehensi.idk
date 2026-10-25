@@ -1,0 +1,27 @@
+# List comprehension: [ekspresi untuk x dalam urutan jika syarat]
+# Seperti Python, tetapi blok tetap memakai { } (tidak relevan di sini karena
+# comprehension adalah satu ekspresi).
+
+cetak([x untuk x dalam rentang(5)])
+cetak([x * x untuk x dalam rentang(1, 6)])
+cetak([x untuk x dalam rentang(10) jika x % 2 == 0])
+
+kata = ["apel", "bunga", "ceri"]
+cetak([k untuk k dalam kata jika panjang(k) == 4])
+cetak([k[0] untuk k dalam kata])
+cetak([huruf untuk huruf dalam "halo"])
+
+# Syarat boleh memakai variabel luar dan operator logika.
+batas = 3
+cetak([i untuk i dalam rentang(6) jika i >= batas dan i < 5])
+
+# Comprehension bersarang: hasilnya daftar berisi daftar.
+matriks = [[a * b untuk b dalam rentang(1, 4)] untuk a dalam rentang(1, 3)]
+cetak(matriks)
+
+# Bisa dipakai sebagai argumen fungsi, dan melibatkan variabel luar (upvalue).
+cetak(panjang([i untuk i dalam rentang(100)]))
+cetak([i + batas untuk i dalam rentang(3)])
+
+# Urutan kosong menghasilkan daftar kosong.
+cetak([i untuk i dalam []])

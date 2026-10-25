@@ -44,6 +44,13 @@ typedef enum {
     OP_CLOSE_UPVALUE,
     OP_BUILD_LIST,
     OP_BUILD_DICT,
+    OP_APPEND,       // [daftar, nilai] -> daftar (list comprehension)
+    OP_DELETE_GLOBAL,   // buang nama; byte = nama
+    OP_DELETE_LOCAL,    // buang nama; byte = slot lokal (diisi VAL_TAKTERISI)
+    OP_DELETE_UPVALUE,  // buang nama; byte = upvalue
+    OP_INDEX_DELETE,    // buang d[i] / kamus[k]
+    OP_UNPACK,          // a, b = ... : byte = jumlah nama
+    OP_DELETE_PROPERTY, // buang obj.atribut
     OP_INDEX_GET,
     OP_INDEX_SET,
     OP_SLICE,

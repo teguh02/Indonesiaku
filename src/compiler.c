@@ -362,6 +362,7 @@ static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
+static Token syntheticToken(const char* text);
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
@@ -660,8 +661,230 @@ static void skipNewlines() {
     while (match(TOKEN_NEWLINE)) { }
 }
 
+// Peeks ahead from the current token to decide whether a '[' opens a list
+// comprehension: a 'untuk' at bracket depth 0 before the closing ']'. The
+// scanner and parser tokens are restored, like scanTryClauses.
+static bool scanComprehension(ScannerState* state, Token* current, Token* previous) {
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    bool found = false;
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) break;
+        if (depth == 0 && type == TOKEN_UNTUK) {
+            *state = saveScanner();
+            *current = parser.current;
+            *previous = parser.previous;
+            found = true;
+            break;
+        }
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET ||
+                   type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return found;
+}
+
+// [ekspresi untuk x dalam urutan jika syarat]
+//
+// Token order fights a single-pass compiler: the element expression comes
+// BEFORE the header that declares its loop variable, so compiling it in place
+// would resolve 'x' as an undefined global. The element tokens are therefore
+// re-read from a saved scanner position AFTER the header has declared 'x' —
+// see the layout in the body. (Only one 'untuk' and one optional 'jika' are
+// supported; chain conditions with 'dan'/'atau'.)
+static void listComprehension(ScannerState elemState, Token elemCurrent, Token elemPrevious,
+                              ScannerState untukState, Token untukCurrent, Token untukPrevious) {
+    // Locate the tokens after the header and after the whole comprehension, so
+    // the iterable, the condition and the element can each be re-read later.
+    ScannerState afterState;
+    Token afterCurrent, afterPrevious;
+    ScannerState condState = {0};
+    Token condCurrent = {0}, condPrevious = {0};
+    bool hasCond = false;
+
+    // Header: untuk x dalam ...
+    restoreScanner(untukState);
+    parser.current = untukCurrent;
+    parser.previous = untukPrevious;
+    advance();  // 'untuk'
+    consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'untuk'.");
+    Token varName = parser.previous;
+    consume(TOKEN_DALAM, "Harapkan 'dalam' setelah nama variabel.");
+
+    // The iterable itself is evaluated in the ENCLOSING frame, so skip its
+    // tokens for now and come back to them after the body has been compiled.
+    ScannerState seqState = saveScanner();
+    Token seqCurrent = parser.current;
+    Token seqPrevious = parser.previous;
+
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) {
+            advance();  // consume ']'
+            break;
+        }
+        if (depth == 0 && type == TOKEN_JIKA && !hasCond) {
+            hasCond = true;
+            condState = saveScanner();
+            condCurrent = parser.current;
+            condPrevious = parser.previous;
+        }
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET ||
+                   type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+    afterState = saveScanner();
+    afterCurrent = parser.current;
+    afterPrevious = parser.previous;
+
+    // The per-element work is compiled into an implicit one-parameter function
+    // called once per element. Its own frame keeps the hidden slots away from
+    // the enclosing frame's expression temporaries (the callee and earlier
+    // arguments of an enclosing call sit below them), and enclosing names are
+    // still visible through the normal upvalue machinery.
+    Compiler compFn;
+    initCompiler(&compFn, TYPE_FUNCTION);
+    current->function->name = copyString("listcomp", 8);
+    current->function->arity = 1;
+    current->function->requiredArity = 1;
+    beginScope();
+    LoopCtx* savedLoop = currentLoop;
+    currentLoop = NULL;      // never let 'hentikan'/'lanjut' target the outer loop
+
+    addLocal(syntheticToken("  comp seq"));   // slot 1: the iterable
+    markInitialized();
+    emitByte(OP_KOSONG);
+    addLocal(varName);                        // slot 2: the loop variable
+    markInitialized();
+    int varSlot = current->localCount - 1;
+
+    emitBytes(OP_BUILD_LIST, 0);
+    int resSlot = addSyntheticLocal("  comp hasil");
+
+    emitBytes(OP_GET_LOCAL, 1);
+    emitByte(OP_LIST_LEN);
+    int lenSlot = addSyntheticLocal("  comp len");
+
+    emitConstant(INT_VAL(-1));
+    int idxSlot = addSyntheticLocal("  comp idx");
+
+    int incrementStart = currentChunk()->count;
+
+    // idx = idx + 1
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitConstant(INT_VAL(1));
+    emitByte(OP_ADD);
+    emitBytes(OP_SET_LOCAL, (uint8_t)idxSlot);
+    emitByte(OP_POP);
+
+    // if !(idx < len) goto exit
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitBytes(OP_GET_LOCAL, (uint8_t)lenSlot);
+    emitByte(OP_LESS);
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+
+    // x = seq[idx]
+    emitBytes(OP_GET_LOCAL, 1);
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitByte(OP_INDEX_GET);
+    emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
+    emitByte(OP_POP);
+
+    // Optional 'jika syarat', evaluated inside the loop.
+    int skipJump = -1;
+    if (hasCond) {
+        restoreScanner(condState);
+        parser.current = condCurrent;
+        parser.previous = condPrevious;
+        advance();  // 'jika'
+        expression();
+        skipJump = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP);
+    }
+
+    // Element expression, re-read from just after '['.
+    restoreScanner(elemState);
+    parser.current = elemCurrent;
+    parser.previous = elemPrevious;
+    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+    expression();
+    emitByte(OP_APPEND);
+    if (!check(TOKEN_UNTUK)) {
+        error("Harapkan 'untuk' setelah ekspresi pada list comprehension.");
+    }
+
+    if (skipJump != -1) {
+        // The true path must skip the POP that belongs to the false path.
+        int endJump = emitJump(OP_JUMP);
+        patchJump(skipJump);
+        emitByte(OP_POP);
+        patchJump(endJump);
+    }
+
+    emitLoop(incrementStart);
+    patchJump(exitJump);
+    emitByte(OP_POP);
+
+    // Return the result list. endCompiler() appends a dead 'return kosong'.
+    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+    emitByte(OP_RETURN);
+
+    currentLoop = savedLoop;
+    ObjFunction* comprehensionFn = endCompiler();
+
+    // Back in the enclosing frame: closure, iterable, call.
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(comprehensionFn)));
+    for (int i = 0; i < comprehensionFn->upvalueCount; i++) {
+        emitByte(compFn.upvalues[i].isLocal ? 1 : 0);
+        emitByte(compFn.upvalues[i].index);
+    }
+
+    restoreScanner(seqState);
+    parser.current = seqCurrent;
+    parser.previous = seqPrevious;
+    expression();
+    emitBytes(OP_CALL, 1);
+
+    restoreScanner(afterState);
+    parser.current = afterCurrent;
+    parser.previous = afterPrevious;
+}
+
 static void listLiteral(bool canAssign) {
-    // '[' already consumed. Parse comma-separated elements.
+    (void)canAssign;
+    // '[' already consumed. A 'untuk' at depth 0 makes this a comprehension.
+    if (!check(TOKEN_RIGHT_BRACKET)) {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehension(&untukState, &untukCurrent, &untukPrevious)) {
+            listComprehension(elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            return;
+        }
+    }
+
+    // Plain literal: comma-separated elements.
     int count = 0;
     if (!check(TOKEN_RIGHT_BRACKET)) {
         do {
@@ -1109,6 +1332,7 @@ ParseRule rules[] = {
   [TOKEN_KOSONG]        = {literal,  NULL,   PREC_NONE},
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
   [TOKEN_CETAK]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_BUANG]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
   [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
@@ -1180,6 +1404,8 @@ static void prescanFunctionBody() {
     int pendingCount = 0;
     Token declared[UINT8_COUNT];   // `variabel x` at the body's own depth
     int declaredCount = 0;
+    Token chain[UINT8_COUNT];      // the names in `a, b, c = ...`
+    int chainCount = 0;
     ScannerState saved = saveScanner();
     Token saveCurrent = parser.current;
 
@@ -1220,14 +1446,35 @@ static void prescanFunctionBody() {
             prev2 = token;
             prev = next;
             token = scanToken();
+            chainCount = 0;
             continue;
         } else if (token.type == TOKEN_EQUAL || isCompoundAssign(token.type)) {
             // Only a bare name is a candidate: diri.x = and a[i] = assign
             // through an object, and `variabel x =` declares its own local.
             if (prev.type == TOKEN_IDENTIFIER && prev2.type != TOKEN_DOT &&
-                prev2.type != TOKEN_VARIABEL && pendingCount < UINT8_COUNT) {
-                pending[pendingCount++] = prev;
+                prev2.type != TOKEN_VARIABEL) {
+                // `a, b = ...` assigns EVERY name in the list, not just the last
+                // one — otherwise 'a' would silently become a global (K3).
+                if (chainCount > 1) {
+                    for (int i = 0; i < chainCount && pendingCount < UINT8_COUNT; i++) {
+                        pending[pendingCount++] = chain[i];
+                    }
+                } else if (pendingCount < UINT8_COUNT) {
+                    pending[pendingCount++] = prev;
+                }
             }
+            chainCount = 0;
+        }
+
+        if (token.type == TOKEN_IDENTIFIER) {
+            if (chainCount == 0 || prev.type == TOKEN_COMMA) {
+                if (chainCount < UINT8_COUNT) chain[chainCount++] = token;
+            } else {
+                chainCount = 1;
+                chain[0] = token;
+            }
+        } else if (token.type != TOKEN_COMMA && token.type != TOKEN_EQUAL) {
+            if (token.type != TOKEN_IDENTIFIER) chainCount = 0;
         }
         prev2 = prev;
         prev = token;
@@ -2076,6 +2323,138 @@ static void scopeDeclaration(bool isGlobal) {
     } while (match(TOKEN_COMMA));
 }
 
+// Delete a variable binding: global (removed from the table), local or upvalue
+// (the slot becomes VAL_TAKTERISI, so reading it is an error again).
+static void deleteVariable(Token name) {
+    int arg = resolveLocal(current, &name);
+    if (arg != -1) {
+        emitBytes(OP_DELETE_LOCAL, (uint8_t)arg);
+        return;
+    }
+    int upvalue = resolveUpvalue(current, &name);
+    if (upvalue != -1) {
+        emitBytes(OP_DELETE_UPVALUE, (uint8_t)upvalue);
+        return;
+    }
+    emitBytes(OP_DELETE_GLOBAL, identifierConstant(&name));
+}
+
+// The base (list/kamus/instance) is already on the stack.
+static void buangFromBase() {
+    if (match(TOKEN_LEFT_BRACKET)) {
+        expression();
+        consume(TOKEN_RIGHT_BRACKET, "Harapkan ']' setelah indeks pada 'buang'.");
+        emitByte(OP_INDEX_DELETE);
+    } else if (match(TOKEN_DOT)) {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama atribut setelah '.' pada 'buang'.");
+        emitBytes(OP_DELETE_PROPERTY, identifierConstant(&parser.previous));
+    } else {
+        errorAtCurrent("Harapkan '[' atau '.' setelah nama pada 'buang'.");
+    }
+}
+
+// buang nama | buang wadah[indeks] | buang objek.atribut
+static void buangStatement() {
+    if (match(TOKEN_DIRI)) {
+        namedVariable(syntheticToken("diri"), false);
+        buangFromBase();
+        return;
+    }
+    if (!check(TOKEN_IDENTIFIER)) {
+        errorAtCurrent("Harapkan nama, elemen, atau atribut setelah 'buang'.");
+        return;
+    }
+
+    // A bare name deletes the binding itself; with '[' or '.' the name is the
+    // container/instance instead.
+    if (!checkNext(TOKEN_LEFT_BRACKET) && !checkNext(TOKEN_DOT)) {
+        Token name = parser.current;
+        advance();
+        deleteVariable(name);
+        return;
+    }
+
+    Token name = parser.current;
+    advance();
+    namedVariable(name, false);
+    buangFromBase();
+}
+
+// a, b = 1, 2 / a, b = urutan — assign n names from one sequence.
+static void assignToName(Token name) {
+    int arg = resolveLocal(current, &name);
+    if (arg != -1) {
+        emitBytes(OP_SET_LOCAL, (uint8_t)arg);
+        emitByte(OP_POP);
+        return;
+    }
+    int upvalue = resolveUpvalue(current, &name);
+    if (upvalue != -1) {
+        emitBytes(OP_SET_UPVALUE, (uint8_t)upvalue);
+        emitByte(OP_POP);
+        return;
+    }
+    // Same define-or-update semantics as implicit assignment.
+    emitBytes(OP_DEFINE_GLOBAL, identifierConstant(&name));
+}
+
+static bool looksLikeUnpack() {
+    if (!check(TOKEN_IDENTIFIER)) return false;
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    int count = 0;
+    bool matched = false;
+    for (;;) {
+        if (!check(TOKEN_IDENTIFIER)) break;
+        count++;
+        advance();
+        if (check(TOKEN_COMMA)) {
+            advance();
+            continue;
+        }
+        if (check(TOKEN_EQUAL) && count >= 2) matched = true;
+        break;
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return matched;
+}
+
+static void unpackStatement() {
+    Token names[UINT8_COUNT];
+    int count = 0;
+    do {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama variabel.");
+        if (count == UINT8_COUNT) {
+            error("Terlalu banyak nama pada penugasan berganda.");
+            return;
+        }
+        names[count++] = parser.previous;
+    } while (match(TOKEN_COMMA));
+
+    consume(TOKEN_EQUAL, "Harapkan '=' setelah daftar nama.");
+
+    // `a, b = 1, 2` builds a list; `a, b = urutan` unpacks the sequence itself.
+    expression();
+    if (match(TOKEN_COMMA)) {
+        int elements = 1;
+        do {
+            if (elements == UINT8_COUNT) {
+                error("Terlalu banyak nilai pada penugasan berganda.");
+                return;
+            }
+            expression();
+            elements++;
+        } while (match(TOKEN_COMMA));
+        emitBytes(OP_BUILD_LIST, (uint8_t)elements);
+    }
+
+    emitBytes(OP_UNPACK, (uint8_t)count);
+    for (int i = 0; i < count; i++) assignToName(names[i]);
+}
+
 static void statement() {
     if (match(TOKEN_GLOBAL)) {
         scopeDeclaration(true);
@@ -2097,6 +2476,8 @@ static void statement() {
         breakStatement();
     } else if (match(TOKEN_LANJUT)) {
         continueStatement();
+    } else if (match(TOKEN_BUANG)) {
+        buangStatement();
     } else if (match(TOKEN_COBA)) {
         tryStatement();
     } else if (match(TOKEN_NAIKKAN)) {
@@ -2107,6 +2488,8 @@ static void statement() {
         beginScope();
         block();
         endScope();
+    } else if (looksLikeUnpack()) {
+        unpackStatement();
     } else {
         expressionStatement();
     }

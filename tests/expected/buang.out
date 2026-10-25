@@ -1,0 +1,11 @@
+[10, 30, 40]
+[10, 30]
+{"b": 2}
+1
+tertangkap: Variabel tidak terdefinisi 'x'.
+7
+tertangkap: Properti tidak terdefinisi 'isi'.
+indeks: Indeks list di luar jangkauan (indeks 99, panjang 2).
+kunci: Kunci 'zzz' tidak ada di kamus.
+lokal: Variabel lokal sudah di-buang atau belum diisi.
+2

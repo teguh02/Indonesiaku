@@ -208,11 +208,11 @@ void initVM() {
     vm.galatLuapan = defineErrorClass("GalatLuapan", vm.galatAritmetika);
     ObjClass* galatPencarian = defineErrorClass("GalatPencarian", vm.galat);
     vm.galatIndeks = defineErrorClass("GalatIndeks", galatPencarian);
-    defineErrorClass("GalatKunci", galatPencarian);
+    vm.galatKunci = defineErrorClass("GalatKunci", galatPencarian);
     vm.galatTipe = defineErrorClass("GalatTipe", vm.galat);
     vm.galatNilai = defineErrorClass("GalatNilai", vm.galat);
     vm.galatNama = defineErrorClass("GalatNama", vm.galat);
-    defineErrorClass("GalatAtribut", vm.galat);
+    vm.galatAtribut = defineErrorClass("GalatAtribut", vm.galat);
     defineErrorClass("GalatBerkas", vm.galat);
     defineErrorClass("GalatOS", vm.galat);
     defineErrorClass("GalatImpor", vm.galat);
@@ -940,7 +940,117 @@ static InterpretResult run() {
             case OP_POP: pop(); break;
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE();
+                // 'buang nama' on a local leaves VAL_TAKTERISI behind, so
+                // reading it again is an error (Python's UnboundLocalError).
+                if (IS_TAKTERISI(frame->slots[slot])) {
+                    runtimeError("Variabel lokal sudah di-buang atau belum diisi.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 push(frame->slots[slot]);
+                break;
+            }
+            case OP_DELETE_LOCAL: {
+                uint8_t slot = READ_BYTE();
+                frame->slots[slot] = TAKTERISI_VAL;
+                break;
+            }
+            case OP_DELETE_GLOBAL: {
+                ObjString* name = READ_STRING();
+                if (!tableDelete(&vm.globals, name)) {
+                    vm.runtimeErrorClass = vm.galatNama;
+                    runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_DELETE_UPVALUE: {
+                uint8_t slot = READ_BYTE();
+                *frame->closure->upvalues[slot]->location = TAKTERISI_VAL;
+                break;
+            }
+            case OP_UNPACK: {
+                // a, b = ... — one sequence becomes n values, first on top.
+                int n = READ_BYTE();
+                Value seq = peek(0);
+                int length = -1;
+                if (IS_LIST(seq)) length = AS_LIST(seq)->items.count;
+                else if (IS_STRING(seq)) length = AS_STRING(seq)->charCount;
+                else if (IS_RANGE(seq)) length = (int)rangeLength(AS_RANGE(seq));
+                if (length < 0) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Hanya daftar, teks, atau rentang yang dapat dibuka menjadi beberapa nama.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                if (length != n) {
+                    vm.runtimeErrorClass = vm.galatNilai;
+                    runtimeError("Tidak dapat membuka %d nilai menjadi %d nama.", length, n);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                // seq stays rooted while strings allocate below.
+                int base = (int)(vm.stackTop - vm.stack) - 1;
+                for (int i = n - 1; i >= 0; i--) {
+                    if (IS_LIST(seq)) {
+                        push(AS_LIST(seq)->items.values[i]);
+                    } else if (IS_STRING(seq)) {
+                        ObjString* teks = AS_STRING(seq);
+                        int offset = utf8ByteOffset(teks, i);
+                        push(OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset))));
+                    } else {
+                        push(rangeElement(AS_RANGE(seq), i));
+                    }
+                }
+                // Drop seq, which now sits below the n elements.
+                for (int i = 0; i < n; i++) vm.stack[base + i] = vm.stack[base + 1 + i];
+                vm.stackTop -= 1;
+                break;
+            }
+            case OP_INDEX_DELETE: {
+                Value key = peek(0);
+                Value container = peek(1);
+                if (IS_LIST(container) && IS_NUMBER(key)) {
+                    ObjList* list = AS_LIST(container);
+                    int given = (int)AS_NUMBER(key);
+                    int index = given < 0 ? given + list->items.count : given;
+                    if (index < 0 || index >= list->items.count) {
+                        vm.runtimeErrorClass = vm.galatIndeks;
+                        runtimeError("Indeks list di luar jangkauan (indeks %d, panjang %d).",
+                                     given, list->items.count);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    for (int i = index; i < list->items.count - 1; i++) {
+                        list->items.values[i] = list->items.values[i + 1];
+                    }
+                    list->items.count--;
+                } else if (IS_DICT(container) && IS_STRING(key)) {
+                    if (!dictDelete(AS_DICT(container), AS_STRING(key))) {
+                        vm.runtimeErrorClass = vm.galatKunci;
+                        runtimeError("Kunci '%s' tidak ada di kamus.", AS_CSTRING(key));
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                } else {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("'buang' elemen memerlukan daftar dengan indeks angka "
+                                 "atau kamus dengan kunci teks.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                vm.stackTop -= 2;
+                break;
+            }
+            case OP_DELETE_PROPERTY: {
+                if (!IS_INSTANCE(peek(0))) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Hanya objek yang memiliki properti.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                ObjInstance* instance = AS_INSTANCE(peek(0));
+                ObjString* name = READ_STRING();
+                if (!tableDelete(&instance->fields, name)) {
+                    vm.runtimeErrorClass = vm.galatAtribut;
+                    runtimeError("Objek tidak punya atribut '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                pop();  // instance
                 break;
             }
             case OP_SET_LOCAL: {
@@ -1368,6 +1478,10 @@ static InterpretResult run() {
             }
             case OP_GET_UPVALUE: {
                 uint8_t slot = READ_BYTE();
+                if (IS_TAKTERISI(*frame->closure->upvalues[slot]->location)) {
+                    runtimeError("Variabel lokal sudah di-buang atau belum diisi.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 push(*frame->closure->upvalues[slot]->location);
                 break;
             }
@@ -1392,6 +1506,18 @@ static InterpretResult run() {
                 pop();                       // the list
                 vm.stackTop -= count;        // the elements
                 push(OBJ_VAL(list));
+                break;
+            }
+            case OP_APPEND: {
+                // List comprehension: stack is [daftar, nilai]. Both stay on the
+                // stack while writeValueArray grows the array (it may GC).
+                if (!IS_LIST(peek(1))) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Hanya daftar yang dapat ditambah elemen.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                writeValueArray(&AS_LIST(peek(1))->items, peek(0));
+                vm.stackTop -= 2;
                 break;
             }
             case OP_BUILD_DICT: {
