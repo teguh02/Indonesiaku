@@ -33,6 +33,7 @@ ObjFunction* newFunction() {
     function->paramNames = NULL;
     function->upvalueCount = 0;
     function->name = NULL;
+    function->module = NULL;   // set by the compiler; GC-marked
     initChunk(&function->chunk);
     return function;
 }
@@ -78,7 +79,27 @@ ObjSet* newSet() {
     ObjSet* set = ALLOCATE_OBJ(ObjSet, OBJ_SET);
     initValueTable(&set->table);
     initValueArray(&set->keys);
+    set->frozen = false;
     return set;
+}
+
+ObjModule* newModule(ObjString* name, ObjString* path) {
+    ObjModule* module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
+    // NULL first: initTable allocates nothing, but a later GC walking this
+    // object must never see uninitialised pointers.
+    module->name = NULL;
+    module->path = NULL;
+    initTable(&module->globals);
+    module->name = name;
+    module->path = path;
+    return module;
+}
+
+ObjIterator* newIterator(Value source) {
+    ObjIterator* it = ALLOCATE_OBJ(ObjIterator, OBJ_ITERATOR);
+    it->source = source;
+    it->index = 0;
+    return it;
 }
 
 bool setAdd(ObjSet* set, Value value) {
@@ -526,15 +547,17 @@ static bool formatObject(TextBuf* out, Value value, bool repr, bool callMagic) {
         case OBJ_SET: {
             // No literal exists (K17): print the call that rebuilds it.
             ObjSet* set = AS_SET(value);
+            const char* nama = set->frozen ? "himpunan_beku" : "himpunan";
+            textAppendCString(out, nama);
             if (set->keys.count == 0) {
-                textAppendCString(out, "himpunan()");
+                textAppendCString(out, "()");
                 return true;
             }
             if (!formatEnter(value, callMagic)) {
-                textAppendCString(out, "himpunan(...)");
+                textAppendCString(out, "(...)");
                 return true;
             }
-            textAppendCString(out, "himpunan([");
+            textAppendCString(out, "([");
             bool ok = formatItems(out, &set->keys, callMagic);
             textAppendCString(out, "])");
             formatLeave(callMagic);
@@ -551,6 +574,14 @@ static bool formatObject(TextBuf* out, Value value, bool repr, bool callMagic) {
         }
         case OBJ_RANGE:
             formatRange(out, AS_RANGE(value));
+            return true;
+        case OBJ_MODULE:
+            textAppendCString(out, "<modul ");
+            textAppend(out, AS_MODULE(value)->name->chars, AS_MODULE(value)->name->length);
+            textAppend(out, ">", 1);
+            return true;
+        case OBJ_ITERATOR:
+            textAppendCString(out, "<iterator>");   // jenis() calls it "iterator"
             return true;
         case OBJ_INSTANCE:
             if (callMagic && formatInstanceHook != NULL) {

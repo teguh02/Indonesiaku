@@ -1,0 +1,11 @@
+# Modul kedua: sengaja memakai nama yang SAMA dengan aritmetika.idk
+# untuk membuktikan namespace keduanya terpisah.
+variabel asal = "sapaan"
+
+fungsi tambah(a, b) {
+    kembalikan ke_teks(a) + " dan " + ke_teks(b)
+}
+
+fungsi halo(nama) {
+    kembalikan "Halo, " + nama + "!"
+}

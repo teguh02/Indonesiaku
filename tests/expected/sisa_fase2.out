@@ -1,0 +1,39 @@
+== tupel tanpa kurung ==
+(1, 2) tupel
+(1,) 1
+("a", "b", "c")
+(3, 2)
+3 2
+3
+[1, 2] {"a": 1, "b": 2}
+== himpunan_beku ==
+himpunan_beku([3, 1, 2]) himpunan_beku 3
+himpunan_beku()
+pasangan
+1
+benar
+himpunan_beku
+himpunan
+himpunan_beku([1])
+himpunan_beku([3, 2])
+== hash ==
+benar benar
+benar
+== turunan_dari ==
+benar
+benar
+salah
+benar salah
+== ke_desimal ==
+3.0 3.0 2.5 1.0
+angka 3 3.0
+== daftar ==
+[] ["a", "b", "c"] [1, 2]
+[0, 1, 2] ["a", "b"]
+[1, 2] [1, 2, 3]
+== iter / lanjutkan ==
+10 20
+habis
+a b
+x y
+tertangkap: Iterator sudah habis.

@@ -1,0 +1,4 @@
+Modul 'modul_contoh.kecil' tidak punya 'tidak_ada'.
+[baris 1, kolom 31] dalam skrip
+    dari modul_contoh.kecil impor tidak_ada
+                                  ^

@@ -1,0 +1,2 @@
+variabel b = himpunan_beku([1, 2])
+b.tambah(3)

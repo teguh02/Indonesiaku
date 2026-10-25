@@ -233,6 +233,10 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_IS_INSTANCE", offset);
         case OP_IMPORT:
             return simpleInstruction("OP_IMPORT", offset);
+        case OP_IMPORT_MODULE:
+            return constantInstruction("OP_IMPORT_MODULE", chunk, offset);
+        case OP_IMPORT_FROM:
+            return constantInstruction("OP_IMPORT_FROM", chunk, offset);
         case OP_RETURN:
             return simpleInstruction("OP_RETURN", offset);
         default:

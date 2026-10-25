@@ -269,6 +269,8 @@ void initVM() {
     initTable(&vm.globals);
     initTable(&vm.strings);
     initTable(&vm.loadedModules);
+    vm.mainModule = NULL;
+    vm.scriptDir = NULL;
 
     vm.initString = NULL;
     vm.initString = copyString("init", 4);
@@ -295,7 +297,7 @@ void initVM() {
     defineErrorClass("GalatImpor", vm.galat);
     vm.galatRekursi = defineErrorClass("GalatRekursi", vm.galat);
     vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
-    defineErrorClass("HentiIterasi", vm.galat);
+    vm.hentiIterasi = defineErrorClass("HentiIterasi", vm.galat);
     defineErrorClass("GalatSintaks", vm.galat);
 
     defineNative("db_buka", nativeFnDbBuka);
@@ -328,6 +330,7 @@ void initVM() {
     defineNative("ke_bulat", nativeFnKeBulat);
     defineNative("ke_logika", nativeFnKeLogika);
     defineNative("adalah_instansi", nativeFnAdalahInstansi);
+    defineNative("turunan_dari", nativeFnTurunanDari);
     defineNative("bisa_dipanggil", nativeFnBisaDipanggil);
     defineNative("repr", nativeFnRepr);
     defineNative("id", nativeFnId);
@@ -347,6 +350,11 @@ void initVM() {
     defineNative("enumerasi", nativeFnEnumerasi);
     defineNative("tupel", nativeFnTupel);
     defineNative("himpunan", nativeFnHimpunan);
+    defineNative("himpunan_beku", nativeFnHimpunanBeku);
+    defineNative("daftar", nativeFnDaftar);
+    defineNative("hash", nativeFnHash);
+    defineNative("iter", nativeFnIter);
+    defineNative("lanjutkan", nativeFnLanjutkan);
     defineNative("kunci", nativeFnKunci);
 
     defineNative("jenis", nativeFnJenis);
@@ -354,6 +362,7 @@ void initVM() {
     defineNative("henti", nativeFnHenti);
 
     defineNative("ke_angka", nativeFnKeAngka);
+    defineNative("ke_desimal", nativeFnKeDesimal);
     defineNative("ke_teks", nativeFnKeTeks);
     defineNative("format", nativeFnFormat);
     defineNative("acak_bulat", nativeFnAcakBulat);
@@ -750,6 +759,20 @@ static NativeFn findNativeMethod(NativeMethod* table, ObjString* name) {
 static bool invoke(ObjString* name, int argCount) {
     Value receiver = peek(argCount);
 
+    if (IS_MODULE(receiver)) {
+        // matematika.mat_fpb(12, 18): look the member up and call it, with the
+        // module slot replaced so the callee sees only its own arguments.
+        Value member;
+        if (!tableGet(&AS_MODULE(receiver)->globals, name, &member)) {
+            vm.runtimeErrorClass = vm.galatNama;
+            runtimeError("Modul '%s' tidak punya '%s'.",
+                         AS_MODULE(receiver)->name->chars, name->chars);
+            return false;
+        }
+        vm.stackTop[-argCount - 1] = member;
+        return callValue(member, argCount, NULL);
+    }
+
     if (!IS_INSTANCE(receiver)) {
         const char* typeName;
         NativeMethod* table = methodsForValue(receiver, &typeName);
@@ -819,6 +842,198 @@ static char* readModuleSource(const char* path) {
 // Compile and execute another .idk file in the current global namespace.
 // Modules are cached by path so re-importing is a no-op. Returns false on
 // a load/compile failure (a runtime error is raised).
+// Globals of the module the RUNNING function belongs to. Resolution follows
+// the callee (function->module), never the caller, so a function defined in
+// module A keeps reading A's globals when B calls it.
+static Table* frameGlobals(CallFrame* frame) {
+    ObjModule* module = frame->closure->function->module;
+    return module != NULL ? &module->globals : &vm.globals;
+}
+
+// Read a global: module table first, then vm.globals (builtins + error
+// classes), which stay visible from every module.
+static bool getGlobalValue(CallFrame* frame, ObjString* name, Value* out) {
+    if (tableGet(frameGlobals(frame), name, out)) return true;
+    return tableGet(&vm.globals, name, out);
+}
+
+// --- Module loading (Fase 3) ----------------------------------------------
+
+#ifdef _WIN32
+#define INDK_PATH_SEP ';'
+#define INDK_DIR_SEP '\\'
+#else
+#define INDK_PATH_SEP ':'
+#define INDK_DIR_SEP '/'
+#endif
+
+static bool fileExists(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (f == NULL) return false;
+    fclose(f);
+    return true;
+}
+
+// Directory part of `path`, without the trailing separator. Returns "" when
+// the path has no directory component.
+static void dirNameOf(const char* path, char* out, size_t outSize) {
+    size_t len = strlen(path);
+    size_t cut = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (path[i] == '/' || path[i] == '\\') cut = i;
+    }
+    if (cut == 0) { out[0] = '\0'; return; }
+    if (cut >= outSize) cut = outSize - 1;
+    memcpy(out, path, cut);
+    out[cut] = '\0';
+}
+
+// "a.b" -> "a/b.idk" (platform separator). Returns false when the name is
+// empty or has an empty component ("a..b"), which would escape the search dir.
+static bool moduleNameToRelPath(const char* name, char* out, size_t outSize) {
+    size_t len = strlen(name);
+    if (len == 0 || len + 5 >= outSize) return false;
+    size_t j = 0;
+    bool componentEmpty = true;
+    for (size_t i = 0; i < len; i++) {
+        if (name[i] == '.') {
+            if (componentEmpty) return false;
+            out[j++] = INDK_DIR_SEP;
+            componentEmpty = true;
+        } else {
+            out[j++] = name[i];
+            componentEmpty = false;
+        }
+    }
+    if (componentEmpty) return false;
+    memcpy(out + j, ".idk", 4);
+    out[j + 4] = '\0';
+    return true;
+}
+
+// Search order: directory of the importing file, then INDK_PATH, then
+// "pustaka/" relative to the working directory.
+static bool resolveModulePath(const char* name, const char* importerDir,
+                              char* out, size_t outSize) {
+    char rel[512];
+    if (!moduleNameToRelPath(name, rel, sizeof rel)) return false;
+
+    if (importerDir != NULL && importerDir[0] != '\0') {
+        if (snprintf(out, outSize, "%s%c%s", importerDir, INDK_DIR_SEP, rel) < (int)outSize &&
+            fileExists(out)) {
+            return true;
+        }
+    } else if (fileExists(rel)) {
+        if (snprintf(out, outSize, "%s", rel) < (int)outSize) return true;
+    }
+
+    const char* search = getenv("INDK_PATH");
+    if (search != NULL) {
+        const char* start = search;
+        while (*start != '\0') {
+            const char* end = strchr(start, INDK_PATH_SEP);
+            size_t partLen = end != NULL ? (size_t)(end - start) : strlen(start);
+            if (partLen > 0 && partLen < 400) {
+                char dir[400];
+                memcpy(dir, start, partLen);
+                dir[partLen] = '\0';
+                if (snprintf(out, outSize, "%s%c%s", dir, INDK_DIR_SEP, rel) < (int)outSize &&
+                    fileExists(out)) {
+                    return true;
+                }
+            }
+            if (end == NULL) break;
+            start = end + 1;
+        }
+    }
+
+    if (snprintf(out, outSize, "pustaka%c%s", INDK_DIR_SEP, rel) < (int)outSize &&
+        fileExists(out)) {
+        return true;
+    }
+    return false;
+}
+
+// Load `name` as a module and leave it on the stack. Cached by resolved path,
+// so two names pointing at the same file execute once.
+static bool loadModule(ObjString* name, Value* out) {
+    char importerDir[512] = "";
+    if (vm.frameCount > 0) {
+        ObjModule* current = vm.frames[vm.frameCount - 1].closure->function->module;
+        if (current != NULL && current->path != NULL) {
+            dirNameOf(current->path->chars, importerDir, sizeof importerDir);
+        }
+    }
+    if (importerDir[0] == '\0' && vm.scriptDir != NULL) {
+        snprintf(importerDir, sizeof importerDir, "%s", vm.scriptDir->chars);
+    }
+
+    char resolved[512];
+    if (!resolveModulePath(name->chars, importerDir, resolved, sizeof resolved)) {
+        vm.runtimeErrorClass = vm.galatNama;
+        runtimeError("Modul '%s' tidak ditemukan.", name->chars);
+        return false;
+    }
+
+    ObjString* pathKey = copyString(resolved, (int)strlen(resolved));
+    push(OBJ_VAL(pathKey));           // keep rooted across allocations
+    Value cached;
+    if (tableGet(&vm.loadedModules, pathKey, &cached) && IS_MODULE(cached)) {
+        pop();
+        *out = cached;
+        return true;
+    }
+
+    char* source = readModuleSource(resolved);
+    if (source == NULL) {
+        pop();
+        runtimeError("Tidak dapat membaca modul '%s'.", resolved);
+        return false;
+    }
+
+    ObjModule* module = newModule(name, pathKey);
+    push(OBJ_VAL(module));
+    // Cache BEFORE running so an import cycle sees the partially filled
+    // module instead of recursing forever.
+    tableSet(&vm.loadedModules, pathKey, OBJ_VAL(module));
+    // __nama__ is the module name here; only the entry script gets "__utama__".
+    ObjString* namaKey = copyString("__nama__", 8);
+    push(OBJ_VAL(namaKey));     // unrooted key + allocating tableSet = UAF
+    tableSet(&module->globals, namaKey, OBJ_VAL(name));
+    pop();
+
+    ObjFunction* function = compileInModule(source, module);
+    free(source);
+    if (function == NULL) {
+        pop(); pop();
+        tableDelete(&vm.loadedModules, pathKey);
+        runtimeError("Gagal mengompilasi modul '%s'.", resolved);
+        return false;
+    }
+
+    push(OBJ_VAL(function));
+    ObjClosure* closure = newClosure(function);
+    pop();
+    // Run the module body to completion right here, reusing the callback
+    // machinery: it already handles frame bookkeeping, error unwinding, and
+    // stack cleanup. Writing a second runner would duplicate all of that.
+    push(OBJ_VAL(closure));
+    Value ignored;
+    if (!callFromNative(0, &ignored)) {
+        // callFromNative flagged a native error; surface it as a normal raise
+        // so the importing code can catch it.
+        tableDelete(&vm.loadedModules, pathKey);
+        pop();                        // module
+        pop();                        // pathKey
+        return false;
+    }
+
+    pop();                            // module
+    pop();                            // pathKey
+    *out = OBJ_VAL(module);
+    return true;
+}
+
 static bool importModule(ObjString* path) {
     // Already loaded? Skip.
     Value dummy;
@@ -1422,6 +1637,8 @@ static void setOperation(uint8_t op) {
     }
     pop();              // result
     pop(); pop();       // operands
+    // Frozen only when BOTH operands are, like Python's frozenset | set.
+    result->frozen = a->frozen && b->frozen;
     push(OBJ_VAL(result));
 }
 
@@ -1564,7 +1781,7 @@ static InterpretResult run() {
             }
             case OP_DELETE_GLOBAL: {
                 ObjString* name = READ_STRING();
-                if (!tableDelete(&vm.globals, name)) {
+                if (!tableDelete(frameGlobals(frame), name)) {
                     vm.runtimeErrorClass = vm.galatNama;
                     runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
@@ -1687,7 +1904,7 @@ static InterpretResult run() {
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
                 Value value;
-                if (!tableGet(&vm.globals, name, &value)) {
+                if (!getGlobalValue(frame, name, &value)) {
                     undefinedVariable(name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1696,16 +1913,22 @@ static InterpretResult run() {
             }
             case OP_DEFINE_GLOBAL: {
                 ObjString* name = READ_STRING();
-                tableSet(&vm.globals, name, peek(0));
+                tableSet(frameGlobals(frame), name, peek(0));
                 pop();
                 break;
             }
             case OP_SET_GLOBAL: {
                 ObjString* name = READ_STRING();
-                if (tableSet(&vm.globals, name, peek(0))) {
-                    tableDelete(&vm.globals, name);
-                    undefinedVariable(name);
-                    return INTERPRET_RUNTIME_ERROR;
+                Table* globals = frameGlobals(frame);
+                // Assigning a name that only exists as a builtin shadows it in
+                // this module rather than mutating the shared builtin table.
+                if (tableSet(globals, name, peek(0))) {
+                    Value existing;
+                    if (!tableGet(&vm.globals, name, &existing)) {
+                        tableDelete(globals, name);
+                        undefinedVariable(name);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                 }
                 // Don't pop - leave value on stack (assignment is an expression)
                 break;
@@ -2243,7 +2466,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {   // K8: any hashable key
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
+                                     "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     dictSet(dict, key, value);
@@ -2307,7 +2530,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
+                                     "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     Value value;
@@ -2373,7 +2596,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
+                                     "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     dictSet(dict, key, value);
@@ -2488,6 +2711,21 @@ static InterpretResult run() {
                 defineMethod(READ_STRING());
                 break;
             case OP_GET_PROPERTY: {
+                if (IS_MODULE(peek(0))) {
+                    // matematika.mat_fpb -- a module's globals are its members.
+                    ObjString* name = READ_STRING();
+                    ObjModule* module = AS_MODULE(peek(0));
+                    Value value;
+                    if (!tableGet(&module->globals, name, &value)) {
+                        vm.runtimeErrorClass = vm.galatNama;
+                        runtimeError("Modul '%s' tidak punya '%s'.",
+                                     module->name->chars, name->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    pop();            // module
+                    push(value);
+                    break;
+                }
                 if (!IS_INSTANCE(peek(0))) {
                     // ponytail: built-in methods can be called but not taken
                     // as values — ObjBoundMethod only carries ObjClosure, and
@@ -2626,9 +2864,9 @@ static InterpretResult run() {
                 } else if (IS_STRING(given)) {
                     error = newError(vm.galatPenegasan, AS_CSTRING(given));
                 } else {
-                    // ponytail: numbers/booleans only; a full repr would need
-                    // native.c's appendValueText exported. Wrap the message in
-                    // ke_teks() for richer values.
+                    // ponytail: numbers/booleans only. A full repr would go through
+                    // formatValue, which may run user code (_repr_) right here while
+                    // raising; wrap the message in ke_teks() for richer values.
                     char buffer[64];
                     if (IS_INT(given)) {
                         // bulat must not be widened: 404 stays "404" (K2).
@@ -2670,6 +2908,31 @@ static InterpretResult run() {
             case OP_IS_INSTANCE: {
                 Value target = pop();
                 push(BOOL_VAL(valueIsInstanceOf(peek(0), target)));
+                break;
+            }
+            case OP_IMPORT_MODULE: {
+                ObjString* name = READ_STRING();
+                Value module;
+                if (!loadModule(name, &module)) return INTERPRET_RUNTIME_ERROR;
+                push(module);
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
+            case OP_IMPORT_FROM: {
+                // Stack: the module, left by OP_IMPORT_MODULE.
+                ObjString* member = READ_STRING();
+                Value moduleValue = peek(0);
+                Value value;
+                if (!IS_MODULE(moduleValue) ||
+                    !tableGet(&AS_MODULE(moduleValue)->globals, member, &value)) {
+                    vm.runtimeErrorClass = vm.galatNama;
+                    runtimeError("Modul '%s' tidak punya '%s'.",
+                                 IS_MODULE(moduleValue)
+                                     ? AS_MODULE(moduleValue)->name->chars : "?",
+                                 member->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                push(value);
                 break;
             }
             case OP_IMPORT: {
@@ -2806,9 +3069,39 @@ bool callFromNative(int argCount, Value* result) {
     return true;
 }
 
+void setScriptPath(const char* path) {
+    char dir[512];
+    dirNameOf(path, dir, sizeof dir);
+    vm.scriptDir = dir[0] != '\0' ? copyString(dir, (int)strlen(dir)) : NULL;
+}
+
 InterpretResult interpret(const char* source) {
     vm.hadError = false;
-    ObjFunction* function = compile(source);
+    // Every execution runs inside a module; the entry script's is "__utama__",
+    // so `jika __nama__ == "__utama__"` works and global lookup has no special
+    // case for "no module". Created once and reused by the REPL.
+    if (vm.mainModule == NULL) {
+        ObjString* name = copyString("__utama__", 9);
+        push(OBJ_VAL(name));
+        // path stays NULL: scriptDir is a DIRECTORY, and loadModule would run
+        // dirNameOf() over it and strip one component too many. The NULL makes
+        // loadModule fall back to vm.scriptDir directly, which is correct for
+        // both a script and the REPL (cwd).
+        ObjModule* main = newModule(name, NULL);
+        push(OBJ_VAL(main));
+        // Root the key: tableSet may grow the table, and growing allocates,
+        // which under DEBUG_STRESS_GC collects and would free this very string
+        // before findEntry reads it (AGENTS.md GC-safety rule).
+        ObjString* namaKey = copyString("__nama__", 8);
+        push(OBJ_VAL(namaKey));
+        tableSet(&main->globals, namaKey, OBJ_VAL(name));
+        pop();
+        vm.mainModule = main;
+        pop();
+        pop();
+    }
+
+    ObjFunction* function = compileInModule(source, vm.mainModule);
     if (function == NULL) return INTERPRET_COMPILE_ERROR;
 
     push(OBJ_VAL(function));

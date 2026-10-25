@@ -586,12 +586,21 @@ static bool rejectTuple(Value value) {
     return true;
 }
 
+// Every himpunan write path routes through here: tambah() and hapus() are the
+// only two, so one guard covers them both.
+static bool rejectFrozenSet(Value value) {
+    if (!IS_SET(value) || !AS_SET(value)->frozen) return false;
+    nativeRaiseKelas(vm.galatTipe, "Himpunan beku tidak dapat diubah.");
+    return true;
+}
+
 Value nativeFnTambah(int argCount, Value* args) {
     if (argCount != 2) {
         nativeRaise("tambah() memerlukan 2 argumen (list, nilai)");
         return KOSONG_VAL;
     }
     if (rejectTuple(args[0])) return KOSONG_VAL;
+    if (rejectFrozenSet(args[0])) return KOSONG_VAL;
     if (IS_SET(args[0])) {   // tambah(himpunan, x): already a member is fine
         if (!setAdd(AS_SET(args[0]), args[1])) {
             nativeRaiseKelas(vm.galatTipe, "Anggota himpunan harus nilai yang dapat di-hash.");
@@ -859,7 +868,8 @@ Value nativeFnJenis(int argCount, Value* args) {
     } else if (IS_TUPLE(args[0])) {
         return OBJ_VAL(copyString("tupel", 5));
     } else if (IS_SET(args[0])) {
-        return OBJ_VAL(copyString("himpunan", 8));
+        return AS_SET(args[0])->frozen ? OBJ_VAL(copyString("himpunan_beku", 13))
+                                       : OBJ_VAL(copyString("himpunan", 8));
     } else if (IS_DICT(args[0])) {
         return OBJ_VAL(copyString("kamus", 5));
     } else if (IS_INSTANCE(args[0])) {
@@ -874,6 +884,10 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("soket", 5));
     } else if (IS_RANGE(args[0])) {
         return OBJ_VAL(copyString("rentang", 7));
+    } else if (IS_ITERATOR(args[0])) {
+        return OBJ_VAL(copyString("iterator", 8));
+    } else if (IS_MODULE(args[0])) {
+        return OBJ_VAL(copyString("modul", 5));
     } else if (IS_FUNCTION(args[0]) || IS_CLOSURE(args[0]) ||
                IS_NATIVE(args[0]) || IS_BOUND_METHOD(args[0])) {
         return OBJ_VAL(copyString("fungsi", 6));
@@ -1876,6 +1890,7 @@ Value nativeFnHimpunanHapus(int argCount, Value* args) {
         nativeRaise("hapus() pada himpunan memerlukan 1 argumen (anggota)");
         return KOSONG_VAL;
     }
+    if (rejectFrozenSet(args[0])) return KOSONG_VAL;
     if (!dictDelete(setAsDict(AS_SET(args[0])), args[1])) {
         nativeRaiseKelas(vm.galatKunci, "Nilai itu bukan anggota himpunan.");
     }
@@ -2195,4 +2210,174 @@ Value nativeFnCetak(int argCount, Value* args) {
     freeTextBuf(&buf);
     fwrite(akhir, 1, (size_t)akhirLen, stdout);
     return KOSONG_VAL;
+}
+
+// === Sisa Fase 2 ============================================================
+
+// hash(x) - bulat hash, exposing the dict-key rule to the language.
+Value nativeFnHash(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("hash() memerlukan 1 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    uint32_t h;
+    if (!hashValue(args[0], &h)) {
+        nativeRaiseKelas(vm.galatTipe, "Nilai itu tidak dapat di-hash.");
+        return KOSONG_VAL;
+    }
+    return INT_VAL((int64_t)h);
+}
+
+// turunan_dari(kelas, induk) - issubclass; a class is its own subclass.
+Value nativeFnTurunanDari(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("turunan_dari() memerlukan 2 argumen, bukan %d", argCount);
+        return BOOL_VAL(false);
+    }
+    if (!IS_CLASS(args[0]) || !IS_CLASS(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "turunan_dari() hanya menerima kelas.");
+        return BOOL_VAL(false);
+    }
+    for (ObjClass* k = AS_CLASS(args[0]); k != NULL; k = k->superclass) {
+        if (k == AS_CLASS(args[1])) return BOOL_VAL(true);
+    }
+    return BOOL_VAL(false);
+}
+
+// ke_desimal(x) - float(). Needed since K2 made ke_angka("3") a bulat.
+Value nativeFnKeDesimal(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("ke_desimal() memerlukan 1 argumen, bukan %d", argCount);
+        return NUMBER_VAL(0);
+    }
+    Value v = args[0];
+    if (IS_INT(v)) return NUMBER_VAL((double)AS_INT(v));
+    if (IS_NUMBER(v)) return NUMBER_VAL(AS_NUMBER(v));
+    if (IS_BOOL(v)) return NUMBER_VAL(AS_BOOL(v) ? 1.0 : 0.0);
+    if (!IS_STRING(v)) {
+        nativeRaiseKelas(vm.galatTipe, "ke_desimal() hanya menerima angka, logika, atau teks.");
+        return NUMBER_VAL(0);
+    }
+    ObjString* teks = AS_STRING(v);
+    char* end = NULL;
+    errno = 0;
+    double d = strtod(teks->chars, &end);
+    // Skip trailing spaces so " 3.5 " works like Python's float().
+    while (end != NULL && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r')) end++;
+    if (end == teks->chars || *end != '\0') {
+        nativeRaiseKelas(vm.galatNilai, "ke_desimal() gagal: '%s' bukan angka valid", teks->chars);
+        return NUMBER_VAL(0);
+    }
+    if (errno == ERANGE) {
+        nativeRaiseKelas(vm.galatLuapan, "ke_desimal() melebihi jangkauan desimal");
+        return NUMBER_VAL(0);
+    }
+    return NUMBER_VAL(d);
+}
+
+// daftar() / daftar(urutan) - list(). Always a fresh copy, even from a daftar.
+Value nativeFnDaftar(int argCount, Value* args) {
+    if (argCount > 1) {
+        nativeRaise("daftar() memerlukan 0 atau 1 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    ObjList* list = newList();
+    if (argCount == 0) return OBJ_VAL(list);
+
+    Value src = args[0];
+    int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
+    if (count < 0) {
+        nativeRaiseKelas(vm.galatTipe,
+                         "daftar() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus");
+        return KOSONG_VAL;
+    }
+    // GC: iterAt allocates a fresh string per character, so the new daftar and
+    // each element must stay rooted while the array grows.
+    push(OBJ_VAL(list));
+    for (int i = 0; i < count; i++) {
+        Value element = IS_DICT(src) ? dictKeyAt(AS_DICT(src), i) : iterAt(src, i);
+        push(element);
+        writeValueArray(&list->items, element);
+        pop();
+    }
+    pop();
+    return OBJ_VAL(list);
+}
+
+// himpunan_beku() / himpunan_beku(urutan) - a hashable himpunan.
+Value nativeFnHimpunanBeku(int argCount, Value* args) {
+    if (argCount > 1) {
+        nativeRaise("himpunan_beku() memerlukan 0 atau 1 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    ObjSet* set = newSet();
+    if (argCount == 0) {
+        set->frozen = true;
+        return OBJ_VAL(set);
+    }
+
+    Value src = args[0];
+    int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
+    if (count < 0) {
+        nativeRaiseKelas(vm.galatTipe,
+                         "himpunan_beku() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus");
+        return KOSONG_VAL;
+    }
+    push(OBJ_VAL(set));
+    for (int i = 0; i < count; i++) {
+        Value member = IS_DICT(src) ? dictKeyAt(AS_DICT(src), i) : iterAt(src, i);
+        push(member);
+        bool added = setAdd(set, member);
+        pop();
+        if (!added) {
+            pop();
+            nativeRaiseKelas(vm.galatTipe, "Anggota himpunan harus nilai yang dapat di-hash.");
+            return KOSONG_VAL;
+        }
+    }
+    pop();
+    // Freeze only after filling: setAdd refuses a frozen himpunan.
+    set->frozen = true;
+    return OBJ_VAL(set);
+}
+
+// iter(urutan) - an explicit cursor, pairing with lanjutkan().
+Value nativeFnIter(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("iter() memerlukan 1 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    Value src = args[0];
+    if (IS_ITERATOR(src)) return src;   // iter(iter(x)) is iter(x), as in Python
+    if (!IS_DICT(src) && iterCount(src) < 0) {
+        nativeRaiseKelas(vm.galatTipe,
+                         "iter() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus");
+        return KOSONG_VAL;
+    }
+    return OBJ_VAL(newIterator(src));
+}
+
+// lanjutkan(it) / lanjutkan(it, bawaan) - next(). Named lanjutkan because
+// `lanjut` is already the continue keyword.
+Value nativeFnLanjutkan(int argCount, Value* args) {
+    if (argCount < 1 || argCount > 2) {
+        nativeRaise("lanjutkan() memerlukan 1 atau 2 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    if (!IS_ITERATOR(args[0])) {
+        nativeRaiseKelas(vm.galatTipe, "lanjutkan() memerlukan iterator dari iter().");
+        return KOSONG_VAL;
+    }
+    ObjIterator* it = AS_ITERATOR(args[0]);
+    // Re-read the length every call: mutating the source mid-iteration ends it
+    // early instead of reading out of bounds.
+    Value src = it->source;
+    int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
+    if (count < 0 || it->index >= count) {
+        if (argCount == 2) return args[1];
+        nativeRaiseKelas(vm.hentiIterasi, "Iterator sudah habis.");
+        return KOSONG_VAL;
+    }
+    int i = it->index++;
+    return IS_DICT(src) ? dictKeyAt(AS_DICT(src), i) : iterAt(src, i);
 }

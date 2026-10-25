@@ -1,0 +1,4 @@
+ke_desimal() gagal: 'abc' bukan angka valid
+[baris 1, kolom 23] dalam skrip
+    cetak(ke_desimal("abc"))
+                          ^

@@ -910,7 +910,45 @@ cetak(jarak[(0, 0)])   # asal
 Ubah urutan lain menjadi tupel dengan `tupel(...)`: `tupel([1, 2])`,
 `tupel("ab")` → `("a", "b")`.
 
-> Contoh: [`examples/tupel.idk`](../examples/tupel.idk)
+### Tupel tanpa kurung
+
+Pada **sisi kanan penugasan** dan setelah **`kembalikan`**, kurungnya boleh
+dilepas — koma saja sudah membentuk tupel, seperti Python:
+
+```indonesiaku
+x = 1, 2
+cetak(x, jenis(x))      # (1, 2) tupel
+
+y = 1,                  # satu elemen, koma di akhir
+cetak(y, panjang(y))    # (1,) 1
+```
+
+Ini membuat fungsi dapat mengembalikan beberapa nilai sekaligus:
+
+```indonesiaku
+fungsi bagi_sisa(a, b) {
+    kembalikan a // b, a % b
+}
+
+cetak(bagi_sisa(17, 5))        # (3, 2)
+bagi, sisa = bagi_sisa(17, 5)  # langsung dibuka ke dua nama
+cetak(bagi, sisa)              # 3 2
+```
+
+Di dalam kurung apa pun, koma **tetap** berarti pemisah seperti biasa — jadi
+argumen fungsi, elemen daftar, dan pasangan kamus tidak berubah artinya:
+
+```indonesiaku
+fungsi tambah2(a, b) { kembalikan a + b }
+cetak(tambah2(1, 2))              # 3  <- dua argumen, bukan satu tupel
+cetak([1, 2], {"a": 1, "b": 2})   # [1, 2] {"a": 1, "b": 2}
+```
+
+> Catatan: `variabel a, b = ...` tidak didukung; untuk membuka beberapa nama
+> tulis `a, b = ...` tanpa `variabel`.
+
+> Contoh: [`examples/tupel.idk`](../examples/tupel.idk),
+> [`examples/sisa_fase2.idk`](../examples/sisa_fase2.idk)
 
 ---
 
@@ -929,8 +967,8 @@ cetak(2 dalam angka)       # benar
 ```
 
 Anggota harus nilai yang **dapat di-hash** — aturan yang sama dengan kunci
-kamus: angka, teks, logika, `kosong`, atau tupel berisi nilai seperti itu.
-Daftar, kamus, dan himpunan lain ditolak dengan `GalatTipe`.
+kamus: angka, teks, logika, `kosong`, tupel, atau `himpunan_beku` berisi nilai
+seperti itu. Daftar, kamus, dan himpunan biasa ditolak dengan `GalatTipe`.
 
 Operasi himpunan menghasilkan himpunan **baru**; kedua operand harus himpunan:
 
@@ -952,12 +990,41 @@ Yang perlu diingat:
 
 - Himpunan **tidak berindeks**: `s[0]` → `GalatTipe`. Ubah dulu ke daftar
   (`terurut(s)`) bila butuh posisi.
-- Seperti `set` Python, himpunan sendiri **tidak dapat di-hash**, jadi tidak
-  bisa menjadi kunci kamus atau anggota himpunan lain.
+- Seperti `set` Python, himpunan biasa **tidak dapat di-hash**, jadi tidak
+  bisa menjadi kunci kamus atau anggota himpunan lain — pakai `himpunan_beku`
+  (di bawah) bila butuh itu.
 - Urutan cetak mengikuti urutan penyisipan. Jangan bergantung pada urutan
   itu; pakai `terurut(s)` bila urutan penting.
 
-> Contoh: [`examples/himpunan.idk`](../examples/himpunan.idk)
+### Himpunan beku
+
+`himpunan_beku(...)` membuat himpunan yang **tidak bisa diubah**, dan karena
+itu **dapat di-hash** — persis `frozenset` di Python:
+
+```indonesiaku
+beku = himpunan_beku([3, 1, 2])
+cetak(beku)          # himpunan_beku([3, 1, 2])
+cetak(jenis(beku))   # himpunan_beku
+
+peta = {himpunan_beku([1, 2]): "pasangan"}
+cetak(peta[himpunan_beku([2, 1])])   # pasangan  <- urutan tidak berpengaruh
+```
+
+Isi sama berarti sama, beku atau tidak. Operator `| & - ^` tetap bekerja;
+hasilnya beku hanya bila **kedua** operand beku:
+
+```indonesiaku
+beku = himpunan_beku([1, 2])
+cetak(himpunan([1, 2]) == beku)           # benar
+cetak(jenis(beku | himpunan_beku([3])))   # himpunan_beku
+cetak(jenis(beku | himpunan([3])))        # himpunan
+```
+
+`tambah` dan `hapus` menolaknya dengan `GalatTipe: Himpunan beku tidak dapat
+diubah.`
+
+> Contoh: [`examples/himpunan.idk`](../examples/himpunan.idk),
+> [`examples/sisa_fase2.idk`](../examples/sisa_fase2.idk)
 
 ---
 
@@ -1724,8 +1791,82 @@ kelas Kosong { lewati }
 
 ## Modul (impor)
 
-`impor "file.idk"` menjalankan file lain dalam namespace global yang sama
-(di-cache, sehingga impor ulang diabaikan).
+Ada dua bentuk impor. Bentuk **bermodul** (`impor nama`) memberi tiap berkas
+namespace sendiri; bentuk **berkas** (`impor "file.idk"`) menjalankan berkas
+lain dalam namespace yang sama. Keduanya di-cache: berkas yang sama tidak
+pernah dijalankan dua kali.
+
+### `impor nama` — tiap modul punya namespace sendiri
+
+```indonesiaku
+impor matematika
+
+cetak(matematika.mat_fpb(12, 18))      # 6
+```
+
+Nama modul ditulis tanpa tanda kutip dan tanpa `.idk`. Berkas dicari
+berurutan di: direktori berkas yang mengimpor, lalu setiap direktori di
+variabel lingkungan `INDK_PATH`, lalu `pustaka/`.
+
+Modul yang diimpor **tidak** mencemari variabel Anda. Dua modul boleh memakai
+nama yang sama tanpa saling menimpa:
+
+```indonesiaku
+impor matematika
+
+variabel mat_fpb = "punya saya"
+cetak(mat_fpb)                         # punya saya
+cetak(matematika.mat_fpb(12, 18))      # 6
+```
+
+### Alias dengan `sebagai`
+
+```indonesiaku
+impor matematika sebagai mtk
+
+cetak(mtk.mat_kpk(4, 6))               # 12
+```
+
+### `dari ... impor ...`
+
+Mengambil anggota tertentu langsung ke namespace Anda:
+
+```indonesiaku
+dari matematika impor mat_fpb
+cetak(mat_fpb(12, 18))                 # 6
+
+dari matematika impor mat_fpb sebagai fpb
+cetak(fpb(9, 6))                       # 3
+
+dari matematika impor mat_fpb, mat_kpk
+cetak(mat_fpb(8, 12), mat_kpk(4, 6))   # 4 12
+```
+
+### Paket (modul di dalam folder)
+
+Titik berarti subfolder, jadi `impor alat.teks` memuat `alat/teks.idk`.
+Nama yang didefinisikan adalah komponen terakhir (`teks`).
+
+### `__nama__` dan `__utama__`
+
+Setiap berkas punya variabel `__nama__`. Isinya `"__utama__"` bila berkas
+dijalankan langsung, dan nama modulnya bila diimpor. Gunakan ini agar sebuah
+berkas bisa jadi program sekaligus modul:
+
+```indonesiaku
+fungsi utama() {
+    cetak("berjalan sebagai program")
+}
+
+jika __nama__ == "__utama__" {
+    utama()
+}
+```
+
+### Bentuk berkas: `impor "file.idk"`
+
+Bentuk lama tetap berlaku dan **tidak berubah**: berkas dijalankan dalam
+namespace yang sama, sehingga semua namanya langsung tersedia tanpa awalan.
 
 ```indonesiaku
 impor "pustaka/teks.idk"
@@ -1734,7 +1875,12 @@ impor "pustaka/daftar.idk"
 cetak(teks_pisah("a,b,c", ","))        # ["a", "b", "c"]
 cetak(daftar_urutkan([3, 1, 2]))       # [1, 2, 3]
 ```
-> Contoh: [`examples/impor.idk`](../examples/impor.idk)
+
+Pilih `impor nama` untuk kode baru — namespace terpisah mencegah tabrakan
+nama. Bentuk berkas berguna bila Anda memang ingin isinya menyatu.
+
+> Contoh: [`examples/modul.idk`](../examples/modul.idk),
+> [`examples/impor.idk`](../examples/impor.idk)
 > Lihat daftar pustaka standar di [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).
 
 ---

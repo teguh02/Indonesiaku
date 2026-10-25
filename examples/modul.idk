@@ -1,0 +1,33 @@
+# Modul dan namespace (Fase 3).
+
+impor modul_contoh.aritmetika
+impor modul_contoh.sapaan
+
+cetak("== namespace terpisah ==")
+cetak(aritmetika.tambah(2, 3))
+cetak(sapaan.tambah(2, 3))
+cetak(aritmetika.asal, sapaan.asal)
+
+cetak("== alias ==")
+impor modul_contoh.aritmetika sebagai ar
+cetak(ar.kali(4, 5))
+
+cetak("== dari ... impor ==")
+dari modul_contoh.sapaan impor halo
+cetak(halo("dunia"))
+
+dari modul_contoh.aritmetika impor tambah sebagai jumlahkan
+cetak(jumlahkan(10, 7))
+
+dari modul_contoh.aritmetika impor tambah, kali
+cetak(tambah(1, 2), kali(3, 4))
+
+cetak("== global modul tidak bocor ==")
+variabel asal = "utama"
+cetak(asal, aritmetika.asal)
+
+cetak("== __nama__ ==")
+cetak(__nama__)
+
+cetak("== jenis ==")
+cetak(jenis(aritmetika))

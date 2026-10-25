@@ -9,6 +9,8 @@
 #define OBJ_TYPE(value)        (AS_OBJ(value)->type)
 
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
+#define IS_ITERATOR(value)     isObjType(value, OBJ_ITERATOR)
+#define IS_MODULE(value)       isObjType(value, OBJ_MODULE)
 #define IS_FUNCTION(value)     isObjType(value, OBJ_FUNCTION)
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
 #define IS_CLOSURE(value)      isObjType(value, OBJ_CLOSURE)
@@ -41,6 +43,8 @@
 #define AS_RANGE(value)        ((ObjRange*)AS_OBJ(value))
 #define AS_TUPLE(value)        ((ObjTuple*)AS_OBJ(value))
 #define AS_SET(value)          ((ObjSet*)AS_OBJ(value))
+#define AS_ITERATOR(value)     ((ObjIterator*)AS_OBJ(value))
+#define AS_MODULE(value)       ((ObjModule*)AS_OBJ(value))
 
 typedef enum {
     OBJ_STRING,
@@ -59,6 +63,8 @@ typedef enum {
     OBJ_RANGE,
     OBJ_TUPLE,
     OBJ_SET,
+    OBJ_ITERATOR,
+    OBJ_MODULE,
 } ObjType;
 
 struct Obj {
@@ -75,6 +81,8 @@ struct ObjString {
     uint32_t hash;
 };
 
+typedef struct ObjModule ObjModule;
+
 typedef struct {
     Obj obj;
     int arity;           // total parameters
@@ -86,6 +94,10 @@ typedef struct {
     int upvalueCount;
     Chunk chunk;
     ObjString* name;
+    // The module this function was compiled in. A function defined in module A
+    // reads A's globals even when called from B, so global resolution follows
+    // the callee, never the caller. GC-marked.
+    struct ObjModule* module;
 } ObjFunction;
 
 typedef Value (*NativeFn)(int argCount, Value* args);
@@ -134,12 +146,35 @@ typedef struct {
     Obj obj;
     ValueTable table;
     ValueArray keys;    // insertion order of members
+    bool frozen;        // himpunan_beku: hashable, and every write path refuses it
 } ObjSet;
 
+// Only the leading fields must line up: setAsDict() hands an ObjSet to the
+// dict helpers, which touch nothing past `keys`. The sizes differ (ObjSet has
+// `frozen`), and that is fine -- no dict is ever allocated from an ObjSet.
 _Static_assert(offsetof(ObjSet, table) == offsetof(ObjDict, table) &&
                offsetof(ObjSet, keys) == offsetof(ObjDict, keys) &&
-               sizeof(ObjSet) == sizeof(ObjDict),
-               "ObjSet must keep ObjDict's layout (setAsDict casts between them)");
+               sizeof(ObjSet) >= sizeof(ObjDict),
+               "ObjSet must keep ObjDict's leading layout (setAsDict casts between them)");
+
+// iter(urutan): an explicit cursor over a snapshot-free sequence. `index` is
+// the next element to hand out; the length is re-read every lanjutkan(), so
+// shrinking the source ends iteration early instead of reading out of bounds.
+typedef struct {
+    Obj obj;
+    Value source;
+    int index;
+} ObjIterator;
+
+// A module owns its global namespace. EVERY execution runs inside one,
+// including the entry script (whose module is named "__utama__"), so global
+// lookup never needs a special case for "no module".
+struct ObjModule {
+    Obj obj;
+    ObjString* name;     // "matematika", or "__utama__" for the entry script
+    ObjString* path;     // resolved absolute path, the cache key
+    Table globals;       // this module's own globals; builtins live in vm.globals
+};
 
 // rentang(awal, akhir, langkah): a lazy arithmetic sequence (Python range).
 // Elements are computed on demand; no list is allocated.
@@ -224,6 +259,8 @@ ObjList* newList();
 ObjTuple* newTuple();
 ObjDict* newDict();
 ObjSet* newSet();
+ObjIterator* newIterator(Value source);
+ObjModule* newModule(ObjString* name, ObjString* path);
 // Adds value; false (nothing added) when it is not hashable. Caller roots both.
 bool setAdd(ObjSet* set, Value value);
 int dictLength(ObjDict* dict);

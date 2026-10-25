@@ -116,28 +116,41 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 ✅ kunci kamus bukan cuma teks — `Value`-based ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md));
 ✅ operator bitwise `& | ^ ~ << >>` + `&= |= ^= <<= >>=` ([rencana](RENCANA_FITUR/selesai/operator_bitwise.md));
 ✅ `tupel` `(1, 2)`/`(1,)`/`()` + `tupel()` ([rencana](RENCANA_FITUR/selesai/tupel.md), K17);
-✅ `himpunan([...])` + `| & - ^` ([rencana](RENCANA_FITUR/selesai/himpunan.md), K17).
+✅ `himpunan([...])` + `| & - ^` ([rencana](RENCANA_FITUR/selesai/himpunan.md), K17);
+✅ tupel tanpa kurung — `x = 1, 2`, `kembalikan a, b` ([rencana](RENCANA_FITUR/selesai/sisa_fase2.md), K17);
+✅ `himpunan_beku` — himpunan yang dapat di-hash ([rencana](RENCANA_FITUR/selesai/sisa_fase2.md));
+✅ builtin `hash`, `iter`/`lanjutkan`, `turunan_dari`, `ke_desimal`, `daftar()` ([rencana](RENCANA_FITUR/selesai/sisa_fase2.md)).
 
-> Fase 2 **baru sebagian selesai** — yang tersisa: tupel
-> tanpa kurung (`x = 1, 2`, `kembalikan a, b` — belum diputuskan, K17),
-> ``himpunan_beku``, builtin ``hash``, ``iter``/``next``, ``turunan_dari``,
-> ``ke_desimal``, ``daftar()`` — lihat
-> [`RENCANA_FITUR/selesai/builtin_inti.md`](RENCANA_FITUR/selesai/builtin_inti.md)
-> (rencana itu selesai sebagian; builtin di atas belum ada).
+> Fase 2 **selesai**. Catatan penamaan: `next` dinamai **`lanjutkan`** karena
+> `lanjut` sudah menjadi kata kunci perulangan. Koma pembentuk tupel hanya
+> berlaku di sisi kanan penugasan dan setelah `kembalikan`; di dalam kurung
+> koma tetap berarti pemisah. `variabel a, b = ...` tetap tidak didukung —
+> tulis `a, b = ...` tanpa `variabel`.
 
 Ref: K2, K8, K11, K13, 06 §4–6.
 
-### Fase 3 — Modul & pustaka inti (0.9)
+### Fase 3 — Modul & pustaka inti (0.9) — ✅ **selesai**
 
-`ObjModule` dengan namespace, `impor x`, `dari x impor y sebagai z`, paket,
-jalur pencarian (`INDK_PATH`), `__utama__`; modul P1 dari katalog 07:
-`matematika`, `acak`, `teks`, `sistem`, `waktu`, `tanggal_waktu`, `json`
-(native). Ditambah **basis data SQLite** — ✅ **selesai**, lihat
+✅ `ObjModule` dengan namespace sendiri per berkas;
+✅ `impor x`, `impor x sebagai y`, `dari x impor y`, `dari x impor y sebagai z`;
+✅ paket (`impor a.b` → `a/b.idk`);
+✅ jalur pencarian (direktori pengimpor → `INDK_PATH` → `pustaka/`);
+✅ `__nama__` / `__utama__`
+([rencana](RENCANA_FITUR/selesai/modul_namespace.md)).
+✅ **Basis data SQLite**, lihat
 [`RENCANA_FITUR/selesai/basis_data_sqlite.md`](RENCANA_FITUR/selesai/basis_data_sqlite.md)
 (dimajukan dari Fase 8: amalgamation adalah satu berkas `.c`, tidak butuh FFI).
 SQLite 3.50.4 di-*vendor*; 10 fungsi `db_*` dengan parameter `?` wajib dan
-satu pernyataan per panggilan. Sisa Fase 3 (`ObjModule`, `impor x`, paket)
-belum dikerjakan.
+satu pernyataan per panggilan.
+
+Bentuk lama `impor "file.idk"` sengaja dipertahankan apa adanya (namespace
+bersama) demi kompatibilitas K14 — itu yang dipakai `pustaka/*.idk`.
+
+**Sisa yang disengaja:** modul P1 katalog 07 (`matematika`, `acak`, `teks`,
+`sistem`, `waktu`, `tanggal_waktu`, `json`) belum ditulis ulang sebagai modul
+**native C**. Isinya sudah tersedia sebagai `pustaka/*.idk` dan kini dapat
+diimpor bermodul (`impor matematika`), sehingga penulisan ulang ke C adalah
+optimasi, bukan fitur yang hilang.
 Ref: 04 §6, 07 §1–5.
 
 ### ★ Rilis 1.0 — "Stabil untuk umum"

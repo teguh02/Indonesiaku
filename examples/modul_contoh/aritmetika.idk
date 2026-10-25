@@ -1,0 +1,14 @@
+# Modul contoh: dipakai oleh examples/modul.idk.
+variabel asal = "aritmetika"
+
+fungsi tambah(a, b) {
+    kembalikan a + b
+}
+
+fungsi kali(a, b) {
+    kembalikan a * b
+}
+
+jika __nama__ == "__utama__" {
+    cetak("dijalankan langsung")
+}

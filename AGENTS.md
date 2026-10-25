@@ -180,6 +180,19 @@ Before committing:
 
 - Mark-sweep GC is always on. To verify GC correctness after touching allocation/stack code, build with `-DDEBUG_STRESS_GC` (collects on every allocation) and run all examples — output must be unchanged. This is the single most valuable check for VM changes.
 - Other flags in `src/common.h`: `DEBUG_LOG_GC`, `DEBUG_PRINT_CODE`, `DEBUG_TRACE_EXECUTION`.
+- **Modules own their globals (Fase 3).** `vm.globals` is now the BUILTIN table
+  only; each `ObjModule` has its own `globals`. Resolution goes through
+  `frameGlobals(frame)` / `getGlobalValue()` in `vm.c` and follows
+  `frame->closure->function->module` — the CALLEE, never the caller, so a
+  function defined in module A still reads A's globals when B calls it. Any new
+  global-touching opcode must use those helpers, not `&vm.globals` directly, or
+  it silently writes into the builtin table. `OP_SET_GLOBAL` deliberately
+  shadows a builtin in the module table instead of mutating the shared one.
+  `compileInModule()` stamps `function->module`; `compile()` is the no-module
+  wrapper. Both `compilingModule` and `function->module` are GC roots.
+- **A module name is an identifier, so language keywords cannot be path
+  components:** `impor paket.dalam` fails because `dalam` is the `in` operator.
+  Name module files accordingly.
 - GC-safety rule: any C code that allocates while holding an unrooted object must keep it reachable (push it on the VM stack, or use `peek` instead of `pop`). See `makeConstant`, `concatenate`, `allocateString`, and the `kunci`/`OP_BUILD_LIST` handlers for the pattern.
 
 ## Language reality (differs from older docs)
@@ -272,8 +285,21 @@ Before committing:
 - Command-line args after the script path are exposed as the global list `argumen`.
 - Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`, `json.idk`, `http.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`, `json_`, `http_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring), `ord`/`chr`, and first-class functions.
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). At script level that means globals; inside a function only a name declared `global` reaches a global this way. Only compound assignment (`+=` etc.) requires the global to already exist.
+- `ObjSet` carries a `frozen` flag instead of a separate `OBJ_FROZENSET` type, so every
+  `ObjType` switch stays untouched. Consequences: `hashValue` accepts a frozen set (XOR of
+  member hashes, so insertion order does not matter), `valuesEqual` deliberately ignores
+  `frozen` (`himpunan([1]) == himpunan_beku([1])` is benar, as in Python), and every write
+  path goes through `rejectFrozenSet` — there are exactly two (`tambah`, `hapus`).
+- The editor's builtin highlight list is GENERATED from `defineNative()` in `src/vm.c`,
+  sorted longest-name-first so `himpunan_beku` wins the alternation against `himpunan`.
+  Do not hand-edit it: 35 builtins silently went unhighlighted for months that way.
+- `allowTupleRHS` in `compiler.c` gates the bare-comma tupel (`x = 1, 2`). It is enabled by
+  exactly four callers — `expressionStatement`, `varDeclaration`, `returnStatement` (both
+  branches), and the `OP_INDEX_SET` path — and `maybeTupleTail` additionally requires
+  `scannerGroupingDepth() == 0`. Both guards are needed: without the depth check a comma
+  inside `f(x = 1, y)` or `[a, b]` would start building a tupel.
 - GC-safety when mutating collections: keep operands on the VM stack (`peek`, not `pop`) until after `tableSet`/`writeValueArray`, which can grow and trigger a GC. `OP_INDEX_SET` for dicts and the `sisip` native follow this. `ObjDict.keys` is also a GC-marked insertion-order list: update it only through `dictSet`/`dictDelete`.
-- **Value formatting lives in THREE paths and they must agree:** `printObject` (`object.c`, used by `cetak`), `appendValueText` (`native.c`, used by `ke_teks`/`format`/f-strings), and `nativeFnRepr`. The escape table is shared via `stringEscape(char)` in `object.c`, called by both `printStringRepr` (object.c) and `appendStringRepr` (native.c) — patching only `printObject` makes `cetak(x)` and `ke_teks(x)` disagree. Strings print bare on their own but are quoted as **collection elements** (`cetak(["a"])` → `["a"]`), Python's str/repr split; double quotes, not Python's single, because dict keys already use `"`.
+- **Value formatting lives in ONE place since K19:** `formatValue` in `object.c` (see the formatter bullet above); the old `printObject`/`appendValueText` pair disagreed and truncated. `printObject`/`printValue` are now thin wrappers for debug output. Escapes come from `stringEscape(char)`. Strings print bare on their own but are quoted as **collection elements** (`cetak(["a"])` → `["a"]`), Python's str/repr split; double quotes, not Python's single, because dict keys already use `"`.
 - **Iterate `ObjDict`/`ObjSet` through `keys`, never `table.entries`** — the table is hash order, `keys` is insertion order, and printing that disagrees with `kunci()` or `untuk ... dalam` on the same dict is a bug users see immediately.
 - **Built-in methods (`"a".huruf_besar()`) cost zero new opcodes** because every relevant native already takes its receiver as `args[0]` and `OP_INVOKE` leaves the stack as `receiver, arg1, …`; `invoke()` just maps name → native. Verify that invariant before adding an entry to the string/list/dict method tables — a native with a different argument order needs a wrapper. Built-in methods can be *called* but not taken as values (no `ObjBoundMethod`); the error message says so explicitly.
 - **Natives reject keyword arguments by default.** `vm.nativeArgNames` is filled only for natives listed in `nativeTakesKeywords()` (currently just `cetak`), so an unsupported `pisah=` is a clear error instead of being silently ignored. `cetak` is a plain native function, **not a keyword** — `OP_PRINT` was removed, and overwriting `cetak` behaves exactly like Python.

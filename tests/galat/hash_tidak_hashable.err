@@ -1,0 +1,4 @@
+Nilai itu tidak dapat di-hash.
+[baris 1, kolom 18] dalam skrip
+    cetak(hash([1, 2]))
+                     ^

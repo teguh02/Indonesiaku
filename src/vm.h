@@ -71,7 +71,9 @@ typedef struct {
     int exitFrame;
     Table globals;
     Table strings;
-    Table loadedModules;
+    Table loadedModules;   // resolved path -> ObjModule
+    ObjModule* mainModule; // the entry script's module ("__utama__")
+    ObjString* scriptDir;  // directory of the entry script, for import search
     ObjString* initString;
     ObjString* magicNames[MAGIC_COUNT];   // K19, interned; see MAGIC_NAMES in vm.c
     ObjClass* galat;
@@ -86,6 +88,7 @@ typedef struct {
     ObjClass* galatPenegasan;
     ObjClass* galatAtribut;
     ObjClass* galatRekursi;
+    ObjClass* hentiIterasi;
 
     // Keyword argument names for the native call currently running, or NULL.
     // Only natives that opt in (see keywordNatives in vm.c) ever see these;
@@ -126,6 +129,8 @@ extern VM vm;
 void initVM();
 void freeVM();
 void defineArgs(int argc, const char* argv[], int start);
+// Directory of the entry script, used as the first import search path.
+void setScriptPath(const char* path);
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();

@@ -205,4 +205,13 @@ Value nativeFnDbIdTerakhir(int argCount, Value* args);
 Value nativeFnDbMulai(int argCount, Value* args);
 Value nativeFnDbKomit(int argCount, Value* args);
 Value nativeFnDbBatal(int argCount, Value* args);
+// Sisa Fase 2
+Value nativeFnHash(int argCount, Value* args);           // hash(x)
+Value nativeFnTurunanDari(int argCount, Value* args);    // turunan_dari(K, Induk)
+Value nativeFnKeDesimal(int argCount, Value* args);      // ke_desimal(x)
+Value nativeFnDaftar(int argCount, Value* args);         // daftar([urutan])
+Value nativeFnHimpunanBeku(int argCount, Value* args);   // himpunan_beku([urutan])
+Value nativeFnIter(int argCount, Value* args);           // iter(urutan)
+Value nativeFnLanjutkan(int argCount, Value* args);      // lanjutkan(it[, bawaan])
+
 #endif

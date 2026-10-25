@@ -207,7 +207,8 @@ diam-diam diabaikan.
 **Selesai juga:** `repr` untuk elemen koleksi. Ternyata ada **dua** jalur
 cetak (`printObject` di `object.c` dan `appendValueText` di `native.c`) plus
 `repr`; memperbaiki satu saja akan membuat `cetak(x)` dan `ke_teks(x)`
-berbeda. Ketiganya kini memakai satu helper `stringEscape()`.
+berbeda. Ketiganya kini memakai satu helper `stringEscape()`. (Sejak K19,
+Fase 4, ketiganya digabung menjadi satu formatter `formatValue`.)
 
 Sekalian diperbaiki: kedua jalur mengiterasi tabel hash padahal `ObjDict`
 menyimpan `keys` untuk urutan sisip, sehingga `cetak(d)` bisa berbeda urutan
