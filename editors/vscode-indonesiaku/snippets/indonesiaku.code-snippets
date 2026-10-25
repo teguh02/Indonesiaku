@@ -113,6 +113,21 @@
     ],
     "description": "Panggilan dengan argumen bernama; posisional harus mendahului yang bernama"
   },
+  "f-string": {
+    "prefix": "fstring",
+    "body": [
+      "f\"${1:teks} {${2:ekspresi}}\"$0"
+    ],
+    "description": "Teks dengan ekspresi tersisip"
+  },
+  "String tiga kutip": {
+    "prefix": "tigakutip",
+    "body": [
+      "\"\"\"${1:baris pertama}",
+      "${2:baris kedua}\"\"\"$0"
+    ],
+    "description": "Teks multi-baris"
+  },
   "Fungsi anonim": {
     "prefix": "fungsianonim",
     "body": [

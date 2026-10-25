@@ -3,13 +3,27 @@
   "name": "Indonesiaku",
   "scopeName": "source.indonesiaku",
   "patterns": [
-    { "include": "#comments" },
-    { "include": "#strings" },
-    { "include": "#keywords" },
-    { "include": "#constants" },
-    { "include": "#functions" },
-    { "include": "#numbers" },
-    { "include": "#operators" }
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#operators"
+    }
   ],
   "repository": {
     "comments": {
@@ -23,11 +37,46 @@
     "strings": {
       "patterns": [
         {
+          "name": "string.quoted.triple.indonesiaku",
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.indonesiaku",
+              "match": "\\\\[ntr\\\"'\\\\]"
+            }
+          ]
+        },
+        {
+          "name": "string.interpolated.indonesiaku",
+          "begin": "f\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.indonesiaku",
+              "match": "\\\\[ntr\\\"'\\\\]"
+            },
+            {
+              "name": "meta.embedded.indonesiaku",
+              "begin": "\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "string.quoted.double.indonesiaku",
           "begin": "\"",
           "end": "\"",
           "patterns": [
-            { "name": "constant.character.escape.indonesiaku", "match": "\\\\[ntr\\\"'\\\\]" }
+            {
+              "name": "constant.character.escape.indonesiaku",
+              "match": "\\\\[ntr\\\"'\\\\]"
+            }
           ]
         }
       ]
@@ -66,12 +115,18 @@
     },
     "numbers": {
       "patterns": [
-        { "name": "constant.numeric.indonesiaku", "match": "\\b(?:0[xX][0-9a-fA-F]+|\\d+(?:\\.\\d+)?)\\b" }
+        {
+          "name": "constant.numeric.indonesiaku",
+          "match": "\\b(?:0[xX][0-9a-fA-F_]+|0[bB][01_]+|0[oO][0-7_]+|\\d[\\d_]*(?:\\.[\\d_]+)?(?:[eE][+-]?\\d[\\d_]*)?)\\b"
+        }
       ]
     },
     "operators": {
       "patterns": [
-        { "name": "keyword.operator.indonesiaku", "match": "(?:==|!=|<=|>=|//=|\\*\\*=|\\+=|-=|\\*=|/=|%=|//|\\*\\*|[+*/%<>=!])" }
+        {
+          "name": "keyword.operator.indonesiaku",
+          "match": "(?:==|!=|<=|>=|//=|\\*\\*=|\\+=|-=|\\*=|/=|%=|//|\\*\\*|[+*/%<>=!])"
+        }
       ]
     }
   }

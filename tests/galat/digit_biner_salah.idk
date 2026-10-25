@@ -1,0 +1,2 @@
+# Angka biner hanya boleh berisi 0 dan 1.
+cetak(0b2)

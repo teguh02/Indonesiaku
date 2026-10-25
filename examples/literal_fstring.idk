@@ -1,0 +1,68 @@
+# Literal angka, string tiga kutip, dan f-string.
+
+# --- Literal angka ---------------------------------------------------------
+
+# Eksponen.
+cetak(1e3, 1E3, 1.5e-3, 2E+8)
+
+# Heksadesimal, biner, oktal.
+cetak(0xFF, 0x1F, 0b1010, 0o17)
+
+# Pemisah ribuan agar angka panjang mudah dibaca.
+cetak(1_000_000, 3.141_592)
+
+# Semuanya tetap angka biasa, hanya cara menulisnya yang berbeda.
+cetak(0xFF == 255, 0b1010 == 10, 0o17 == 15, 1_000 == 1000)
+
+# Huruf di awal nama variabel tidak terpengaruh.
+variabel b1010 = "ini nama variabel"
+cetak(b1010)
+
+# --- String tiga kutip -----------------------------------------------------
+
+variabel puisi = """baris pertama
+baris kedua
+baris ketiga"""
+cetak(puisi)
+cetak(panjang(puisi))
+
+# Kutip tunggal di dalamnya tidak perlu di-escape.
+cetak("""dia berkata "halo" lalu pergi""")
+
+# --- f-string --------------------------------------------------------------
+
+variabel nama = "Budi"
+variabel umur = 30
+cetak(f"Halo {nama}, umurmu {umur} tahun")
+
+# Ekspresi apa pun boleh, bukan hanya nama variabel.
+cetak(f"1 + 2 = {1 + 2}")
+
+fungsi dua_kali(x) {
+    kembalikan x * 2
+}
+cetak(f"dua kali 21 = {dua_kali(21)}")
+
+# Nilai non-teks ditampilkan seperti ke_teks().
+cetak(f"daftar: {[1, 2, 3]}")
+cetak(f"kosong: {kosong}")
+
+variabel data = {"a": 1}
+cetak(f"ambil dari kamus: {data["a"]}")
+
+# Kurung harfiah ditulis dobel.
+cetak(f"kurung {{harfiah}} ok")
+
+# Ekspresi kondisional juga bisa di dalamnya.
+cetak(f"status: {"dewasa" jika umur >= 18 selain "anak"}")
+
+# f-string melihat variabel lokal, termasuk di dalam closure.
+fungsi pembuat_label(awalan) {
+    kembalikan fungsi(x) { kembalikan f"{awalan}-{x}" }
+}
+variabel label = pembuat_label("ID")
+cetak(label(7))
+
+untuk i dalam rentang(3) {
+    cetak(f"ke-{i} kuadratnya {i * i}")
+}

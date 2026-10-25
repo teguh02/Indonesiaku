@@ -59,6 +59,9 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
+- ✅ **f-string**: `f"Halo {nama}, umurmu {umur}"`
+- ✅ **Literal angka**: `1e3`, `0xFF`, `0b1010`, `0o17`, `1_000_000`
+- ✅ **String tiga kutip**: `"""teks\nmulti-baris"""`
 - ✅ **Fungsi anonim**: `fungsi(x) { kembalikan x * x }` sebagai nilai, closure penuh
 - ✅ **Ekspresi kondisional**: `"lulus" jika nilai >= 60 selain "gagal"`
 - ✅ **`pastikan`** (assert) dengan pesan opsional → `GalatPenegasan`

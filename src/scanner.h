@@ -32,6 +32,7 @@ typedef enum {
     TOKEN_DIRI, TOKEN_BENAR, TOKEN_VARIABEL, TOKEN_SELAGI,
     TOKEN_JIKA_LAIN, TOKEN_DALAM, TOKEN_HENTIKAN, TOKEN_LANJUT,
     TOKEN_LEWATI, TOKEN_IMPOR, TOKEN_DARI, TOKEN_SEBAGAI, TOKEN_PASTIKAN,
+    TOKEN_FSTRING,
     TOKEN_DENGAN, TOKEN_COBA, TOKEN_KECUALI, TOKEN_AKHIRNYA,
     TOKEN_GLOBAL, TOKEN_NONLOKAL,
     TOKEN_NAIKKAN, TOKEN_TIDAK, TOKEN_ADALAH, TOKEN_BUKAN,
@@ -58,5 +59,8 @@ void initScanner(const char* source);
 Token scanToken();
 ScannerState saveScanner();
 void restoreScanner(ScannerState state);
+// Re-point the scanner at a NUL-terminated buffer, keeping the reported line
+// number (used to compile f-string expressions without losing their line).
+void initScannerAt(const char* source, int line);
 
 #endif

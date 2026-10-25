@@ -1020,6 +1020,74 @@ a.bersuara()   # Rex berkata: Guk
 
 ---
 
+## Cara Menulis Angka
+
+Selain `10` dan `3.5`, angka boleh ditulis dengan basis lain atau pemisah:
+
+```indonesiaku
+cetak(1e3, 1.5e-3)          # eksponen -> 1000  0.0015
+cetak(0xFF, 0b1010, 0o17)   # heksadesimal, biner, oktal -> 255  10  15
+cetak(1_000_000)            # pemisah ribuan -> 1000000
+```
+
+Semuanya tetap bertipe angka biasa — hanya cara menulisnya yang berbeda,
+jadi `0xFF == 255` bernilai `benar`.
+
+Garis bawah hanya boleh berada **di antara** digit: `1_000` sah, sedangkan
+`1__0` dan `1_` ditolak.
+
+---
+
+## String Tiga Kutip
+
+Untuk teks yang membentang beberapa baris, tanpa menyambung `+ "\n" +`:
+
+```indonesiaku
+variabel puisi = """baris pertama
+baris kedua"""
+```
+
+Baris baru disimpan apa adanya, dan kutip tunggal di dalamnya tidak perlu
+di-escape.
+
+---
+
+## f-string (Teks Bersisip)
+
+Awali teks dengan `f`, lalu sisipkan ekspresi di dalam `{ }`:
+
+```indonesiaku
+variabel nama = "Budi"
+variabel umur = 30
+cetak(f"Halo {nama}, umurmu {umur} tahun")
+cetak(f"1 + 2 = {1 + 2}")
+```
+
+Isi `{ }` boleh ekspresi apa pun — pemanggilan fungsi, indeks, bahkan ekspresi
+kondisional. Nilai non-teks ditampilkan sama seperti hasil `ke_teks()`.
+
+Untuk menulis kurung kurawal harfiah, tulis dobel:
+
+```indonesiaku
+cetak(f"kurung {{harfiah}} ok")      # kurung {harfiah} ok
+```
+
+Satu hal yang perlu diperhatikan: kurawal pembuka yang langsung diikuti
+kurawal lain dibaca sebagai kurawal harfiah. Jadi untuk menyisipkan kamus
+literal, beri spasi — sama seperti di Python:
+
+```indonesiaku
+cetak(f"kamus: { {"a": 1} }")        # bukan f"kamus: {{"a": 1}}"
+```
+
+Belum ada format spec seperti `{x:.2f}`; itu menunggu metode pada tipe teks.
+
+Contoh lengkap: [`examples/literal_fstring.idk`](../examples/literal_fstring.idk)
+
+{{embed:examples/literal_fstring.idk}}
+
+---
+
 ## Fungsi Anonim
 
 Fungsi tanpa nama, ditulis persis seperti fungsi biasa tetapi langsung menjadi

@@ -8,6 +8,16 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **Literal angka baru** — eksponen (`1e3`, `1.5e-3`), heksadesimal
+  (`0xFF`), biner (`0b1010`), oktal (`0o17`), dan pemisah ribuan
+  (`1_000_000`). Garis bawah wajib di antara digit; `1__0` dan `0b2` ditolak
+  dengan pesan sendiri. Semuanya tetap `double` — bilangan bulat presisi
+  penuh masih menunggu Fase 2.
+- ✅ **String tiga kutip** — `"""..."""` mempertahankan baris baru apa adanya.
+- ✅ **f-string** — `f"Halo {nama}"`. Didesugar menjadi `+` dan `ke_teks()`
+  yang sudah ada, jadi tanpa opcode baru. Mendukung ekspresi apa pun,
+  `{{`/`}}` harfiah, serta kutip di dalam `{ }` (`f"{d["a"]}"`).
+  Belum ada format spec (`{x:.2f}`) — menunggu metode tipe teks.
 - ✅ **Fungsi anonim** — `fungsi(x) { kembalikan x * x }` sebagai ekspresi,
   closure penuh, mendukung nilai bawaan + argumen bernama. Badannya tetap
   `{ }` dan `kembalikan`; tidak ada bentuk satu-ekspresi gaya `lambda` supaya

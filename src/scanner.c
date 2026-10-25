@@ -25,6 +25,13 @@ ScannerState saveScanner() {
     return state;
 }
 
+void initScannerAt(const char* source, int line) {
+    scanner.start = source;
+    scanner.current = source;
+    scanner.line = line;
+    scanner.groupingDepth = 0;
+}
+
 void restoreScanner(ScannerState state) {
     scanner.start = state.start;
     scanner.current = state.current;
@@ -40,6 +47,10 @@ static bool isAlpha(char c) {
 
 static bool isDigit(char c) {
     return c >= '0' && c <= '9';
+}
+
+static bool isHexDigit(char c) {
+    return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 static bool isAtEnd() {
@@ -249,20 +260,87 @@ static Token identifier() {
 }
 
 static Token number() {
-    while (isDigit(peek())) advance();
+    // 0x / 0b / 0o prefixes. Only reachable after a leading digit, so an
+    // identifier like `b1010` is unaffected.
+    if (scanner.current[-1] == '0' && !isAtEnd()) {
+        char base = peek();
+        if (base == 'x' || base == 'X' || base == 'b' || base == 'B' ||
+            base == 'o' || base == 'O') {
+            advance();
+            while (isHexDigit(peek()) || peek() == '_') advance();
+            return makeToken(TOKEN_NUMBER);
+        }
+    }
+
+    while (isDigit(peek()) || peek() == '_') advance();
 
     // Look for a fractional part.
     if (peek() == '.' && isDigit(peekNext())) {
         // Consume the ".".
         advance();
 
-        while (isDigit(peek())) advance();
+        while (isDigit(peek()) || peek() == '_') advance();
+    }
+
+    // Exponent: 1e3, 1.5e-3, 2E+8. strtod parses these itself.
+    if (peek() == 'e' || peek() == 'E') {
+        char next = peekNext();
+        // Guard the third char: peekNext() may already be the terminating NUL.
+        char after = next == '\0' ? '\0' : scanner.current[2];
+        if (isDigit(next) || ((next == '+' || next == '-') && isDigit(after))) {
+            advance();                       // 'e'
+            if (peek() == '+' || peek() == '-') advance();
+            while (isDigit(peek()) || peek() == '_') advance();
+        }
     }
 
     return makeToken(TOKEN_NUMBER);
 }
 
+// f"..." may contain quotes inside {...}: f"{d["a"]}". Track brace depth so
+// the literal does not end at the first inner quote.
+static Token fstringBody() {
+    int depth = 0;
+    while (!isAtEnd()) {
+        char c = peek();
+        if (c == '\\' && peekNext() != '\0') { advance(); advance(); continue; }
+        if (c == '\n') scanner.line++;
+        if (c == '{') {
+            if (peekNext() == '{') { advance(); advance(); continue; }
+            depth++;
+        } else if (c == '}') {
+            if (depth == 0 && peekNext() == '}') { advance(); advance(); continue; }
+            if (depth > 0) depth--;
+        } else if (c == '"' && depth == 0) {
+            advance();
+            return makeToken(TOKEN_FSTRING);
+        }
+        advance();
+    }
+    return errorToken("String tidak ditutup.");
+}
+
 static Token string() {
+    // Triple-quoted: """ ... """ keeps newlines verbatim.
+    if (peek() == '"' && peekNext() == '"') {
+        advance();
+        advance();
+        while (!isAtEnd()) {
+            // Guard the third char: peekNext() may already be the NUL.
+            if (peek() == '"' && peekNext() == '"' &&
+                peekNext() != '\0' && scanner.current[2] == '"') {
+                advance();
+                advance();
+                advance();
+                return makeToken(TOKEN_STRING);
+            }
+            if (peek() == '\n') scanner.line++;
+            if (peek() == '\\' && peekNext() != '\0') advance();
+            advance();
+        }
+        return errorToken("String tiga kutip tidak ditutup.");
+    }
+
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
         // Skip escaped characters (e.g. \" \\) so they don't end the string.
@@ -286,6 +364,11 @@ Token scanToken() {
     if (isAtEnd()) return makeToken(TOKEN_EOF);
 
     char c = advance();
+    // f"..." — must be checked before identifier(), which would swallow the f.
+    if (c == 'f' && peek() == '"') {
+        advance();                           // the opening quote
+        return fstringBody();
+    }
     if (isAlpha(c)) return identifier();
     if (isDigit(c)) return number();
 

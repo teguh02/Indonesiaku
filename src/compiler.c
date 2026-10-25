@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <errno.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -777,8 +778,62 @@ static void grouping(bool canAssign) {
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
 }
 
+// Numeric literal -> double. Handles 0x/0b/0o bases and `_` separators;
+// strtod already covers plain decimals, fractions and exponents.
 static void number(bool canAssign) {
-    double value = strtod(parser.previous.start, NULL);
+    (void)canAssign;
+    const char* src = parser.previous.start;
+    int len = parser.previous.length;
+
+    // Strip separators into a NUL-terminated buffer. parser.previous.start
+    // points into the source, so length must come from the token, not strlen.
+    char buf[64];
+    if (len >= (int)sizeof(buf)) {
+        error("Angka terlalu panjang.");
+        emitConstant(NUMBER_VAL(0));
+        return;
+    }
+    int n = 0;
+    for (int i = 0; i < len; i++) {
+        char c = src[i];
+        if (c == '_') {
+            // Separators must sit between digits: 1_000 yes, 1__0 / 1_ no.
+            bool okBefore = i > 0 && src[i - 1] != '_' && src[i - 1] != '.';
+            bool okAfter = i + 1 < len && src[i + 1] != '_';
+            if (!okBefore || !okAfter) {
+                error("Garis bawah hanya boleh di antara digit.");
+                emitConstant(NUMBER_VAL(0));
+                return;
+            }
+            continue;
+        }
+        buf[n++] = c;
+    }
+    buf[n] = '\0';
+
+    double value;
+    if (n > 2 && buf[0] == '0' && (buf[1] == 'b' || buf[1] == 'B' ||
+                                   buf[1] == 'o' || buf[1] == 'O')) {
+        int base = (buf[1] == 'b' || buf[1] == 'B') ? 2 : 8;
+        char* end;
+        errno = 0;
+        long parsed = strtol(buf + 2, &end, base);
+        if (*end != '\0' || errno == ERANGE) {
+            error(base == 2 ? "Digit biner tidak sah."
+                            : "Digit oktal tidak sah.");
+            emitConstant(NUMBER_VAL(0));
+            return;
+        }
+        value = (double)parsed;
+    } else {
+        char* end;
+        value = strtod(buf, &end);
+        if (*end != '\0') {
+            error("Angka tidak sah.");
+            emitConstant(NUMBER_VAL(0));
+            return;
+        }
+    }
     emitConstant(NUMBER_VAL(value));
 }
 
@@ -800,11 +855,139 @@ static void or_(bool canAssign) {
     patchJump(endJump);
 }
 
+// f"halo {nama}" desugars into "halo " + ke_teks(nama), reusing OP_ADD and the
+// existing ke_teks native — no new opcode. Literal chunks are emitted as
+// constants; each {...} is compiled by pointing the scanner at that slice of
+// source, the same rewind trick used by default parameter values.
+static void fstring(bool canAssign) {
+    (void)canAssign;
+    Token token = parser.previous;
+    // The token starts at the `f` prefix: f"..." -> skip 'f' and the quote.
+    const char* src = token.start + 2;
+    int rawLen = token.length - 3;
+
+    ScannerState afterToken = saveScanner();
+    Token afterTokenCurrent = parser.current;
+
+    int parts = 0;
+    char* buf = ALLOCATE(char, rawLen + 1);
+    int len = 0;
+
+    for (int i = 0; i < rawLen; i++) {
+        char c = src[i];
+
+        if (c == '{' && i + 1 < rawLen && src[i + 1] == '{') {
+            buf[len++] = '{'; i++; continue;
+        }
+        if (c == '}' && i + 1 < rawLen && src[i + 1] == '}') {
+            buf[len++] = '}'; i++; continue;
+        }
+        if (c == '}') {
+            FREE_ARRAY(char, buf, rawLen + 1);
+            semanticError("'}' tanpa '{' di dalam f-string.");
+            emitConstant(OBJ_VAL(copyString("", 0)));
+            return;
+        }
+        if (c != '{') {
+            if (c == '\\' && i + 1 < rawLen) {
+                char next = src[++i];
+                switch (next) {
+                    case 'n':  buf[len++] = '\n'; break;
+                    case 't':  buf[len++] = '\t'; break;
+                    case 'r':  buf[len++] = '\r'; break;
+                    case '\\': buf[len++] = '\\'; break;
+                    case '"':  buf[len++] = '"';  break;
+                    case '\'': buf[len++] = '\''; break;
+                    case '0':  buf[len++] = '\0'; break;
+                    default:   buf[len++] = '\\'; buf[len++] = next; break;
+                }
+            } else {
+                buf[len++] = c;
+            }
+            continue;
+        }
+
+        // Flush the literal collected so far.
+        if (len > 0) {
+            emitConstant(OBJ_VAL(copyString(buf, len)));
+            len = 0;
+            parts++;
+            if (parts >= 2) emitByte(OP_ADD);
+        }
+
+        // Find the matching '}', honouring nesting and strings.
+        int start = i + 1;
+        int depth = 1;
+        int j = start;
+        char quote = '\0';
+        for (; j < rawLen; j++) {
+            char e = src[j];
+            if (quote != '\0') {
+                if (e == '\\') { j++; continue; }
+                if (e == quote) quote = '\0';
+                continue;
+            }
+            if (e == '"' || e == '\'') { quote = e; continue; }
+            if (e == '{') depth++;
+            else if (e == '}' && --depth == 0) break;
+        }
+        if (j >= rawLen) {
+            FREE_ARRAY(char, buf, rawLen + 1);
+            semanticError("'{' tidak ditutup di dalam f-string.");
+            emitConstant(OBJ_VAL(copyString("", 0)));
+            return;
+        }
+        if (j == start) {
+            FREE_ARRAY(char, buf, rawLen + 1);
+            semanticError("Ekspresi kosong di dalam f-string.");
+            emitConstant(OBJ_VAL(copyString("", 0)));
+            return;
+        }
+
+        // ke_teks(<expr>) — look the native up by name, then call it.
+        Token keTeks = {TOKEN_IDENTIFIER, "ke_teks", 7, token.line};
+        emitBytes(OP_GET_GLOBAL, identifierConstant(&keTeks));
+
+        // The slice is not NUL-terminated, so compile from a copy. Tokens
+        // point into it only while expression() runs.
+        int exprLen = j - start;
+        char* expr = ALLOCATE(char, exprLen + 1);
+        memcpy(expr, src + start, exprLen);
+        expr[exprLen] = '\0';
+
+        initScannerAt(expr, token.line);
+        advance();                                // prime parser.current
+        expression();
+        if (!check(TOKEN_EOF)) {
+            semanticError("Ekspresi f-string tidak lengkap.");
+        }
+        restoreScanner(afterToken);
+        parser.current = afterTokenCurrent;
+        FREE_ARRAY(char, expr, exprLen + 1);
+
+        emitBytes(OP_CALL, 1);
+
+        parts++;
+        if (parts >= 2) emitByte(OP_ADD);
+        i = j;
+    }
+
+    if (len > 0 || parts == 0) {
+        emitConstant(OBJ_VAL(copyString(buf, len)));
+        parts++;
+        if (parts >= 2) emitByte(OP_ADD);
+    }
+    FREE_ARRAY(char, buf, rawLen + 1);
+}
+
 static void string(bool canAssign) {
     // The token includes the surrounding quotes. Process escape sequences
     // (\n \t \r \\ \" \' \0) into a fresh buffer, then intern it.
-    const char* src = parser.previous.start + 1;
-    int rawLen = parser.previous.length - 2;
+    // Triple-quoted literals carry three quotes on each side.
+    int quotes = (parser.previous.length >= 6 &&
+                  strncmp(parser.previous.start, "\"\"\"", 3) == 0) ? 3 : 1;
+    const char* src = parser.previous.start + quotes;
+    int rawLen = parser.previous.length - 2 * quotes;
 
     char* chars = ALLOCATE(char, rawLen + 1);
     int len = 0;
@@ -1087,6 +1270,7 @@ ParseRule rules[] = {
   [TOKEN_LESS_EQUAL]    = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
   [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+  [TOKEN_FSTRING]       = {fstring,  NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_DAN]           = {NULL,     and_,   PREC_AND},
   [TOKEN_KELAS]         = {NULL,     NULL,   PREC_NONE},

@@ -56,9 +56,9 @@ Prinsip penamaan:
 | Fitur Python | Contoh | Status | Fase |
 |---|---|---|---|
 | Komentar `#` | | ✅ | — |
-| Docstring / string multi-baris `"""` | | ❌ | 1 |
-| f-string | `f"Halo {nama}"` | ❌ (ada `format()`) | 1 |
-| Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ❌ | 1 |
+| String multi-baris `"""` | | ✅ | 1 — selesai; docstring (atribut) belum |
+| f-string | `f"Halo {nama}"` | ✅ | 1 — selesai; format spec `{x:.2f}` belum |
+| Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ✅ | 1 — selesai |
 | Literal kamus `{"a": 1}` | | ✅ | — |
 | Literal tupel `(1, 2)` | | ❌ | 2 |
 | Literal himpunan `{1, 2}` | | ❌ | 2 |
