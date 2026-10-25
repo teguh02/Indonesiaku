@@ -45,18 +45,36 @@ tetap reachable (pakai `peek`, bukan `pop`, sebelum `tableSet`/`writeValueArray`
 
 - Contoh golden: `examples/<nama>.idk` + `tests/expected/<nama>.out`
   (stdout saja; stderr harus kosong; exit 0).
+- Tes galat: `tests/galat/<nama>.idk` + `.err` untuk apa pun yang harus gagal.
 - Kasus batas yang wajib diuji: <daftar>.
-- Jalankan juga dengan `-DDEBUG_STRESS_GC` — output harus identik.
+- Jalankan juga dengan `-DDEBUG_STRESS_GC` — output harus identik. Kalau
+  menyentuh alokasi/stack/koleksi/objek, build sanitizer
+  (`-fsanitize=address,undefined`) dan jalankan golden **dan** `tests/galat/`
+  terhadap biner itu; `tests/test_all.sh` membangun ulang secara normal
+  sehingga tidak memakai biner instrumentasi.
+- Golden yang berubah dibaca satu per satu, tidak pernah diregenerasi buta.
 - Kalau menyentuh scope/upvalue: tambahkan regresi seperti
   `examples/lingkup_variabel.idk`.
 
-## 6. Dampak dokumentasi
+## 6. Dampak dokumentasi & tooling
+
+Wajib, bukan opsional — fitur belum selesai kalau ada yang belum dicentang.
+Potongan kode di panduan harus benar-benar dijalankan, bukan ditulis dari
+ingatan.
 
 - [ ] `website/panduan/03_PANDUAN_SINTAKS.md`
 - [ ] `website/panduan/07_PUSTAKA_STANDAR.md` (kalau ada builtin baru)
+- [ ] `editors/vscode-indonesiaku/extension.js` — KEYWORDS (kata kunci baru)
+      atau BUILTINS (builtin baru)
+- [ ] `editors/vscode-indonesiaku/syntaxes/indonesiaku.tmLanguage.json`
+- [ ] `editors/vscode-indonesiaku/snippets/indonesiaku.code-snippets`
+      (kalau sintaksnya layak dapat snippet)
 - [ ] `README.md`
 - [ ] `CHANGELOG.md` + `docs/ROADMAP.md`
+      + `docs/ANALISIS/02_PETA_FITUR_PYTHON.md`
 - [ ] `AGENTS.md` (kalau ada jebakan baru yang perlu diketahui agen/kontributor)
+- [ ] Berkas rencana ini: status → `selesai`, lalu `git mv` ke
+      `docs/RENCANA_FITUR/selesai/`
 
 ## 7. Risiko & alternatif
 

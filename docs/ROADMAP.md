@@ -26,6 +26,36 @@ ke [`ANALISIS/01_KONDISI_SAAT_INI.md`](ANALISIS/01_KONDISI_SAAT_INI.md) (bug)
 dan [`ANALISIS/03_KEPUTUSAN_DESAIN.md`](ANALISIS/03_KEPUTUSAN_DESAIN.md)
 (keputusan desain).
 
+## Definisi "selesai" (berlaku untuk SETIAP fase dan fitur)
+
+Sebuah butir di bawah **tidak boleh** ditandai ✅ hanya karena kodenya jalan.
+Satu butir dinyatakan selesai bila seluruhnya terpenuhi:
+
+1. **Rencana lebih dulu di `docs/`** — `RENCANA_FITUR/<nama>.md` dari
+   `TEMPLATE.md`, ditulis **sebelum** menyentuh kode, lalu dipindah ke
+   `RENCANA_FITUR/selesai/` saat tuntas. Perencanaan tidak pernah ditulis di
+   `README.md`, `CHANGELOG.md`, atau `website/`.
+2. **Uji wajib** — contoh golden di `examples/` + `tests/expected/`, pasangan
+   `.idk`/`.err` di `tests/galat/` untuk yang harus gagal, seluruh
+   `tests/test_all.sh` hijau, dan build sanitizer
+   (`-DDEBUG_STRESS_GC -fsanitize=address,undefined`) bila menyentuh
+   alokasi/stack/koleksi/objek. Berkas golden tidak pernah diregenerasi buta.
+3. **Dokumentasi pengguna ikut diperbarui** — `website/panduan/`
+   (`03_PANDUAN_SINTAKS.md` untuk sintaks, `07_PUSTAKA_STANDAR.md` untuk
+   builtin), plus `CHANGELOG.md` dan `README.md`. Potongan kode di panduan
+   wajib benar-benar dijalankan, bukan ditulis dari ingatan.
+4. **Ekstensi VS Code ikut diperbarui** — `editors/vscode-indonesiaku/`:
+   keyword baru ke `extension.js` KEYWORDS + `tmLanguage.json`, builtin baru
+   ke BUILTINS, sintaks baru yang layak ke `snippets/`.
+5. **Status dibalik di sini dan di `ANALISIS/02_PETA_FITUR_PYTHON.md`**, dan
+   pitfall baru dicatat di `AGENTS.md`.
+
+Interpreter, uji, dokumentasi, dan tooling editor adalah **satu kesatuan** —
+fitur yang menyala di terminal tapi tidak di editor, atau tidak ada di
+panduan, dihitung belum selesai. Checklist lengkapnya ada di
+[`AGENTS.md`](../AGENTS.md) bagian *Feature workflow*; bagian itu yang
+mengikat, daftar ini ringkasannya.
+
 ### Fase 0 — Stabilisasi (target 0.5.0) — *"tidak ada jawaban salah"*
 
 Tujuan: program pemula (halo dunia, percabangan, perulangan, list, kamus,

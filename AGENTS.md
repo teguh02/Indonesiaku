@@ -105,7 +105,11 @@ roadmap, or design notes anywhere else: not in `README.md`, not in
 truth for status.
 
 **2. When the feature works, update ALL of these in the same change** — this
-list is a checklist, not a suggestion:
+list is a checklist, not a suggestion. Documentation and editor tooling are
+part of the feature, not follow-up work: a keyword that highlights in the
+terminal but not in VS Code is a bug, and a feature absent from
+`website/panduan/` does not exist for users. A PR missing any row is
+incomplete, however good the C code is.
 
 | Target | What to update |
 |---|---|
@@ -123,8 +127,29 @@ list is a checklist, not a suggestion:
 suite catches most of it, but `pustaka/*.idk` is imported by examples and fails
 far from the edit.
 
-**4. Only then commit**, code+tests separate from docs (see Conventions), run
-the full verification matrix, `git fetch` + rebase, re-test, push.
+**4. Testing is NOT optional, and "the suite passed" is not the whole bar.**
+Before committing:
+
+- `bash tests/test_all.sh` → every test green, no exceptions.
+- Touched allocation, the stack, collections, closures, objects, or anything
+  holding a raw pointer? Rebuild with
+  `-DDEBUG_STRESS_GC -fsanitize=address,undefined` and run the goldens AND
+  `tests/galat/` against that binary — `tests/test_all.sh` rebuilds normally,
+  so it will NOT use your instrumented binary. Grepping stderr alone silently
+  accepts crashes: assert the expected exit code and output too. Nearly every
+  use-after-free in this repo's history was invisible to the normal suite.
+- **Never regenerate `tests/expected/*.out` or `tests/galat/*.err` blindly.**
+  When a formatting change invalidates many fixtures, read each diff, or
+  normalise the new output back to the old shape and assert the remainder is
+  byte-identical. Reading them is how a real bug (a newline token printed
+  literally, splitting an error message in half) was caught instead of frozen
+  into a golden.
+- Verify the claims you write in docs by actually running the snippets. An
+  example in `website/panduan/` that was never executed is a future bug report.
+- A background job exiting 0 does not prove the tests ran — read its output.
+
+**5. Only then commit**, code+tests separate from docs (see Conventions),
+`git fetch` + rebase, re-test, push.
 
 ## Build
 
