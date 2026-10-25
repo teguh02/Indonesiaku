@@ -257,6 +257,12 @@ static void markRoots() {
     markTable(&vm.globals);
     markTable(&vm.loadedModules);
 
+    // Keyword argument names of the native call in flight. These live in a
+    // chunk constant table, so they are already reachable through the running
+    // closure — marked explicitly anyway so the invariant doesn't depend on
+    // that indirection surviving future changes.
+    markObject((Obj*)vm.nativeArgNames);
+
     // Open upvalues (still pointing at live stack slots).
     for (ObjUpvalue* upvalue = vm.openUpvalues;
          upvalue != NULL;

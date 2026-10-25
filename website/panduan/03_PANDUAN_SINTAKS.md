@@ -1343,6 +1343,55 @@ cetak(daftar_urutkan([3, 1, 2]))       # [1, 2, 3]
 
 ---
 
+## Mencetak (`cetak`)
+
+`cetak` adalah **fungsi biasa**, bukan kata kunci. Argumen dipisah spasi dan
+diakhiri baris baru:
+
+```indonesiaku
+cetak("satu")
+cetak(1, 2, 3)
+cetak()                      # baris kosong
+```
+
+Pemisah dan akhiran bisa diatur lewat argumen bernama:
+
+```indonesiaku
+cetak("a", "b", "c", pisah="-")        # a-b-c
+cetak("tanpa newline", akhir="")
+cetak("x", "y", pisah="", akhir="!\n") # xy!
+```
+
+Karena fungsi biasa, `cetak` juga sebuah nilai: bisa disimpan, dioper, dan
+diperiksa.
+
+```indonesiaku
+variabel tulis = cetak
+tulis("lewat variabel")
+
+fungsi jalankan(fn) { fn("dioper") }
+jalankan(cetak)
+
+cetak(bisa_dipanggil(cetak))   # benar
+```
+
+Konsekuensinya sama seperti Python: namanya bisa ditimpa, dan sesudah ditimpa
+ia bukan fungsi lagi.
+
+```indonesiaku
+variabel cetak = 5
+# cetak("x")   -> Hanya dapat memanggil fungsi dan kelas.
+```
+
+Fungsi bawaan **lain** belum menerima argumen bernama; hanya `cetak` yang
+menerimanya.
+
+Contoh lengkap: [`examples/cetak_fungsi.idk`](../examples/cetak_fungsi.idk)
+
+{{embed:examples/cetak_fungsi.idk}}
+
+---
+
 ## Built-in Functions
 
 > Referensi lengkap semua fungsi bawaan (matematika, string, list, kamus,
@@ -1592,7 +1641,8 @@ selagi angka <= 20 {
 | **Kesalahan** | `naikkan`, `coba`, `kecuali` |
 | **Modul** | `impor` |
 | **Operator logika** | `dan`, `atau`, `tidak` |
-| **Output** | `cetak` |
+
+`cetak` **bukan** kata kunci — ia fungsi bawaan biasa (lihat seksi Mencetak).
 
 ---
 

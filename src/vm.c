@@ -197,6 +197,7 @@ void initVM() {
     vm.hadError = false;
     vm.nativeErrorPending = false;
     vm.nativeErrorValue = KOSONG_VAL;
+    vm.nativeArgNames = NULL;
     vm.runtimeErrorPending = false;
 
     srand((unsigned int)time(NULL));
@@ -266,6 +267,7 @@ void initVM() {
     defineNative("repr", nativeFnRepr);
     defineNative("id", nativeFnId);
 
+    defineNative("cetak", nativeFnCetak);
     defineNative("panjang", nativeFnPanjang);
     defineNative("huruf_besar", nativeFnHurofBesar);
     defineNative("huruf_kecil", nativeFnHurofKecil);
@@ -445,6 +447,12 @@ static bool call(ObjClosure* closure, int argCount, ObjList* names) {
     return true;
 }
 
+// Natives that read vm.nativeArgNames. Everything else still rejects keyword
+// arguments, so an unsupported `pisah=` is an error rather than a no-op.
+static bool nativeTakesKeywords(NativeFn fn) {
+    return fn == nativeFnCetak;
+}
+
 static bool callValue(Value callee, int argCount, ObjList* names) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
@@ -468,13 +476,18 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
             case OBJ_CLOSURE:
                 return call(AS_CLOSURE(callee), argCount, names);
             case OBJ_NATIVE: {
-                if (names != NULL) {
+                NativeFn native = AS_NATIVE(callee);
+                // Only natives that understand keywords receive them; the
+                // rest keep rejecting keywords, so no silently ignored
+                // `pisah=` on a function that never reads it.
+                if (names != NULL && !nativeTakesKeywords(native)) {
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Fungsi bawaan belum menerima argumen bernama.");
                     return false;
                 }
-                NativeFn native = AS_NATIVE(callee);
+                vm.nativeArgNames = names;
                 Value result = native(argCount, vm.stackTop - argCount);
+                vm.nativeArgNames = NULL;
                 vm.stackTop -= argCount + 1;
                 push(result);
                 return true;
@@ -1277,16 +1290,6 @@ static InterpretResult run() {
                 }
                 push(NUMBER_VAL(-AS_NUMBER(pop())));
                 break;
-            case OP_PRINT: {
-                int count = READ_BYTE();
-                for (int i = count - 1; i >= 0; i--) {
-                    printValue(peek(i));
-                    if (i > 0) printf(" ");
-                }
-                printf("\n");
-                vm.stackTop -= count;
-                break;
-            }
             case OP_LOOP: {
                 uint16_t offset = READ_SHORT();
                 // Ensure we don't jump to invalid bytecode

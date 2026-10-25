@@ -8,6 +8,11 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **`cetak` menjadi fungsi biasa (K12)** — bukan lagi pernyataan/opcode.
+  Mendukung `pisah=` dan `akhir=`, serta dapat diperlakukan sebagai nilai
+  (disimpan, dioper, `bisa_dipanggil(cetak)`). `OP_PRINT`, `TOKEN_CETAK`, dan
+  `printStatement()` dihapus. Konsekuensi seperti Python: `cetak` kini nama
+  biasa yang bisa ditimpa.
 - ✅ **Metode pada tipe bawaan (K10)** — `"budi".huruf_besar()`,
   `[3,1,2].terurut()`, `{"a":1}.punya("a")`, dan dapat dirangkai.
   Setiap metode memanggil native yang sudah ada (semuanya sudah menerima

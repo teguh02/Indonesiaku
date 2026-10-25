@@ -176,7 +176,7 @@ memuat `ObjClosure`. Ditolak dengan pesan yang menyebut cara benarnya.
 `jenis(x) == bulat` dan `adalah_instansi(x, bulat)` berfungsi. Tipe bawaan
 menjadi objek kelas sungguhan (lihat 04 §4).
 
-## K12 — `cetak` menjadi fungsi biasa
+## K12 — `cetak` menjadi fungsi biasa (terlaksana sebagian 0.7.0)
 
 `cetak(1, 2)` → `1 2`; `cetak()` → baris kosong;
 `cetak("a", "b", pisah="-", akhir="")`. Butuh argumen bernama (fase 1).
@@ -185,6 +185,16 @@ menjadi objek kelas sungguhan (lihat 04 §4).
 Perbedaan cetak di dalam koleksi (seperti Python): `cetak("a")` → `a`,
 tetapi `cetak(["a"])` → `["a"]` (pakai `repr` untuk elemen). Sekarang
 tercetak `[a]`.
+
+**Status 0.7.0:** `cetak` sudah menjadi native biasa dengan `pisah=`/`akhir=`,
+dan `OP_PRINT`/`TOKEN_CETAK`/`printStatement()` dihapus. Argumen bernama untuk
+native ditempuh lewat `vm.nativeArgNames` yang hanya diisi untuk native yang
+terdaftar di `nativeTakesKeywords()` — native lain tetap menolak keyword,
+sehingga `pisah=` pada fungsi yang tidak mengenalnya menjadi galat, bukan
+diam-diam diabaikan.
+
+**Sisa yang belum:** `repr` untuk elemen koleksi (`cetak(["a"])` masih `[a]`,
+belum `["a"]`). Itu menyentuh banyak golden dan menjadi butir tersendiri.
 
 ## K13 — String berbasis karakter
 

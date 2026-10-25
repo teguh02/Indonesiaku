@@ -1281,7 +1281,6 @@ ParseRule rules[] = {
   [TOKEN_JIKA]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KOSONG]        = {literal,  NULL,   PREC_NONE},
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
-  [TOKEN_CETAK]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
   [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
@@ -1946,7 +1945,6 @@ static void importStatement() {
     emitByte(OP_POP);  // discard the module's return value (kosong)
 }
 
-
 // Lookahead helper: having just scanned a '{', skip to its matching '}'.
 static bool skipBalancedBraces() {
     int depth = 1;
@@ -2172,25 +2170,6 @@ static void tryStatement() {
     }
 }
 
-static void printStatement() {
-    // cetak(a, b, c) prints all values on one line separated by spaces, like
-    // Python's print(); cetak() prints an empty line.
-    consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah 'cetak'.");
-    int count = 0;
-    if (!check(TOKEN_RIGHT_PAREN)) {
-        do {
-            expression();
-            if (count == 255) {
-                error("Tidak boleh lebih dari 255 argumen untuk 'cetak'.");
-            }
-            count++;
-        } while (match(TOKEN_COMMA));
-    }
-
-    consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah argumen.");
-    emitBytes(OP_PRINT, (uint8_t)count);
-}
-
 static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
@@ -2264,7 +2243,6 @@ static void synchronize() {
             case TOKEN_UNTUK:
             case TOKEN_JIKA:
             case TOKEN_SELAGI:
-            case TOKEN_CETAK:
             case TOKEN_KEMBALIKAN:
                 return;
 
@@ -2323,8 +2301,6 @@ static void statement() {
         scopeDeclaration(false);
     } else if (match(TOKEN_LEWATI)) {
         // 'lewati' (Python's pass): an explicit no-op statement.
-    } else if (match(TOKEN_CETAK)) {
-        printStatement();
     } else if (match(TOKEN_UNTUK)) {
         forStatement();
     } else if (match(TOKEN_JIKA)) {

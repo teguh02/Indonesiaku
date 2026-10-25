@@ -148,7 +148,8 @@ static TokenType identifierType() {
         case 'c':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
-                    case 'e': return checkKeyword(2, 3, "tak", TOKEN_CETAK);
+                    // 'cetak' is a plain identifier now (K12): it resolves to
+                    // the native, so it can be passed around and shadowed.
                     case 'o': return checkKeyword(2, 2, "ba", TOKEN_COBA);
                 }
             }

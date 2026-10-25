@@ -1982,3 +1982,47 @@ Value nativeFnSaring(int argCount, Value* args) {
     pop();
     return OBJ_VAL(hasil);
 }
+
+// cetak(...) — K12: a normal function, not a statement.
+// Positional arguments are printed separated by `pisah` (default " ") and
+// followed by `akhir` (default "\n"). Keyword names arrive via
+// vm.nativeArgNames; callValue only populates it for this native.
+Value nativeFnCetak(int argCount, Value* args) {
+    const char* pisah = " ";
+    int pisahLen = 1;
+    const char* akhir = "\n";
+    int akhirLen = 1;
+
+    int namedCount = vm.nativeArgNames == NULL
+                         ? 0 : vm.nativeArgNames->items.count;
+    int positional = argCount - namedCount;
+
+    for (int i = 0; i < namedCount; i++) {
+        ObjString* name = AS_STRING(vm.nativeArgNames->items.values[i]);
+        Value value = args[positional + i];
+        bool isPisah = strcmp(name->chars, "pisah") == 0;
+        bool isAkhir = strcmp(name->chars, "akhir") == 0;
+        if (!isPisah && !isAkhir) {
+            nativeRaise("cetak() tidak punya parameter bernama '%s'", name->chars);
+            return KOSONG_VAL;
+        }
+        if (!IS_STRING(value)) {
+            nativeRaise("cetak(): '%s' harus teks", name->chars);
+            return KOSONG_VAL;
+        }
+        if (isPisah) {
+            pisah = AS_CSTRING(value);
+            pisahLen = AS_STRING(value)->length;
+        } else {
+            akhir = AS_CSTRING(value);
+            akhirLen = AS_STRING(value)->length;
+        }
+    }
+
+    for (int i = 0; i < positional; i++) {
+        printValue(args[i]);
+        if (i < positional - 1) fwrite(pisah, 1, (size_t)pisahLen, stdout);
+    }
+    fwrite(akhir, 1, (size_t)akhirLen, stdout);
+    return KOSONG_VAL;
+}
