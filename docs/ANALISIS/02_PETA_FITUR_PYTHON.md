@@ -142,23 +142,23 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `input` | `input` / `masukan` | ✅ | — |
 | `len` | `panjang` | ✅ | — |
 | `type` | `jenis` | 🟡 nama string | 2 |
-| `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_angka`, `ke_teks` | 1 |
+| `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_bulat`, `ke_teks`, `ke_logika`, `ke_angka`; `ke_desimal` belum | 1 |
 | `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus` | 2 |
 | `range` | `rentang` | ✅ | — |
 | `enumerate` | `enumerasi` | ✅ list pasangan `[indeks, nilai]`, offset opsional | 1 |
-| `zip` | `pasangkan` | ❌ | 2 |
-| `map` / `filter` | `peta` / `saring` | 🟡 `daftar_peta`, `daftar_saring` | 2 |
-| `sorted` / `reversed` | `terurut` / `terbalik` | 🟡 pustaka | 1 |
-| `sum` / `min` / `max` | `jumlah` / `min` / `max` | 🟡 min/max 2 argumen | 1 |
-| `abs` / `round` / `pow` / `divmod` | `abs` / `bulatkan` / `pangkat` / `bagi_sisa` | 🟡 (`bulat` = round?) | 1 |
-| `all` / `any` | `semua` / `ada_yang` | ❌ | 2 |
-| `isinstance` / `issubclass` | `adalah_instansi` / `turunan_dari` | ❌ | 2 |
+| `zip` | `pasangkan` | ✅ | — |
+| `map` / `filter` | `peta` / `saring` | ✅ (mengembalikan daftar, bukan iterator) | — |
+| `sorted` / `reversed` | `terurut` / `terbalik` | ✅ | — |
+| `sum` / `min` / `max` | `jumlah` / `min` / `max` | ✅ min/max juga menerima satu daftar | — |
+| `abs` / `round` / `pow` / `divmod` | `abs` / `bulatkan` / `pangkat` / `bagi_sisa` | ✅ (`bulatkan` = round banker's; `bulat` lama tetap beda) | — |
+| `all` / `any` | `semua` / `ada_yang` | ✅ | — |
+| `isinstance` / `issubclass` | `adalah_instansi` / `turunan_dari` | 🟡 `adalah_instansi`; `turunan_dari` belum | 2 |
 | `hasattr` / `getattr` / `setattr` / `delattr` | `punya_atribut` / `ambil_atribut` / `atur_atribut` / `buang_atribut` | ❌ | 4 |
-| `callable` | `bisa_dipanggil` | ❌ | 2 |
-| `repr` / `str` | `repr` / `ke_teks` | 🟡 | 2 |
+| `callable` | `bisa_dipanggil` | ✅ | — |
+| `repr` / `str` | `repr` / `ke_teks` | ✅ | — |
 | `ord` / `chr` | `ord` / `chr` | ✅ | — |
-| `bin` / `oct` / `hex` | `biner` / `oktal` / `heksa` | ❌ | 2 |
-| `hash` / `id` | `hash` / `id` | ❌ | 2 |
+| `bin` / `oct` / `hex` | `biner` / `oktal` / `heksa` | ✅ (int64; bigint belum) | — |
+| `hash` / `id` | `hash` / `id` | 🟡 `id`; `hash` belum | 2 |
 | `iter` / `next` | `iterator` / `berikutnya` | ❌ | 5 |
 | `open` | `buka` | 🟡 `buka_berkas` | 4: `dengan buka(...) sebagai f` |
 | `format` | `format` | ✅ | — |

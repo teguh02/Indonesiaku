@@ -8,6 +8,20 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✨ **19 fungsi bawaan baru (padanan builtin Python):**
+  - Agregat & urutan: `jumlah()` (sum), `semua()` (all), `ada_yang()` (any),
+    `terurut()` (sorted), `terbalik()` (reversed), `pasangkan()` (zip),
+    `peta()` (map), `saring()` (filter). `peta`/`saring`/`pasangkan`/`terbalik`
+    mengembalikan daftar, belum iterator malas.
+  - Angka: `bulatkan()` (round, *banker's rounding*), `bagi_sisa()` (divmod),
+    `biner()` / `oktal()` / `heksa()` (bin/oct/hex, int64).
+  - Konversi & introspeksi: `ke_bulat()` (int), `ke_logika()` (bool),
+    `adalah_instansi()` (isinstance), `bisa_dipanggil()` (callable),
+    `repr()`, `id()`.
+  - **Catatan:** `bulat` yang lama tetap ada dan sengaja berbeda dari
+    `round()` Python; `bulatkan` adalah padanan `round()` yang benar.
+- ✨ **`max()` / `min()` menerima satu argumen daftar:** `max([3, 1, 2])`
+  selain bentuk dua argumen yang sudah ada.
 - ✨ **Argumen bernama:** `gambar("Judul", tengah=benar)` mengirim nilai
   berdasarkan nama parameter, sehingga parameter di tengah boleh dilewati dan
   urutannya bebas. Berlaku untuk fungsi, `init`, metode, dan `super`. Argumen

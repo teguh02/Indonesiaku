@@ -8,12 +8,14 @@ const KEYWORDS = [
 ];
 
 const BUILTINS = [
-  "abs", "acak", "acak_bulat", "ada_berkas", "akar", "atap", "baca", "baca_baris", "baca_semua",
-  "buka_berkas", "bulat", "cetak", "chr", "format", "format_tanggal", "ganti", "hapus", "hapus_berkas",
-  "hapus_kunci", "hapus_pada", "huruf_besar", "huruf_kecil", "input", "jam", "jenis", "kamus", "karakter",
-  "ke_angka", "ke_teks", "kunci", "lantai", "max", "min", "ord", "pangkat", "panjang", "potong", "punya",
-  "sisip", "soket_baca", "soket_dengar", "soket_terima", "soket_tulis", "soket_tutup", "tambah", "tambah_berkas",
-  "tanggal", "tulis", "tulis_semua", "tutup", "waktu"
+  "abs", "acak", "acak_bulat", "ada_berkas", "ada_yang", "adalah_instansi", "akar", "atap", "baca",
+  "baca_baris", "baca_semua", "bagi_sisa", "biner", "bisa_dipanggil", "buka_berkas", "bulat", "bulatkan",
+  "chr", "enumerasi", "format", "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_kunci",
+  "hapus_pada", "heksa", "henti", "huruf_besar", "huruf_kecil", "id", "input", "jam", "jenis", "jumlah",
+  "kamus", "karakter", "ke_angka", "ke_bulat", "ke_logika", "ke_teks", "kunci", "lantai", "max", "min",
+  "oktal", "ord", "pangkat", "panjang", "pasangkan", "peta", "potong", "punya", "rentang", "repr",
+  "saring", "semua", "sisip", "soket_baca", "soket_dengar", "soket_terima", "soket_tulis", "soket_tutup",
+  "tambah", "tambah_berkas", "tanggal", "terbalik", "terurut", "tulis", "tulis_semua", "tutup", "waktu"
 ];
 
 function item(label, kind, detail, insertText) {

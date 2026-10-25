@@ -85,6 +85,13 @@ kelas, builtin P1–P2 dari 02 §D — lihat
 [`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md)
 (`jumlah`, `terurut`, `semua`, `pasangkan`, `bulatkan`, …; sebagian bisa
 masuk lebih awal di Fase 1 karena tidak butuh tipe baru).
+✅ **Sebagian besar builtin inti sudah selesai** — 19 fungsi sudah masuk di
+Fase 1 (`jumlah`, `semua`, `ada_yang`, `terurut`, `terbalik`, `pasangkan`,
+`peta`, `saring`, `bulatkan`, `bagi_sisa`, `biner`, `oktal`, `heksa`,
+`ke_bulat`, `ke_logika`, `adalah_instansi`, `bisa_dipanggil`, `repr`, `id`),
+plus `max`/`min` dengan satu argumen daftar. Sisanya menunggu tipe baru:
+`himpunan()`, `tupel()`, `daftar()`, `hash`, `iter`/`next`, `turunan_dari`,
+`ke_desimal`, dan `biner` untuk bigint.
 Ref: K2, K8, K11, K13, 06 §4–6.
 
 ### Fase 3 — Modul & pustaka inti (0.9)

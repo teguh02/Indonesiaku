@@ -835,7 +835,20 @@ Value nativeFnHenti(int argCount, Value* args) {
 // FUNGSI KONVERSI & FORMAT - IMPLEMENTASI
 // ============================================================================
 
+static void appendValueText(Value v, char* buf, size_t size, size_t* pos);
+
+// Append a literal string, respecting the buffer bound.
+static void appendRaw(const char* s, char* buf, size_t size, size_t* pos) {
+    for (int i = 0; s[i] != '\0' && *pos + 1 < size; i++) {
+        buf[(*pos)++] = s[i];
+    }
+    buf[*pos] = '\0';
+}
+
 // Append a value's text representation into buf at *pos (bounded by size).
+// Lists, dicts and ranges recurse so ke_teks()/format()/repr() agree with
+// cetak() instead of printing "<objek>". Kept self-contained (no
+// open_memstream / stdout redirection) because this must build on Windows.
 static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
     char tmp[64];
     const char* s = NULL;
@@ -852,6 +865,48 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
         ObjString* str = AS_STRING(v);
         s = str->chars;
         len = str->length;
+    } else if (IS_LIST(v)) {
+        ObjList* list = AS_LIST(v);
+        appendRaw("[", buf, size, pos);
+        for (int i = 0; i < list->items.count; i++) {
+            if (i > 0) appendRaw(", ", buf, size, pos);
+            appendValueText(list->items.values[i], buf, size, pos);
+        }
+        appendRaw("]", buf, size, pos);
+        return;
+    } else if (IS_DICT(v)) {
+        ObjDict* dict = AS_DICT(v);
+        appendRaw("{", buf, size, pos);
+        bool first = true;
+        for (int i = 0; i < dict->table.capacity; i++) {
+            Entry* entry = &dict->table.entries[i];
+            if (entry->key == NULL) continue;
+            if (!first) appendRaw(", ", buf, size, pos);
+            first = false;
+            appendRaw("\"", buf, size, pos);
+            appendRaw(entry->key->chars, buf, size, pos);
+            appendRaw("\": ", buf, size, pos);
+            appendValueText(entry->value, buf, size, pos);
+        }
+        appendRaw("}", buf, size, pos);
+        return;
+    } else if (IS_RANGE(v)) {
+        // Mirrors printObject: rentang(0, 5) / rentang(0, 10, 2).
+        ObjRange* range = AS_RANGE(v);
+        char start[32], stop[32], step[32];
+        numberToString(range->start, start, sizeof(start));
+        numberToString(range->stop, stop, sizeof(stop));
+        appendRaw("rentang(", buf, size, pos);
+        appendRaw(start, buf, size, pos);
+        appendRaw(", ", buf, size, pos);
+        appendRaw(stop, buf, size, pos);
+        if (range->step != 1) {
+            numberToString(range->step, step, sizeof(step));
+            appendRaw(", ", buf, size, pos);
+            appendRaw(step, buf, size, pos);
+        }
+        appendRaw(")", buf, size, pos);
+        return;
     } else {
         s = "<objek>";
     }

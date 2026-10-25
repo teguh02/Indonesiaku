@@ -65,3 +65,9 @@ cetak(repr("halo"), repr(5))
 
 variabel d = [1, 2]
 cetak(id(d) == id(d), id(d) == id([1, 2]))
+
+# ke_teks/repr/format kini sepakat dengan cetak untuk daftar, kamus, rentang.
+variabel isi = {"x": 1, "y": [2, 3]}
+cetak(ke_teks([1, 2]), ke_teks(rentang(3)))
+cetak(format("isi: {}", [1, 2]))
+cetak(ke_teks(isi) == ke_teks(isi))
