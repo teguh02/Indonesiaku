@@ -215,8 +215,8 @@ Atribut setiap galat: `pesan`, `argumen`, `jejak` (traceback), `sebab`
 | `__init__` | `init` (sudah ada, pertahankan) | ✅ |
 | `__new__` | `_baru_` | P3 |
 | `__del__` | `_hapus_` | P3 |
-| `__str__` | `_teks_` (dipakai `cetak`, `ke_teks`) | P1 |
-| `__repr__` | `_repr_` | P2 |
+| `__str__` | `_teks_` (dipakai `cetak`, `ke_teks`) | ✅ (K19) |
+| `__repr__` | `_repr_` | ✅ (K19) |
 | `__format__` | `_format_` | P3 |
 | `__bool__` | `_logika_` | P2 |
 | `__hash__` | `_hash_` | P2 |
@@ -225,6 +225,7 @@ Atribut setiap galat: `pesan`, `argumen`, `jejak` (traceback), `sebab`
 
 `__eq__` `_sama_`, `__ne__` `_tidak_sama_`, `__lt__` `_kurang_dari_`,
 `__le__` `_kurang_sama_`, `__gt__` `_lebih_dari_`, `__ge__` `_lebih_sama_`.
+✅ semuanya (K19).
 
 ### 10.3 Aritmetika (P2)
 
@@ -236,6 +237,9 @@ Atribut setiap galat: `pesan`, `argumen`, `jejak` (traceback), `sebab`
 | `__pow__` | `_pangkat_` | `__divmod__` | `_bagi_sisa_` |
 | `__neg__` / `__pos__` / `__abs__` | `_negatif_` / `_positif_` / `_mutlak_` | `__matmul__` | `_matkali_` (P3) |
 | `__and__` `__or__` `__xor__` `__invert__` `__lshift__` `__rshift__` | `_dan_bit_` `_atau_bit_` `_xor_` `_balik_bit_` `_geser_kiri_` `_geser_kanan_` | | P3 |
+
+✅ (K19): `_tambah_` `_kurangi_` `_kali_` `_bagi_` `_bagi_bulat_` `_sisa_`
+`_pangkat_` `_negatif_`. Belum: `_bagi_sisa_`, `_positif_`, `_mutlak_`, bitwise.
 
 Varian sisi kanan (`__radd__` → `_ktambah_`) dan di tempat
 (`__iadd__` → `_tambah_di_`) — P3. Catatan: kata "kurang" bisa berarti

@@ -152,6 +152,15 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 `@metode_kelas`, dekorator, pewarisan berganda + MRO C3, `dengan ... sebagai`
 (manajer konteks), `adalah_instansi`, kelas abstrak. Ref: 04 §4.
 
+✅ metode ajaib tahap 1 — representasi, perbandingan, aritmetika
+([rencana](RENCANA_FITUR/selesai/metode_ajaib.md), K19).
+
+> Fase 4 **baru dimulai** — yang tersisa: metode ajaib tahap 2 (cerminan
+> aritmetika `_ktambah_` + `TidakDiterapkan`, `_logika_`, `_panjang_`,
+> `_hash_`, `_ambil_`/`_atur_`, `_iter_`, `_panggil_`; `terurut`/`min`/`max`
+> atas objek), atribut kelas, dekorator, `dengan ... sebagai`, pewarisan
+> berganda, kelas abstrak.
+
 ### Fase 5 — Iterator & generator (1.3)
 
 Protokol `_iter_`/`_berikutnya_`, `hasilkan` (yield), generator expression,

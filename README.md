@@ -72,6 +72,8 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
 - ✅ **List comprehension** `[x * x untuk x dalam rentang(1, 6)]`, **penugasan berganda** `a, b = b, a`, **`buang`** (del)
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
+- ✅ **Metode ajaib**: `_teks_`, `_repr_`, `_sama_`, `_kurang_dari_`, `_tambah_`, `_kali_`, ... —
+  objek buatan sendiri bisa dicetak, dibandingkan, dan dijumlahkan
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
 - ✅ **Teks dalam koleksi dikutip**: `cetak(["a"])` → `["a"]`

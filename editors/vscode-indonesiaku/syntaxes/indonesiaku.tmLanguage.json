@@ -104,6 +104,10 @@
     "functions": {
       "patterns": [
         {
+          "name": "support.function.magic.indonesiaku",
+          "match": "\\b_(?:teks|repr|sama|tidak_sama|kurang_dari|kurang_sama|lebih_dari|lebih_sama|tambah|kurangi|kali|bagi|bagi_bulat|sisa|pangkat|negatif)_\\b"
+        },
+        {
           "name": "support.function.builtin.indonesiaku",
           "match": "\\b(?:cetak|panjang|jenis|input|format|ke_angka|ke_teks|kamus|min|max|abs|akar|pangkat|bulat|lantai|atap|acak|acak_bulat|huruf_besar|huruf_kecil|ganti|tambah|hapus|punya|kunci|hapus_kunci|karakter|potong|ord|chr|waktu|tanggal|format_tanggal|buka_berkas|tutup|baca|baca_baris|baca_semua|tulis|tulis_semua|tambah_berkas|ada_berkas|hapus_berkas|sisip|hapus_pada|soket_dengar|soket_terima|soket_baca|soket_tulis|soket_tutup)\\b"
         },

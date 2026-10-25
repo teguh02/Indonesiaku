@@ -184,7 +184,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | Kelas, konstruktor, metode, pewarisan tunggal, `super` | ✅ | — |
 | `isinstance`, kelas sebagai nilai pertama | ❌ / ✅ | 2 |
 | Pewarisan berganda + MRO (C3) | ❌ | 4 |
-| Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | ❌ | 4 |
+| Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | 🟡 representasi, perbandingan, aritmetika (K19); sisanya belum | 4 |
 | Usulan nama: `_teks_`, `_sama_`, `_kurang_`, `_tambah_`, `_panjang_`, `_ambil_`, `_iter_`, `_panggil_` | | |
 | Atribut kelas (bukan per instansi) | ❌ | 4 |
 | `@property`, `@staticmethod`, `@classmethod` | ❌ | 4 |

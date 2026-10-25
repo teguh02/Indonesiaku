@@ -34,7 +34,7 @@ kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
 | K15 | Nilai bawaan parameter | Dievaluasi **tiap panggilan**, bukan sekali saat definisi | Ya (beda dari Python) | disetujui — selesai ✅ (Fase 1) |
 | K16 | Argumen bernama | `f(b=2)`, boleh melewati parameter di tengah | Ya | disetujui — selesai ✅ (Fase 1) |
 | K17 | Sintaks tupel & himpunan | Tupel `(1, 2)`/`(1,)`/`()` seperti Python; himpunan **hanya** lewat `himpunan([...])`, tanpa literal `{1, 2}` | Tidak | disetujui (2026-10-25) |
-| K19 | Metode ajaib | Nama Indonesia berpola `_nama_` (06 §10), dicari di kelas; cerminan untuk perbandingan; `_sama_` membuat instansi tidak hashable | Tidak (perilaku baru; perbaikan NaN pada `>=`/`<=`/`!=`) | usulan |
+| K19 | Metode ajaib | Nama Indonesia berpola `_nama_` (06 §10), dicari di kelas; cerminan untuk perbandingan; `_sama_` membuat instansi tidak hashable | Tidak (perilaku baru; perbaikan NaN pada `>=`/`<=`/`!=`) | selesai ✅ (Fase 4) |
 
 ---
 
@@ -375,9 +375,9 @@ harus semuanya ter-root di stack VM saat `dictSet`/`writeValueArray` dipanggil
 — keduanya bisa memicu GC. Ini pola `OP_BUILD_DICT`, tetapi bersarang dua
 tingkat.
 
-## K19 — Metode ajaib: nama dan aturan pemanggilan (usulan)
+## K19 — Metode ajaib: nama dan aturan pemanggilan (selesai ✅, Fase 4)
 
-Rencana: [`RENCANA_FITUR/metode_ajaib.md`](../RENCANA_FITUR/metode_ajaib.md).
+Rencana: [`RENCANA_FITUR/selesai/metode_ajaib.md`](../RENCANA_FITUR/selesai/metode_ajaib.md).
 
 **Nama.** Dunder Python diterjemahkan menjadi nama Indonesia yang diapit satu
 garis bawah, mengikuti katalog 06 §10: `_teks_`, `_repr_`, `_sama_`,

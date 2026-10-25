@@ -311,10 +311,10 @@ sama. Daftar/kamus/rentang tidak bisa menjadi kunci (`GalatTipe`).
 | Fungsi | Deskripsi |
 |--------|-----------|
 | `ke_angka(teks)` | String → angka (gagal dapat ditangkap) |
-| `ke_teks(nilai)` | Nilai apa pun → string |
+| `ke_teks(nilai)` | Nilai apa pun → string; objek memakai `_teks_` bila ada (lihat *Metode ajaib*) |
 | `ke_bulat(x)` | Angka/teks/boolean → `bulat`, **memotong ke arah nol** |
 | `ke_logika(x)` | Nilai apa pun → `benar`/`salah` menurut aturan *truthiness* |
-| `repr(x)` | Representasi untuk **debug**: teks ditampilkan **dengan tanda kutip** |
+| `repr(x)` | Representasi untuk **debug**: teks ditampilkan **dengan tanda kutip**; objek memakai `_repr_` bila ada |
 | `format(pola, ...)` | Ganti setiap `{}` di pola dengan argumen |
 | `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
 

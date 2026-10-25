@@ -1255,6 +1255,85 @@ a.bersuara()   # Rex berkata: Guk
 
 {{embed:examples/oop/kelas.idk}}
 
+### Metode ajaib
+
+Metode yang namanya diapit garis bawah, seperti `_teks_` atau `_tambah_`,
+dipanggil **otomatis** oleh interpreter. Dengan metode ini objek buatan
+sendiri bisa dicetak, dibandingkan, dan dijumlahkan seperti angka atau teks:
+
+```indonesiaku
+kelas Vektor {
+    init(x, y) {
+        diri.x = x
+        diri.y = y
+    }
+    _teks_() {
+        kembalikan f"({diri.x}, {diri.y})"
+    }
+    _repr_() {
+        kembalikan f"Vektor({diri.x}, {diri.y})"
+    }
+    _sama_(lain) {
+        kembalikan diri.x == lain.x dan diri.y == lain.y
+    }
+    _tambah_(lain) {
+        kembalikan Vektor(diri.x + lain.x, diri.y + lain.y)
+    }
+    _kali_(k) {
+        kembalikan Vektor(diri.x * k, diri.y * k)
+    }
+    _negatif_() {
+        kembalikan Vektor(-diri.x, -diri.y)
+    }
+}
+
+a = Vektor(1, 2)
+b = Vektor(3, 4)
+cetak(a)                  # (1, 2)
+cetak([a, b])             # [Vektor(1, 2), Vektor(3, 4)]
+cetak(f"a = {a}")         # a = (1, 2)
+cetak(a + b, a * 3, -a)   # (4, 6) (3, 6) (-1, -2)
+cetak(a == Vektor(1, 2))  # benar
+cetak(a != b)             # benar
+a += b
+cetak(a)                  # (4, 6)
+```
+
+| Metode | Dipanggil oleh |
+|---|---|
+| `_teks_()` | `cetak(x)`, `ke_teks(x)`, `f"{x}"` |
+| `_repr_()` | `repr(x)`, dan saat `x` ada di dalam daftar/tupel/kamus yang dicetak |
+| `_sama_(lain)` / `_tidak_sama_(lain)` | `==` / `!=`, `dalam`, dan `==` antar-daftar |
+| `_kurang_dari_` `_kurang_sama_` `_lebih_dari_` `_lebih_sama_` | `<` `<=` `>` `>=` |
+| `_tambah_` `_kurangi_` `_kali_` `_bagi_` `_bagi_bulat_` `_sisa_` `_pangkat_` | `+` `-` `*` `/` `//` `%` `**` (juga `+=`, `-=`, ...) |
+| `_negatif_()` | `-x` |
+
+Yang perlu diingat:
+
+- `_teks_` dan `_repr_` **harus mengembalikan teks**. Kalau hanya ada
+  `_repr_`, `cetak` juga memakainya. Tanpa keduanya objek dicetak
+  `<objek NamaKelas>`.
+- Perbandingan boleh dibalik: kalau hanya `_kurang_dari_` yang ada, `b > a`
+  tetap jalan karena dijawab `a._kurang_dari_(b)`. `!=` tanpa `_tidak_sama_`
+  memakai kebalikan `_sama_`.
+- `adalah` **tidak pernah** memanggil `_sama_`; ia selalu menguji apakah dua
+  nilai adalah objek yang sama.
+- Objek yang punya `_sama_` tidak bisa menjadi kunci kamus atau anggota
+  himpunan (`GalatTipe`), sama seperti Python.
+- Operator pada objek yang tidak punya metodenya menghasilkan `GalatTipe`:
+
+```indonesiaku
+kelas Kotak {
+}
+coba {
+    cetak(Kotak() + 1)
+} kecuali GalatTipe sebagai e {
+    cetak(e.pesan)   # Operator '+' tidak didukung antara 'Kotak' dan 'bulat'.
+}
+```
+
+> Contoh lengkap: [`examples/oop/metode_ajaib.idk`](../examples/oop/metode_ajaib.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

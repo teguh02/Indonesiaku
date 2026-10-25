@@ -1,9 +1,9 @@
 # Rencana Fitur: Metode ajaib — representasi, perbandingan, aritmetika
 
-- **Status:** usulan
+- **Status:** selesai (disetujui dan dikerjakan 2026-10-25)
 - **Target versi:** Fase 4 (1.1), butir pertama
 - **Pemilik:** teguh02
-- **Keputusan terkait:** K19 (nama & aturan metode ajaib — usulan), K7
+- **Keputusan terkait:** K19 (nama & aturan metode ajaib — disetujui), K7
   (`==` struktural, `_sama_` pada instansi), K8 (aturan hash), K10/K11
 - **Ref:** `ANALISIS/06_KATALOG_TIPE_BAWAAN.md` §10, `ANALISIS/04_TEKNIK_LANJUTAN.md` §4
 
@@ -45,6 +45,21 @@ semuanya berada tepat di cabang yang akan disentuh fitur ini:
    `kecuali GalatTipe`.
 3. **Batas `FRAMES_MAX` tanpa kelas**: pesan "Call stack overflow: ..." tidak
    memakai `GalatRekursi`, padahal kelas itu sudah didaftarkan di `initVM`.
+
+Ditemukan lagi saat implementasi, semuanya di jalur yang sama dan ikut
+diperbaiki:
+
+4. **Teks terpotong:** `ke_teks`, f-string, dan `repr` menyalin ke buffer 512
+   byte, jadi teks lebih dari 511 karakter terpotong diam-diam (`format` di
+   1023).
+5. **Dua pencetak yang tidak sepakat:** `cetak` memakai `printObject`,
+   sisanya `appendValueText` — `ke_teks(cetak)` memberi `<objek>`,
+   `cetak(cetak)` memberi `<fungsi bawaan>`.
+6. **Crash pada daftar yang berisi dirinya sendiri:** `a.tambah(a)` lalu
+   `cetak(a)` berulang tanpa akhir sampai stack C habis (exit 127). Python
+   mencetak `[1, [...]]`.
+7. **Galat atribut tanpa kelas** (`(5).x` → "Hanya objek yang memiliki
+   properti.") dan `0 ** -1` tanpa kelas (Python: `ZeroDivisionError`).
 
 ## 2. Sintaks usulan
 
@@ -106,7 +121,7 @@ cetak(a)                  # (4, 6)
 |---|---|---|---|
 | Representasi | `_teks_` | `__str__` | `cetak`, `ke_teks`, f-string |
 | | `_repr_` | `__repr__` | `repr`, elemen di dalam koleksi yang dicetak, cadangan `_teks_` |
-| Perbandingan | `_sama_` | `__eq__` | `==`, `dalam`, `==` di dalam koleksi, `.indeks()`/`.hitung()`/`.hapus(x)` |
+| Perbandingan | `_sama_` | `__eq__` | `==`, `dalam`, `==` antar-daftar/tupel/kamus |
 | | `_tidak_sama_` | `__ne__` | `!=` |
 | | `_kurang_dari_` / `_kurang_sama_` | `__lt__` / `__le__` | `<` / `<=` (termasuk berantai) |
 | | `_lebih_dari_` / `_lebih_sama_` | `__gt__` / `__ge__` | `>` / `>=` (termasuk berantai) |
@@ -137,7 +152,7 @@ pengguna — butuh merge sort sendiri, sekalian stabil seperti `sorted`).
 1. `a` instansi dan kelasnya punya `_tambah_` → hasil = `a._tambah_(b)`, apa
    pun tipenya (tidak dipaksa menjadi tipe tertentu).
 2. Selain itu, bila salah satu operand instansi → `GalatTipe`
-   "Operand '+' tidak didukung antara 'Vektor' dan 'bulat'." (Python:
+   "Operator '+' tidak didukung antara 'Vektor' dan 'bulat'." (Python:
    *unsupported operand type(s)*). Python masih akan mencoba `b.__radd__(a)`;
    di sini itu baru datang bersama `_ktambah_`.
 3. Selain itu → perilaku sekarang, tetapi semua galat operand diberi kelas
@@ -169,9 +184,11 @@ kanan); kalau tidak ada tetapi `_sama_` ada → `tidak` hasil `_sama_` (bawaan
 `adalah` / `bukan` **tetap identitas murni** dan tidak pernah memanggil
 `_sama_` (K7) — golden `gabung_sama` menjaganya.
 
-**Di dalam koleksi:** `[a] == [Vektor(1, 2)]`, `(a,) == (b,)`, `a dalam xs`,
-`xs.indeks(a)`, `xs.hitung(a)`, `xs.hapus(a)` membandingkan elemen instansi
-lewat `_sama_`, seperti Python.
+**Di dalam koleksi:** `[a] == [Vektor(1, 2)]`, `(a,) == (b,)`, dan `a dalam xs`
+membandingkan elemen instansi lewat `_sama_`, seperti Python — setelah
+jalan pintas identitas yang juga diambil Python (`x dalam [x]` tidak
+memanggil `_sama_`). Bahasa ini belum punya `.indeks()`/`.hitung()` pada
+daftar.
 
 **Hash (K8):** kelas yang mendefinisikan `_sama_` membuat instansinya **tidak
 dapat di-hash** — menjadi kunci kamus atau anggota himpunan → `GalatTipe`
@@ -215,7 +232,8 @@ himpunan **tidak pernah** memanggil kode pengguna. `_hash_` menyusul.
 | `src/object.h` / `object.c` | `ObjClass.ajaib` (bitmask metode ajaib yang ada) supaya cek di VM cukup satu `&` tanpa pencarian tabel; cetak bawaan `<objek Kelas>` |
 | `src/vm.c` | Tabel nama metode ajaib (string ter-intern di `vm`, seperti `initString`). `OP_METHOD` menyalakan bit; `OP_INHERIT` meng-OR bitmask induk. Helper `dispatchMagic(nama, cermin, …)` dipanggil **hanya** di cabang yang sekarang melempar galat operand, lalu menata stack (penerima di `peek(1)`, argumen di `peek(0)`; cerminan = tukar dulu) dan memanggil `call(closure, n)` — frame baru, tanpa masuk-ulang C. `OP_EQUAL`/`OP_NOT_EQUAL` cek instansi lebih dulu. `chainCompare` (fungsi C) memakai `callFromNative`. Semua galat operand diberi `vm.galatTipe`; `FRAMES_MAX` diberi `vm.galatRekursi`; batas `NATIVE_CALL_MAX` di `callFromNative` |
 | `src/value.c` | `valuesEqualDepth`: instansi lewat hook yang dipasang VM (value.c tidak mengenal `vm`); `hashValue`: instansi dengan bit `_sama_` → tidak hashable |
-| `src/native.c` | Satu fungsi teks (`teksNilai(v, repr, &hasil)`) dipakai `cetak`, `ke_teks`, `repr`, dan elemen koleksi di `appendValueText`; memanggil `_teks_`/`_repr_` lewat `callFromNative` |
+| `src/object.c` | **Satu formatter** `formatValue` ke `TextBuf` (malloc, tanpa batas panjang, penjaga siklus) menggantikan `printObject` dan `appendValueText`; instansi lewat `formatInstanceHook` yang dipasang VM |
+| `src/native.c` | `cetak`, `ke_teks`, `repr`, `format` memakai `formatValue` (`valueText`); `_teks_`/`_repr_` jalan lewat `callFromNative` |
 | `src/memory.c` | Tandai string nama metode ajaib di `markRoots` |
 
 **Jalur cepat tidak berubah:** pengecekan instansi hanya ada di cabang yang
@@ -258,26 +276,24 @@ hari ini sudah berakhir dengan galat, jadi program yang ada tidak melambat.
 
 ## 6. Dampak dokumentasi & tooling
 
-- [ ] `website/panduan/03_PANDUAN_SINTAKS.md` — subbagian "Metode ajaib" di
-      bawah "Kelas & OOP"
-- [ ] `website/panduan/07_PUSTAKA_STANDAR.md` — `ke_teks`/`repr` memanggil
+- [x] `website/panduan/03_PANDUAN_SINTAKS.md` — subbagian "Metode ajaib" di
+      bawah "Kelas & OOP" (kedua blok kode dijalankan dan cocok)
+- [x] `website/panduan/07_PUSTAKA_STANDAR.md` — `ke_teks`/`repr` memanggil
       `_teks_`/`_repr_`
-- [ ] `editors/vscode-indonesiaku/extension.js` — tidak ada keyword/builtin
-      baru; tambahkan nama metode ajaib ke saran pelengkapan di dalam `kelas`
-      bila ekstensinya mendukung
-- [ ] `editors/vscode-indonesiaku/syntaxes/indonesiaku.tmLanguage.json` —
-      opsional: sorot `_nama_` sebagai `support.function.magic`
-- [ ] `editors/vscode-indonesiaku/snippets/indonesiaku.code-snippets` —
+- [x] `editors/vscode-indonesiaku/extension.js` — `MAGIC_METHODS` di saran
+      pelengkapan
+- [x] `editors/vscode-indonesiaku/syntaxes/indonesiaku.tmLanguage.json` —
+      `support.function.magic` (pola diuji dengan mencocokkan teks nyata)
+- [x] `editors/vscode-indonesiaku/snippets/indonesiaku.code-snippets` —
       snippet `_teks_` dan `_sama_`
-- [ ] `README.md`
-- [ ] `CHANGELOG.md` (Added + Fixed: NaN, kelas `GalatTipe`/`GalatRekursi`,
-      teks bawaan instansi) + `docs/ROADMAP.md` (Fase 4 sebagian)
+- [x] `README.md`
+- [x] `CHANGELOG.md` + `docs/ROADMAP.md` (Fase 4 sebagian)
       + `docs/ANALISIS/02_PETA_FITUR_PYTHON.md`
-      + `docs/ANALISIS/06_KATALOG_TIPE_BAWAAN.md` §10 (status per nama)
-- [ ] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K19 → disetujui/selesai
-- [ ] `AGENTS.md` — bitmask `ajaib`, aturan "dispatch hanya di cabang galat",
-      jebakan masuk-ulang di loop C
-- [ ] Berkas rencana ini: status → `selesai`, lalu `git mv` ke
+      + `docs/ANALISIS/06_KATALOG_TIPE_BAWAAN.md` §10
+- [x] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K19 → selesai
+- [x] `AGENTS.md` — bitmask `magic`, dua jalur dispatch, formatter tunggal,
+      jebakan masuk-ulang di loop C, `NATIVE_CALL_MAX`
+- [x] Berkas rencana ini: status → `selesai`, lalu `git mv` ke
       `docs/RENCANA_FITUR/selesai/`
 
 ## 7. Risiko & alternatif
