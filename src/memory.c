@@ -89,6 +89,7 @@ static void blackenObject(Obj* object) {
         case OBJ_FUNCTION: {
             ObjFunction* function = (ObjFunction*)object;
             markObject((Obj*)function->name);
+            markObject((Obj*)function->module);
             // paramNames holds ObjString*; missing this frees live names.
             for (int i = 0; i < function->arity && function->paramNames != NULL; i++) {
                 markObject((Obj*)function->paramNames[i]);
@@ -126,6 +127,13 @@ static void blackenObject(Obj* object) {
         case OBJ_ITERATOR:
             markValue(((ObjIterator*)object)->source);
             break;
+        case OBJ_MODULE: {
+            ObjModule* module = (ObjModule*)object;
+            markObject((Obj*)module->name);
+            markObject((Obj*)module->path);
+            markTable(&module->globals);
+            break;
+        }
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
             markObject((Obj*)klass->name);
@@ -219,6 +227,12 @@ static void freeObject(Obj* object) {
             // `source` is a Value owned by the GC; nothing extra to release.
             FREE(ObjIterator, object);
             break;
+        case OBJ_MODULE: {
+            ObjModule* module = (ObjModule*)object;
+            freeTable(&module->globals);
+            FREE(ObjModule, object);
+            break;
+        }
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
             freeTable(&klass->methods);
@@ -304,6 +318,8 @@ static void markRoots() {
 
     // The interned "init" method name.
     markObject((Obj*)vm.initString);
+    markObject((Obj*)vm.mainModule);
+    markObject((Obj*)vm.scriptDir);
 
     // A pending native error value (raised but not yet unwound).
     markValue(vm.nativeErrorValue);

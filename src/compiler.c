@@ -394,6 +394,9 @@ static void patchJump(int offset) {
 // Source of the compile() in progress, shared by every function it produces
 // so runtime errors can print the offending line. Reset on each compile().
 static ObjString* compilingSource = NULL;
+// Module every function compiled in this pass belongs to. Like compilingSource
+// it is a GC root for the duration of the compile.
+static ObjModule* compilingModule = NULL;
 
 static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->enclosing = current;
@@ -409,6 +412,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->finallyBudgetReported = false;
     compiler->function = newFunction();
     compiler->function->chunk.source = compilingSource;
+    compiler->function->module = compilingModule;
     current = compiler;
     if (type != TYPE_SCRIPT) {
         if (type == TYPE_FUNCTION && parser.previous.type == TOKEN_FUNGSI) {
@@ -2426,14 +2430,81 @@ static void assertStatement() {
     patchJump(doneJump);
 }
 
+// `impor a.b.c` / `dari a.b impor x` -- reads a dotted module name into `out`.
+// Returns the constant index of the name string.
+static uint8_t moduleNameConstant() {
+    char name[256];
+    int len = 0;
+    do {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama modul.");
+        if (len + parser.previous.length + 1 >= (int)sizeof name) {
+            error("Nama modul terlalu panjang.");
+            return 0;
+        }
+        if (len > 0) name[len++] = '.';
+        memcpy(name + len, parser.previous.start, parser.previous.length);
+        len += parser.previous.length;
+    } while (match(TOKEN_DOT));
+    name[len] = '\0';
+    return makeConstant(OBJ_VAL(copyString(name, len)));
+}
+
+// The name a module is bound to: last component of a dotted path, so
+// `impor a.b` defines `b` (Python binds `a`, but we have no package objects).
+static uint8_t defaultBindingName(const char* dotted, int len) {
+    int start = 0;
+    for (int i = 0; i < len; i++) {
+        if (dotted[i] == '.') start = i + 1;
+    }
+    return makeConstant(OBJ_VAL(copyString(dotted + start, len - start)));
+}
+
 static void importStatement() {
-    // impor "path.idk"   -> load & run another file in the same namespace.
-    consume(TOKEN_STRING, "Harapkan nama file (string) setelah 'impor'.");
-    // Reuse the string literal handling to push the path (minus quotes).
-    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
-                                    parser.previous.length - 2)));
-    emitByte(OP_IMPORT);
-    emitByte(OP_POP);  // discard the module's return value (kosong)
+    // Legacy form, unchanged: impor "path.idk" runs a file in the CALLER's
+    // namespace. Keeping it is what lets every pustaka/*.idk keep working.
+    if (match(TOKEN_STRING)) {
+        emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
+                                        parser.previous.length - 2)));
+        emitByte(OP_IMPORT);
+        emitByte(OP_POP);  // discard the module's return value (kosong)
+        return;
+    }
+
+    // impor nama[.sub] [sebagai alias]
+    uint8_t nameConst = moduleNameConstant();
+    ObjString* dotted = AS_STRING(currentChunk()->constants.values[nameConst]);
+
+    uint8_t binding;
+    if (match(TOKEN_SEBAGAI)) {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama alias setelah 'sebagai'.");
+        binding = identifierConstant(&parser.previous);
+    } else {
+        binding = defaultBindingName(dotted->chars, dotted->length);
+    }
+
+    emitBytes(OP_IMPORT_MODULE, nameConst);
+    emitBytes(OP_DEFINE_GLOBAL, binding);
+}
+
+// dari modul impor a [sebagai x] [, b [sebagai y]]...
+static void fromImportStatement() {
+    uint8_t nameConst = moduleNameConstant();
+    consume(TOKEN_IMPOR, "Harapkan 'impor' setelah nama modul.");
+
+    emitBytes(OP_IMPORT_MODULE, nameConst);   // module stays on the stack
+    do {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama yang diimpor.");
+        uint8_t member = identifierConstant(&parser.previous);
+        uint8_t binding = member;
+        if (match(TOKEN_SEBAGAI)) {
+            consume(TOKEN_IDENTIFIER, "Harapkan nama alias setelah 'sebagai'.");
+            binding = identifierConstant(&parser.previous);
+        }
+        emitBytes(OP_IMPORT_FROM, member);
+        emitBytes(OP_DEFINE_GLOBAL, binding);
+    } while (match(TOKEN_COMMA));
+
+    emitByte(OP_POP);   // the module itself
 }
 
 // Lookahead helper: having just scanned a '{', skip to its matching '}'.
@@ -2980,6 +3051,8 @@ static void statement() {
         raiseStatement();
     } else if (match(TOKEN_PASTIKAN)) {
         assertStatement();
+    } else if (match(TOKEN_DARI)) {
+        fromImportStatement();
     } else if (match(TOKEN_IMPOR)) {
         importStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
@@ -2995,11 +3068,12 @@ static void statement() {
     // Consume optional newlines after statements
 }
 
-ObjFunction* compile(const char* source) {
+ObjFunction* compileInModule(const char* source, ObjModule* module) {
     initScanner(source);
     // Keep the source alive as a GC object: module sources are freed by the
     // caller right after compile(), but runtime errors need them later.
     compilingSource = copyString(source, (int)strlen(source));
+    compilingModule = module;
     Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
 
@@ -3025,6 +3099,7 @@ ObjFunction* compile(const char* source) {
 
     ObjFunction* function = endCompiler();
     compilingSource = NULL;
+    compilingModule = NULL;
     return parser.hadError ? NULL : function;
 }
 
@@ -3035,9 +3110,14 @@ void markCompilerRoots() {
     // Not yet reachable from any function while the first chunk is still
     // being built, and allocations during parsing can trigger a GC.
     markObject((Obj*)compilingSource);
+    markObject((Obj*)compilingModule);
     Compiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);
         compiler = compiler->enclosing;
     }
+}
+
+ObjFunction* compile(const char* source) {
+    return compileInModule(source, NULL);
 }

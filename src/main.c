@@ -97,6 +97,8 @@ static char* readFile(const char* path) {
 
 static int runFile(const char* path) {
     char* source = readFile(path);
+    // Imports resolve relative to the script's own directory first.
+    setScriptPath(path);
     InterpretResult result = interpret(source);
     free(source);
 

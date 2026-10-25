@@ -894,6 +894,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("rentang", 7));
     } else if (IS_ITERATOR(args[0])) {
         return OBJ_VAL(copyString("iterator", 8));
+    } else if (IS_MODULE(args[0])) {
+        return OBJ_VAL(copyString("modul", 5));
     } else if (IS_FUNCTION(args[0]) || IS_CLOSURE(args[0]) ||
                IS_NATIVE(args[0]) || IS_BOUND_METHOD(args[0])) {
         return OBJ_VAL(copyString("fungsi", 6));

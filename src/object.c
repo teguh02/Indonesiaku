@@ -32,6 +32,7 @@ ObjFunction* newFunction() {
     function->paramNames = NULL;
     function->upvalueCount = 0;
     function->name = NULL;
+    function->module = NULL;   // set by the compiler; GC-marked
     initChunk(&function->chunk);
     return function;
 }
@@ -79,6 +80,18 @@ ObjSet* newSet() {
     initValueArray(&set->keys);
     set->frozen = false;
     return set;
+}
+
+ObjModule* newModule(ObjString* name, ObjString* path) {
+    ObjModule* module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
+    // NULL first: initTable allocates nothing, but a later GC walking this
+    // object must never see uninitialised pointers.
+    module->name = NULL;
+    module->path = NULL;
+    initTable(&module->globals);
+    module->name = name;
+    module->path = path;
+    return module;
 }
 
 ObjIterator* newIterator(Value source) {
@@ -374,6 +387,9 @@ void printObject(Value value) {
             printf(")");
             break;
         }
+        case OBJ_MODULE:
+            printf("<modul %s>", AS_MODULE(value)->name->chars);
+            break;
         case OBJ_SET: {
             // No literal exists (K17), so print the constructor call that
             // rebuilds it: himpunan([1, 2]) and himpunan().

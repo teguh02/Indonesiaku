@@ -66,7 +66,9 @@ typedef struct {
     int exitFrame;
     Table globals;
     Table strings;
-    Table loadedModules;
+    Table loadedModules;   // resolved path -> ObjModule
+    ObjModule* mainModule; // the entry script's module ("__utama__")
+    ObjString* scriptDir;  // directory of the entry script, for import search
     ObjString* initString;
     ObjClass* galat;
     ObjClass* galatAritmetika;
@@ -120,6 +122,8 @@ extern VM vm;
 void initVM();
 void freeVM();
 void defineArgs(int argc, const char* argv[], int start);
+// Directory of the entry script, used as the first import search path.
+void setScriptPath(const char* path);
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();

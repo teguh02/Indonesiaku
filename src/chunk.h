@@ -76,6 +76,8 @@ typedef enum {
     OP_PASTIKAN,
     OP_IS_INSTANCE,
     OP_IMPORT,
+    OP_IMPORT_MODULE,   // impor nama; konstanta = nama modul -> ObjModule di stack
+    OP_IMPORT_FROM,     // dari m impor x; konstanta = nama anggota
     OP_RETURN,
 } OpCode;
 
