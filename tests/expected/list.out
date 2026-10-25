@@ -13,7 +13,7 @@ dihapus: 50
 2
 3
 [1, "dua", benar, kosong]
-jenis: list
+jenis: daftar
 === Bangun List dengan Loop ===
 [1, 4, 9, 16, 25]
 jumlah elemen: 5

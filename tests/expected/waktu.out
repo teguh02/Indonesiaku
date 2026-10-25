@@ -9,5 +9,5 @@ hari 1..31: benar
 jam 0..23: benar
 menit 0..59: benar
 === format_tanggal ===
-jenis format: string
+jenis format: teks
 panjang tahun 4 digit: benar

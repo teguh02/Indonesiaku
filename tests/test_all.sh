@@ -96,6 +96,18 @@ if [ -d tests/galat ]; then
     done
 fi
 
+# Contoh di website/panduan/ adalah dokumentasi yang hidup: kalau tidak diuji,
+# ia membusuk diam-diam. Syarat Rilis 1.0 di docs/ROADMAP.md.
+if [ -f tests/test_panduan.sh ]; then
+    echo ""
+    if bash tests/test_panduan.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES panduan"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 echo -e "${BLUE}=================================================${NC}"
 echo -e "TOTAL: ${GREEN}$PASSED/$TOTAL PASSED${NC}"
 if [ "$FAILED" -eq 0 ]; then

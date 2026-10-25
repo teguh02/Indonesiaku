@@ -866,13 +866,13 @@ Value nativeFnJenis(int argCount, Value* args) {
     if (IS_KOSONG(args[0])) {
         return OBJ_VAL(copyString("kosong", 6));
     } else if (IS_BOOL(args[0])) {
-        return OBJ_VAL(copyString("boolean", 7));
+        return OBJ_VAL(copyString("logika", 6));
     } else if (IS_NUMBER(args[0])) {
         return OBJ_VAL(copyString("angka", 5));
     } else if (IS_STRING(args[0])) {
-        return OBJ_VAL(copyString("string", 6));
+        return OBJ_VAL(copyString("teks", 4));
     } else if (IS_LIST(args[0])) {
-        return OBJ_VAL(copyString("list", 4));
+        return OBJ_VAL(copyString("daftar", 6));
     } else if (IS_TUPLE(args[0])) {
         return OBJ_VAL(copyString("tupel", 5));
     } else if (IS_SET(args[0])) {
@@ -900,7 +900,7 @@ Value nativeFnJenis(int argCount, Value* args) {
                IS_NATIVE(args[0]) || IS_BOUND_METHOD(args[0])) {
         return OBJ_VAL(copyString("fungsi", 6));
     } else if (IS_OBJ(args[0])) {
-        return OBJ_VAL(copyString("object", 6));
+        return OBJ_VAL(copyString("objek", 5));
     }
     return OBJ_VAL(copyString("tidak diketahui", 15));
 }

@@ -4,10 +4,10 @@ jenis(42):
 angka
 
 jenis('hello'):
-string
+teks
 
 jenis(benar):
-boolean
+logika
 
 jenis(kosong):
 kosong

@@ -40,7 +40,7 @@ fungsi json_teks(nilai) {
     jika t == "kosong" {
         kembalikan "null"
     }
-    jika t == "boolean" {
+    jika t == "logika" {
         jika nilai {
             kembalikan "true"
         }
@@ -49,10 +49,10 @@ fungsi json_teks(nilai) {
     jika t == "angka" {
         kembalikan ke_teks(nilai)
     }
-    jika t == "string" {
+    jika t == "teks" {
         kembalikan json_escape(nilai)
     }
-    jika t == "list" {
+    jika t == "daftar" {
         variabel hasil = "["
         variabel i = 0
         selagi i < panjang(nilai) {
