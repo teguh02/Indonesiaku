@@ -104,7 +104,11 @@ jobs:
           foreach ($f in @("README.md","CHANGELOG.md","LICENSE","docs/SPESIFIKASI.md")) {
             if (Test-Path $f) { Copy-Item $f "dist/$pkg/" }
           }
-          Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip" -Force
+          # Compress-Archive (PowerShell 5) menulis pemisah path '\' di dalam
+          # arsip, melanggar spec ZIP: 'unzip' di Linux/macOS lalu menghasilkan
+          # berkas datar bernama 'indk-windows\indk.exe'. 7z sudah terpasang
+          # di runner dan menulis '/' yang benar.
+          7z a -tzip "dist/$pkg.zip" "dist/$pkg" | Out-Null
           Get-Item "dist/$pkg.zip"
 
       - name: Upload artifact
