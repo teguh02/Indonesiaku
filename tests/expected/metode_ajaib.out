@@ -1,0 +1,67 @@
+== representasi ==
+(1, 2)
+[Vektor(1, 2), Vektor(3, 4)]
+(Vektor(1, 2),) {"a": Vektor(1, 2)}
+(1, 2) Vektor(1, 2)
+a = (1, 2), daftar = [Vektor(1, 2)]
+(1, 2) dan (5, 6)
+Kode("x") [Kode("y")] Kode("z")
+<objek Polos> <objek Polos> [<objek Polos>]
+<fungsi bawaan> <kelas Vektor> [<kelas Vektor>]
+== aritmetika ==
+(4, 6) (2, 2) (3, 6) (-1, -2)
+(1.5, 2.0) (1, 2) (1, 0) (1, 4)
+(4, 6)
+(3, 5)
+(3, 3) salah benar
+== perbandingan ==
+benar salah benar salah
+salah salah benar
+benar salah benar
+salah benar
+  (_tidak_sama_ dipanggil)
+benar
+benar salah benar benar
+benar salah
+salah benar
+== koleksi ==
+benar
+salah benar
+benar
+benar benar
+benar salah
+polos boleh jadi kunci
+== galat ==
+GalatAtribut: Hanya objek yang memiliki properti.
+GalatTipe: Operator '+' tidak didukung antara 'Polos' dan 'bulat'.
+GalatTipe: Operator '+' tidak didukung antara 'bulat' dan 'Vektor'.
+GalatTipe: Operator '<' tidak didukung antara 'Polos' dan 'Polos'.
+GalatTipe: Operator '-' tidak didukung untuk 'Polos'.
+GalatTipe: Operand harus berupa angka.
+GalatTipe: Operand harus berupa angka.
+GalatTipe: Vektor punya _sama_, jadi tidak hashable
+GalatTipe: Anggota himpunan harus nilai yang dapat di-hash.
+GalatBagiNol: 0 tidak dapat dipangkatkan dengan bilangan negatif.
+== galat dari metode ajaib ==
+GalatTipe: _teks_ harus mengembalikan teks, bukan bulat.
+GalatBagiNol: Pembagian dengan nol.
+GalatBagiNol: Pembagian dengan nol.
+GalatBagiNol: Pembagian dengan nol.
+GalatBagiNol: Pembagian dengan nol.
+GalatBagiNol: Pembagian dengan nol.
+awal GalatIndeks: Indeks list di luar jangkauan (indeks 0, panjang 0).
+GalatIndeks: Indeks list di luar jangkauan (indeks 0, panjang 0).
+lanjut normal
+== NaN dan nilai bawaan ==
+salah salah salah salah benar salah salah
+[1, [...]] [1, [...]]
+600 600 602
+== masuk-ulang dan rekursi ==
+salah [1, 2, 0, 0, 0]
+salah []
+GalatRekursi: _teks_ memanggil dirinya
+GalatRekursi: fungsi biasa
+[[Pencabut, 1, 2, "x"]]
+[]
+{Kunci: ["nilai", 42]}
+GalatBagiNol: Pembagian dengan nol.

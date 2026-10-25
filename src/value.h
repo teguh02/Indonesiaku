@@ -78,6 +78,13 @@ typedef struct {
 bool valuesEqual(Value a, Value b);
 bool valuesIdentical(Value a, Value b);
 
+// _sama_ for instances (K19), installed by the VM: value.c cannot run
+// Indonesiaku code itself. Returns 1/0 for the comparison's truth value, or
+// -1 when neither operand defines _sama_ (the caller falls back to identity).
+// When the method raises, the error is left pending and 0 is returned.
+typedef int (*InstanceEqualFn)(Value a, Value b);
+extern InstanceEqualFn instanceEqualHook;
+
 // --- K2: int64 arithmetic ------------------------------------------------
 // Each returns true when the mathematical result does not fit in int64; *out
 // is then unspecified. Callers raise GalatLuapan instead of wrapping silently.

@@ -1,0 +1,4 @@
+# Instansi tanpa _tambah_ tidak bisa dijumlahkan (K19).
+kelas Polos {
+}
+cetak(Polos() + 1)

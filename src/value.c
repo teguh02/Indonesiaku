@@ -30,24 +30,14 @@ void freeValueArray(ValueArray* array) {
     initValueArray(array);
 }
 
+// Debug/GC logs and the disassembler. User-facing printing (cetak, ke_teks,
+// ...) goes through formatValue with magic methods enabled instead.
 void printValue(Value value) {
-    switch (value.type) {
-        case VAL_BOOL:
-            printf(AS_BOOL(value) ? "benar" : "salah");
-            break;
-        case VAL_KOSONG: printf("kosong"); break;
-        // Should be unreachable: the marker never escapes a call prologue.
-        // Printing something recognisable beats printing garbage if it does.
-        case VAL_TAKTERISI: printf("<takterisi>"); break;
-        case VAL_INT: printf("%lld", (long long)AS_INT(value)); break;
-        case VAL_NUMBER: {
-            char buf[32];
-            numberToString(AS_NUMBER(value), buf, sizeof(buf));
-            printf("%s", buf);
-            break;
-        }
-        case VAL_OBJ: printObject(value); break;
-    }
+    TextBuf buf;
+    initTextBuf(&buf);
+    formatValue(&buf, value, false, false);
+    if (buf.length > 0) fwrite(buf.chars, 1, (size_t)buf.length, stdout);
+    freeTextBuf(&buf);
 }
 
 // Format a double the way the language prints a desimal (K2): the SHORTEST
@@ -146,6 +136,14 @@ bool hashValue(Value value, uint32_t* out) {
                 }
                 *out = h;
                 return true;
+            }
+            if (AS_OBJ(value)->type == OBJ_INSTANCE &&
+                (AS_INSTANCE(value)->klass->magic & MAGIC_BIT(MAGIC_SAMA))) {
+                // K19: defining _sama_ (without a _hash_, which does not exist
+                // yet) makes instances unhashable, like Python setting
+                // __hash__ = None. Dict and set lookups therefore never run
+                // user code.
+                return false;
             }
             {
                 // Instances and other objects hash by identity.
@@ -318,7 +316,18 @@ bool valuesIdentical(Value a, Value b) {
 // anything deeper is reported as not equal rather than crashing the VM.
 #define EQUAL_MAX_DEPTH 64
 
+InstanceEqualFn instanceEqualHook = NULL;
+
 static bool valuesEqualDepth(Value a, Value b, int depth) {
+    // An instance with _sama_ decides for itself (K19), after the identity
+    // shortcut that Python's PyObject_RichCompareBool also takes: x dalam [x]
+    // is benar without calling _sama_. The top-level `==` operator does not
+    // come through here for instances; it calls _sama_ even on itself.
+    if ((IS_INSTANCE(a) || IS_INSTANCE(b)) && instanceEqualHook != NULL) {
+        if (IS_OBJ(a) && IS_OBJ(b) && AS_OBJ(a) == AS_OBJ(b)) return true;
+        int handled = instanceEqualHook(a, b);
+        if (handled >= 0) return handled == 1;
+    }
     // K2: 1 == 1.0 must be true even though the types differ (Python).
     if (IS_NUMBER(a) && IS_NUMBER(b)) {
         int cmp;
@@ -337,10 +346,12 @@ static bool valuesEqualDepth(Value a, Value b, int depth) {
             ValueArray* x = sequenceItems(a);
             ValueArray* y = sequenceItems(b);
             if (x->count != y->count) return false;
-            for (int i = 0; i < x->count; i++) {
+            // Bounds re-checked every step: a _sama_ called on an element may
+            // shrink either list (only lists can change; tupel are fixed).
+            for (int i = 0; i < x->count && i < y->count; i++) {
                 if (!valuesEqualDepth(x->values[i], y->values[i], depth + 1)) return false;
             }
-            return true;
+            return x->count == y->count;
         }
         case OBJ_DICT: {
             ObjDict* x = AS_DICT(a);

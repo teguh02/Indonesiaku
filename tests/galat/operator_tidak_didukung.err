@@ -1,0 +1,4 @@
+Operator '+' tidak didukung antara 'Polos' dan 'bulat'.
+[baris 4, kolom 17] dalam skrip
+    cetak(Polos() + 1)
+                    ^

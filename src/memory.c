@@ -295,8 +295,9 @@ static void markRoots() {
     // Anything the compiler is holding onto right now.
     markCompilerRoots();
 
-    // The interned "init" method name.
+    // The interned "init" method name and the magic method names (K19).
     markObject((Obj*)vm.initString);
+    for (int i = 0; i < MAGIC_COUNT; i++) markObject((Obj*)vm.magicNames[i]);
 
     // A pending native error value (raised but not yet unwound).
     markValue(vm.nativeErrorValue);

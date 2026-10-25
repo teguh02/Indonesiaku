@@ -20,6 +20,18 @@ VM vm;
 static void closeUpvalues(Value* last);
 static ObjInstance* newError(ObjClass* klass, const char* message);
 
+// Magic method names (K19), indexed by MagicKind. Interned into vm.magicNames
+// at startup so OP_METHOD can recognise them by pointer.
+static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
+    "_teks_", "_repr_", "_sama_", "_tidak_sama_",
+    "_kurang_dari_", "_kurang_sama_", "_lebih_dari_", "_lebih_sama_",
+    "_tambah_", "_kurangi_", "_kali_", "_bagi_", "_bagi_bulat_", "_sisa_",
+    "_pangkat_", "_negatif_",
+};
+
+static int formatInstanceMagic(TextBuf* out, Value instance, bool repr);
+static int instanceEqualMagic(Value a, Value b);
+
 static Value clockNative(int argCount, Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
 }
@@ -260,6 +272,12 @@ void initVM() {
 
     vm.initString = NULL;
     vm.initString = copyString("init", 4);
+    for (int i = 0; i < MAGIC_COUNT; i++) vm.magicNames[i] = NULL;
+    for (int i = 0; i < MAGIC_COUNT; i++) {
+        vm.magicNames[i] = copyString(MAGIC_NAMES[i], (int)strlen(MAGIC_NAMES[i]));
+    }
+    formatInstanceHook = formatInstanceMagic;
+    instanceEqualHook = instanceEqualMagic;
     vm.runtimeErrorClass = NULL;
     vm.galat = defineErrorClass("Galat", NULL);
     vm.galatAritmetika = defineErrorClass("GalatAritmetika", vm.galat);
@@ -275,7 +293,7 @@ void initVM() {
     defineErrorClass("GalatBerkas", vm.galat);
     defineErrorClass("GalatOS", vm.galat);
     defineErrorClass("GalatImpor", vm.galat);
-    defineErrorClass("GalatRekursi", vm.galat);
+    vm.galatRekursi = defineErrorClass("GalatRekursi", vm.galat);
     vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
     defineErrorClass("HentiIterasi", vm.galat);
     defineErrorClass("GalatSintaks", vm.galat);
@@ -384,6 +402,7 @@ void freeVM() {
     freeTable(&vm.strings);
     freeTable(&vm.loadedModules);
     vm.initString = NULL;
+    for (int i = 0; i < MAGIC_COUNT; i++) vm.magicNames[i] = NULL;
     freeObjects();
 }
 
@@ -482,6 +501,7 @@ static bool call(ObjClosure* closure, int argCount, ObjList* names) {
     }
 
     if (vm.frameCount >= FRAMES_MAX) {
+        vm.runtimeErrorClass = vm.galatRekursi;
         runtimeError("Call stack overflow: kedalaman maksimal panggilan fungsi %d terlampaui. Kemungkinan rekursi tak terbatas?", FRAMES_MAX);
         return false;
     }
@@ -614,6 +634,7 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
 static bool bindMethod(ObjClass* klass, ObjString* name) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
+        vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
         runtimeError("Properti tidak terdefinisi '%s'.", name->chars);
         return false;
     }
@@ -627,6 +648,7 @@ static bool bindMethod(ObjClass* klass, ObjString* name) {
 static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
+        vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
         runtimeError("Metode tidak terdefinisi '%s'.", name->chars);
         return false;
     }
@@ -747,6 +769,7 @@ static bool invoke(ObjString* name, int argCount) {
             push(result);
             return true;
         }
+        vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
         runtimeError("Hanya objek yang memiliki metode.");
         return false;
     }
@@ -767,6 +790,9 @@ static void defineMethod(ObjString* name) {
     Value method = peek(0);
     ObjClass* klass = AS_CLASS(peek(1));
     tableSet(&klass->methods, name, method);
+    for (int i = 0; i < MAGIC_COUNT; i++) {
+        if (vm.magicNames[i] == name) klass->magic |= MAGIC_BIT(i);   // interned
+    }
     pop();
 }
 
@@ -930,6 +956,162 @@ static bool stringContains(ObjString* haystack, ObjString* needle) {
 
 // `item dalam container` (Python 'in'). Returns false after raising a
 // runtime error when the container type does not support membership.
+// ---------------------------------------------------------------------------
+// Magic methods (K19)
+// ---------------------------------------------------------------------------
+
+// Type name for operator error messages: an instance's class name, otherwise
+// the Indonesian type name.
+static const char* valueTypeName(Value value) {
+    if (IS_INSTANCE(value)) return AS_INSTANCE(value)->klass->name->chars;
+    if (IS_BOOL(value)) return "logika";
+    if (IS_KOSONG(value)) return "kosong";
+    if (IS_INT(value)) return "bulat";
+    if (IS_NUMBER(value)) return "desimal";
+    if (IS_STRING(value)) return "teks";
+    if (IS_LIST(value)) return "daftar";
+    if (IS_TUPLE(value)) return "tupel";
+    if (IS_SET(value)) return "himpunan";
+    if (IS_DICT(value)) return "kamus";
+    if (IS_RANGE(value)) return "rentang";
+    if (IS_CLASS(value)) return "kelas";
+    if (IS_CLOSURE(value) || IS_FUNCTION(value) || IS_NATIVE(value) ||
+        IS_BOUND_METHOD(value)) {
+        return "fungsi";
+    }
+    return "objek";
+}
+
+// The magic method `kind` of an instance's class. Looked up on the class, not
+// the instance's fields -- like Python looking dunders up on the type. The
+// bitmask makes the miss case one AND.
+static bool instanceMagic(Value value, MagicKind kind, Value* method) {
+    if (!IS_INSTANCE(value)) return false;
+    ObjClass* klass = AS_INSTANCE(value)->klass;
+    if ((klass->magic & MAGIC_BIT(kind)) == 0) return false;
+    return tableGet(&klass->methods, vm.magicNames[kind], method);
+}
+
+typedef enum {
+    MAGIC_ABSENT,    // no applicable magic method; caller continues
+    MAGIC_STARTED,   // a call frame was pushed; run() continues inside it
+    MAGIC_FAILED     // an error was raised
+} MagicDispatch;
+
+// Operator on peek(1) (left) and peek(0) (right): left.kind(right), else
+// right.mirror(left). The method is entered with a plain call() -- slot 0 is
+// the receiver, slot 1 the argument -- so its return value lands exactly where
+// the operator's result belongs and nothing re-enters C.
+static MagicDispatch binaryMagic(MagicKind kind, MagicKind mirror) {
+    Value method;
+    if (instanceMagic(peek(1), kind, &method)) {
+        return call(AS_CLOSURE(method), 1, NULL) ? MAGIC_STARTED : MAGIC_FAILED;
+    }
+    if (mirror != MAGIC_NONE && instanceMagic(peek(0), mirror, &method)) {
+        Value left = peek(1);
+        vm.stackTop[-2] = vm.stackTop[-1];
+        vm.stackTop[-1] = left;
+        return call(AS_CLOSURE(method), 1, NULL) ? MAGIC_STARTED : MAGIC_FAILED;
+    }
+    return MAGIC_ABSENT;
+}
+
+// binaryMagic for operators that have no fallback on instances: an instance
+// operand without the method is a GalatTipe (Python: unsupported operand).
+// MAGIC_ABSENT only when neither operand is an instance.
+static MagicDispatch binaryMagicOrError(MagicKind kind, MagicKind mirror, const char* symbol) {
+    if (!IS_INSTANCE(peek(0)) && !IS_INSTANCE(peek(1))) return MAGIC_ABSENT;
+    MagicDispatch dispatch = binaryMagic(kind, mirror);
+    if (dispatch != MAGIC_ABSENT) return dispatch;
+    vm.runtimeErrorClass = vm.galatTipe;
+    runtimeError("Operator '%s' tidak didukung antara '%s' dan '%s'.",
+                 symbol, valueTypeName(peek(1)), valueTypeName(peek(0)));
+    return MAGIC_FAILED;
+}
+
+// receiver.method(arg) called right now from C, for the places that cannot
+// just push a frame: chainCompare, `!=` negating _sama_, and the equality and
+// text hooks used deep inside C loops. An error is left pending as a native
+// error; run() picks it up with resolveNativeError().
+static bool callMagicNow(Value receiver, Value method, Value arg, int argCount,
+                         Value* result) {
+    push(receiver);                                   // GC: root before allocating
+    ObjBoundMethod* bound = newBoundMethod(receiver, AS_CLOSURE(method));
+    vm.stackTop[-1] = OBJ_VAL(bound);
+    if (argCount == 1) push(arg);
+    return callFromNative(argCount, result);
+}
+
+// Comparison through magic methods, run now: left.kind(right), else
+// right.mirror(left). Returns -1 when neither defines it, 0 when the method
+// raised (error pending), 1 with *result set to the truthiness of its value.
+static int compareMagicNow(MagicKind kind, MagicKind mirror, Value left, Value right,
+                           bool* result) {
+    Value method;
+    Value value;
+    bool ok;
+    if (instanceMagic(left, kind, &method)) {
+        ok = callMagicNow(left, method, right, 1, &value);
+    } else if (instanceMagic(right, mirror, &method)) {
+        ok = callMagicNow(right, method, left, 1, &value);
+    } else {
+        return -1;
+    }
+    if (!ok) return 0;
+    *result = !isFalsey(value);
+    return 1;
+}
+
+// instanceEqualHook: _sama_ for == inside collections, dalam, indeks, ...
+static int instanceEqualMagic(Value a, Value b) {
+    // An earlier comparison in the same C loop already raised: stop running
+    // user code and let the loop's caller unwind.
+    if (vm.nativeErrorPending) return 0;
+    bool equal;
+    int found = compareMagicNow(MAGIC_SAMA, MAGIC_SAMA, a, b, &equal);
+    if (found <= 0) return found;
+    return equal ? 1 : 0;
+}
+
+// formatInstanceHook: _teks_ for cetak/ke_teks/f-string (falling back to
+// _repr_, as Python's object.__str__ does), _repr_ for repr and elements.
+static int formatInstanceMagic(TextBuf* out, Value instance, bool repr) {
+    Value method;
+    MagicKind kind = MAGIC_REPR;
+    if (!repr && instanceMagic(instance, MAGIC_TEKS, &method)) {
+        kind = MAGIC_TEKS;
+    } else if (!instanceMagic(instance, MAGIC_REPR, &method)) {
+        return 0;
+    }
+    if (vm.nativeErrorPending) return -1;
+    Value text;
+    if (!callMagicNow(instance, method, KOSONG_VAL, 0, &text)) return -1;
+    if (!IS_STRING(text)) {
+        nativeRaiseKelas(vm.galatTipe, "%s harus mengembalikan teks, bukan %s.",
+                         MAGIC_NAMES[kind], valueTypeName(text));
+        return -1;
+    }
+    textAppend(out, AS_CSTRING(text), AS_STRING(text)->length);
+    return 1;
+}
+
+// Ordering opcodes/chain ops share these: which magic method, its mirror,
+// the symbol for messages, and how a three-way comparison maps to a result.
+static MagicKind orderMagic(bool greater, bool orEqual) {
+    if (greater) return orEqual ? MAGIC_LEBIH_SAMA : MAGIC_LEBIH_DARI;
+    return orEqual ? MAGIC_KURANG_SAMA : MAGIC_KURANG_DARI;
+}
+
+static const char* orderSymbol(bool greater, bool orEqual) {
+    if (greater) return orEqual ? ">=" : ">";
+    return orEqual ? "<=" : "<";
+}
+
+static bool orderHolds(bool greater, bool orEqual, int cmp) {
+    if (cmp == 0) return orEqual;
+    return greater ? cmp > 0 : cmp < 0;
+}
+
 static bool containsValue(Value container, Value item, bool* found) {
     if (IS_SET(container)) {
         // Hash lookup. An unhashable item can never be a member; Python
@@ -947,7 +1129,8 @@ static bool containsValue(Value container, Value item, bool* found) {
     ValueArray* items = sequenceItems(container);   // daftar or tupel
     if (items != NULL) {
         *found = false;
-        for (int i = 0; i < items->count && !*found; i++) {
+        // count/values re-read every step: _sama_ may change the list.
+        for (int i = 0; i < items->count && !*found && !vm.nativeErrorPending; i++) {
             *found = valuesEqual(items->values[i], item);
         }
         return true;
@@ -974,29 +1157,66 @@ static bool containsValue(Value container, Value item, bool* found) {
     return false;
 }
 
+// Returns false on error. An error from a magic method is left pending as a
+// native error (OP_CHAIN_COMPARE resolves it); others went through
+// runtimeError.
 static bool chainCompare(ChainCompare op, Value left, Value right, bool* result) {
+    bool instance = IS_INSTANCE(left) || IS_INSTANCE(right);
     switch (op) {
         case CHAIN_EQUAL:
+            if (instance) {
+                int found = compareMagicNow(MAGIC_SAMA, MAGIC_SAMA, left, right, result);
+                if (found == 0) return false;
+                if (found < 0) *result = valuesIdentical(left, right);
+                return true;
+            }
             *result = valuesEqual(left, right);
-            return true;
+            return !vm.nativeErrorPending;
         case CHAIN_IDENTITY:
             *result = valuesIdentical(left, right);   // 'adalah' stays identity
             return true;
         case CHAIN_NOT_EQUAL:
+            if (instance) {
+                int found = compareMagicNow(MAGIC_TIDAK_SAMA, MAGIC_TIDAK_SAMA,
+                                            left, right, result);
+                if (found == 0) return false;
+                if (found > 0) return true;
+                // No _tidak_sama_: negate _sama_ (Python's default __ne__).
+                found = compareMagicNow(MAGIC_SAMA, MAGIC_SAMA, left, right, result);
+                if (found == 0) return false;
+                *result = found < 0 ? !valuesIdentical(left, right) : !*result;
+                return true;
+            }
             *result = !valuesEqual(left, right);
-            return true;
+            return !vm.nativeErrorPending;
         case CHAIN_NOT_IDENTITY:
             *result = !valuesIdentical(left, right);
             return true;
         case CHAIN_IN:
         case CHAIN_NOT_IN:
             if (!containsValue(right, left, result)) return false;
+            if (vm.nativeErrorPending) return false;   // a _sama_ raised mid-search
             if (op == CHAIN_NOT_IN) *result = !*result;
             return true;
         case CHAIN_GREATER:
         case CHAIN_GREATER_EQUAL:
         case CHAIN_LESS:
         case CHAIN_LESS_EQUAL:
+        {
+            bool greater = op == CHAIN_GREATER || op == CHAIN_GREATER_EQUAL;
+            bool orEqual = op == CHAIN_GREATER_EQUAL || op == CHAIN_LESS_EQUAL;
+            if (instance) {
+                int found = compareMagicNow(orderMagic(greater, orEqual),
+                                            orderMagic(!greater, orEqual),
+                                            left, right, result);
+                if (found >= 0) return found == 1;
+                vm.runtimeErrorClass = vm.galatTipe;
+                runtimeError("Operator '%s' tidak didukung antara '%s' dan '%s'.",
+                             orderSymbol(greater, orEqual),
+                             valueTypeName(left), valueTypeName(right));
+                return false;
+            }
+        }
             if (IS_STRING(left) && IS_STRING(right)) {
                 int cmp = strcmp(AS_STRING(left)->chars, AS_STRING(right)->chars);
                 *result = op == CHAIN_GREATER ? cmp > 0 :
@@ -1005,6 +1225,7 @@ static bool chainCompare(ChainCompare op, Value left, Value right, bool* result)
                 return true;
             }
             if (!IS_NUMBER(left) || !IS_NUMBER(right)) {
+                vm.runtimeErrorClass = vm.galatTipe;
                 runtimeError("Operand harus berupa angka atau dua string.");
                 return false;
             }
@@ -1012,6 +1233,7 @@ static bool chainCompare(ChainCompare op, Value left, Value right, bool* result)
                 // Compare int64 exactly even when one side is a desimal.
                 int cmp;
                 if (!numberCompare(left, right, &cmp)) {
+                    vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka atau dua string.");
                     return false;
                 }
@@ -1291,6 +1513,28 @@ static InterpretResult run() {
         disassembleInstruction(&frame->closure->function->chunk, ipOffset);
 #endif
 
+// K19: when an operand is an instance, run its magic method. A pushed frame
+// means "continue there"; a failed dispatch already raised. Used directly in
+// a case body (never inside a loop), so `break` leaves the switch.
+#define DISPATCH_MAGIC(dispatch)                                      \
+        {                                                             \
+            MagicDispatch magic_ = (dispatch);                        \
+            if (magic_ == MAGIC_FAILED) return INTERPRET_RUNTIME_ERROR; \
+            if (magic_ == MAGIC_STARTED) {                            \
+                frame = &vm.frames[vm.frameCount - 1];                \
+                break;                                                \
+            }                                                         \
+        }
+// A magic method run through callFromNative (deep inside valuesEqual,
+// containsValue, chainCompare) may have raised: unwind like OP_CALL does
+// after a native.
+#define RESOLVE_MAGIC_ERROR()                                         \
+        if (vm.nativeErrorPending) {                                  \
+            if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR; \
+            frame = &vm.frames[vm.frameCount - 1];                    \
+            break;                                                    \
+        }
+
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
             case OP_CONSTANT: {
@@ -1420,6 +1664,7 @@ static InterpretResult run() {
             case OP_DELETE_PROPERTY: {
                 if (!IS_INSTANCE(peek(0))) {
                     vm.runtimeErrorClass = vm.galatTipe;
+                    vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
                     runtimeError("Hanya objek yang memiliki properti.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1466,9 +1711,34 @@ static InterpretResult run() {
                 break;
             }
             case OP_EQUAL: {
-                Value b = pop();
-                Value a = pop();
-                push(BOOL_VAL(valuesEqual(a, b)));
+                if (IS_INSTANCE(peek(0)) || IS_INSTANCE(peek(1))) {
+                    DISPATCH_MAGIC(binaryMagic(MAGIC_SAMA, MAGIC_SAMA));
+                    // Neither defines _sama_: identity (K7), below.
+                }
+                // Operands stay on the stack: _sama_ of an element (inside
+                // valuesEqual) may allocate and collect.
+                bool equal = valuesEqual(peek(1), peek(0));
+                RESOLVE_MAGIC_ERROR();
+                vm.stackTop -= 2;
+                push(BOOL_VAL(equal));
+                break;
+            }
+            case OP_NOT_EQUAL: {
+                bool equal;
+                if (IS_INSTANCE(peek(0)) || IS_INSTANCE(peek(1))) {
+                    DISPATCH_MAGIC(binaryMagic(MAGIC_TIDAK_SAMA, MAGIC_TIDAK_SAMA));
+                    // No _tidak_sama_: negate _sama_ (Python's default __ne__),
+                    // else identity.
+                    int found = compareMagicNow(MAGIC_SAMA, MAGIC_SAMA,
+                                                peek(1), peek(0), &equal);
+                    RESOLVE_MAGIC_ERROR();
+                    if (found < 0) equal = valuesIdentical(peek(1), peek(0));
+                } else {
+                    equal = valuesEqual(peek(1), peek(0));
+                    RESOLVE_MAGIC_ERROR();
+                }
+                vm.stackTop -= 2;
+                push(BOOL_VAL(!equal));
                 break;
             }
             case OP_IDENTICAL: {
@@ -1477,37 +1747,31 @@ static InterpretResult run() {
                 push(BOOL_VAL(valuesIdentical(a, b)));
                 break;
             }
-            case OP_GREATER: {
+            case OP_GREATER:
+            case OP_GREATER_EQUAL:
+            case OP_LESS:
+            case OP_LESS_EQUAL: {
+                bool greater = instruction == OP_GREATER || instruction == OP_GREATER_EQUAL;
+                bool orEqual = instruction == OP_GREATER_EQUAL || instruction == OP_LESS_EQUAL;
+                int cmp;
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
-                    ObjString* b = AS_STRING(pop());
-                    ObjString* a = AS_STRING(pop());
-                    push(BOOL_VAL(strcmp(a->chars, b->chars) > 0));
-                } else {
-                    int cmp;
-                    if (!numberCompare(peek(1), peek(0), &cmp)) {
-                        runtimeError("Operand harus berupa angka.");
-                        return INTERPRET_RUNTIME_ERROR;
-                    }
+                    cmp = strcmp(AS_CSTRING(peek(1)), AS_CSTRING(peek(0)));
                     vm.stackTop -= 2;
-                    push(BOOL_VAL(cmp == 1));   // NaN (2) is never greater
+                    push(BOOL_VAL(orderHolds(greater, orEqual, cmp)));
+                    break;
                 }
-                break;
-            }
-            case OP_LESS: {
-                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
-                    ObjString* b = AS_STRING(pop());
-                    ObjString* a = AS_STRING(pop());
-                    push(BOOL_VAL(strcmp(a->chars, b->chars) < 0));
-                } else {
-                    int cmp;
-                    if (!numberCompare(peek(1), peek(0), &cmp)) {
-                        runtimeError("Operand harus berupa angka.");
-                        return INTERPRET_RUNTIME_ERROR;
-                    }
+                if (numberCompare(peek(1), peek(0), &cmp)) {
                     vm.stackTop -= 2;
-                    push(BOOL_VAL(cmp == -1));  // NaN (2) is never less
+                    // NaN (2) is never ordered, so >= and <= are salah too.
+                    push(BOOL_VAL(cmp != 2 && orderHolds(greater, orEqual, cmp)));
+                    break;
                 }
-                break;
+                DISPATCH_MAGIC(binaryMagicOrError(orderMagic(greater, orEqual),
+                                                  orderMagic(!greater, orEqual),
+                                                  orderSymbol(greater, orEqual)));
+                vm.runtimeErrorClass = vm.galatTipe;
+                runtimeError("Operand harus berupa angka.");
+                return INTERPRET_RUNTIME_ERROR;
             }
             case OP_ADD: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
@@ -1529,6 +1793,7 @@ static InterpretResult run() {
                     double a = AS_NUMBER(pop());
                     push(NUMBER_VAL(a + b));
                 } else {
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_TAMBAH, MAGIC_NONE, "+"));
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand '+' harus dua angka, dua teks, dua daftar, atau dua tupel.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1536,11 +1801,14 @@ static InterpretResult run() {
                 break;
             }
             case OP_SUBTRACT: {
+                // Before the himpunan branch: Vektor - himpunan is Vektor's call.
+                DISPATCH_MAGIC(binaryMagicOrError(MAGIC_KURANGI, MAGIC_NONE, "-"));
                 if (IS_SET(peek(0)) || IS_SET(peek(1))) {   // himpunan - himpunan
                     if (!setBinary(OP_SUBTRACT, "-")) return INTERPRET_RUNTIME_ERROR;
                     break;
                 }
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1581,6 +1849,8 @@ static InterpretResult run() {
                     push(NUMBER_VAL(x * y));
                     break;
                 }
+                // Before the sequence branch: Vektor * [1] is Vektor's call.
+                DISPATCH_MAGIC(binaryMagicOrError(MAGIC_KALI, MAGIC_NONE, "*"));
 
                 Value seq = IS_NUMBER(b) ? a : b;    // the repeated operand
                 Value times = IS_NUMBER(b) ? b : a;
@@ -1632,6 +1902,8 @@ static InterpretResult run() {
             }
             case OP_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_BAGI, MAGIC_NONE, "/"));
+                    vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1647,6 +1919,8 @@ static InterpretResult run() {
             }
             case OP_MODULO: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_SISA, MAGIC_NONE, "%"));
+                    vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1684,6 +1958,7 @@ static InterpretResult run() {
                 if (!containsValue(peek(0), peek(1), &found)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                RESOLVE_MAGIC_ERROR();
                 vm.stackTop -= 2;
                 push(BOOL_VAL(found));
                 break;
@@ -1693,6 +1968,7 @@ static InterpretResult run() {
                 Value right = peek(0);
                 bool result;
                 if (!chainCompare(op, peek(1), right, &result)) {
+                    RESOLVE_MAGIC_ERROR();
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 vm.stackTop -= 2;
@@ -1729,6 +2005,8 @@ static InterpretResult run() {
             }
             case OP_FLOOR_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_BAGI_BULAT, MAGIC_NONE, "//"));
+                    vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1756,10 +2034,13 @@ static InterpretResult run() {
             }
             case OP_POWER: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_PANGKAT, MAGIC_NONE, "**"));
+                    vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (AS_NUMBER(peek(1)) == 0 && AS_NUMBER(peek(0)) < 0) {
+                    vm.runtimeErrorClass = vm.galatBagiNol;   // Python: ZeroDivisionError
                     runtimeError("0 tidak dapat dipangkatkan dengan bilangan negatif.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1786,6 +2067,22 @@ static InterpretResult run() {
                 break;
             case OP_NEGATE: {
                 if (!IS_NUMBER(peek(0))) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    if (IS_INSTANCE(peek(0))) {
+                        Value method;
+                        if (instanceMagic(peek(0), MAGIC_NEGATIF, &method)) {
+                            vm.runtimeErrorClass = NULL;
+                            // Receiver already in slot 0, no arguments.
+                            if (!call(AS_CLOSURE(method), 0, NULL)) {
+                                return INTERPRET_RUNTIME_ERROR;
+                            }
+                            frame = &vm.frames[vm.frameCount - 1];
+                            break;
+                        }
+                        runtimeError("Operator '-' tidak didukung untuk '%s'.",
+                                     valueTypeName(peek(0)));
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -2183,6 +2480,7 @@ static InterpretResult run() {
                 ObjClass* subclass = AS_CLASS(peek(0));
                 subclass->superclass = AS_CLASS(superclass);
                 tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
+                subclass->magic |= AS_CLASS(superclass)->magic;   // copied with the methods
                 pop();  // subclass
                 break;
             }
@@ -2213,6 +2511,7 @@ static InterpretResult run() {
                                      typeName, propName->chars);
                         return INTERPRET_RUNTIME_ERROR;
                     }
+                    vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
                     runtimeError("Hanya objek yang memiliki properti.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -2233,6 +2532,7 @@ static InterpretResult run() {
             }
             case OP_SET_PROPERTY: {
                 if (!IS_INSTANCE(peek(1))) {
+                    vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
                     runtimeError("Hanya objek yang memiliki properti.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -2428,6 +2728,8 @@ static InterpretResult run() {
 #undef READ_CONSTANT
 #undef READ_STRING
 #undef BINARY_OP
+#undef DISPATCH_MAGIC
+#undef RESOLVE_MAGIC_ERROR
 }
 
 // Call an Indonesiaku callable from inside a native. The callee and its
@@ -2438,6 +2740,15 @@ bool callFromNative(int argCount, Value* result) {
     int frameBefore = vm.frameCount;
     Value* calleeSlot = vm.stackTop - argCount - 1;
     Value callee = *calleeSlot;
+
+    if (vm.nativeCallDepth >= NATIVE_CALL_MAX) {
+        vm.stackTop = calleeSlot;
+        nativeRaiseKelas(vm.galatRekursi,
+                         "Kedalaman panggilan balik dari fungsi bawaan melebihi %d. "
+                         "Kemungkinan rekursi tak terbatas, misalnya _teks_ yang memanggil cetak(diri)?",
+                         NATIVE_CALL_MAX);
+        return false;
+    }
 
     // Raised while this flag is up, runtimeError only records the message;
     // we convert it to a catchable native error below.

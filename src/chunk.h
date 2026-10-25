@@ -19,6 +19,11 @@ typedef enum {
     OP_IDENTICAL,
     OP_GREATER,
     OP_LESS,
+    // Own opcodes instead of `NOT <`/`NOT >`/`NOT ==`: negation is wrong for
+    // NaN (nan >= 1 is salah) and would call the wrong magic method (K19).
+    OP_NOT_EQUAL,
+    OP_GREATER_EQUAL,
+    OP_LESS_EQUAL,
     OP_ADD,
     OP_SUBTRACT,
     OP_MULTIPLY,
