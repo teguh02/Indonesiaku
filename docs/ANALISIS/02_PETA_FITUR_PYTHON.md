@@ -61,7 +61,7 @@ Prinsip penamaan:
 | Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ✅ | 1 — selesai |
 | Literal kamus `{"a": 1}` | | ✅ | — |
 | Literal tupel `(1, 2)` | `(1, 2)`, `(1,)`, `()` (K17) | ✅ | — |
-| Literal himpunan `{1, 2}` | | ❌ | 2 |
+| Literal himpunan `{1, 2}` | `himpunan([1, 2])` (K17: sengaja tanpa literal) | ✅ | — |
 | Indeks negatif `a[-1]` | | ✅ | — |
 | Irisan `a[1:3]`, `a[::-1]` | | ✅ daftar & teks | — |
 | Gabung `+` / ulang `*` teks & daftar | | ✅ | — |
@@ -94,7 +94,7 @@ Prinsip penamaan:
 | `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; 11 metode inti sudah ada |
 | `tuple` | `tupel` | ✅ | — | Kunci kamus bila elemennya hashable |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
-| `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
+| `set` / `frozenset` | `himpunan` / `himpunan_beku` | 🟡 `himpunan` | 2 | `himpunan_beku` belum |
 | `range` | `rentang` | ✅ | — | Objek malas, seperti Python 3 |
 | `bytes` / `bytearray` | `bita` / `larik_bita` | ❌ | 6 | Diperlukan untuk berkas biner, jaringan |
 | Fungsi, kelas, metode terikat | | ✅ | — | |
@@ -148,7 +148,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `len` | `panjang` | ✅ | — |
 | `type` | `jenis` | 🟡 nama string | 2 |
 | `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_bulat`, `ke_teks`, `ke_logika`, `ke_angka`; `ke_desimal` belum | 1 |
-| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus`, `tupel` | 2 |
+| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus`, `tupel`, `himpunan` | 2 |
 | `range` | `rentang` | ✅ | — |
 | `enumerate` | `enumerasi` | ✅ list pasangan `[indeks, nilai]`, offset opsional | 1 |
 | `zip` | `pasangkan` | ✅ | — |

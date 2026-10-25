@@ -914,6 +914,53 @@ Ubah urutan lain menjadi tupel dengan `tupel(...)`: `tupel([1, 2])`,
 
 ---
 
+## Himpunan
+
+Himpunan adalah koleksi **anggota unik**: duplikat dibuang otomatis, dan
+mengecek `x dalam s` itu cepat. Himpunan hanya dibuat lewat `himpunan(...)` —
+tidak ada literal `{1, 2}` karena `{ }` sudah dipakai untuk blok dan kamus.
+
+```indonesiaku
+hampa = himpunan()
+angka = himpunan([3, 1, 3, 2])
+cetak(angka)               # himpunan([3, 1, 2])
+cetak(himpunan("halo"))    # himpunan(["h", "a", "l", "o"])
+cetak(2 dalam angka)       # benar
+```
+
+Anggota harus nilai yang **dapat di-hash** — aturan yang sama dengan kunci
+kamus: angka, teks, logika, `kosong`, atau tupel berisi nilai seperti itu.
+Daftar, kamus, dan himpunan lain ditolak dengan `GalatTipe`.
+
+Operasi himpunan menghasilkan himpunan **baru**; kedua operand harus himpunan:
+
+```indonesiaku
+a = himpunan([1, 2, 3])
+b = himpunan([2, 3, 4])
+cetak(a | b)   # gabungan         himpunan([1, 2, 3, 4])
+cetak(a & b)   # irisan           himpunan([2, 3])
+cetak(a - b)   # selisih          himpunan([1])
+cetak(a ^ b)   # selisih simetris himpunan([1, 4])
+```
+
+Mengubah isi: `s.tambah(x)` (tidak bergalat bila sudah ada) dan `s.hapus(x)`
+(`GalatKunci` bila `x` bukan anggota). Himpunan bisa dipakai di `untuk`,
+comprehension, `panjang`, `jumlah`, `min`, `max`, `terurut`, dan `tupel(...)`.
+`==` membandingkan anggota tanpa peduli urutan. Himpunan kosong bernilai salah.
+
+Yang perlu diingat:
+
+- Himpunan **tidak berindeks**: `s[0]` → `GalatTipe`. Ubah dulu ke daftar
+  (`terurut(s)`) bila butuh posisi.
+- Seperti `set` Python, himpunan sendiri **tidak dapat di-hash**, jadi tidak
+  bisa menjadi kunci kamus atau anggota himpunan lain.
+- Urutan cetak mengikuti urutan penyisipan. Jangan bergantung pada urutan
+  itu; pakai `terurut(s)` bila urutan penting.
+
+> Contoh: [`examples/himpunan.idk`](../examples/himpunan.idk)
+
+---
+
 ## Kamus (Dictionary)
 
 Kamus dibuat dengan **literal `{ }`** atau dengan `kamus()`.

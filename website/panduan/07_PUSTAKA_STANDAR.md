@@ -279,6 +279,19 @@ Metode yang tersedia pada tupel hanya yang **tidak mengubah**: `panjang`,
 mengubah daftar (`tambah`, `hapus`, `hapus_pada`, `sisip`) menolak tupel
 dengan `GalatTipe`.
 
+### 1.3c Himpunan
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `himpunan()` | Himpunan kosong |
+| `himpunan(urutan)` | Himpunan baru dari daftar, tupel, himpunan, teks (per karakter), rentang, atau kamus (kuncinya); duplikat dibuang |
+| `tambah(s, x)` / `s.tambah(x)` | Tambah anggota (tanpa galat bila sudah ada) |
+| `s.hapus(x)` | Buang anggota; `GalatKunci` bila tidak ada |
+
+Metode lain: `panjang`, `terurut`, `jumlah`, `semua`, `ada_yang`. Operator
+`| & - ^` membuat himpunan baru. Anggota harus dapat di-hash (seperti kunci
+kamus); himpunan sendiri tidak dapat di-hash.
+
 ### 1.4 Kamus (Dictionary)
 
 | Fungsi | Deskripsi |

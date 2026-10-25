@@ -7,6 +7,14 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — pesan galat
+- 🐛 Galat bertipe yang melewati `coba` tanpa `kecuali` yang cocok (mis.
+  `GalatNama` melewati `kecuali GalatTipe`) dulu hanya tercetak
+  "Kesalahan tak tertangani." — kini pesan aslinya ditampilkan
+  (`tests/galat/galat_bertipe_diteruskan`).
+- 🐛 Pengindeksan pada nilai yang tidak berindeks kini `GalatTipe` (dulu kelas
+  umum), dengan pesan yang menyebut daftar/tupel/teks/kamus.
+
 ### Fixed — compiler hang (ditemukan fuzzer CI)
 - 🐛 `akhirnya` bersarang yang berisi `kembalikan`/`hentikan`/`lanjut` membuat
   compiler menyalin blok luar secara eksponensial: kedalaman 6 butuh 24 detik,
@@ -64,6 +72,12 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Iterasi `untuk k dalam kamus` tetap urutan penyisipan (opcode `OP_SEQ_GET`).
 
 ### Added — Fase 2
+- 🧺 **Himpunan** (K17) lewat `himpunan([urutan])` saja, tanpa literal
+  (`examples/himpunan.idk`). Anggota unik dan harus hashable (aturan K8);
+  `dalam`, `panjang`, `untuk`, comprehension, `==` tanpa peduli urutan,
+  `| & - ^` (himpunan baru, kedua operand harus himpunan), `.tambah`,
+  `.hapus` (`GalatKunci` bila tidak ada). Seperti `set` Python, himpunan
+  tidak hashable dan tidak berindeks. Dicetak `himpunan([1, 2])`.
 - 📦 **Tupel** (K17) `(1, 2)`, `(1,)` (koma wajib), `()`; `(1)` tetap
   pengelompokan (`examples/tupel.idk`). Seperti Python: indeks, irisan
   (hasilnya tupel), unpacking, `untuk`, `dalam`, `+`, `*`, `==` struktural

@@ -13,7 +13,7 @@ const BUILTINS = [
   "cetak", "chr", "db_ambil_satu", "db_ambil_semua", "db_baris_terpengaruh", "db_batal", "db_buka", "db_eksekusi",
   "db_id_terakhir", "db_komit", "db_mulai", "db_tutup",
   "enumerasi", "format", "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_kunci",
-  "hapus_pada", "heksa", "henti", "huruf_besar", "huruf_kecil", "id", "input", "jam", "jenis", "jumlah",
+  "hapus_pada", "heksa", "henti", "himpunan", "huruf_besar", "huruf_kecil", "id", "input", "jam", "jenis", "jumlah",
   "kamus", "karakter", "ke_angka", "ke_bulat", "ke_logika", "ke_teks", "kunci", "lantai", "max", "min",
   "oktal", "ord", "pangkat", "panjang", "pasangkan", "peta", "potong", "punya", "rentang", "repr",
   "saring", "semua", "sisip", "soket_baca", "soket_dengar", "soket_terima", "soket_tulis", "soket_tutup",

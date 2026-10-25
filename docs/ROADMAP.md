@@ -83,14 +83,14 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 ✅ ``bulat`` int64 ([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md));
 ✅ penugasan berganda & unpacking ([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md));
 ✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md));
-✅ kunci kamus bukan cuma teks — `Value`-based (`himpunan()`/`tupel()` masih tunggu) ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md));
+✅ kunci kamus bukan cuma teks — `Value`-based ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md));
 ✅ operator bitwise `& | ^ ~ << >>` + `&= |= ^= <<= >>=` ([rencana](RENCANA_FITUR/selesai/operator_bitwise.md));
-✅ `tupel` `(1, 2)`/`(1,)`/`()` + `tupel()` ([rencana](RENCANA_FITUR/selesai/tupel.md), K17).
+✅ `tupel` `(1, 2)`/`(1,)`/`()` + `tupel()` ([rencana](RENCANA_FITUR/selesai/tupel.md), K17);
+✅ `himpunan([...])` + `| & - ^` ([rencana](RENCANA_FITUR/selesai/himpunan.md), K17).
 
-> Fase 2 **baru sebagian selesai** — yang tersisa:
-> ``himpunan`` (hanya lewat `himpunan([...])`, tanpa literal — K17), tupel
-> tanpa kurung (`x = 1, 2`, `kembalikan a, b` — belum diputuskan, K17), builtin
-> ``himpunan()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
+> Fase 2 **baru sebagian selesai** — yang tersisa: tupel
+> tanpa kurung (`x = 1, 2`, `kembalikan a, b` — belum diputuskan, K17),
+> ``himpunan_beku``, builtin ``hash``, ``iter``/``next``, ``turunan_dari``,
 > ``ke_desimal``, ``daftar()`` — lihat
 > [`RENCANA_FITUR/selesai/builtin_inti.md`](RENCANA_FITUR/selesai/builtin_inti.md)
 > (rencana itu selesai sebagian; builtin di atas belum ada).
