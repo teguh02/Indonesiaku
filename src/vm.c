@@ -223,7 +223,7 @@ void initVM() {
     vm.galatTipe = defineErrorClass("GalatTipe", vm.galat);
     vm.galatNilai = defineErrorClass("GalatNilai", vm.galat);
     vm.galatNama = defineErrorClass("GalatNama", vm.galat);
-    defineErrorClass("GalatAtribut", vm.galat);
+    vm.galatAtribut = defineErrorClass("GalatAtribut", vm.galat);
     defineErrorClass("GalatBerkas", vm.galat);
     defineErrorClass("GalatOS", vm.galat);
     defineErrorClass("GalatImpor", vm.galat);
@@ -509,10 +509,92 @@ static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
     return call(AS_CLOSURE(method), argCount, NULL);
 }
 
+// K10: methods on built-in types. Every relevant native already takes its
+// receiver as args[0] (huruf_besar(teks), tambah(daftar, nilai), ...), and
+// OP_INVOKE leaves the stack as `receiver, arg1, ...` — exactly the layout a
+// native expects. So a method call reuses the existing native unchanged;
+// only this name->function mapping is new.
+typedef struct {
+    const char* name;
+    NativeFn function;
+} NativeMethod;
+
+static NativeMethod stringMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"huruf_besar", nativeFnHurofBesar},
+    {"huruf_kecil", nativeFnHurofKecil},
+    {"ganti", nativeFnGanti},
+    {"potong", nativeFnPotong},
+    {"karakter", nativeFnKarakter},
+    {"format", nativeFnFormat},
+    {"ord", nativeFnOrd},
+    {NULL, NULL}
+};
+
+static NativeMethod listMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"tambah", nativeFnTambah},
+    {"hapus", nativeFnHapus},
+    {"hapus_pada", nativeFnHapusPada},
+    {"sisip", nativeFnSisip},
+    {"terurut", nativeFnTerurut},
+    {"terbalik", nativeFnTerbalik},
+    {"jumlah", nativeFnJumlah},
+    {"semua", nativeFnSemua},
+    {"ada_yang", nativeFnAdaYang},
+    {"enumerasi", nativeFnEnumerasi},
+    {NULL, NULL}
+};
+
+static NativeMethod dictMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"punya", nativeFnPunya},
+    {"hapus_kunci", nativeFnHapusKunci},
+    {"kunci", nativeFnKunci},
+    {"enumerasi", nativeFnEnumerasi},
+    {NULL, NULL}
+};
+
+// Which table serves this receiver, and what to call the type in errors.
+static NativeMethod* methodsForValue(Value receiver, const char** typeName) {
+    if (IS_STRING(receiver)) { *typeName = "teks";   return stringMethods; }
+    if (IS_LIST(receiver))   { *typeName = "daftar"; return listMethods; }
+    if (IS_DICT(receiver))   { *typeName = "kamus";  return dictMethods; }
+    *typeName = NULL;
+    return NULL;
+}
+
+// ponytail: linear scan over ~11 entries, cheaper than hashing at this size.
+// Switch to the existing Table if a profile ever says otherwise.
+static NativeFn findNativeMethod(NativeMethod* table, ObjString* name) {
+    for (int i = 0; table[i].name != NULL; i++) {
+        if (strcmp(table[i].name, name->chars) == 0) return table[i].function;
+    }
+    return NULL;
+}
+
 static bool invoke(ObjString* name, int argCount) {
     Value receiver = peek(argCount);
 
     if (!IS_INSTANCE(receiver)) {
+        const char* typeName;
+        NativeMethod* table = methodsForValue(receiver, &typeName);
+        if (table != NULL) {
+            NativeFn fn = findNativeMethod(table, name);
+            if (fn == NULL) {
+                vm.runtimeErrorClass = vm.galatAtribut;
+                runtimeError("Tipe '%s' tidak punya metode '%s'.",
+                             typeName, name->chars);
+                return false;
+            }
+            // The receiver sits just below the arguments, so pass it as
+            // args[0] — the same layout the free function already uses.
+            Value* slot = vm.stackTop - argCount - 1;
+            Value result = fn(argCount + 1, slot);
+            vm.stackTop = slot;
+            push(result);
+            return true;
+        }
         runtimeError("Hanya objek yang memiliki metode.");
         return false;
     }
@@ -1517,6 +1599,28 @@ static InterpretResult run() {
                 break;
             case OP_GET_PROPERTY: {
                 if (!IS_INSTANCE(peek(0))) {
+                    // ponytail: built-in methods can be called but not taken
+                    // as values — ObjBoundMethod only carries ObjClosure, and
+                    // a native-bound variant isn't worth a new object type
+                    // yet. Say so plainly instead of "hanya objek...".
+                    const char* typeName;
+                    NativeMethod* table = methodsForValue(peek(0), &typeName);
+                    ObjString* propName = READ_STRING();
+                    if (table != NULL &&
+                        findNativeMethod(table, propName) != NULL) {
+                        vm.runtimeErrorClass = vm.galatAtribut;
+                        runtimeError(
+                            "Metode '%s' pada tipe '%s' harus langsung "
+                            "dipanggil, misalnya x.%s().",
+                            propName->chars, typeName, propName->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    if (table != NULL) {
+                        vm.runtimeErrorClass = vm.galatAtribut;
+                        runtimeError("Tipe '%s' tidak punya properti '%s'.",
+                                     typeName, propName->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                     runtimeError("Hanya objek yang memiliki properti.");
                     return INTERPRET_RUNTIME_ERROR;
                 }

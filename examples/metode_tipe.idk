@@ -1,0 +1,70 @@
+# Metode pada tipe bawaan: teks, daftar, dan kamus.
+#
+# Setiap metode memanggil fungsi bawaan yang sama, jadi kedua gaya penulisan
+# selalu memberi hasil identik.
+
+# --- Teks ------------------------------------------------------------------
+
+cetak("budi".huruf_besar(), huruf_besar("budi"))
+cetak("BUDI".huruf_kecil())
+cetak("a,b,c".ganti(",", "-"))
+cetak("halo dunia".potong(0, 4))
+cetak("abc".karakter(1))
+cetak("A".ord())
+cetak("teks".panjang())
+
+# --- Daftar ----------------------------------------------------------------
+
+variabel angka = [3, 1, 2]
+cetak(angka.terurut())
+cetak(angka.terbalik())
+cetak(angka.panjang())
+cetak(angka.jumlah())
+
+# Metode yang mengubah daftar tetap mengubah aslinya.
+variabel isi = [1, 2]
+isi.tambah(3)
+cetak("setelah tambah:", isi)
+isi.sisip(0, 0)
+cetak("setelah sisip:", isi)
+isi.hapus_pada(0)
+cetak("setelah hapus_pada:", isi)
+
+cetak([benar, benar].semua())
+cetak([salah, benar].ada_yang())
+
+# --- Kamus -----------------------------------------------------------------
+
+variabel nilai = {"a": 1, "b": 2}
+cetak(nilai.punya("a"))
+cetak(nilai.kunci())
+cetak(nilai.panjang())
+nilai.hapus_kunci("a")
+cetak("setelah hapus_kunci:", nilai)
+
+# --- Dirangkai -------------------------------------------------------------
+
+cetak("a,b".ganti(",", "-").huruf_besar())
+cetak([3, 1, 2].terurut().panjang())
+
+# Boleh langsung pada nilai literal.
+cetak("literal".huruf_besar())
+cetak([5, 4].terurut())
+
+# --- Galat -----------------------------------------------------------------
+
+coba {
+    cetak("abc".tidak_ada())
+} kecuali GalatAtribut sebagai e {
+    cetak("galat:", e.pesan)
+}
+
+# Metode bawaan harus langsung dipanggil, tidak bisa disimpan dulu.
+coba {
+    variabel f = "abc".huruf_besar
+} kecuali GalatAtribut sebagai e {
+    cetak("galat:", e.pesan)
+}
+
+# Fungsi bebas yang lama tetap berfungsi seperti sebelumnya.
+cetak(huruf_besar("tetap ada"), panjang([1, 2, 3]))

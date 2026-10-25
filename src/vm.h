@@ -76,6 +76,7 @@ typedef struct {
     ObjClass* galatIndeks;
     ObjClass* galatNama;
     ObjClass* galatPenegasan;
+    ObjClass* galatAtribut;
     ObjUpvalue* openUpvalues;
     Obj* objects;
     bool hadError;

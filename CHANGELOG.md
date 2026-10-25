@@ -8,6 +8,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **Metode pada tipe bawaan (K10)** — `"budi".huruf_besar()`,
+  `[3,1,2].terurut()`, `{"a":1}.punya("a")`, dan dapat dirangkai.
+  Setiap metode memanggil native yang sudah ada (semuanya sudah menerima
+  penerima sebagai argumen pertama), jadi tidak ada logika teks/daftar/kamus
+  yang ditulis ulang dan fungsi bebas lama tetap berfungsi.
+  Metode bawaan harus langsung dipanggil; menyimpannya sebagai nilai ditolak
+  dengan pesan yang menjelaskan caranya.
 - ✅ **Literal angka baru** — eksponen (`1e3`, `1.5e-3`), heksadesimal
   (`0xFF`), biner (`0b1010`), oktal (`0o17`), dan pemisah ribuan
   (`1_000_000`). Garis bawah wajib di antara digit; `1__0` dan `0b2` ditolak

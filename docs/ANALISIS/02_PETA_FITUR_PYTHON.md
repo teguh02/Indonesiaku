@@ -90,8 +90,8 @@ Prinsip penamaan:
 | `int` (tak terbatas) | `bulat` | ❌ | 2 | Saat ini semua `double` |
 | `float` | `desimal` | 🟡 | — | Presisi cetak salah (B10) |
 | `complex` | `kompleks` | ❌ | 8 | Prioritas rendah |
-| `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); tanpa metode |
-| `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; tanpa metode |
+| `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); 8 metode inti sudah ada |
+| `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; 11 metode inti sudah ada |
 | `tuple` | `tupel` | ❌ | 2 | |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
 | `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
@@ -104,11 +104,16 @@ Prinsip penamaan:
 ### C.1 Metode `str` (Python ±47 metode)
 
 Usulan prioritas fase 1–2 (sebagian sudah ada sebagai fungsi `teks_*` di
-`pustaka/teks.idk` — pindahkan ke metode native):
+`pustaka/teks.idk` — pindahkan ke metode native).
+
+**Status:** bentuk metode sudah aktif (K10). Yang bertanda "sebagai fungsi"
+kini juga dapat dipanggil sebagai metode bila namanya terdaftar di
+`stringMethods`/`listMethods`/`dictMethods` di `src/vm.c`; sisanya masih
+menunggu native-nya dibuat.
 
 | Python | Usulan | Ada sekarang? |
 |---|---|---|
-| `upper` / `lower` | `.huruf_besar()` / `.huruf_kecil()` | sebagai fungsi |
+| `upper` / `lower` | `.huruf_besar()` / `.huruf_kecil()` | ✅ metode + fungsi |
 | `strip` / `lstrip` / `rstrip` | `.pangkas()` / `.pangkas_kiri()` / `.pangkas_kanan()` | ❌ |
 | `split` / `join` | `.pisah(sep)` / `sep.gabung(daftar)` | 🟡 pustaka |
 | `replace` | `.ganti(a, b)` | sebagai fungsi |

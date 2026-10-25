@@ -1020,6 +1020,58 @@ a.bersuara()   # Rex berkata: Guk
 
 ---
 
+## Metode pada Tipe Bawaan
+
+Teks, daftar, dan kamus punya metode sendiri, jadi operasi bisa ditulis
+berurutan dari kiri ke kanan:
+
+```indonesiaku
+cetak("budi".huruf_besar())        # BUDI
+cetak("a,b,c".ganti(",", "-"))     # a-b-c
+cetak([3, 1, 2].terurut())         # [1, 2, 3]
+cetak({"a": 1}.punya("a"))         # benar
+```
+
+Keduanya setara — metode memanggil fungsi bawaan yang sama, jadi
+`huruf_besar(x)` dan `x.huruf_besar()` selalu memberi hasil identik. Fungsi
+bebas **tetap ada** dan tidak akan dihapus.
+
+Metode bisa dirangkai:
+
+```indonesiaku
+cetak("a,b".ganti(",", "-").huruf_besar())   # A-B
+```
+
+Yang tersedia sekarang:
+
+| Tipe | Metode |
+|---|---|
+| teks | `panjang`, `huruf_besar`, `huruf_kecil`, `ganti`, `potong`, `karakter`, `format`, `ord` |
+| daftar | `panjang`, `tambah`, `hapus`, `hapus_pada`, `sisip`, `terurut`, `terbalik`, `jumlah`, `semua`, `ada_yang`, `enumerasi` |
+| kamus | `panjang`, `punya`, `hapus_kunci`, `kunci`, `enumerasi` |
+
+Metode yang mengubah isi tetap mengubah aslinya, sama seperti bentuk
+fungsinya:
+
+```indonesiaku
+variabel isi = [1, 2]
+isi.tambah(3)
+cetak(isi)                         # [1, 2, 3]
+```
+
+Satu batasan: metode bawaan **harus langsung dipanggil**. Menyimpannya sebagai
+nilai belum didukung dan akan ditolak dengan pesan yang menjelaskan hal itu:
+
+```indonesiaku
+variabel f = "abc".huruf_besar     # ditolak — tulis "abc".huruf_besar()
+```
+
+Contoh lengkap: [`examples/metode_tipe.idk`](../examples/metode_tipe.idk)
+
+{{embed:examples/metode_tipe.idk}}
+
+---
+
 ## Cara Menulis Angka
 
 Selain `10` dan `3.5`, angka boleh ditulis dengan basis lain atau pemisah:

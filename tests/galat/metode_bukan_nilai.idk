@@ -1,0 +1,3 @@
+# Metode bawaan harus langsung dipanggil, bukan disimpan sebagai nilai.
+variabel daftar = [1, 2]
+variabel f = daftar.tambah

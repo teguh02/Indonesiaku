@@ -1,0 +1,2 @@
+Metode 'tambah' pada tipe 'daftar' harus langsung dipanggil, misalnya x.tambah().
+[baris 3] dalam skrip

@@ -152,12 +152,23 @@ Butuh fungsi hash per tipe dan `Table` yang berkunci `Value`, bukan
 untuk list, teks (per karakter), kamus (per kunci), rentang. Tahap 2 (fase 5):
 objek dengan `_iter_`/`_berikutnya_` dan generator `hasilkan`.
 
-## K10 — Metode pada tipe bawaan
+## K10 — Metode pada tipe bawaan (terlaksana 0.7.0)
 
 `"abc".huruf_besar()`, `daftar.tambah(4)`, `d.kunci()`. Implementasi: tabel
 metode native per tipe (`vm.listMethods`, `vm.stringMethods`, ...) yang dicari
 di `OP_INVOKE`/`OP_GET_PROPERTY` saat penerima bukan instansi. Fungsi lama
 (`tambah(a, x)`) tetap ada agar kode lama tidak rusak.
+
+Saat diimplementasikan ternyata lebih murah dari dugaan: setiap native yang
+relevan **sudah** menerima penerimanya sebagai `args[0]`, dan `OP_INVOKE`
+meninggalkan stack sebagai `penerima, arg1, ...` — persis tata letak yang
+diharapkan native. Jadi yang ditambahkan hanya tabel pemetaan nama → native
+per tipe; tidak ada logika teks/daftar/kamus yang ditulis ulang, tanpa opcode
+baru, dan tanpa perubahan compiler.
+
+Batas yang diambil sadar: metode bawaan hanya dapat **dipanggil**, belum bisa
+diambil sebagai nilai (`variabel f = x.tambah`), karena `ObjBoundMethod` hanya
+memuat `ObjClosure`. Ditolak dengan pesan yang menyebut cara benarnya.
 
 ## K11 — `jenis()` mengembalikan kelas
 

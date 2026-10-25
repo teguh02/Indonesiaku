@@ -1,0 +1,27 @@
+BUDI BUDI
+budi
+a-b-c
+halo
+b
+65
+4
+[1, 2, 3]
+[2, 1, 3]
+3
+6
+setelah tambah: [1, 2, 3]
+setelah sisip: [0, 1, 2, 3]
+setelah hapus_pada: [1, 2, 3]
+benar
+benar
+benar
+[a, b]
+2
+setelah hapus_kunci: {"b": 2}
+A-B
+3
+LITERAL
+[4, 5]
+galat: Tipe 'teks' tidak punya metode 'tidak_ada'.
+galat: Metode 'huruf_besar' pada tipe 'teks' harus langsung dipanggil, misalnya x.huruf_besar().
+TETAP ADA 3

@@ -1,0 +1,3 @@
+# Metode yang tidak ada pada tipe bawaan.
+variabel teks = "halo"
+cetak(teks.belum_ada())
