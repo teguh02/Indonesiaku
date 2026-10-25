@@ -3,3 +3,10 @@ nilai: enumerasi() hanya menerima list, teks, rentang, atau kamus
 pilihan: Pembagian dengan nol.
 pencarian: Indeks list di luar jangkauan (indeks 5, panjang 1).
 umum: Variabel tidak terdefinisi 'tidak_ada'.
+tanpa galat
+aritmetika -> Pembagian dengan nol.
+pencarian -> Indeks list di luar jangkauan (indeks 9, panjang 1).
+umum -> Variabel tidak terdefinisi 'tidak_ada_ini'.
+dilempar ulang -> Pembagian dengan nol.
+tertangkap
+akhirnya tetap jalan

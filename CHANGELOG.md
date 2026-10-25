@@ -7,7 +7,23 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+- 🐛 **Kompilator menggantung selamanya pada `}` yang tidak punya pasangan.**
+  Berkas yang hanya berisi `}` pun membuat `indk` berputar tanpa henti
+  (exit 124) alih-alih melaporkan galat. `declaration()` sengaja kembali
+  tanpa mengonsumsi saat bertemu `}` (itulah cara `block()` tahu blok sudah
+  habis), tetapi di tingkat atas tidak ada blok yang ditutup sehingga
+  perulangan tidak pernah maju. Sekarang menghasilkan
+  `'}' tidak punya '{' yang cocok.` dengan exit 65.
+
 ### Added — Fase 1
+- ✨ **Beberapa klausa `kecuali` untuk satu `coba`**, dicoba berurutan seperti
+  Python: `} kecuali GalatAritmetika sebagai e { … } kecuali GalatPencarian
+  sebagai e { … }`. Sebelumnya hanya satu klausa yang dikompilasi dan klausa
+  kedua memicu galat parser (lalu menggantung). Bila tidak ada yang cocok,
+  galat dilempar ulang ke `coba` di luarnya. Berfungsi juga bersama
+  `akhirnya` dan bentuk tuple `kecuali (A, B) sebagai e`. `kecuali` tanpa
+  tipe menangkap semuanya sehingga wajib menjadi klausa terakhir.
 - ✨ **19 fungsi bawaan baru (padanan builtin Python):**
   - Agregat & urutan: `jumlah()` (sum), `semua()` (all), `ada_yang()` (any),
     `terurut()` (sorted), `terbalik()` (reversed), `pasangkan()` (zip),

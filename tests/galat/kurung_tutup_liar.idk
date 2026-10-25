@@ -1,0 +1,3 @@
+# '}' tanpa '{' pernah membuat kompilator menggantung selamanya.
+cetak("halo")
+}

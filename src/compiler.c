@@ -1707,13 +1707,17 @@ static void scanTryClauses(bool* hasCatch, bool* hasFinally,
     ScannerState saved = saveScanner();
     if (skipBalancedBraces()) {
         Token next = scanToken();
-        if (next.type == TOKEN_KECUALI) {
+        // Skip EVERY 'kecuali' clause: a 'coba' may have several, and the
+        // 'akhirnya' we are looking for sits after the last one.
+        while (next.type == TOKEN_KECUALI) {
             *hasCatch = true;
             do {
                 next = scanToken();
             } while (next.type != TOKEN_LEFT_BRACE && next.type != TOKEN_EOF);
             if (next.type == TOKEN_LEFT_BRACE && skipBalancedBraces()) {
                 next = scanToken();
+            } else {
+                break;
             }
         }
         *hasFinally = next.type == TOKEN_AKHIRNYA;
@@ -1724,7 +1728,13 @@ static void scanTryClauses(bool* hasCatch, bool* hasFinally,
 
 // kecuali e { ... }, kecuali Tipe sebagai e { ... }, or
 // kecuali (TipeA, TipeB) sebagai e { ... }. The VM has pushed the error.
-static void catchClause() {
+//
+// Several 'kecuali' clauses may follow one 'coba'. A typed clause that does
+// not match must fall through to the NEXT clause, so instead of emitting the
+// rethrow itself this returns the unpatched "no match" jump; the caller
+// chains it to the following clause, or patches it to OP_THROW when the
+// chain ends. Returns -1 for an untyped clause, which always matches.
+static int catchClause(int* doneJumps, int* doneCount) {
     consume(TOKEN_KECUALI, "Harapkan 'kecuali' atau 'akhirnya' setelah blok 'coba'.");
     bool typed = false;
     Token caught;
@@ -1776,12 +1786,10 @@ static void catchClause() {
     endScope();
 
     if (typed) {
-        int done = emitJump(OP_JUMP);
-        patchJump(rethrow);
-        emitByte(OP_POP);
-        emitByte(OP_THROW);
-        patchJump(done);
+        doneJumps[(*doneCount)++] = emitJump(OP_JUMP);
+        return rethrow;   // caller chains this to the next clause
     }
+    return -1;            // untyped: always matches, ends the chain
 }
 
 // akhirnya { ... } — entered with two values on the stack: the raised value
@@ -1856,7 +1864,33 @@ static void tryStatement() {
         current->tryDepth--;
         int skipCatch = emitJump(OP_JUMP);
         patchJump(catchHandler);
-        catchClause();
+
+        // One 'coba' may have several 'kecuali' clauses, tried in order. Each
+        // typed clause hands back its "no match" jump, which lands on the next
+        // clause; the last unmatched jump falls through to the rethrow.
+        int doneJumps[UINT8_COUNT];
+        int doneCount = 0;
+        int pending = -1;
+        bool sawUntyped = false;
+        do {
+            if (pending != -1) {
+                patchJump(pending);
+                emitByte(OP_POP);           // drop the failed OP_IS_INSTANCE result
+            }
+            if (sawUntyped) {
+                semanticError("'kecuali' tanpa tipe harus menjadi yang terakhir.");
+            }
+            pending = catchClause(doneJumps, &doneCount);
+            if (pending == -1) sawUntyped = true;
+        } while (check(TOKEN_KECUALI));
+
+        if (pending != -1) {
+            // No clause matched: re-raise the original error.
+            patchJump(pending);
+            emitByte(OP_POP);
+            emitByte(OP_THROW);
+        }
+        for (int i = 0; i < doneCount; i++) patchJump(doneJumps[i]);
         patchJump(skipCatch);
     }
 
@@ -2067,6 +2101,15 @@ ObjFunction* compile(const char* source) {
     advance();
 
     while (!check(TOKEN_EOF)) {
+        // declaration() returns without consuming when it meets '}' (block()
+        // relies on that to end a block). At top level there is no block to
+        // close, so without this guard the loop never advances and the
+        // compiler hangs instead of reporting the error.
+        if (check(TOKEN_RIGHT_BRACE)) {
+            errorAtCurrent("'}' tidak punya '{' yang cocok.");
+            advance();
+            continue;
+        }
         declaration();
     }
 

@@ -28,3 +28,50 @@ coba {
 } kecuali Galat sebagai e {
     cetak("umum:", e.pesan)
 }
+
+# Beberapa 'kecuali' untuk satu 'coba': dicoba berurutan, yang pertama cocok menang.
+fungsi klasifikasi(n) {
+    coba {
+        jika n == 1 { cetak(1 / 0) }
+        jika n == 2 {
+            variabel d = [1]
+            cetak(d[9])
+        }
+        jika n == 3 { cetak(tidak_ada_ini) }
+        cetak("tanpa galat")
+    } kecuali GalatAritmetika sebagai e {
+        cetak("aritmetika ->", e.pesan)
+    } kecuali GalatPencarian sebagai e {
+        cetak("pencarian ->", e.pesan)
+    } kecuali Galat sebagai e {
+        cetak("umum ->", e.pesan)
+    }
+}
+
+untuk i dalam rentang(4) {
+    klasifikasi(i)
+}
+
+# Tidak ada yang cocok: galat dilempar ulang ke 'coba' di luarnya.
+coba {
+    coba {
+        cetak(1 / 0)
+    } kecuali GalatPencarian sebagai e {
+        cetak("tidak dipakai")
+    } kecuali GalatNilai sebagai e {
+        cetak("tidak dipakai")
+    }
+} kecuali GalatAritmetika sebagai e {
+    cetak("dilempar ulang ->", e.pesan)
+}
+
+# Beberapa 'kecuali' plus 'akhirnya'.
+coba {
+    cetak(1 / 0)
+} kecuali GalatPencarian sebagai e {
+    cetak("tidak dipakai")
+} kecuali GalatAritmetika sebagai e {
+    cetak("tertangkap")
+} akhirnya {
+    cetak("akhirnya tetap jalan")
+}

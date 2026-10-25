@@ -1,0 +1,8 @@
+# 'kecuali' tanpa tipe menangkap semuanya, jadi harus paling akhir.
+coba {
+    cetak(1 / 0)
+} kecuali e {
+    cetak("semua")
+} kecuali GalatAritmetika sebagai e {
+    cetak("tak terjangkau")
+}
