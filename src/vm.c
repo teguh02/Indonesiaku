@@ -327,6 +327,7 @@ void initVM() {
     defineNative("punya", nativeFnPunya);
     defineNative("hapus_kunci", nativeFnHapusKunci);
     defineNative("enumerasi", nativeFnEnumerasi);
+    defineNative("tupel", nativeFnTupel);
     defineNative("kunci", nativeFnKunci);
 
     defineNative("jenis", nativeFnJenis);
@@ -668,6 +669,19 @@ static NativeMethod listMethods[] = {
     {NULL, NULL}
 };
 
+// tupel gets only the non-mutating daftar methods: t.tambah(x) must fail
+// with "tidak punya metode", like Python's AttributeError on tuple.append.
+static NativeMethod tupleMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"terurut", nativeFnTerurut},
+    {"terbalik", nativeFnTerbalik},
+    {"jumlah", nativeFnJumlah},
+    {"semua", nativeFnSemua},
+    {"ada_yang", nativeFnAdaYang},
+    {"enumerasi", nativeFnEnumerasi},
+    {NULL, NULL}
+};
+
 static NativeMethod dictMethods[] = {
     {"panjang", nativeFnPanjang},
     {"punya", nativeFnPunya},
@@ -681,6 +695,7 @@ static NativeMethod dictMethods[] = {
 static NativeMethod* methodsForValue(Value receiver, const char** typeName) {
     if (IS_STRING(receiver)) { *typeName = "teks";   return stringMethods; }
     if (IS_LIST(receiver))   { *typeName = "daftar"; return listMethods; }
+    if (IS_TUPLE(receiver))  { *typeName = "tupel";  return tupleMethods; }
     if (IS_DICT(receiver))   { *typeName = "kamus";  return dictMethods; }
     *typeName = NULL;
     return NULL;
@@ -901,11 +916,11 @@ static bool stringContains(ObjString* haystack, ObjString* needle) {
 // `item dalam container` (Python 'in'). Returns false after raising a
 // runtime error when the container type does not support membership.
 static bool containsValue(Value container, Value item, bool* found) {
-    if (IS_LIST(container)) {
-        ObjList* list = AS_LIST(container);
+    ValueArray* items = sequenceItems(container);   // daftar or tupel
+    if (items != NULL) {
         *found = false;
-        for (int i = 0; i < list->items.count && !*found; i++) {
-            *found = valuesEqual(list->items.values[i], item);
+        for (int i = 0; i < items->count && !*found; i++) {
+            *found = valuesEqual(items->values[i], item);
         }
         return true;
     }
@@ -927,7 +942,7 @@ static bool containsValue(Value container, Value item, bool* found) {
         *found = IS_NUMBER(item) && rangeContains(AS_RANGE(container), AS_NUMBER(item));
         return true;
     }
-    runtimeError("Operand kanan 'dalam' harus list, teks, kamus, atau rentang.");
+    runtimeError("Operand kanan 'dalam' harus daftar, tupel, teks, kamus, atau rentang.");
     return false;
 }
 
@@ -996,6 +1011,7 @@ bool isFalsey(Value value) {
             switch (OBJ_TYPE(value)) {
                 case OBJ_STRING: return AS_STRING(value)->length == 0;
                 case OBJ_LIST:   return AS_LIST(value)->items.count == 0;
+                case OBJ_TUPLE:  return AS_TUPLE(value)->items.count == 0;
                 case OBJ_DICT:   return dictLength(AS_DICT(value)) == 0;
                 case OBJ_RANGE:  return rangeLength(AS_RANGE(value)) == 0;
                 default:         return false;
@@ -1069,16 +1085,19 @@ static void concatenate() {
 // daftar + daftar: a fresh list holding shallow copies of both sides.
 // Both operands stay on the stack while the result grows (writeValueArray
 // can allocate and trigger a GC).
+// daftar + daftar -> daftar, tupel + tupel -> tupel. Callers guarantee both
+// operands have the same type (mixing is a GalatTipe, as in Python).
 static void concatenateLists() {
-    ObjList* b = AS_LIST(peek(0));
-    ObjList* a = AS_LIST(peek(1));
-    ObjList* result = newList();
-    push(OBJ_VAL(result));
-    for (int i = 0; i < a->items.count; i++) writeValueArray(&result->items, a->items.values[i]);
-    for (int i = 0; i < b->items.count; i++) writeValueArray(&result->items, b->items.values[i]);
+    ValueArray* b = sequenceItems(peek(0));
+    ValueArray* a = sequenceItems(peek(1));
+    Value result = IS_TUPLE(peek(0)) ? OBJ_VAL(newTuple()) : OBJ_VAL(newList());
+    push(result);       // root while the item array grows
+    ValueArray* out = sequenceItems(result);
+    for (int i = 0; i < a->count; i++) writeValueArray(out, a->values[i]);
+    for (int i = 0; i < b->count; i++) writeValueArray(out, b->values[i]);
     pop();              // result
     pop(); pop();       // operands
-    push(OBJ_VAL(result));
+    push(result);
 }
 
 // Shared guard for 'daftar * n' and 'teks * n'. Returns false (after raising)
@@ -1248,12 +1267,13 @@ static InterpretResult run() {
                 int n = READ_BYTE();
                 Value seq = peek(0);
                 int length = -1;
-                if (IS_LIST(seq)) length = AS_LIST(seq)->items.count;
+                ValueArray* items = sequenceItems(seq);   // daftar or tupel
+                if (items != NULL) length = items->count;
                 else if (IS_STRING(seq)) length = AS_STRING(seq)->charCount;
                 else if (IS_RANGE(seq)) length = (int)rangeLength(AS_RANGE(seq));
                 if (length < 0) {
                     vm.runtimeErrorClass = vm.galatTipe;
-                    runtimeError("Hanya daftar, teks, atau rentang yang dapat dibuka menjadi beberapa nama.");
+                    runtimeError("Hanya daftar, tupel, teks, atau rentang yang dapat dibuka menjadi beberapa nama.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 if (length != n) {
@@ -1265,8 +1285,8 @@ static InterpretResult run() {
                 // seq stays rooted while strings allocate below.
                 int base = (int)(vm.stackTop - vm.stack) - 1;
                 for (int i = n - 1; i >= 0; i--) {
-                    if (IS_LIST(seq)) {
-                        push(AS_LIST(seq)->items.values[i]);
+                    if (items != NULL) {
+                        push(items->values[i]);
                     } else if (IS_STRING(seq)) {
                         ObjString* teks = AS_STRING(seq);
                         int offset = utf8ByteOffset(teks, i);
@@ -1283,6 +1303,11 @@ static InterpretResult run() {
             case OP_INDEX_DELETE: {
                 Value key = peek(0);
                 Value container = peek(1);
+                if (IS_TUPLE(container)) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Tupel tidak dapat diubah.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 if (IS_LIST(container) && IS_NUMBER(key)) {
                     ObjList* list = AS_LIST(container);
                     int given = (int)AS_NUMBER(key);
@@ -1417,7 +1442,8 @@ static InterpretResult run() {
             case OP_ADD: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                     concatenate();
-                } else if (IS_LIST(peek(0)) && IS_LIST(peek(1))) {
+                } else if ((IS_LIST(peek(0)) && IS_LIST(peek(1))) ||
+                           (IS_TUPLE(peek(0)) && IS_TUPLE(peek(1)))) {
                     concatenateLists();
                 } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
                     int64_t result;
@@ -1434,7 +1460,7 @@ static InterpretResult run() {
                     push(NUMBER_VAL(a + b));
                 } else {
                     vm.runtimeErrorClass = vm.galatTipe;
-                    runtimeError("Operand '+' harus dua angka, dua teks, atau dua daftar.");
+                    runtimeError("Operand '+' harus dua angka, dua teks, dua daftar, atau dua tupel.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -1484,31 +1510,33 @@ static InterpretResult run() {
 
                 Value seq = IS_NUMBER(b) ? a : b;    // the repeated operand
                 Value times = IS_NUMBER(b) ? b : a;
-                if (!IS_LIST(seq) && !IS_STRING(seq)) {
+                if (sequenceItems(seq) == NULL && !IS_STRING(seq)) {
                     vm.runtimeErrorClass = vm.galatTipe;
-                    runtimeError("Operand '*' harus dua angka, atau daftar/teks dengan angka.");
+                    runtimeError("Operand '*' harus dua angka, atau daftar/tupel/teks dengan angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 int n;
                 if (!repeatCount(times, &n)) return INTERPRET_RUNTIME_ERROR;
 
-                if (IS_LIST(seq)) {
-                    ObjList* src = AS_LIST(seq);
-                    if ((long)src->items.count * n > REPEAT_MAX) {
+                if (sequenceItems(seq) != NULL) {
+                    // daftar * n -> daftar, tupel * n -> tupel.
+                    ValueArray* src = sequenceItems(seq);
+                    if ((long)src->count * n > REPEAT_MAX) {
                         vm.runtimeErrorClass = vm.galatNilai;
                         runtimeError("Hasil pengulangan terlalu besar (maksimum %d).", REPEAT_MAX);
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    ObjList* result = newList();
-                    push(OBJ_VAL(result));   // root while writeValueArray allocates
+                    Value result = IS_TUPLE(seq) ? OBJ_VAL(newTuple()) : OBJ_VAL(newList());
+                    push(result);   // root while writeValueArray allocates
+                    ValueArray* out = sequenceItems(result);
                     for (int r = 0; r < n; r++) {
-                        for (int i = 0; i < src->items.count; i++) {
-                            writeValueArray(&result->items, src->items.values[i]);
+                        for (int i = 0; i < src->count; i++) {
+                            writeValueArray(out, src->values[i]);
                         }
                     }
                     pop();
                     vm.stackTop -= 2;
-                    push(OBJ_VAL(result));
+                    push(result);
                 } else {
                     ObjString* src = AS_STRING(seq);
                     if ((long)src->length * n > REPEAT_MAX) {
@@ -1804,6 +1832,20 @@ static InterpretResult run() {
                 push(OBJ_VAL(list));
                 break;
             }
+            case OP_BUILD_TUPLE: {
+                // Same rooting pattern as OP_BUILD_LIST: the tupel and its
+                // elements stay on the stack while the item array grows.
+                int count = READ_BYTE();
+                ObjTuple* tuple = newTuple();
+                push(OBJ_VAL(tuple));
+                for (int i = count; i >= 1; i--) {
+                    writeValueArray(&tuple->items, peek(i));
+                }
+                pop();                       // the tupel
+                vm.stackTop -= count;        // the elements
+                push(OBJ_VAL(tuple));
+                break;
+            }
             case OP_APPEND: {
                 // List comprehension: stack is [daftar, nilai]. Both stay on the
                 // stack while writeValueArray grows the array (it may GC).
@@ -1830,7 +1872,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {   // K8: any hashable key
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong).");
+                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     dictSet(dict, key, value);
@@ -1860,17 +1902,19 @@ static InterpretResult run() {
                 // Everything else behaves like ordinary indexing.
                 // fall through
             case OP_INDEX_GET: {
-                if (IS_LIST(peek(1)) && IS_NUMBER(peek(0))) {
+                if (sequenceItems(peek(1)) != NULL && IS_NUMBER(peek(0))) {
+                    // daftar or tupel; also reached by 'untuk' via OP_SEQ_GET.
+                    const char* kind = IS_TUPLE(peek(1)) ? "tupel" : "list";
                     int given = (int)AS_NUMBER(pop());
-                    ObjList* list = AS_LIST(pop());
-                    int index = given < 0 ? given + list->items.count : given;
-                    if (index < 0 || index >= list->items.count) {
+                    ValueArray* items = sequenceItems(pop());
+                    int index = given < 0 ? given + items->count : given;
+                    if (index < 0 || index >= items->count) {
                         vm.runtimeErrorClass = vm.galatIndeks;
-                        runtimeError("Indeks list di luar jangkauan (indeks %d, panjang %d).",
-                                     given, list->items.count);
+                        runtimeError("Indeks %s di luar jangkauan (indeks %d, panjang %d).",
+                                     kind, given, items->count);
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    push(list->items.values[index]);
+                    push(items->values[index]);
                 } else if (IS_RANGE(peek(1)) && IS_NUMBER(peek(0))) {
                     double index = AS_NUMBER(pop());
                     ObjRange* range = AS_RANGE(pop());
@@ -1891,7 +1935,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong).");
+                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     Value value;
@@ -1925,6 +1969,11 @@ static InterpretResult run() {
             }
             case OP_INDEX_SET: {
                 // Stack: target, index/key, value
+                if (IS_TUPLE(peek(2))) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Tupel tidak dapat diubah.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 if (IS_LIST(peek(2)) && IS_NUMBER(peek(1))) {
                     Value value = pop();
                     int given = (int)AS_NUMBER(pop());
@@ -1949,7 +1998,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong).");
+                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     dictSet(dict, key, value);
@@ -1974,22 +2023,24 @@ static InterpretResult run() {
                 int start, stop, step;
                 const char* msg = NULL;
 
-                if (IS_LIST(target)) {
-                    ObjList* src = AS_LIST(target);
-                    if (!resolveSlice(peek(2), peek(1), peek(0), src->items.count,
+                if (sequenceItems(target) != NULL) {
+                    // daftar[a:b] gives a daftar, tupel[a:b] a tupel (Python).
+                    ValueArray* src = sequenceItems(target);
+                    if (!resolveSlice(peek(2), peek(1), peek(0), src->count,
                                       &start, &stop, &step, &msg)) {
                         vm.runtimeErrorClass = vm.galatNilai;
                         runtimeError("%s", msg);
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    ObjList* out = newList();
-                    push(OBJ_VAL(out));   // root: writeValueArray may GC
+                    Value out = IS_TUPLE(target) ? OBJ_VAL(newTuple()) : OBJ_VAL(newList());
+                    push(out);   // root: writeValueArray may GC
+                    ValueArray* outItems = sequenceItems(out);
                     for (int i = start; step > 0 ? i < stop : i > stop; i += step) {
-                        writeValueArray(&out->items, src->items.values[i]);
+                        writeValueArray(outItems, src->values[i]);
                     }
                     pop();
                     vm.stackTop -= 4;
-                    push(OBJ_VAL(out));
+                    push(out);
                 } else if (IS_STRING(target)) {
                     ObjString* src = AS_STRING(target);
                     if (!resolveSlice(peek(2), peek(1), peek(0), src->charCount,
@@ -2016,7 +2067,7 @@ static InterpretResult run() {
                     push(OBJ_VAL(out));
                 } else {
                     vm.runtimeErrorClass = vm.galatTipe;
-                    runtimeError("Irisan hanya untuk daftar dan teks.");
+                    runtimeError("Irisan hanya untuk daftar, tupel, dan teks.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -2025,8 +2076,8 @@ static InterpretResult run() {
                 // Length of what 'untuk' iterates; elements are then read
                 // with OP_INDEX_GET, so any indexable sequence works.
                 Value seq = pop();
-                if (IS_LIST(seq)) {
-                    push(INT_VAL(AS_LIST(seq)->items.count));
+                if (sequenceItems(seq) != NULL) {          // daftar or tupel
+                    push(INT_VAL(sequenceItems(seq)->count));
                 } else if (IS_RANGE(seq)) {
                     push(INT_VAL((int64_t)rangeLength(AS_RANGE(seq))));
                 } else if (IS_DICT(seq)) {
@@ -2034,7 +2085,7 @@ static InterpretResult run() {
                 } else if (IS_STRING(seq)) {
                     push(INT_VAL(AS_STRING(seq)->charCount));
                 } else {
-                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi list, teks, atau rentang.");
+                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, tupel, teks, rentang, atau kamus.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;

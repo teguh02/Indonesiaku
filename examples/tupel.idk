@@ -1,0 +1,84 @@
+# tupel: urutan yang tidak bisa diubah (K17). Ditulis seperti Python.
+
+# (Tiap bagian di dalam fungsinya sendiri: satu chunk maksimal 256 konstanta.)
+
+fungsi bagian_literal() {
+    cetak("== Literal ==")
+    titik = (3, 4)
+    cetak(titik, (5,), (), (1, 2,))       # (3, 4) (5,) () (1, 2)
+    cetak((5))                             # 5 -- tanpa koma hanya pengelompokan
+    cetak(("a", [1, 2]))                   # boleh berisi apa saja
+}
+bagian_literal()
+
+fungsi bagian_membaca() {
+    cetak("== Membaca ==")
+    titik = (3, 4)
+    cetak(titik[0], titik[-1], panjang(titik))
+    cetak(titik[0:1], titik[::-1], (1, 2, 3, 4)[1:3])   # irisan tupel -> tupel
+    x, y = titik
+    cetak("x =", x, "y =", y)
+    cetak(((1, 2), (3, 4))[1][0])
+}
+bagian_membaca()
+
+fungsi bagian_operator() {
+    cetak("== Operator ==")
+    cetak((1, 2) + (3,), (1, 2) * 2, (0,) * 0)
+    cetak((1, 2) == (1, 2), (1, 2) == (2, 1), (1, 2) == (1.0, 2))
+    cetak((1,) == [1])                     # salah: tupel bukan daftar
+    cetak(2 dalam (1, 2), 5 dalam (1, 2), "a" tidak dalam ("b",))
+}
+bagian_operator()
+
+fungsi bagian_kunci_kamus() {
+    cetak("== Kunci kamus ==")
+    jarak = {}
+    jarak[(0, 0)] = "asal"
+    jarak[(1, 2)] = "titik"
+    cetak(jarak[(0, 0)], jarak[(1, 2)], (0, 0) dalam jarak, panjang(jarak))
+    jarak[(1, 2)] = "baru"                 # tupel yang sama = kunci yang sama
+    cetak(panjang(jarak), jarak[(1, 2)])
+}
+bagian_kunci_kamus()
+
+fungsi bagian_konstruktor() {
+    cetak("== tupel() ==")
+    cetak(tupel(), tupel([1, 2]), tupel("ab"), tupel(rentang(3)), tupel((7, 8)))
+    cetak(tupel({"a": 1, "b": 2}))         # kamus -> kuncinya
+}
+bagian_konstruktor()
+
+fungsi bagian_iterasi() {
+    cetak("== Iterasi & builtin ==")
+    total = 0
+    untuk n dalam (1, 2, 3) { total = total + n }
+    cetak(total)
+    cetak([v * 2 untuk v dalam (1, 2, 3)])
+    cetak(jumlah((1, 2, 3)), min((4, 2, 9)), max((4, 2, 9)), terurut((3, 1, 2)))
+    cetak((1, 2).panjang(), (3, 1, 2).terurut())
+    cetak(ke_teks((1, "a")), jenis((1,)))
+    jika () { cetak("tidak tercetak") } selain { cetak("() bernilai salah") }
+}
+bagian_iterasi()
+
+fungsi bagian_tidak_bisa_diubah() {
+    cetak("== Tidak bisa diubah ==")
+    t = (1, 2)
+    coba { t[0] = 9 } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { buang t[0] } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { tambah(t, 3) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { t.tambah(3) } kecuali e { cetak("Galat:", e) }
+    cetak("t tetap", t)
+}
+bagian_tidak_bisa_diubah()
+
+fungsi bagian_galat_lain() {
+    cetak("== Galat lain ==")
+    t = (1, 2)
+    coba { cetak(t[5]) } kecuali GalatIndeks sebagai e { cetak("GalatIndeks:", e.pesan) }
+    coba { a, b, c = t } kecuali GalatNilai sebagai e { cetak("GalatNilai:", e.pesan) }
+    coba { cetak([1] + (2,)) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(tupel(5)) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+}
+bagian_galat_lain()

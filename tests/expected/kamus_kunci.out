@@ -9,4 +9,4 @@ salah 5
 benar ya
 kosong hampa
 a 1
-tipe: Kunci kamus harus nilai yang dapat di-hash (angka, teks, logika, kosong).
+tipe: Kunci kamus harus nilai yang dapat di-hash (angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).

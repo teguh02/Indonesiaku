@@ -132,6 +132,21 @@ bool hashValue(Value value, uint32_t* out) {
                 AS_OBJ(value)->type == OBJ_RANGE) {
                 return false;   // unhashable, as in Python
             }
+            if (AS_OBJ(value)->type == OBJ_TUPLE) {
+                // Structural, so equal tupel are the same dict key: combine the
+                // element hashes. Hashable only if every element is (Python:
+                // hash(([1],)) is a TypeError). A tupel cannot contain itself
+                // (it is immutable), so this recursion always terminates.
+                ValueArray* items = &AS_TUPLE(value)->items;
+                uint32_t h = seed ^ (uint32_t)items->count;
+                for (int i = 0; i < items->count; i++) {
+                    uint32_t element;
+                    if (!hashValue(items->values[i], &element)) return false;
+                    h = (h ^ element) * 16777619u;
+                }
+                *out = h;
+                return true;
+            }
             {
                 // Instances and other objects hash by identity.
                 uintptr_t p = (uintptr_t)AS_OBJ(value);
@@ -316,9 +331,11 @@ static bool valuesEqualDepth(Value a, Value b, int depth) {
     if (depth >= EQUAL_MAX_DEPTH) return false;   // ponytail: cap instead of cycle detection
 
     switch (OBJ_TYPE(a)) {
-        case OBJ_LIST: {
-            ValueArray* x = &AS_LIST(a)->items;
-            ValueArray* y = &AS_LIST(b)->items;
+        case OBJ_LIST:
+        case OBJ_TUPLE: {
+            // Same object type is guaranteed above: [1] == (1,) is salah, as in Python.
+            ValueArray* x = sequenceItems(a);
+            ValueArray* y = sequenceItems(b);
             if (x->count != y->count) return false;
             for (int i = 0; i < x->count; i++) {
                 if (!valuesEqualDepth(x->values[i], y->values[i], depth + 1)) return false;

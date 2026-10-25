@@ -63,6 +63,14 @@ ObjList* newList() {
     return list;
 }
 
+// An empty tupel; callers fill items while it is rooted on the VM stack and
+// never touch it afterwards (tupel is immutable).
+ObjTuple* newTuple() {
+    ObjTuple* tuple = ALLOCATE_OBJ(ObjTuple, OBJ_TUPLE);
+    initValueArray(&tuple->items);
+    return tuple;
+}
+
 ObjDict* newDict() {
     ObjDict* dict = ALLOCATE_OBJ(ObjDict, OBJ_DICT);
     initValueTable(&dict->table);
@@ -328,6 +336,18 @@ void printObject(Value value) {
                 printValueRepr(list->items.values[i]);
             }
             printf("]");
+            break;
+        }
+        case OBJ_TUPLE: {
+            // Like Python: (1, 2), (1,) -- the comma marks a 1-tuple -- and ().
+            ObjTuple* tuple = AS_TUPLE(value);
+            printf("(");
+            for (int i = 0; i < tuple->items.count; i++) {
+                if (i > 0) printf(", ");
+                printValueRepr(tuple->items.values[i]);
+            }
+            if (tuple->items.count == 1) printf(",");
+            printf(")");
             break;
         }
         case OBJ_DICT: {

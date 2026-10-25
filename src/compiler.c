@@ -1113,9 +1113,31 @@ static void literal(bool canAssign) {
     }
 }
 
+// '(' already consumed. (x) is plain grouping; a comma after the first
+// expression makes a tupel (K17): (a, b), (a,), (a, b,). () is the empty
+// tupel. Newlines inside are free: '(' raises the scanner's grouping depth.
 static void grouping(bool canAssign) {
+    (void)canAssign;
+    if (match(TOKEN_RIGHT_PAREN)) {
+        emitBytes(OP_BUILD_TUPLE, 0);
+        return;
+    }
     expression();
-    consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
+    if (!match(TOKEN_COMMA)) {
+        consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
+        return;
+    }
+    int count = 1;
+    while (!check(TOKEN_RIGHT_PAREN) && !check(TOKEN_EOF)) {
+        expression();
+        if (count == 255) {
+            error("Tidak boleh lebih dari 255 elemen dalam literal tupel.");
+        }
+        count++;
+        if (!match(TOKEN_COMMA)) break;
+    }
+    consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah elemen tupel.");
+    emitBytes(OP_BUILD_TUPLE, (uint8_t)count);
 }
 
 // Numeric literal. Handles `_` separators and 0b/0o/0x bases (Fase 1) and

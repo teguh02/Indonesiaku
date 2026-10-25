@@ -93,12 +93,14 @@ static bool dbTailEmpty(const char* tail) {
 
 static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
     if (!dbText(sql)) return NULL;
-    if (!IS_LIST(params) && !IS_KOSONG(params)) {
-        nativeRaiseKelas(vm.galatTipe, "db: params harus daftar");
+    // params: daftar or tupel (Python's sqlite3 takes a tuple too), or kosong.
+    ValueArray* items = sequenceItems(params);
+    if (items == NULL && !IS_KOSONG(params)) {
+        nativeRaiseKelas(vm.galatTipe, "db: params harus daftar atau tupel");
         return NULL;
     }
-    int count = IS_LIST(params) ? AS_LIST(params)->items.count : 0;
-    Value* values = IS_LIST(params) ? AS_LIST(params)->items.values : NULL;
+    int count = items != NULL ? items->count : 0;
+    Value* values = items != NULL ? items->values : NULL;
     // Validate every value before preparing or stepping any SQL.
     for (int i = 0; i < count; i++) {
         Value v = values[i];

@@ -181,7 +181,7 @@ Value nativeFnAcak(int argCount, Value* args) {
 // Baca satu elemen dari urutan yang bisa diiterasi (daftar, rentang, teks).
 // Mengembalikan false bila tipenya bukan urutan.
 static bool seqLength(Value seq, int* length) {
-    if (IS_LIST(seq)) *length = AS_LIST(seq)->items.count;
+    if (sequenceItems(seq) != NULL) *length = sequenceItems(seq)->count;
     else if (IS_RANGE(seq)) *length = (int)rangeLength(AS_RANGE(seq));
     else if (IS_STRING(seq)) *length = AS_STRING(seq)->charCount;
     else return false;
@@ -191,7 +191,7 @@ static bool seqLength(Value seq, int* length) {
 // Alokasi: untuk teks ini membuat ObjString baru, jadi pemanggil wajib
 // menjaga nilai lain yang dipegangnya tetap tereferensi dari stack VM.
 static Value seqGet(Value seq, int i) {
-    if (IS_LIST(seq)) return AS_LIST(seq)->items.values[i];
+    if (sequenceItems(seq) != NULL) return sequenceItems(seq)->values[i];
     if (IS_RANGE(seq)) return rangeElement(AS_RANGE(seq), i);
     ObjString* teks = AS_STRING(seq);
     int offset = utf8ByteOffset(teks, i);
@@ -568,8 +568,8 @@ Value nativeFnPanjang(int argCount, Value* args) {
     if (IS_STRING(args[0])) {
         return INT_VAL(AS_STRING(args[0])->charCount);
     }
-    if (IS_LIST(args[0])) {
-        return INT_VAL(AS_LIST(args[0])->items.count);
+    if (sequenceItems(args[0]) != NULL) {          // daftar or tupel
+        return INT_VAL(sequenceItems(args[0])->count);
     }
     if (IS_DICT(args[0])) {
         return INT_VAL(dictLength(AS_DICT(args[0])));
@@ -581,11 +581,20 @@ Value nativeFnPanjang(int argCount, Value* args) {
     return NUMBER_VAL(0);
 }
 
+// tupel is immutable: the daftar-mutating builtins refuse it with the same
+// message as t[i] = x in the VM, instead of a confusing "harus list".
+static bool rejectTuple(Value value) {
+    if (!IS_TUPLE(value)) return false;
+    nativeRaiseKelas(vm.galatTipe, "Tupel tidak dapat diubah.");
+    return true;
+}
+
 Value nativeFnTambah(int argCount, Value* args) {
     if (argCount != 2) {
         nativeRaise("tambah() memerlukan 2 argumen (list, nilai)");
         return KOSONG_VAL;
     }
+    if (rejectTuple(args[0])) return KOSONG_VAL;
     if (!IS_LIST(args[0])) {
         nativeRaise("tambah() argumen pertama harus list");
         return KOSONG_VAL;
@@ -600,6 +609,7 @@ Value nativeFnHapus(int argCount, Value* args) {
         nativeRaise("hapus() memerlukan 1 argumen (list)");
         return KOSONG_VAL;
     }
+    if (rejectTuple(args[0])) return KOSONG_VAL;
     if (!IS_LIST(args[0])) {
         nativeRaise("hapus() hanya menerima list");
         return KOSONG_VAL;
@@ -665,12 +675,12 @@ Value nativeFnEnumerasi(int argCount, Value* args) {
 
     Value urutan = args[0];
     int count;
-    if (IS_LIST(urutan)) count = AS_LIST(urutan)->items.count;
+    if (sequenceItems(urutan) != NULL) count = sequenceItems(urutan)->count;
     else if (IS_STRING(urutan)) count = AS_STRING(urutan)->charCount;
     else if (IS_RANGE(urutan)) count = (int)rangeLength(AS_RANGE(urutan));
     else if (IS_DICT(urutan)) count = dictLength(AS_DICT(urutan));
     else {
-        nativeRaise("enumerasi() hanya menerima list, teks, rentang, atau kamus");
+        nativeRaise("enumerasi() hanya menerima daftar, tupel, teks, rentang, atau kamus");
         return KOSONG_VAL;
     }
 
@@ -685,7 +695,7 @@ Value nativeFnEnumerasi(int argCount, Value* args) {
         ObjList* pasangan = newList();
         push(OBJ_VAL(pasangan));
         Value nilai;
-        if (IS_LIST(urutan)) nilai = AS_LIST(urutan)->items.values[i];
+        if (sequenceItems(urutan) != NULL) nilai = sequenceItems(urutan)->values[i];
         else if (IS_STRING(urutan)) {
             ObjString* teks = AS_STRING(urutan);
             int offset = utf8ByteOffset(teks, i);
@@ -841,6 +851,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("string", 6));
     } else if (IS_LIST(args[0])) {
         return OBJ_VAL(copyString("list", 4));
+    } else if (IS_TUPLE(args[0])) {
+        return OBJ_VAL(copyString("tupel", 5));
     } else if (IS_DICT(args[0])) {
         return OBJ_VAL(copyString("kamus", 5));
     } else if (IS_INSTANCE(args[0])) {
@@ -993,6 +1005,17 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
             appendValueRepr(list->items.values[i], buf, size, pos);
         }
         appendRaw("]", buf, size, pos);
+        return;
+    } else if (IS_TUPLE(v)) {
+        // (1, 2), (1,), () -- same as printObject and Python.
+        ObjTuple* tuple = AS_TUPLE(v);
+        appendRaw("(", buf, size, pos);
+        for (int i = 0; i < tuple->items.count; i++) {
+            if (i > 0) appendRaw(", ", buf, size, pos);
+            appendValueRepr(tuple->items.values[i], buf, size, pos);
+        }
+        if (tuple->items.count == 1) appendRaw(",", buf, size, pos);
+        appendRaw(")", buf, size, pos);
         return;
     } else if (IS_DICT(v)) {
         ObjDict* dict = AS_DICT(v);
@@ -1631,6 +1654,7 @@ Value nativeFnHapusPada(int argCount, Value* args) {
         nativeRaise("hapus_pada() memerlukan 2 argumen (list, indeks)");
         return KOSONG_VAL;
     }
+    if (rejectTuple(args[0])) return KOSONG_VAL;
     if (!IS_LIST(args[0]) || !IS_NUMBER(args[1])) {
         nativeRaise("hapus_pada() memerlukan (list, angka)");
         return KOSONG_VAL;
@@ -1655,6 +1679,7 @@ Value nativeFnSisip(int argCount, Value* args) {
         nativeRaise("sisip() memerlukan 3 argumen (list, indeks, nilai)");
         return KOSONG_VAL;
     }
+    if (rejectTuple(args[0])) return KOSONG_VAL;
     if (!IS_LIST(args[0]) || !IS_NUMBER(args[1])) {
         nativeRaise("sisip() memerlukan (list, angka, nilai)");
         return KOSONG_VAL;
@@ -1860,7 +1885,7 @@ Value nativeFnSoketTutup(int argCount, Value* args) {
 
 // Jumlah elemen iterable; -1 bila tipenya tidak iterable.
 static int iterCount(Value v) {
-    if (IS_LIST(v)) return AS_LIST(v)->items.count;
+    if (sequenceItems(v) != NULL) return sequenceItems(v)->count;
     if (IS_STRING(v)) return AS_STRING(v)->charCount;
     if (IS_RANGE(v)) return (int)rangeLength(AS_RANGE(v));
     return -1;
@@ -1868,11 +1893,42 @@ static int iterCount(Value v) {
 
 // Elemen ke-i. Untuk teks ini MENGALOKASI sebuah ObjString baru.
 static Value iterAt(Value v, int i) {
-    if (IS_LIST(v)) return AS_LIST(v)->items.values[i];
+    if (sequenceItems(v) != NULL) return sequenceItems(v)->values[i];
     if (IS_RANGE(v)) return rangeElement(AS_RANGE(v), i);
     ObjString* teks = AS_STRING(v);
     int offset = utf8ByteOffset(teks, i);
     return OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
+}
+
+// tupel() / tupel(urutan) - tupel baru dari daftar, tupel, teks, rentang, atau
+// kamus (kuncinya), seperti tuple() di Python.
+Value nativeFnTupel(int argCount, Value* args) {
+    if (argCount > 1) {
+        nativeRaise("tupel() memerlukan 0 atau 1 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    if (argCount == 0) return OBJ_VAL(newTuple());
+    Value src = args[0];
+    if (IS_TUPLE(src)) return src;   // immutable, so sharing it is safe (Python does too)
+
+    int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
+    if (count < 0) {
+        nativeRaiseKelas(vm.galatTipe,
+                         "tupel() hanya menerima daftar, tupel, teks, rentang, atau kamus");
+        return KOSONG_VAL;
+    }
+    // GC: the tupel and each element stay rooted while the array grows --
+    // iterAt allocates a fresh string per character for teks.
+    ObjTuple* tuple = newTuple();
+    push(OBJ_VAL(tuple));
+    for (int i = 0; i < count; i++) {
+        Value element = IS_DICT(src) ? dictKeyAt(AS_DICT(src), i) : iterAt(src, i);
+        push(element);
+        writeValueArray(&tuple->items, element);
+        pop();
+    }
+    pop();
+    return OBJ_VAL(tuple);
 }
 
 // jumlah(d[, awal]) - seperti sum(); hanya angka.

@@ -23,6 +23,7 @@
 
 #define IS_SOCKET(value)       isObjType(value, OBJ_SOCKET)
 #define IS_RANGE(value)        isObjType(value, OBJ_RANGE)
+#define IS_TUPLE(value)        isObjType(value, OBJ_TUPLE)
 
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
@@ -37,6 +38,7 @@
 #define AS_FILE(value)         ((ObjFile*)AS_OBJ(value))
 #define AS_SOCKET(value)       ((ObjSocket*)AS_OBJ(value))
 #define AS_RANGE(value)        ((ObjRange*)AS_OBJ(value))
+#define AS_TUPLE(value)        ((ObjTuple*)AS_OBJ(value))
 
 typedef enum {
     OBJ_STRING,
@@ -53,6 +55,7 @@ typedef enum {
     OBJ_SOCKET,
     OBJ_DB,
     OBJ_RANGE,
+    OBJ_TUPLE,
 } ObjType;
 
 struct Obj {
@@ -107,6 +110,13 @@ typedef struct {
     Obj obj;
     ValueArray items;
 } ObjList;
+
+// tupel (K17): an immutable sequence. Same layout as ObjList on purpose, so
+// every read path can share sequenceItems(); only writes tell them apart.
+typedef struct {
+    Obj obj;
+    ValueArray items;
+} ObjTuple;
 
 typedef struct {
     Obj obj;
@@ -167,6 +177,7 @@ ObjNative* newNative(NativeFn function);
 ObjClosure* newClosure(ObjFunction* function);
 ObjUpvalue* newUpvalue(Value* slot);
 ObjList* newList();
+ObjTuple* newTuple();
 ObjDict* newDict();
 int dictLength(ObjDict* dict);
 bool dictSet(ObjDict* dict, Value key, Value value);
@@ -196,6 +207,15 @@ void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
+}
+
+// Items of a daftar or tupel, for READ-only paths (index, slice, iterate,
+// unpack, compare, hash). NULL for anything else. Never write through this
+// pointer: a tupel must stay immutable.
+static inline ValueArray* sequenceItems(Value value) {
+    if (IS_LIST(value)) return &AS_LIST(value)->items;
+    if (IS_TUPLE(value)) return &AS_TUPLE(value)->items;
+    return NULL;
 }
 
 #endif

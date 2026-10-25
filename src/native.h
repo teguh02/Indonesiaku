@@ -98,6 +98,7 @@ Value nativeFnHapusKunci(int argCount, Value* args);
 
 // enumerasi(urutan[, awal]) - Pasangan [indeks, nilai]
 Value nativeFnEnumerasi(int argCount, Value* args);
+Value nativeFnTupel(int argCount, Value* args);      // tupel([urutan])
 
 // kunci(kamus) - Mengembalikan list berisi semua kunci
 Value nativeFnKunci(int argCount, Value* args);

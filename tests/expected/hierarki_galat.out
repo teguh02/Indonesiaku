@@ -1,5 +1,5 @@
 aritmetika: Pembagian dengan nol.
-nilai: enumerasi() hanya menerima list, teks, rentang, atau kamus
+nilai: enumerasi() hanya menerima daftar, tupel, teks, rentang, atau kamus
 pilihan: Pembagian dengan nol.
 pencarian: Indeks list di luar jangkauan (indeks 5, panjang 1).
 umum: Variabel tidak terdefinisi 'tidak_ada'.

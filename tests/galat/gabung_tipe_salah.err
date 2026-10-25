@@ -1,4 +1,4 @@
-Operand '+' harus dua angka, dua teks, atau dua daftar.
+Operand '+' harus dua angka, dua teks, dua daftar, atau dua tupel.
 [baris 3, kolom 11] dalam skrip
     cetak(a + "tiga")
               ^

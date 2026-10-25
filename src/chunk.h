@@ -48,6 +48,7 @@ typedef enum {
     OP_SET_UPVALUE,
     OP_CLOSE_UPVALUE,
     OP_BUILD_LIST,
+    OP_BUILD_TUPLE,  // byte = jumlah elemen; (a, b) / (a,) / ()
     OP_BUILD_DICT,
     OP_APPEND,       // [daftar, nilai] -> daftar (list comprehension)
     OP_DELETE_GLOBAL,   // buang nama; byte = nama

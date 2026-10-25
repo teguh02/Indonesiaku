@@ -168,6 +168,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return byteInstruction("OP_SET_UPVALUE", chunk, offset);
         case OP_CLOSE_UPVALUE:
             return simpleInstruction("OP_CLOSE_UPVALUE", offset);
+        case OP_BUILD_TUPLE:
+            return byteInstruction("OP_BUILD_TUPLE", chunk, offset);
         case OP_BUILD_LIST:
             return byteInstruction("OP_BUILD_LIST", chunk, offset);
         case OP_BUILD_DICT:
