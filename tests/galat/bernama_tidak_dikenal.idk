@@ -1,0 +1,5 @@
+# Nama argumen harus cocok dengan nama parameter.
+fungsi gambar(teks, lebar=80) {
+    cetak(teks, lebar)
+}
+gambar("Judul", warna="merah")

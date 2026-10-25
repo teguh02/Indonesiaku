@@ -119,6 +119,23 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return jumpInstruction("OP_LOOP", -1, chunk, offset);
         case OP_CALL:
             return byteInstruction("OP_CALL", chunk, offset);
+        case OP_CALL_BERNAMA: {
+            // argCount, then the constant index of the keyword-name list.
+            uint8_t argCount = chunk->code[offset + 1];
+            uint8_t names = chunk->code[offset + 2];
+            printf("%-16s %4d names %d '", "OP_CALL_BERNAMA", argCount, names);
+            printValue(chunk->constants.values[names]);
+            printf("'\n");
+            return offset + 3;
+        }
+        case OP_ISI_BAWAAN: {
+            // slot, then a 16-bit forward jump taken when the slot is filled.
+            uint8_t slot = chunk->code[offset + 1];
+            uint16_t jump = (uint16_t)(chunk->code[offset + 2] << 8);
+            jump |= chunk->code[offset + 3];
+            printf("%-16s %4d -> %d\n", "OP_ISI_BAWAAN", slot, offset + 4 + jump);
+            return offset + 4;
+        }
         case OP_CLOSURE: {
             offset++;
             uint8_t constant = chunk->code[offset++];

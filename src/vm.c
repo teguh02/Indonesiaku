@@ -304,16 +304,57 @@ static Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
-static bool call(ObjClosure* closure, int argCount) {
+// names != NULL: the last names->items.count arguments on the stack were
+// passed by name and must be moved to the slots their names select.
+static bool call(ObjClosure* closure, int argCount, ObjList* names) {
     ObjFunction* fn = closure->function;
-    if (argCount < fn->requiredArity || argCount > fn->arity) {
-        if (fn->requiredArity == fn->arity) {
-            runtimeError("Harapkan %d argumen tetapi mendapat %d.", fn->arity, argCount);
-        } else {
-            runtimeError("Harapkan %d sampai %d argumen tetapi mendapat %d.",
-                         fn->requiredArity, fn->arity, argCount);
-        }
+    int namedCount = names == NULL ? 0 : names->items.count;
+    int positional = argCount - namedCount;
+
+    if (argCount > fn->arity) {
+        runtimeError("Harapkan paling banyak %d argumen tetapi mendapat %d.",
+                     fn->arity, argCount);
         return false;
+    }
+    if (positional > fn->arity) {
+        runtimeError("Terlalu banyak argumen posisional.");
+        return false;
+    }
+
+    // Rebuild the parameter slots: positional args keep their place, keyword
+    // args move to the slot their name selects, the rest get the marker that
+    // tells the prologue to evaluate that parameter's default.
+    Value* base = vm.stackTop - argCount;
+    Value slots[UINT8_COUNT];
+    for (int i = 0; i < fn->arity; i++) {
+        slots[i] = i < positional ? base[i] : TAKTERISI_VAL;
+    }
+
+    for (int i = 0; i < namedCount; i++) {
+        ObjString* wanted = AS_STRING(names->items.values[i]);
+        int target = -1;
+        for (int p = 0; p < fn->arity; p++) {
+            if (fn->paramNames[p] == wanted) { target = p; break; }
+        }
+        if (target < 0) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("Fungsi tidak punya parameter bernama '%s'.", wanted->chars);
+            return false;
+        }
+        if (target < positional || !IS_TAKTERISI(slots[target])) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("Parameter '%s' diisi lebih dari sekali.", wanted->chars);
+            return false;
+        }
+        slots[target] = base[positional + i];
+    }
+
+    for (int i = 0; i < fn->requiredArity; i++) {
+        if (IS_TAKTERISI(slots[i])) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("Parameter wajib '%s' tidak diisi.", fn->paramNames[i]->chars);
+            return false;
+        }
     }
 
     if (vm.frameCount >= FRAMES_MAX) {
@@ -321,33 +362,30 @@ static bool call(ObjClosure* closure, int argCount) {
         return false;
     }
 
+    for (int i = 0; i < fn->arity; i++) base[i] = slots[i];
+    vm.stackTop = base + fn->arity;
+
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->closure = closure;
-    // Enter the staged prologue at the point that fills the missing defaults;
-    // with no defaults entryPoints is NULL and we start at the body.
-    frame->ip = fn->entryPoints == NULL
-                    ? fn->chunk.code
-                    : fn->chunk.code + fn->entryPoints[argCount - fn->requiredArity];
-    // Computed from the ACTUAL argument count: the prologue pushes the missing
-    // values on top, so the parameter slots line up without adjustment here.
-    frame->slots = vm.stackTop - argCount - 1;
+    frame->ip = fn->chunk.code;
+    frame->slots = base - 1;   // slot 0 is the callee itself
     return true;
 }
 
-static bool callValue(Value callee, int argCount) {
+static bool callValue(Value callee, int argCount, ObjList* names) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_BOUND_METHOD: {
                 ObjBoundMethod* bound = AS_BOUND_METHOD(callee);
                 vm.stackTop[-argCount - 1] = bound->receiver;
-                return call(bound->method, argCount);
+                return call(bound->method, argCount, names);
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
                 vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
-                    return call(AS_CLOSURE(initializer), argCount);
+                    return call(AS_CLOSURE(initializer), argCount, names);
                 } else if (argCount != 0) {
                     runtimeError("Harapkan 0 argumen tetapi mendapat %d.", argCount);
                     return false;
@@ -355,8 +393,13 @@ static bool callValue(Value callee, int argCount) {
                 return true;
             }
             case OBJ_CLOSURE:
-                return call(AS_CLOSURE(callee), argCount);
+                return call(AS_CLOSURE(callee), argCount, names);
             case OBJ_NATIVE: {
+                if (names != NULL) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Fungsi bawaan belum menerima argumen bernama.");
+                    return false;
+                }
                 NativeFn native = AS_NATIVE(callee);
                 Value result = native(argCount, vm.stackTop - argCount);
                 vm.stackTop -= argCount + 1;
@@ -390,7 +433,7 @@ static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
         runtimeError("Metode tidak terdefinisi '%s'.", name->chars);
         return false;
     }
-    return call(AS_CLOSURE(method), argCount);
+    return call(AS_CLOSURE(method), argCount, NULL);
 }
 
 static bool invoke(ObjString* name, int argCount) {
@@ -407,7 +450,7 @@ static bool invoke(ObjString* name, int argCount) {
     Value value;
     if (tableGet(&instance->fields, name, &value)) {
         vm.stackTop[-argCount - 1] = value;
-        return callValue(value, argCount);
+        return callValue(value, argCount, NULL);
     }
 
     return invokeFromClass(instance->klass, name, argCount);
@@ -469,7 +512,7 @@ static bool importModule(ObjString* path) {
     ObjClosure* closure = newClosure(function);
     pop();
     push(OBJ_VAL(closure));
-    return call(closure, 0);
+    return call(closure, 0, NULL);
 }
 
 // Unwind to the nearest active 'coba' handler. Restores frame count and
@@ -653,6 +696,7 @@ static bool chainCompare(ChainCompare op, Value left, Value right, bool* result)
 static bool isFalsey(Value value) {
     switch (value.type) {
         case VAL_KOSONG: return true;
+        case VAL_TAKTERISI: return true;   // unreachable; be safe, not crashy
         case VAL_BOOL:   return !AS_BOOL(value);
         case VAL_NUMBER: return AS_NUMBER(value) == 0;
         case VAL_OBJ:
@@ -1109,12 +1153,33 @@ static InterpretResult run() {
             }
             case OP_CALL: {
                 int argCount = READ_BYTE();
-                if (!callValue(peek(argCount), argCount)) {
+                if (!callValue(peek(argCount), argCount, NULL)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 int ne = resolveNativeError();
                 if (ne == -1) return INTERPRET_RUNTIME_ERROR;
                 frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
+            case OP_CALL_BERNAMA: {
+                int argCount = READ_BYTE();
+                ObjList* names = AS_LIST(READ_CONSTANT());
+                if (!callValue(peek(argCount), argCount, names)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                int ne = resolveNativeError();
+                if (ne == -1) return INTERPRET_RUNTIME_ERROR;
+                frame = &vm.frames[vm.frameCount - 1];
+                break;
+            }
+            case OP_ISI_BAWAAN: {
+                // Skip this parameter's default expression when the caller
+                // already supplied a value for the slot.
+                uint8_t slot = READ_BYTE();
+                uint16_t offset = READ_SHORT();
+                if (!IS_TAKTERISI(frame->slots[slot])) {
+                    frame->ip += offset;
+                }
                 break;
             }
             case OP_CLOSURE: {
@@ -1540,7 +1605,7 @@ InterpretResult interpret(const char* source) {
     ObjClosure* closure = newClosure(function);
     pop();
     push(OBJ_VAL(closure));
-    call(closure, 0);
+    call(closure, 0, NULL);
 
     InterpretResult result = run();
     // A runtimeError() inside 'coba' stops run() with a pending error:

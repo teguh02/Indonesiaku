@@ -36,6 +36,8 @@ typedef enum {
     OP_JUMP_IF_FALSE,
     OP_LOOP,
     OP_CALL,
+    OP_CALL_BERNAMA,
+    OP_ISI_BAWAAN,
     OP_CLOSURE,
     OP_GET_UPVALUE,
     OP_SET_UPVALUE,

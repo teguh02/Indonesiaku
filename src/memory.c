@@ -88,6 +88,10 @@ static void blackenObject(Obj* object) {
         case OBJ_FUNCTION: {
             ObjFunction* function = (ObjFunction*)object;
             markObject((Obj*)function->name);
+            // paramNames holds ObjString*; missing this frees live names.
+            for (int i = 0; i < function->arity && function->paramNames != NULL; i++) {
+                markObject((Obj*)function->paramNames[i]);
+            }
             markArray(&function->chunk.constants);
             break;
         }
@@ -156,9 +160,8 @@ static void freeObject(Obj* object) {
         case OBJ_FUNCTION: {
             ObjFunction* function = (ObjFunction*)object;
             freeChunk(&function->chunk);
-            if (function->entryPoints != NULL) {
-                FREE_ARRAY(int, function->entryPoints,
-                           function->arity - function->requiredArity + 1);
+            if (function->paramNames != NULL) {
+                FREE_ARRAY(ObjString*, function->paramNames, function->arity);
             }
             FREE(ObjFunction, object);
             break;

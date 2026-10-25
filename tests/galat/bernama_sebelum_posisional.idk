@@ -1,0 +1,5 @@
+# Argumen posisional harus mendahului argumen bernama.
+fungsi f(a, b=2) {
+    kembalikan a + b
+}
+cetak(f(b=1, 2))

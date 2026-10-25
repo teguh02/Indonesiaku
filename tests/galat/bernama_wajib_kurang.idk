@@ -1,0 +1,5 @@
+# Parameter wajib yang tidak terisi disebut namanya.
+fungsi f(a, b) {
+    kembalikan a + b
+}
+cetak(f(b=1))

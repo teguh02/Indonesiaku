@@ -1,0 +1,2 @@
+# Fungsi bawaan belum menerima argumen bernama.
+cetak(panjang(x="abc"))

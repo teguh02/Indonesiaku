@@ -1,0 +1,75 @@
+# Argumen bernama: kirim nilai berdasarkan nama parameter, bukan urutan.
+
+fungsi gambar(teks, lebar=80, garis="-", tengah=salah) {
+    cetak(teks, lebar, garis, tengah)
+}
+
+gambar("Judul")
+gambar("Judul", tengah=benar)
+
+# Urutan argumen bernama bebas.
+gambar("Judul", garis="=", lebar=40)
+
+# Parameter wajib pun boleh dinamai.
+gambar(teks="Judul")
+
+# Campuran: posisional dulu, lalu bernama.
+gambar("Judul", 40, tengah=benar)
+
+# Melewati parameter di tengah — inilah alasan utama memakai argumen bernama.
+fungsi tiga(a, b=2, c=3) {
+    cetak(a, b, c)
+}
+tiga(1, c=9)
+tiga(1)
+tiga(a=1, c=9)
+
+# Kelas: init dan metode.
+kelas Kotak {
+    init(lebar, tinggi=10) {
+        diri.lebar = lebar
+        diri.tinggi = tinggi
+    }
+
+    luas(skala=1, tambah=0) {
+        kembalikan diri.lebar * diri.tinggi * skala + tambah
+    }
+}
+
+variabel k = Kotak(lebar=3)
+cetak(k.lebar, k.tinggi)
+cetak(k.luas(tambah=5))
+cetak(k.luas(skala=2))
+cetak(Kotak(3, tinggi=4).luas())
+
+# Pewarisan: metode induk lewat 'super' juga menerima argumen bernama.
+kelas KotakWarna < Kotak {
+    init(lebar, tinggi=10, warna="merah") {
+        super.init(lebar, tinggi=tinggi)
+        diri.warna = warna
+    }
+
+    luas(skala=1, tambah=0) {
+        kembalikan super.luas(skala=skala, tambah=tambah)
+    }
+}
+
+variabel kw = KotakWarna(2, warna="biru")
+cetak(kw.lebar, kw.tinggi, kw.warna)
+cetak(kw.luas(skala=3))
+
+# Nilai bawaan tetap dievaluasi tiap panggilan (K15).
+fungsi kumpul(x, daftar=[]) {
+    tambah(daftar, x)
+    kembalikan daftar
+}
+cetak(kumpul(1), kumpul(x=2))
+
+# Fungsi berdefault tetap nilai biasa.
+fungsi pakai(f) {
+    kembalikan f(5, b=1)
+}
+fungsi kurang(a, b=0) {
+    kembalikan a - b
+}
+cetak(pakai(kurang))

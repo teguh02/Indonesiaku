@@ -1,0 +1,5 @@
+# Satu parameter tidak boleh diisi posisional dan bernama sekaligus.
+fungsi f(a, b=2) {
+    kembalikan a + b
+}
+cetak(f(1, a=5))

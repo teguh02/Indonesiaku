@@ -36,6 +36,9 @@ void printValue(Value value) {
             printf(AS_BOOL(value) ? "benar" : "salah");
             break;
         case VAL_KOSONG: printf("kosong"); break;
+        // Should be unreachable: the marker never escapes a call prologue.
+        // Printing something recognisable beats printing garbage if it does.
+        case VAL_TAKTERISI: printf("<takterisi>"); break;
         case VAL_NUMBER: {
             char buf[32];
             numberToString(AS_NUMBER(value), buf, sizeof(buf));

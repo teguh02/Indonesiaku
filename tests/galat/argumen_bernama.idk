@@ -1,6 +1,0 @@
-# B2: f(b=1, a=5) dulu dikompilasi sebagai assignment global dan
-# menghasilkan -4 tanpa error. Sekarang harus ditolak saat kompilasi.
-fungsi kurang(a, b) {
-    kembalikan a - b
-}
-cetak(kurang(b=1, a=5))

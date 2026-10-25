@@ -69,11 +69,10 @@ typedef struct {
     Obj obj;
     int arity;           // total parameters
     int requiredArity;   // parameters without a default value
-    // Staged prologue: entryPoints[i] is the chunk offset to start at when the
-    // call supplied (requiredArity + i) arguments, so the defaults for the
-    // missing parameters run and push their values. Length is
-    // (arity - requiredArity + 1); NULL when every parameter is required.
-    int* entryPoints;
+    // Parameter names, in declaration order, length `arity`. Needed at
+    // runtime because keyword arguments are matched in the VM (the callee is
+    // only known then). These are ObjString* and MUST be GC-marked.
+    ObjString** paramNames;
     int upvalueCount;
     Chunk chunk;
     ObjString* name;

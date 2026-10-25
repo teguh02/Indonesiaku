@@ -194,6 +194,15 @@ static bool check(TokenType type) {
     return parser.current.type == type;
 }
 
+// One extra token of lookahead, used to spot `nama=` in an argument list.
+// The scanner is rewound afterwards, so no token is consumed.
+static bool checkNext(TokenType type) {
+    ScannerState saved = saveScanner();
+    Token next = scanToken();
+    restoreScanner(saved);
+    return next.type == type;
+}
+
 static bool match(TokenType type) {
     if (!check(type)) return false;
     advance();
@@ -486,13 +495,42 @@ static void defineVariable(uint8_t global) {
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
-static uint8_t argumentList() {
+// Parses a call's arguments. Positional values are emitted in order; keyword
+// arguments (nama=nilai) are emitted after them and their names collected
+// into a constant list, matched against the callee's parameters at runtime.
+// Returns the total argument count; *nameList is -1 when none were named.
+static uint8_t argumentList(int* nameList) {
     uint8_t argCount = 0;
+    // The name list is built on the VM stack from the start: collecting names
+    // in a local array would leave them unrooted while later arguments
+    // allocate, and a GC would free them mid-parse.
+    ObjList* names = NULL;
     const char* enclosingArgStart = callArgStart;
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
-            callArgStart = parser.current.start;
-            expression();
+            // A keyword argument is exactly `identifier = expr`; two tokens of
+            // lookahead distinguish it from an expression starting with a name.
+            if (check(TOKEN_IDENTIFIER) && checkNext(TOKEN_EQUAL)) {
+                Token name = parser.current;
+                advance();  // name
+                advance();  // '='
+                if (names == NULL) {
+                    names = newList();
+                    push(OBJ_VAL(names));
+                }
+                ObjString* str = copyString(name.start, name.length);
+                push(OBJ_VAL(str));            // root while writeValueArray grows
+                writeValueArray(&names->items, OBJ_VAL(str));
+                pop();
+                callArgStart = NULL;
+                expression();
+            } else {
+                if (names != NULL) {
+                    semanticError("Argumen posisional tidak boleh setelah argumen bernama.");
+                }
+                callArgStart = parser.current.start;
+                expression();
+            }
             if (argCount == 255) {
                 error("Tidak boleh lebih dari 255 argumen.");
             }
@@ -501,6 +539,14 @@ static uint8_t argumentList() {
     }
     callArgStart = enclosingArgStart;
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah argumen.");
+
+    if (names == NULL) {
+        *nameList = -1;
+        return argCount;
+    }
+
+    *nameList = makeConstant(OBJ_VAL(names));
+    pop();   // names
     return argCount;
 }
 
@@ -541,9 +587,45 @@ static void binary(bool canAssign) {
     }
 }
 
+// Peeks ahead over an argument list (the '(' is already consumed) to see
+// whether it contains a keyword argument. Lets `dot`/`super` fall back to
+// OP_GET_PROPERTY + OP_CALL_BERNAMA instead of needing keyword-aware
+// variants of OP_INVOKE and OP_SUPER_INVOKE.
+static bool argsHaveNames() {
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    bool found = false;
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_PAREN) break;
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET || type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        } else if (depth == 0 && type == TOKEN_IDENTIFIER && checkNext(TOKEN_EQUAL)) {
+            found = true;
+            break;
+        }
+        advance();
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return found;
+}
+
 static void call(bool canAssign) {
-    uint8_t argCount = argumentList();
-    emitBytes(OP_CALL, argCount);
+    int nameList;
+    uint8_t argCount = argumentList(&nameList);
+    if (nameList < 0) {
+        emitBytes(OP_CALL, argCount);
+    } else {
+        emitBytes(OP_CALL_BERNAMA, argCount);
+        emitByte((uint8_t)nameList);
+    }
 }
 
 static void dot(bool canAssign) {
@@ -554,7 +636,18 @@ static void dot(bool canAssign) {
         expression();
         emitBytes(OP_SET_PROPERTY, name);
     } else if (match(TOKEN_LEFT_PAREN)) {
-        uint8_t argCount = argumentList();
+        if (argsHaveNames()) {
+            // Keyword call on a method: load it as a value and use the normal
+            // call path, instead of a keyword-aware OP_INVOKE.
+            emitBytes(OP_GET_PROPERTY, name);
+            int nameList;
+            uint8_t argCount = argumentList(&nameList);
+            emitBytes(OP_CALL_BERNAMA, argCount);
+            emitByte((uint8_t)nameList);
+            return;
+        }
+        int nameList;
+        uint8_t argCount = argumentList(&nameList);
         emitBytes(OP_INVOKE, name);
         emitByte(argCount);
     } else {
@@ -790,10 +883,6 @@ static void namedVariable(Token name, bool canAssign) {
     }
 
     if (canAssign && match(TOKEN_EQUAL)) {
-        if (name.start == callArgStart) {
-            semanticError("Argumen bernama (nama=nilai) belum didukung. "
-                  "Kirim nilainya sesuai urutan parameter.");
-        }
         parsePrecedence(PREC_ASSIGNMENT);
         if (setOp == OP_SET_GLOBAL) {
             emitBytes(OP_DEFINE_GLOBAL, (uint8_t)arg);
@@ -843,7 +932,18 @@ static void super_(bool canAssign) {
 
     namedVariable(syntheticToken("diri"), false);
     if (match(TOKEN_LEFT_PAREN)) {
-        uint8_t argCount = argumentList();
+        if (argsHaveNames()) {
+            // Same fallback as `dot`: fetch the bound method, then call it.
+            namedVariable(syntheticToken("super"), false);
+            emitBytes(OP_GET_SUPER, name);
+            int nameList;
+            uint8_t argCount = argumentList(&nameList);
+            emitBytes(OP_CALL_BERNAMA, argCount);
+            emitByte((uint8_t)nameList);
+            return;
+        }
+        int nameList;
+        uint8_t argCount = argumentList(&nameList);
         namedVariable(syntheticToken("super"), false);
         emitBytes(OP_SUPER_INVOKE, name);
         emitByte(argCount);
@@ -1161,10 +1261,12 @@ static void function(FunctionType type) {
 
     consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah nama fungsi.");
     // Parameter names are declared first; their default expressions are
-    // compiled afterwards as a staged prologue (see below), so we remember
-    // where each '=' sits and rewind the scanner to it.
+    // compiled afterwards as a conditional prologue (see below), so we
+    // remember where each '=' sits and rewind the scanner to it.
     ScannerState defaultStarts[UINT8_COUNT];
     Token defaultTokens[UINT8_COUNT];
+    int defaultSlots[UINT8_COUNT];
+    Token paramTokens[UINT8_COUNT];
     int defaultCount = 0;
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
@@ -1173,11 +1275,16 @@ static void function(FunctionType type) {
                 errorAtCurrent("Tidak boleh lebih dari 255 parameter.");
             }
             uint8_t constant = parseVariable("Harapkan nama parameter.");
+            if (current->function->arity <= UINT8_COUNT) {
+                paramTokens[current->function->arity - 1] = parser.previous;
+            }
             defineVariable(constant);
 
             if (match(TOKEN_EQUAL)) {
                 defaultStarts[defaultCount] = saveScanner();
                 defaultTokens[defaultCount] = parser.current;
+                // Slot = parameter position: locals[0] is the function itself.
+                defaultSlots[defaultCount] = current->function->arity;
                 defaultCount++;
                 skipDefaultExpression();
             } else if (defaultCount > 0) {
@@ -1190,22 +1297,43 @@ static void function(FunctionType type) {
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah parameter.");
     current->function->requiredArity = current->function->arity - defaultCount;
 
-    // Staged prologue. entryPoints[i] is where to start when the call passed
-    // (requiredArity + i) arguments: the remaining defaults run and push the
-    // missing values, falling through into the next default and finally the
-    // body. Entering at entryPoints[defaultCount] skips the prologue entirely.
-    if (defaultCount > 0) {
+    // Parameter names must survive to runtime: keyword arguments are matched
+    // in the VM, because the callee is only known there.
+    if (current->function->arity > 0) {
         ObjFunction* fn = current->function;
-        fn->entryPoints = ALLOCATE(int, defaultCount + 1);
+        fn->paramNames = ALLOCATE(ObjString*, fn->arity);
+        // Clear BEFORE any copyString: that allocates, which can trigger a GC
+        // that walks paramNames. Uninitialised slots would be marked as live
+        // garbage pointers.
+        for (int i = 0; i < fn->arity; i++) fn->paramNames[i] = NULL;
+        for (int i = 0; i < fn->arity; i++) {
+            fn->paramNames[i] = copyString(paramTokens[i].start, paramTokens[i].length);
+        }
+    }
+
+    // Conditional prologue. call() fills unsupplied parameter slots with the
+    // TAKTERISI marker; each default tests its own slot and only evaluates
+    // when still unfilled. Unlike a staged prologue (jump straight to the
+    // right entry point) this copes with gaps: f(1, c=9) leaves b unfilled
+    // while c is filled, which no single entry point could express.
+    if (defaultCount > 0) {
         ScannerState afterParams = saveScanner();
         Token afterParamsCurrent = parser.current;
         for (int i = 0; i < defaultCount; i++) {
-            fn->entryPoints[i] = currentChunk()->count;
+            emitBytes(OP_ISI_BAWAAN, (uint8_t)defaultSlots[i]);
+            int skip = currentChunk()->count;
+            emitByte(0xff);
+            emitByte(0xff);
             restoreScanner(defaultStarts[i]);
             parser.current = defaultTokens[i];
             expression();
+            emitBytes(OP_SET_LOCAL, (uint8_t)defaultSlots[i]);
+            emitByte(OP_POP);
+            int jump = currentChunk()->count - skip - 2;
+            if (jump > UINT16_MAX) error("Nilai bawaan terlalu panjang.");
+            currentChunk()->code[skip] = (jump >> 8) & 0xff;
+            currentChunk()->code[skip + 1] = jump & 0xff;
         }
-        fn->entryPoints[defaultCount] = currentChunk()->count;
         restoreScanner(afterParams);
         parser.current = afterParamsCurrent;
     }
