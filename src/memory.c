@@ -156,6 +156,10 @@ static void freeObject(Obj* object) {
         case OBJ_FUNCTION: {
             ObjFunction* function = (ObjFunction*)object;
             freeChunk(&function->chunk);
+            if (function->entryPoints != NULL) {
+                FREE_ARRAY(int, function->entryPoints,
+                           function->arity - function->requiredArity + 1);
+            }
             FREE(ObjFunction, object);
             break;
         }

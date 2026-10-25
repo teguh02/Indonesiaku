@@ -1125,6 +1125,27 @@ static void prescanFunctionBody() {
     }
 }
 
+// Skip a parameter's default expression without compiling it. The expression
+// is compiled later, as part of the staged prologue, so here we only need to
+// find where it ends: the first ',' or ')' at nesting depth zero.
+static void skipDefaultExpression() {
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) {
+            errorAtCurrent("Harapkan ')' setelah parameter.");
+            return;
+        }
+        if (depth == 0 && (type == TOKEN_COMMA || type == TOKEN_RIGHT_PAREN)) return;
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET || type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+}
+
 static void function(FunctionType type) {
     Compiler compiler;
     initCompiler(&compiler, type);
@@ -1139,6 +1160,12 @@ static void function(FunctionType type) {
     currentLoop = NULL;
 
     consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah nama fungsi.");
+    // Parameter names are declared first; their default expressions are
+    // compiled afterwards as a staged prologue (see below), so we remember
+    // where each '=' sits and rewind the scanner to it.
+    ScannerState defaultStarts[UINT8_COUNT];
+    Token defaultTokens[UINT8_COUNT];
+    int defaultCount = 0;
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             current->function->arity++;
@@ -1147,9 +1174,42 @@ static void function(FunctionType type) {
             }
             uint8_t constant = parseVariable("Harapkan nama parameter.");
             defineVariable(constant);
+
+            if (match(TOKEN_EQUAL)) {
+                defaultStarts[defaultCount] = saveScanner();
+                defaultTokens[defaultCount] = parser.current;
+                defaultCount++;
+                skipDefaultExpression();
+            } else if (defaultCount > 0) {
+                // semanticError: the code is well-formed, just not allowed —
+                // staying out of panic mode avoids a bogus "Harapkan '}'" cascade.
+                semanticError("Parameter wajib tidak boleh setelah parameter dengan nilai bawaan.");
+            }
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah parameter.");
+    current->function->requiredArity = current->function->arity - defaultCount;
+
+    // Staged prologue. entryPoints[i] is where to start when the call passed
+    // (requiredArity + i) arguments: the remaining defaults run and push the
+    // missing values, falling through into the next default and finally the
+    // body. Entering at entryPoints[defaultCount] skips the prologue entirely.
+    if (defaultCount > 0) {
+        ObjFunction* fn = current->function;
+        fn->entryPoints = ALLOCATE(int, defaultCount + 1);
+        ScannerState afterParams = saveScanner();
+        Token afterParamsCurrent = parser.current;
+        for (int i = 0; i < defaultCount; i++) {
+            fn->entryPoints[i] = currentChunk()->count;
+            restoreScanner(defaultStarts[i]);
+            parser.current = defaultTokens[i];
+            expression();
+        }
+        fn->entryPoints[defaultCount] = currentChunk()->count;
+        restoreScanner(afterParams);
+        parser.current = afterParamsCurrent;
+    }
+
     consume(TOKEN_LEFT_BRACE, "Harapkan '{' sebelum badan fungsi.");
     prescanFunctionBody();
     block();

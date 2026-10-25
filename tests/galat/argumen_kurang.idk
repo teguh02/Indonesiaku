@@ -1,0 +1,5 @@
+# Kurang dari jumlah parameter wajib.
+fungsi f(a, b, c=3) {
+    kembalikan a + b + c
+}
+cetak(f(1))

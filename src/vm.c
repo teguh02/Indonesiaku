@@ -305,9 +305,14 @@ static Value peek(int distance) {
 }
 
 static bool call(ObjClosure* closure, int argCount) {
-    if (argCount != closure->function->arity) {
-        runtimeError("Harapkan %d argumen tetapi mendapat %d.",
-                    closure->function->arity, argCount);
+    ObjFunction* fn = closure->function;
+    if (argCount < fn->requiredArity || argCount > fn->arity) {
+        if (fn->requiredArity == fn->arity) {
+            runtimeError("Harapkan %d argumen tetapi mendapat %d.", fn->arity, argCount);
+        } else {
+            runtimeError("Harapkan %d sampai %d argumen tetapi mendapat %d.",
+                         fn->requiredArity, fn->arity, argCount);
+        }
         return false;
     }
 
@@ -318,7 +323,13 @@ static bool call(ObjClosure* closure, int argCount) {
 
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->closure = closure;
-    frame->ip = closure->function->chunk.code;
+    // Enter the staged prologue at the point that fills the missing defaults;
+    // with no defaults entryPoints is NULL and we start at the body.
+    frame->ip = fn->entryPoints == NULL
+                    ? fn->chunk.code
+                    : fn->chunk.code + fn->entryPoints[argCount - fn->requiredArity];
+    // Computed from the ACTUAL argument count: the prologue pushes the missing
+    // values on top, so the parameter slots line up without adjustment here.
     frame->slots = vm.stackTop - argCount - 1;
     return true;
 }

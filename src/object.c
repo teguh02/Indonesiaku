@@ -28,6 +28,8 @@ static Obj* allocateObject(size_t size, ObjType type) {
 ObjFunction* newFunction() {
     ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     function->arity = 0;
+    function->requiredArity = 0;
+    function->entryPoints = NULL;
     function->upvalueCount = 0;
     function->name = NULL;
     initChunk(&function->chunk);

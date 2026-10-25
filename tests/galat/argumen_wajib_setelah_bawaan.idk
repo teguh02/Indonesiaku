@@ -1,0 +1,5 @@
+# Parameter wajib tidak boleh mengikuti parameter yang punya nilai bawaan.
+fungsi f(a=1, b) {
+    kembalikan a + b
+}
+cetak(f(1, 2))

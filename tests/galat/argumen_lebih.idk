@@ -1,0 +1,5 @@
+# Lebih dari jumlah seluruh parameter.
+fungsi f(a, b=2) {
+    kembalikan a + b
+}
+cetak(f(1, 2, 3))

@@ -1,0 +1,86 @@
+# Parameter dengan nilai bawaan.
+# Nilai bawaan dievaluasi SETIAP kali fungsi dipanggil (beda dari Python).
+
+fungsi sapa(nama, salam="Halo") {
+    cetak(salam + ", " + nama)
+}
+sapa("Budi")
+sapa("Budi", "Hai")
+
+# Beberapa nilai bawaan sekaligus; diisi dari kiri ke kanan.
+fungsi tiga(a, b=2, c=3) {
+    cetak(a, b, c)
+}
+tiga(1)
+tiga(1, 20)
+tiga(1, 20, 30)
+
+# Nilai bawaan boleh ekspresi apa pun.
+fungsi ekspresi(x=2 * 3, y=[1, 2], z={"a": 1}) {
+    cetak(x, panjang(y), z["a"])
+}
+ekspresi()
+
+# Nilai bawaan boleh merujuk parameter di sebelah kirinya.
+fungsi kiri(a, b=a) {
+    cetak(a, b)
+}
+kiri(7)
+kiri(7, 9)
+
+# Daftar bawaan TIDAK dibagi antar panggilan — di Python kode ini
+# akan mencetak [1] lalu [1, 2].
+fungsi kumpul(x, daftar=[]) {
+    tambah(daftar, x)
+    kembalikan daftar
+}
+cetak(kumpul(1))
+cetak(kumpul(2))
+
+# Metode kelas dan init.
+kelas Kotak {
+    init(lebar, tinggi=10) {
+        diri.lebar = lebar
+        diri.tinggi = tinggi
+    }
+
+    luas(skala=1) {
+        kembalikan diri.lebar * diri.tinggi * skala
+    }
+}
+
+variabel k = Kotak(3)
+cetak(k.lebar, k.tinggi)
+cetak(k.luas(), k.luas(2))
+cetak(Kotak(3, 4).luas())
+
+# Fungsi berdefault tetap nilai biasa.
+fungsi pakai(f) {
+    kembalikan f(5)
+}
+fungsi tambahkan(a, b=100) {
+    kembalikan a + b
+}
+cetak(pakai(tambahkan))
+
+# Rekursi dengan akumulator bawaan.
+fungsi jumlah(n, akum=0) {
+    jika n == 0 {
+        kembalikan akum
+    }
+    kembalikan jumlah(n - 1, akum + n)
+}
+cetak(jumlah(4))
+
+# Closure menangkap parameter berdefault.
+fungsi buat(awal=10) {
+    fungsi naik() {
+        nonlokal awal
+        awal = awal + 1
+        kembalikan awal
+    }
+    kembalikan naik
+}
+variabel n = buat()
+n()
+cetak(n())
