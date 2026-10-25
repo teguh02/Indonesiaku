@@ -435,6 +435,56 @@ ditangkap `coba/kecuali`. Untuk server HTTP, gunakan `pustaka/http.idk`.
 | `soket_tulis(klien, teks)` | Kirim teks → jumlah byte |
 | `soket_tutup(soket)` | Tutup soket (server atau klien) |
 
+### 1.10 Basis Data (SQLite)
+
+SQLite tertanam langsung di dalam `indk` — tidak ada yang perlu dipasang.
+Semua kesalahan dapat ditangkap `coba/kecuali`.
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `db_buka(jalur)` | Buka/buat basis data → handle. `":memory:"` = di memori saja |
+| `db_eksekusi(db, sql, params)` | Jalankan satu pernyataan (DDL/DML) → `kosong` |
+| `db_ambil_semua(db, sql, params)` | Jalankan kueri → daftar kamus (satu kamus per baris) |
+| `db_ambil_satu(db, sql, params)` | Baris pertama saja → kamus, atau `kosong` bila tidak ada |
+| `db_baris_terpengaruh(db)` | Jumlah baris yang diubah pernyataan terakhir |
+| `db_id_terakhir(db)` | `id` baris hasil INSERT terakhir |
+| `db_mulai(db)` | Mulai transaksi |
+| `db_komit(db)` | Simpan transaksi |
+| `db_batal(db)` | Batalkan transaksi |
+| `db_tutup(db)` | Tutup handle; aman dipanggil dua kali |
+
+`params` boleh dikosongkan bila SQL tidak memakai `?`.
+
+**Selalu pakai `?`, jangan pernah merangkai SQL dengan `+`.** Nilai yang
+dikirim lewat `params` disimpan sebagai data, tidak pernah dieksekusi:
+
+```indonesiaku
+variabel db = db_buka(":memory:")
+db_eksekusi(db, "CREATE TABLE siswa (id INTEGER PRIMARY KEY, nama TEXT, nilai REAL)")
+db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", ["Budi", 85.5])
+
+untuk b dalam db_ambil_semua(db, "SELECT nama, nilai FROM siswa WHERE nilai > ?", [80]) {
+    cetak(b["nama"], b["nilai"])        # Budi 85.5
+}
+db_tutup(db)
+```
+
+Pemetaan tipe: `NULL` ↔ `kosong`, `INTEGER`/`REAL` ↔ angka, `TEXT` ↔ teks.
+
+Batasan yang disengaja — semuanya bergalat, bukan diam-diam salah:
+
+- **Satu pernyataan per panggilan.** `"INSERT ...; DROP TABLE ..."` ditolak
+  sebelum apa pun dijalankan.
+- **Jumlah `?` harus sama** dengan panjang `params`.
+- **Hanya `?` anonim**, bukan `:nama` atau `?1`.
+- **`BLOB` belum didukung** (menunggu tipe `bita`), dan `INTEGER` di luar
+  jangkauan tepat angka desimal (±2⁵³) ditolak daripada dibulatkan diam-diam.
+- Handle yang sudah ditutup → galat, bukan crash.
+
+Contoh lengkap, termasuk transaksi dan uji anti-injeksi:
+
+{{embed:examples/db_sqlite.idk}}
+
 ---
 
 ## 2. Pustaka Standar (`pustaka/`)

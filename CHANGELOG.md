@@ -7,6 +7,24 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 3
+- 🗄️ **Basis data SQLite tertanam** — 10 fungsi bawaan (`db_buka`,
+  `db_eksekusi`, `db_ambil_semua`, `db_ambil_satu`, `db_baris_terpengaruh`,
+  `db_id_terakhir`, `db_mulai`, `db_komit`, `db_batal`, `db_tutup`).
+  SQLite **3.50.4** di-*vendor* sebagai amalgamation resmi (public domain,
+  SHA256 tercatat di `src/SQLITE_PROVENANCE.md`), jadi `make` tetap satu
+  langkah tanpa dependensi dan tanpa menunggu FFI. Handle `OBJ_DB` menutup
+  diri saat GC seperti `OBJ_FILE`/`OBJ_SOCKET`; `db_buka(":memory:")` bekerja
+  di lingkungan read-only seperti playground.
+
+  Keamanan bukan tambahan belakangan: parameter `?` ada sejak versi pertama,
+  satu panggilan hanya menerima **satu** pernyataan — ditolak *sebelum*
+  pernyataan pertama dijalankan, sehingga `"INSERT ...; DROP TABLE ..."`
+  tidak pernah mengubah apa pun — jumlah `?` wajib sama dengan panjang
+  parameter, dan hanya `?` anonim yang diterima. `BLOB` serta `INTEGER` di
+  luar jangkauan tepat ±2⁵³ **bergalat** daripada merusak data diam-diam.
+  Ukuran biner naik ~140 KB → ~1,2 MB.
+
 ### Fixed
 - 🐛 **Kompilator menggantung selamanya pada `}` yang tidak punya pasangan.**
   Berkas yang hanya berisi `}` pun membuat `indk` berputar tanpa henti

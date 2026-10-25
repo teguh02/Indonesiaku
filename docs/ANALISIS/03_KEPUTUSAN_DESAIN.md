@@ -247,3 +247,41 @@ bernama 'warna'.`, `Parameter 'a' diisi lebih dari sekali.`
 
 Fungsi bawaan (native) belum menerima argumen bernama dan menolaknya dengan
 pesan jelas. `cetak(pisah=, akhir=)` menunggu K12.
+
+## K18 — SQLite di-*vendor* sebagai amalgamation, bukan lewat FFI
+
+**Keputusan:** `src/sqlite3.c` + `src/sqlite3.h` disalin apa adanya dari rilis
+resmi sqlite.org dan ikut di-commit. Versi terkunci, SHA256 dicatat di
+`src/SQLITE_PROVENANCE.md`. Berkas vendor **tidak pernah disunting** dan
+dikompilasi tanpa `-Wall -Wextra` lewat aturan Makefile tersendiri.
+
+**Alasan menolak alternatif:**
+
+- *Menunggu FFI (rencana lama: Fase 8).* Tidak perlu. Amalgamation hanyalah
+  satu berkas `.c` tanpa dependensi di luar libc; menahan basis data di
+  belakang proyek FFI tidak punya pembenaran teknis. SQLite dimajukan ke
+  Fase 3.
+- *`-lsqlite3` dari sistem.* Membuat `make` butuh `apt install` di Linux dan
+  lebih rumit lagi di Windows/Alpine, serta membuat hasil uji bergantung pada
+  versi SQLite mesin. Harga vendoring (repo +~9 MB, pembaruan manual saat ada
+  CVE) dibayar sekali dan ditanggung maintainer, bukan mahasiswa.
+
+**Keamanan ikut diputuskan di sini, bukan ditunda:**
+
+- Parameter `?` ada sejak versi pertama. Tanpa itu pengguna akan merangkai SQL
+  dengan `+` dan setiap contoh yang diajarkan menjadi contoh SQL injection.
+- Satu panggilan = satu pernyataan, divalidasi dengan `sqlite3_complete`
+  **sebelum `sqlite3_prepare_v2`** — sebagian `PRAGMA` mengubah keadaan
+  koneksi sudah saat prepare, bukan hanya saat step. Karena itu penolakan
+  terjadi sebelum efek samping apa pun.
+- Hanya `?` anonim; `:nama` dan `?1` ditolak agar pencocokan posisi parameter
+  tidak pernah ambigu.
+- `BLOB` dan `INTEGER` di luar ±2⁵³ **bergalat**, tidak dipaksakan ke
+  `double`. Diam-diam merusak nilai jauh lebih berbahaya daripada menolak;
+  keduanya dibuka kembali saat `bita` dan `bulat` int64 ada (Fase 2/6).
+
+**Jebakan GC:** `db_ambil_semua` membangun daftar berisi kamus sambil
+mengalokasi string tiap kolom. Daftar hasil, kamus baris, kunci, dan nilai
+harus semuanya ter-root di stack VM saat `dictSet`/`writeValueArray` dipanggil
+— keduanya bisa memicu GC. Ini pola `OP_BUILD_DICT`, tetapi bersarang dua
+tingkat.

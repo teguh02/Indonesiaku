@@ -112,5 +112,36 @@
       "${1:fungsi}(${2:nilai}, ${3:parameter}=${4:nilai})$0"
     ],
     "description": "Panggilan dengan argumen bernama; posisional harus mendahului yang bernama"
+  },
+  "Buka basis data SQLite": {
+    "prefix": "dbbuka",
+    "body": [
+      "variabel ${1:db} = db_buka(\"${2::memory:}\")",
+      "$0",
+      "db_tutup(${1:db})"
+    ],
+    "description": "Buka basis data SQLite dan tutup kembali"
+  },
+  "Kueri SQLite dengan parameter": {
+    "prefix": "dbkueri",
+    "body": [
+      "untuk ${1:baris} dalam db_ambil_semua(${2:db}, \"SELECT ${3:*} FROM ${4:tabel} WHERE ${5:kolom} = ?\", [${6:nilai}]) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Kueri SQLite dengan parameter '?' (jangan merangkai SQL dengan +)"
+  },
+  "Transaksi SQLite": {
+    "prefix": "dbtransaksi",
+    "body": [
+      "db_mulai(${1:db})",
+      "coba {",
+      "\t$0",
+      "\tdb_komit(${1:db})",
+      "} kecuali Galat sebagai e {",
+      "\tdb_batal(${1:db})",
+      "}"
+    ],
+    "description": "Transaksi SQLite dengan rollback saat galat"
   }
 }

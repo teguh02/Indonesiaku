@@ -1,9 +1,9 @@
 # Rencana Fitur: Basis data SQLite
 
-- **Status:** usulan
+- **Status:** selesai
 - **Target versi:** 0.9.0 (Fase 3) — **dimajukan dari Fase 8**
 - **Pemilik:** Teguh
-- **Keputusan terkait:** calon K18
+- **Keputusan terkait:** K18
 
 ## 1. Masalah
 
@@ -182,22 +182,42 @@ sedang diisi harus keduanya ada di stack VM saat `dictSet` dipanggil —
     harus tersimpan sebagai teks biasa, tabel tetap utuh (ini tes keamanan,
     wajib ada)
   - handle ditutup lalu dipakai → galat, bukan crash
-- Tes galat: `db_sql_salah`, `db_params_tidak_cocok`, `db_ditutup`.
+- Tes galat: `db_params_tidak_cocok`, `db_dua_pernyataan`, `db_ditutup`.
+  (`db_sql_salah` tidak dibuat: SQL salah sudah tercakup jalur `dbError` yang
+  sama dan diuji manual; fixture-nya hanya akan mengunci teks pesan SQLite.)
 - `-DDEBUG_STRESS_GC` + ASan **wajib** — lihat catatan GC di §4.
+
+### Hasil (2026-10-25)
+
+Semua butir di atas terpenuhi; golden `db_sqlite` mencakup seluruh kasus batas
+dalam satu berkas, tiga tes galat terpisah untuk yang harus gagal.
+
+```text
+tests/test_all.sh                         104/104 PASSED
+ASan+UBSan+DEBUG_STRESS_GC                bersih (golden + galat + stress 40×20 baris)
+vendor sqlite3.c/.h vs rilis resmi        identik byte-per-byte (cmp)
+BUILTINS ekstensi vs defineNative         82 = 82
+```
+
+Diverifikasi ulang oleh parent, bukan diambil dari laporan agen: percobaan
+injeksi sebagai parameter tersimpan inert dan tabel tetap utuh; pernyataan
+kedua ditolak **sebelum** yang pertama dijalankan; titik koma di dalam string
+literal dan di dalam body `CREATE TRIGGER` tidak salah dibaca sebagai pemisah;
+`PRAGMA` dan komentar di ekor tetap diterima.
 - CI: amalgamation menambah waktu kompilasi; kompilasi `sqlite3.o` sekali dan
   biarkan cache Makefile bekerja (objek hanya bergantung pada header).
 
 ## 6. Dampak dokumentasi
 
-- [ ] `website/panduan/07_PUSTAKA_STANDAR.md` — seksi basis data
-- [ ] `website/panduan/` — pertimbangkan panduan baru "Basis Data"
-- [ ] `README.md` + `CHANGELOG.md`
-- [ ] `docs/ROADMAP.md` — pindahkan `sqlite` dari Fase 8 ke Fase 3
-- [ ] `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` — `sqlite3` ❌ → ✅
-- [ ] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K18: vendoring amalgamation
-- [ ] `editors/vscode-indonesiaku/extension.js` — 10 builtin baru
-- [ ] `AGENTS.md` — `sqlite3.c` jangan disunting; jebakan GC bersarang
-- [ ] `docker/images/Dockerfile` — pastikan biner tetap jalan di Alpine/musl
+- [x] `website/panduan/07_PUSTAKA_STANDAR.md` — seksi 1.10 Basis Data
+- [ ] `website/panduan/` — panduan terpisah "Basis Data" (belum; seksi 1.10 sudah cukup untuk sekarang)
+- [x] `README.md` + `CHANGELOG.md`
+- [x] `docs/ROADMAP.md` — `sqlite` di Fase 3, ditandai selesai
+- [x] `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` — `sqlite3` ❌ → ✅
+- [x] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K18 ditulis
+- [x] `editors/vscode-indonesiaku/extension.js` — 10 builtin (82 = 82, cocok dengan `defineNative`) + 3 snippet
+- [x] `AGENTS.md` — `sqlite3.c` jangan disunting; jebakan GC bersarang
+- [x] `docker/images/Dockerfile` — objek host dibersihkan sebelum kompilasi musl
 
 ## 7. Risiko & alternatif
 

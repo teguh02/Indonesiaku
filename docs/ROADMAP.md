@@ -99,9 +99,12 @@ Ref: K2, K8, K11, K13, 06 §4–6.
 `ObjModule` dengan namespace, `impor x`, `dari x impor y sebagai z`, paket,
 jalur pencarian (`INDK_PATH`), `__utama__`; modul P1 dari katalog 07:
 `matematika`, `acak`, `teks`, `sistem`, `waktu`, `tanggal_waktu`, `json`
-(native). Ditambah **basis data SQLite** — lihat
-[`RENCANA_FITUR/basis_data_sqlite.md`](RENCANA_FITUR/basis_data_sqlite.md)
+(native). Ditambah **basis data SQLite** — ✅ **selesai**, lihat
+[`RENCANA_FITUR/selesai/basis_data_sqlite.md`](RENCANA_FITUR/selesai/basis_data_sqlite.md)
 (dimajukan dari Fase 8: amalgamation adalah satu berkas `.c`, tidak butuh FFI).
+SQLite 3.50.4 di-*vendor*; 10 fungsi `db_*` dengan parameter `?` wajib dan
+satu pernyataan per panggilan. Sisa Fase 3 (`ObjModule`, `impor x`, paket)
+belum dikerjakan.
 Ref: 04 §6, 07 §1–5.
 
 ### ★ Rilis 1.0 — "Stabil untuk umum"

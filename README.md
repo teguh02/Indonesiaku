@@ -549,6 +549,27 @@ Dibangun di atas native soket TCP (`soket_dengar`/`soket_terima`/...) dan
 `pustaka/http.idk` (parsing request + pembuatan response). Server single-thread
 & blocking untuk tujuan edukasi.
 
+## 🗄️ Basis Data SQLite
+
+SQLite tertanam langsung di dalam `indk` — tidak ada yang perlu dipasang.
+
+```indonesiaku
+variabel db = db_buka(":memory:")          # atau "sekolah.db"
+db_eksekusi(db, "CREATE TABLE siswa (id INTEGER PRIMARY KEY, nama TEXT, nilai REAL)")
+db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", ["Budi", 85.5])
+
+untuk b dalam db_ambil_semua(db, "SELECT nama, nilai FROM siswa WHERE nilai > ?", [80]) {
+    cetak(b["nama"], b["nilai"])           # tiap baris adalah kamus
+}
+db_tutup(db)
+```
+
+**Selalu pakai `?`, jangan merangkai SQL dengan `+`.** Nilai lewat parameter
+disimpan sebagai data, tidak pernah dieksekusi. Satu panggilan hanya menerima
+satu pernyataan, sehingga `"INSERT ...; DROP TABLE ..."` ditolak sebelum apa
+pun berjalan. Selengkapnya: `examples/db_sqlite.idk` dan
+[panduan pustaka standar](website/panduan/07_PUSTAKA_STANDAR.md).
+
 ## 🔤 Kata Kunci
 
 ### Tabel Pemetaan (Python → Indonesiaku)
