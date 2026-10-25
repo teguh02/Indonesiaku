@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `0.4.0`).
+Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `1.0.0`).
 
 ## Identity: Python semantics, PHP-style braces (NON-NEGOTIABLE)
 
@@ -23,7 +23,7 @@ Poin yang wajib dijaga setiap kali dokumen publik disentuh:
   lain). Jika sebuah draft eksternal menyebut nama lain, sesuaikan sebelum
   masuk ke repo.
 - **Jangan membuat asumsi bahwa proyek ini belum punya roadmap/versi.** Proyek
-  ini sudah menempuh v0.4.0 dengan roadmap di `docs/ROADMAP.md` dan analisis
+  ini sudah menempuh v1.0.0 dengan roadmap di `docs/ROADMAP.md` dan analisis
   desain di `docs/ANALISIS/`. Dokumen publik harus tetap selaras dengan status
   tersebut.
 - **Jangan menimbulkan kesan afiliasi resmi** dengan pemerintah atau lembaga

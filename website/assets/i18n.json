@@ -11,7 +11,7 @@
     "ui_copy": "salin",
     "ui_copied": "tersalin",
 
-    "hero_eyebrow": "BAHASA PEMROGRAMAN INDONESIA · V0.4.0",
+    "hero_eyebrow": "BAHASA PEMROGRAMAN INDONESIA · V1.0.0",
     "hero_title_1": "Menulis kode",
     "hero_title_2": "dalam Bahasa Indonesia",
     "hero_lead": "Indonesiaku adalah bahasa pemrograman berbasis bytecode VM dengan sintaks Bahasa Indonesia. Tulis fungsi, kelas, JSON, dan HTTP dengan kata kunci yang langsung terbaca.",
@@ -129,7 +129,7 @@
     "ui_copy": "copy",
     "ui_copied": "copied",
 
-    "hero_eyebrow": "INDONESIAN PROGRAMMING LANGUAGE · V0.4.0",
+    "hero_eyebrow": "INDONESIAN PROGRAMMING LANGUAGE · V1.0.0",
     "hero_title_1": "Write code",
     "hero_title_2": "in Indonesian",
     "hero_lead": "Indonesiaku is a bytecode-VM programming language with Indonesian syntax. Write functions, classes, JSON, and HTTP with keywords that read naturally.",

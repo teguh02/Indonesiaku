@@ -10,7 +10,7 @@ Selamat datang di dokumentasi lengkap **Bahasa Pemrograman Indonesiaku** - Bahas
 Pengenalan umum tentang Bahasa Pemrograman Indonesiaku, sejarah, visi, dan misi.
 - Apa itu Bahasa Pemrograman Indonesiaku?
 - Mengapa dibuat?
-- Fitur utama v0.4.0
+- Fitur utama v1.0.0
 - Roadmap pengembangan
 
 ### 2. [Panduan Instalasi](02_INSTALASI.md)
@@ -101,7 +101,7 @@ cetak("Hasil penjumlahan:", jumlah)
 
 | Aspek | Keterangan |
 |-------|-----------|
-| **Versi** | v0.4.0 |
+| **Versi** | v1.0.0 |
 | **Tipe** | Bytecode VM (interpreted) + garbage collector |
 | **Syntax** | Kurung kurawal `{ }` dengan keyword Bahasa Indonesia |
 | **Tipe Data** | Angka, boolean, string, kosong, list, kamus |
@@ -147,4 +147,4 @@ Terima kasih telah menggunakan Bahasa Pemrograman Indonesiaku. Kami sangat mengh
 ---
 
 **Maintainer**: Teguh Rijanandi  
-**Version**: v0.4.0
+**Version**: v1.0.0

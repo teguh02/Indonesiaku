@@ -56,7 +56,7 @@ Pengembangan proyek dilakukan secara terbuka dan nonkomersial. Partisipasi serta
 Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut lain yang dapat memberikan kesan proyek resmi pemerintah.
 ## ✨ Fitur
 
-### Saat Ini (v0.4.0)
+### Saat Ini (v1.0.0)
 - ✅ Ekspresi aritmatika (+, -, *, /, %, **) & assignment gabungan (+=, -=, dll)
 - ✅ Tipe data: angka (`bulat` int64 + `desimal` double, seperti Python), boolean (`benar`/`salah`), `kosong`, string
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
@@ -683,7 +683,7 @@ Fungsi berikut tersedia langsung tanpa impor (didefinisikan di `src/native.c`):
 ### Utilitas
 | Fungsi | Deskripsi |
 |--------|-----------|
-| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
+| `jenis(x)` | Nama tipe: `"angka"`, `"teks"`, `"logika"`, `"kosong"`, `"daftar"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
 | `input(prompt)` | Baca satu baris dari stdin (prompt opsional) |
 | `henti(detik)` | Jeda eksekusi selama `detik` detik |
 | `jam()` | Waktu CPU berjalan (detik) |
@@ -724,7 +724,7 @@ Semua kegagalan dapat ditangkap dengan `coba/kecuali`.
 Roadmap **satu-satunya** ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** (status
 per fitur + rencana detail). Ringkasnya: semua fitur inti (closure, list/kamus,
 kelas & warisan, exception, modul, GC, file I/O, JSON, HTTP, soket TCP) sudah
-selesai di v0.4.0, dan Fase 0 (stabilisasi: operator, `akhirnya`, `lewati`,
+selesai di v1.0.0, dan Fase 0 (stabilisasi: operator, `akhirnya`, `lewati`,
 galat yang bisa ditangkap, teks Unicode) sedang menuju rilis berikutnya.
 
 ## 🏗️ Arsitektur

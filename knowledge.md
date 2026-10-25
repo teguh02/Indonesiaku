@@ -11,7 +11,7 @@ implemented as a **bytecode virtual machine in C11** (architecture follows
 ```
 
 No AST is built; the compiler emits bytecode directly. Version constant lives in
-`src/common.h` (`INDK_VERSION`); currently `0.4.0`.
+`src/common.h` (`INDK_VERSION`); currently `1.0.0`.
 
 ## Where the code lives
 

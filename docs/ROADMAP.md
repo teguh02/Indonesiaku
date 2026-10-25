@@ -1,6 +1,6 @@
 # Roadmap — Bahasa Indonesiaku
 
-**Satu-satunya sumber kebenaran untuk roadmap.** Versi saat ini: `0.4.0`
+**Satu-satunya sumber kebenaran untuk roadmap.** Versi saat ini: `1.0.0`
 (`INDK_VERSION` di `src/common.h`). Riwayat detail per rilis ada di
 [`CHANGELOG.md`](../CHANGELOG.md).
 
@@ -17,6 +17,7 @@ alasan setiap fase ada di [`ANALISIS/`](ANALISIS/README.md).
 | 0.2.0 | Closure/upvalue, list, kamus, `untuk...dalam`, `hentikan`/`lanjut`, kelas + warisan, `naikkan`/`coba`/`kecuali`, `impor`, GC mark-sweep | `examples/closure.idk`, `examples/oop/` |
 | 0.3.0 | Pustaka standar `pustaka/*.idk`, file I/O, waktu/tanggal, konversi, escape string, `argumen`, REPL multi-baris | `pustaka/`, `examples/berkas.idk` |
 | 0.4.0 | JSON, HTTP, soket TCP, server REST contoh, `ord`/`chr`/`sisip`/`hapus_pada`; pesan error dengan nomor baris + jejak panggilan | `examples/todo_server.idk`, `src/vm.c` `runtimeError` |
+| 1.0.0 | Fase 0–3 tuntas: stabilisasi, inti mirip Python, tipe data lengkap (`bulat`/`desimal`, tupel, himpunan, himpunan beku), modul bernamespace + paket + `__utama__`, SQLite; `SPESIFIKASI.md` normatif; contoh panduan diuji otomatis | `docs/SPESIFIKASI.md`, `tests/test_panduan.sh` |
 
 ## Fase pengembangan
 
@@ -153,11 +154,12 @@ diimpor bermodul (`impor matematika`), sehingga penulisan ulang ke C adalah
 optimasi, bukan fitur yang hilang.
 Ref: 04 §6, 07 §1–5.
 
-### ★ Rilis 1.0 — "Stabil untuk umum"
+### ★ Rilis 1.0 — "Stabil untuk umum" — ✅ **syarat terpenuhi**
 
-Syarat: Fase 0–3 selesai; `docs/SPESIFIKASI.md` ditulis; semua contoh di
-panduan diuji otomatis; kebijakan stabilitas K14 berlaku. Setelah 1.0, tidak
-ada breaking change sampai 2.0.
+Syarat: ✅ Fase 0–3 selesai; ✅ [`SPESIFIKASI.md`](SPESIFIKASI.md) ditulis;
+✅ semua contoh di panduan diuji otomatis (`tests/test_panduan.sh`, ikut
+dijalankan `tests/test_all.sh`); ✅ kebijakan stabilitas K14 berlaku. Setelah
+1.0, tidak ada breaking change sampai 2.0.
 
 ### Fase 4 — OOP lengkap (1.1–1.2)
 

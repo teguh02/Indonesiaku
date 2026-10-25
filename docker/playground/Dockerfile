@@ -20,7 +20,7 @@ RUN apk add --no-cache nginx python3 su-exec \
 
 LABEL maintainer="Teguh Rijanandi <teguhrijanandi02@gmail.com>"
 LABEL description="Dokumentasi + playground bahasa pemrograman Indonesiaku"
-LABEL version="0.4.0"
+LABEL version="1.0.0"
 
 # Interpreter + pustaka standar (untuk `impor "pustaka/..."`).
 COPY --from=build /src/indk /usr/local/bin/indk

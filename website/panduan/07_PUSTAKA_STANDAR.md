@@ -386,7 +386,7 @@ sama. Daftar/kamus/rentang tidak bisa menjadi kunci (`GalatTipe`).
 | `turunan_dari(kelas, induk)` | `benar` bila `kelas` turunan `induk` (kelas adalah turunan dirinya sendiri) |
 | `repr(x)` | Representasi untuk **debug**: teks ditampilkan **dengan tanda kutip** |
 | `format(pola, ...)` | Ganti setiap `{}` di pola dengan argumen |
-| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"tupel"`, `"himpunan"`, `"himpunan_beku"`, `"iterator"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
+| `jenis(x)` | Nama tipe: `"angka"`, `"teks"`, `"logika"`, `"kosong"`, `"daftar"`, `"tupel"`, `"himpunan"`, `"himpunan_beku"`, `"iterator"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"`, `"modul"`, `"fungsi"`, `"rentang"` |
 
 #### `ke_desimal` — memaksa desimal
 

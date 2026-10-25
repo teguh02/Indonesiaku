@@ -149,7 +149,7 @@ nama = "Teguh"
 
 ### Naming Rules (Aturan Penamaan)
 
-```indonesiaku
+```indonesiaku-takjalan
 # VALID - Boleh digunakan
 nama = "Budi"
 nama_lengkap = "Budi Santoso"
@@ -327,6 +327,9 @@ jadi `[1, 2] dalam [[1, 2]]` bernilai `benar`.
 Perbandingan dapat dirantai seperti Python: operand tengah dihitung sekali dan evaluasi berhenti saat salah.
 
 ```indonesiaku
+x = 2
+buah = ["apel", "jeruk"]
+
 cetak(1 < x < 3)
 cetak("apel" dalam buah == buah)
 ```
@@ -455,6 +458,8 @@ hasil3 = 10 > 5 dan 3 < 2 atau 4 == 4  # benar
 Struktur dasar percabangan:
 
 ```indonesiaku
+kondisi = benar
+
 jika kondisi {
     # code jika kondisi benar
 }
@@ -569,6 +574,8 @@ jika (x > 0 dan x < 100) atau x == 0 {
 Struktur dasar loop:
 
 ```indonesiaku
+kondisi = salah
+
 selagi kondisi {
     # code yang diulang
 }
@@ -848,6 +855,8 @@ boleh dikosongkan, dan aturannya mengikuti Python: batas di-*clamp*, irisan di
 luar jangkauan menghasilkan hasil kosong (bukan galat).
 
 ```indonesiaku
+a = [10, 20, 30, 40, 99]
+
 cetak(a[1:3])     # [20, 30]      — dari 1 sampai sebelum 3
 cetak(a[:2])      # [10, 20]      — dari awal
 cetak(a[3:])      # [40, 99]      — sampai akhir
@@ -893,7 +902,7 @@ Membaca tupel sama seperti membaca daftar: indeks, irisan (hasilnya tupel),
 `untuk ... dalam`, `dalam`, `panjang`, `jumlah`, `terurut`, dan seterusnya.
 Yang berbeda: tupel **tidak bisa diubah**.
 
-```indonesiaku
+```indonesiaku-takjalan
 titik = (3, 4)
 titik[0] = 10      # GalatTipe: Tupel tidak dapat diubah.
 ```
@@ -1034,7 +1043,7 @@ Kamus dibuat dengan **literal `{ }`** atau dengan `kamus()`.
 
 ```indonesiaku
 orang = {"nama": "Budi", "umur": 25}
-kosong = {}
+kamus_kosong = {}
 
 # Multi-baris, koma di akhir boleh
 data = {
@@ -1162,7 +1171,7 @@ Jumlah nilai yang tidak cocok menimbulkan `GalatNilai` yang bisa ditangkap.
 `buang` (padanan `del` Python) menghapus variabel, elemen daftar, kunci kamus,
 atau atribut objek:
 
-```indonesiaku
+```indonesiaku-takjalan
 angka = [10, 20, 30]
 buang angka[0]        # [20, 30]
 
@@ -1171,6 +1180,10 @@ buang kamus["a"]      # {"b": 2}
 
 x = 5
 buang x               # nama 'x' hilang; membacanya lagi = GalatNama
+
+kelas Kotak {
+    fungsi init(diri, isi) { diri.isi = isi }
+}
 
 k = Kotak(7)
 buang k.isi           # hapus atribut
@@ -1366,7 +1379,7 @@ cetak(isi)                         # [1, 2, 3]
 Satu batasan: metode bawaan **harus langsung dipanggil**. Menyimpannya sebagai
 nilai belum didukung dan akan ditolak dengan pesan yang menjelaskan hal itu:
 
-```indonesiaku
+```indonesiaku-takjalan
 variabel f = "abc".huruf_besar     # ditolak — tulis "abc".huruf_besar()
 ```
 
@@ -1481,6 +1494,7 @@ Di pesan kesalahan namanya muncul sebagai `<anonim>`.
 Memilih satu dari dua nilai tanpa menulis blok `jika`:
 
 ```indonesiaku
+variabel nilai = 75
 variabel label = "lulus" jika nilai >= 60 selain "gagal"
 ```
 
@@ -1492,6 +1506,7 @@ wajib ada.
 dijalankan.** Karena itu pola penjaga berikut aman walaupun daftarnya kosong:
 
 ```indonesiaku
+variabel x = [1, 2]
 cetak(x[0] jika panjang(x) > 0 selain "kosong")
 ```
 
@@ -1499,6 +1514,8 @@ Jangan keliru dengan pernyataan `jika`, yang memakai blok dan tidak
 menghasilkan nilai:
 
 ```indonesiaku
+variabel nilai = 75
+
 jika nilai >= 60 { cetak("lulus") } selain { cetak("gagal") }   # pernyataan
 variabel l = "lulus" jika nilai >= 60 selain "gagal"            # ekspresi
 ```
@@ -1515,6 +1532,8 @@ Contoh lengkap: [`examples/fungsi_anonim.idk`](../examples/fungsi_anonim.idk)
 apa-apa; kalau salah, program menaikkan `GalatPenegasan`.
 
 ```indonesiaku
+variabel umur = 20
+
 pastikan umur >= 0
 pastikan umur >= 0, "umur tidak boleh negatif"      # dengan pesan sendiri
 ```
@@ -1668,7 +1687,7 @@ Blok `akhirnya` **selalu** dijalankan, baik terjadi kesalahan maupun tidak.
 Cocok untuk menutup berkas atau soket. Tanpa `kecuali`, kesalahan diteruskan
 ke luar setelah blok `akhirnya` selesai:
 
-```indonesiaku
+```indonesiaku-takjalan
 f = buka_berkas("data.txt", "b")
 coba {
     cetak(baca(f))
@@ -1959,6 +1978,8 @@ cetak("Level 1")
 ### 3. Gunakan Comments untuk Logic Kompleks
 
 ```indonesiaku
+harga = 50000
+
 # ✅ BAIK
 # Menghitung total dengan diskon 10%
 total = harga * 0.9
@@ -2121,4 +2142,4 @@ selagi angka <= 20 {
 
 **Dokumen ini memberikan fondasi untuk mulai menggunakan Bahasa Pemrograman Indonesiaku. Untuk pertanyaan lebih lanjut, silakan lihat contoh di folder `/examples` atau [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).**
 
-Versi bahasa: v0.4.0
+Versi bahasa: v1.0.0

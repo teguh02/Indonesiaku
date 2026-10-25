@@ -30,14 +30,14 @@ Dalam dokumentasi Indonesiaku, kami telah membahas:
 ### Status Proyek Saat Ini
 
 ```
-Versi:          0.4.0
+Versi:          1.0.0
 Golden test:    51 lulus (CI lintas Linux/macOS/Windows)
 Examples:       50+ program contoh
 Pustaka:        teks, daftar, matematika, kamus, json, http
 Documentation:  Lengkap & komprehensif
 ```
 
-### Pencapaian v0.4.0
+### Pencapaian v1.0.0
 
 | Kategori | Status |
 |----------|--------|
@@ -101,7 +101,7 @@ Documentation:  Lengkap & komprehensif
 
 **Q: Apakah Indonesiaku production-ready?**
 
-A: v0.4.0 sudah mencakup fitur inti (list, kamus, kelas/OOP, exception, modul,
+A: v1.0.0 sudah mencakup fitur inti (list, kamus, kelas/OOP, exception, modul,
 GC, File I/O, soket) dengan pengujian golden + integrasi di CI. Cocok untuk
 pembelajaran dan aplikasi kecil-menengah. Untuk sistem skala besar/produksi
 kritis, pertimbangkan bahasa yang lebih matang ekosistemnya.
@@ -114,7 +114,7 @@ A: Ya, bisa untuk educational projects dan simple applications. Untuk large-scal
 
 A: Ya, variable names dan keywords adalah case-sensitive.
 
-```indonesiaku
+```indonesiaku-takjalan
 x = 10
 X = 20  # Variabel berbeda dengan x
 
@@ -125,7 +125,7 @@ Fungsi test() { }  # ERROR - harus 'fungsi' (lowercase)
 
 A: Keywords harus Latin (ASCII), tapi strings dapat menggunakan Unicode:
 
-```indonesiaku
+```indonesiaku-takjalan
 # ✅ OK
 teks = "Halo, 世界! 🌍"
 cetak(teks)
@@ -152,7 +152,7 @@ A: Tips untuk optimize code:
 3. **Cache calculations** - Don't recalculate same values
 4. **Profile code** - Understand where time is spent
 
-```indonesiaku
+```indonesiaku-takjalan
 # ❌ Slow - Rekursi dalam loop
 i = 0
 selagi i < 1000 {
@@ -251,7 +251,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe src/*.c -lm
 
 Solution: Variable tidak dideklarasikan sebelum digunakan.
 
-```indonesiaku
+```indonesiaku-takjalan
 # ❌ ERROR
 cetak(x)  # x tidak defined
 
@@ -283,7 +283,7 @@ fungsi factorial(n) {
 
 Check syntax - mungkin ada typo atau missing punctuation:
 
-```indonesiaku
+```indonesiaku-takjalan
 # ❌ ERROR - Missing {
 jika x > 0
     cetak(x)
@@ -550,7 +550,7 @@ Jika menggunakan Indonesiaku untuk research atau projects:
 Author: Teguh Rijanandi
 Project: Bahasa Pemrograman Indonesiaku
 Repository: https://github.com/teguh02/Indonesiaku
-Version: 0.4.0
+Version: 1.0.0
 ```
 
 ### Credits
@@ -645,7 +645,7 @@ Mari bersama-sama membangun masa depan programming yang lebih accessible, innova
 
 ```
 ╔════════════════════════════════════════════════════╗
-║     Bahasa Pemrograman Indonesiaku v0.4.0           ║
+║     Bahasa Pemrograman Indonesiaku v1.0.0           ║
 ║                                                    ║
 ║  "Programming dalam bahasa ibu kita"              ║
 ║                                                    ║

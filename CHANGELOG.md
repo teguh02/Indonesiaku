@@ -7,6 +7,19 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-25
+
+Rilis stabil pertama. Mulai versi ini kebijakan **K14** berlaku: perilaku yang
+tertulis di [`docs/SPESIFIKASI.md`](docs/SPESIFIKASI.md) tidak akan berubah
+sampai 2.0.
+
+### Changed
+- ⚠️ **`jenis()` kini konsisten berbahasa Indonesia**: `"string"` → `"teks"`,
+  `"boolean"` → `"logika"`, `"list"` → `"daftar"`, `"object"` → `"objek"`.
+  Nama-nama ini kini sama dengan yang dipakai pesan galat. Sengaja dilakukan
+  SEBELUM 1.0 karena setelahnya K14 mengunci perilaku sampai 2.0.
+  Konsumen di repo (`pustaka/json.idk`) ikut diperbarui.
+
 ### Added — Fase 3: modul & namespace
 - ✨ **`ObjModule`**: setiap berkas kini punya namespace global sendiri, jadi
   dua modul boleh memakai nama yang sama tanpa saling menimpa.

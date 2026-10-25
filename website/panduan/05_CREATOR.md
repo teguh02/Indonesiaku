@@ -334,7 +334,7 @@ Kepada semua yang percaya pada visi Indonesiaku dan mendukung perjalanan ini!
 
 ### Jangka Pendek (1 tahun)
 
-- Rilis v0.4.0
+- Rilis v1.0.0
 - Growing community
 - More examples dan tutorials
 - Indonesian language adoption

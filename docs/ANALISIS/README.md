@@ -1,6 +1,6 @@
 # Analisis Indonesiaku vs Python
 
-Hasil audit menyeluruh (2026-10-24) terhadap Indonesiaku v0.4.0 dan
+Hasil audit menyeluruh (2026-10-24) terhadap Indonesiaku v1.0.0 dan
 pemetaan lengkap fitur Python 3.12 yang akan ditiru. Urutan pengerjaan
 resmi **tidak** ada di sini, melainkan di [`../ROADMAP.md`](../ROADMAP.md);
 folder ini berisi alasan dan rinciannya.

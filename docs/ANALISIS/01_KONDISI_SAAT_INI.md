@@ -1,4 +1,4 @@
-# 01 — Kondisi Indonesiaku Saat Ini (audit v0.4.0)
+# 01 — Kondisi Indonesiaku Saat Ini (audit v1.0.0)
 
 > Tanggal audit: 2026-10-24. Basis: kode di `src/`, `pustaka/`, `examples/`,
 > 51 tes golden (semua lulus), plus ±80 skrip uji coba tambahan yang ditulis

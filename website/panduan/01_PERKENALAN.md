@@ -21,7 +21,7 @@ Menjadi bahasa pemrograman pertama yang fully mendukung pemrograman dalam Bahasa
 
 ## Fitur Utama
 
-### ✅ v0.4.0 (Saat Ini)
+### ✅ v1.0.0 (Saat Ini)
 
 **Tipe Data**
 - ✅ Angka (integer & float, direpresentasikan sebagai `double`)
@@ -61,7 +61,7 @@ Menjadi bahasa pemrograman pertama yang fully mendukung pemrograman dalam Bahasa
 ## Roadmap Pengembangan
 
 Semua fitur inti (list, kamus, kelas/OOP, exception, modul, GC, File I/O, soket)
-sudah **terimplementasi** di v0.4.0, dan tahap stabilisasi (`akhirnya`,
+sudah **terimplementasi** di v1.0.0, dan tahap stabilisasi (`akhirnya`,
 `lewati`, kesalahan yang bisa ditangkap, teks Unicode) sudah selesai.
 Kandidat pekerjaan berikutnya:
 
@@ -240,5 +240,5 @@ Lihat file **KONTRIBUSI.md** untuk detail lengkap.
 ---
 
 **Status**: Aktif dikembangkan  
-**Latest Version**: v0.4.0  
+**Latest Version**: v1.0.0  
 **Maintainer**: Teguh Rijanandi
