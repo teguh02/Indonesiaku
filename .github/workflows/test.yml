@@ -113,7 +113,7 @@ jobs:
             -DDEBUG_STRESS_GC \
             -o indk_asan \
             src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
-            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
 
       - name: Run every example under sanitizers
         env:
@@ -150,7 +150,7 @@ jobs:
         run: |
           gcc -std=c11 -g -O0 -Isrc -o indk_dbg \
             src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
-            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
 
       - name: Valgrind on representative examples
         run: |
@@ -180,7 +180,7 @@ jobs:
         run: |
           gcc -std=c11 -O0 -g --coverage -Isrc -o indk \
             src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
-            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
 
       - name: Exercise every example
         run: |
@@ -216,7 +216,7 @@ jobs:
           clang -g -O1 -fsanitize=fuzzer,address,undefined -Isrc \
             tests/fuzz_compile.c src/chunk.c src/compiler.c src/debug.c \
             src/memory.c src/native.c src/object.c src/scanner.c src/table.c \
-            src/value.c src/vm.c -lm -o fuzz_compile
+            src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm -o fuzz_compile
 
       - name: Seed corpus from examples
         run: |
