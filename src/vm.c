@@ -157,6 +157,18 @@ static ObjClass* defineErrorClass(const char* name, ObjClass* superclass) {
     return klass;
 }
 
+// Pull the ".pesan" field out of an error instance, or NULL when absent.
+static ObjString* errorMessage(ObjInstance* instance) {
+    for (int i = 0; i < instance->fields.capacity; i++) {
+        Entry* entry = &instance->fields.entries[i];
+        if (entry->key != NULL && strcmp(entry->key->chars, "pesan") == 0 &&
+            IS_STRING(entry->value)) {
+            return AS_STRING(entry->value);
+        }
+    }
+    return NULL;
+}
+
 static ObjInstance* newError(ObjClass* klass, const char* message) {
     ObjInstance* error = newInstance(klass);
     push(OBJ_VAL(error));
@@ -216,7 +228,7 @@ void initVM() {
     defineErrorClass("GalatOS", vm.galat);
     defineErrorClass("GalatImpor", vm.galat);
     defineErrorClass("GalatRekursi", vm.galat);
-    defineErrorClass("GalatPenegasan", vm.galat);
+    vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
     defineErrorClass("HentiIterasi", vm.galat);
     defineErrorClass("GalatSintaks", vm.galat);
 
@@ -620,14 +632,10 @@ static int resolveNativeError() {
         if (IS_STRING(error)) {
             runtimeError("%s", AS_CSTRING(error));
         } else if (IS_INSTANCE(error)) {
-            ObjInstance* instance = AS_INSTANCE(error);
-            for (int i = 0; i < instance->fields.capacity; i++) {
-                Entry* entry = &instance->fields.entries[i];
-                if (entry->key != NULL && strcmp(entry->key->chars, "pesan") == 0 &&
-                    IS_STRING(entry->value)) {
-                    runtimeError("%s", AS_CSTRING(entry->value));
-                    return -1;
-                }
+            ObjString* message = errorMessage(AS_INSTANCE(error));
+            if (message != NULL) {
+                runtimeError("%s", message->chars);
+                return -1;
             }
             runtimeError("Kesalahan tak tertangani dari fungsi bawaan.");
         } else {
@@ -1604,6 +1612,53 @@ static InterpretResult run() {
                 }
                 frame = &vm.frames[vm.frameCount - 1];
                 push(error);  // make the raised value available to 'kecuali'
+                break;
+            }
+            case OP_PASTIKAN: {
+                // The assertion already failed; the stack holds the message
+                // expression, or kosong when none was written.
+                Value given = peek(0);        // keep rooted: newError allocates
+                ObjInstance* error;
+                if (IS_KOSONG(given)) {
+                    error = newError(vm.galatPenegasan, "Penegasan gagal.");
+                } else if (IS_STRING(given)) {
+                    error = newError(vm.galatPenegasan, AS_CSTRING(given));
+                } else {
+                    // ponytail: numbers/booleans only; a full repr would need
+                    // native.c's appendValueText exported. Wrap the message in
+                    // ke_teks() for richer values.
+                    char buffer[64];
+                    if (IS_NUMBER(given)) {
+                        numberToString(AS_NUMBER(given), buffer, sizeof(buffer));
+                    } else if (IS_BOOL(given)) {
+                        snprintf(buffer, sizeof(buffer), "%s",
+                                 AS_BOOL(given) ? "benar" : "salah");
+                    } else {
+                        snprintf(buffer, sizeof(buffer), "Penegasan gagal.");
+                    }
+                    error = newError(vm.galatPenegasan, buffer);
+                }
+                pop();                        // drop the message expression
+                Value raised = OBJ_VAL(error);
+                if (!throwValue(raised)) {
+                    if (vm.nativeCallDepth > 0) {
+                        vm.nativeErrorValue = raised;
+                        vm.nativeErrorPending = true;
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    ObjString* message = errorMessage(error);
+                    // The default message is already a full sentence; only a
+                    // user-supplied one needs the "Penegasan gagal:" prefix.
+                    if (message == NULL ||
+                        strcmp(message->chars, "Penegasan gagal.") == 0) {
+                        runtimeError("Penegasan gagal.");
+                    } else {
+                        runtimeError("Penegasan gagal: %s", message->chars);
+                    }
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                frame = &vm.frames[vm.frameCount - 1];
+                push(raised);
                 break;
             }
             case OP_IS_INSTANCE: {

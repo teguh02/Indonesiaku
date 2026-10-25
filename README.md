@@ -59,6 +59,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
+- ✅ **`pastikan`** (assert) dengan pesan opsional → `GalatPenegasan`
 - ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
 - ✅ `rentang()`, operator `dalam`/`tidak dalam`, truthiness seperti Python
 - ✅ **Sistem modul**: `impor "file.idk"` (namespace global bersama, di-cache)
@@ -603,6 +604,7 @@ pun berjalan. Selengkapnya: `examples/db_sqlite.idk` dan
 - `except` → `kecuali`
 - `finally` → `akhirnya`
 - `raise` → `naikkan`
+- `assert` → `pastikan`
 
 Dicadangkan untuk versi mendatang (belum bisa dipakai): `from` → `dari`,
 `as` → `sebagai`, `with` → `dengan`.

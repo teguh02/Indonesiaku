@@ -192,6 +192,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_TRY_END", offset);
         case OP_THROW:
             return simpleInstruction("OP_THROW", offset);
+        case OP_PASTIKAN:
+            return simpleInstruction("OP_PASTIKAN", offset);
         case OP_IS_INSTANCE:
             return simpleInstruction("OP_IS_INSTANCE", offset);
         case OP_IMPORT:

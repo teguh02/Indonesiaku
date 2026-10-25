@@ -73,7 +73,7 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | f-string, string `"""` multi-baris, literal `1e3`, `0x`, `0b`, `1_000` | 02 §B | ⬜ |
 | Metode pada `teks`/`daftar`/`kamus` (P1 dari katalog 06) | K10, 06 §1–3 | ⬜ |
 | `+`/`*` untuk teks & daftar, `==` struktural | K7 | ✅ |
-| `pastikan` (assert) | 02 §A | ⬜ |
+| `pastikan` (assert) ([rencana](RENCANA_FITUR/selesai/pastikan.md)) | 02 §A | ✅ |
 | Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" | 04 §5, 05 §5 | ⬜ |
 
 ### Fase 2 — Tipe data lengkap (0.8)

@@ -1,0 +1,3 @@
+# Penegasan yang gagal tanpa pesan memakai teks bawaan.
+variabel umur = -5
+pastikan umur >= 0

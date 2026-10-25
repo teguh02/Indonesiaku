@@ -45,7 +45,7 @@ Prinsip penamaan:
 | `lambda` | `fungsi(x) { ... }` anonim / `lambda` | ❌ | 1 |
 | `global` / `nonlocal` | `global` / `nonlokal` | ✅ | — |
 | `del` | `buang` | ❌ | 2 |
-| `assert` | `pastikan` | ❌ | 1 |
+| `assert` | `pastikan` | ✅ | 1 — selesai; pesan dinilai hanya saat gagal |
 | `with` | `dengan ... sebagai` | ❌ (token ada) | 4 |
 | `yield` | `hasilkan` | ❌ | 5 |
 | `async` / `await` | `asinkron` / `tunggu` | ❌ | 7 |

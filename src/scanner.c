@@ -202,6 +202,8 @@ static TokenType identifierType() {
             break;
         case 'g':
             return checkKeyword(1, 5, "lobal", TOKEN_GLOBAL);
+        case 'p':
+            return checkKeyword(1, 7, "astikan", TOKEN_PASTIKAN);
         case 'n':
             if (scanner.current - scanner.start > 1 && scanner.start[1] == 'o') {
                 return checkKeyword(2, 6, "nlokal", TOKEN_NONLOKAL);

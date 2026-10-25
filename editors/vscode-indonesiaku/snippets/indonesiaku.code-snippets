@@ -113,6 +113,13 @@
     ],
     "description": "Panggilan dengan argumen bernama; posisional harus mendahului yang bernama"
   },
+  "Penegasan (assert)": {
+    "prefix": "pastikan",
+    "body": [
+      "pastikan ${1:kondisi}, \"${2:pesan}\"$0"
+    ],
+    "description": "Nyatakan kondisi yang harus benar; gagal -> GalatPenegasan"
+  },
   "Buka basis data SQLite": {
     "prefix": "dbbuka",
     "body": [

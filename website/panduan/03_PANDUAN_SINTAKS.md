@@ -1020,6 +1020,56 @@ a.bersuara()   # Rex berkata: Guk
 
 ---
 
+## Penegasan (`pastikan`)
+
+`pastikan` menyatakan sesuatu yang **harus** benar. Kalau benar, tidak terjadi
+apa-apa; kalau salah, program menaikkan `GalatPenegasan`.
+
+```indonesiaku
+pastikan umur >= 0
+pastikan umur >= 0, "umur tidak boleh negatif"      # dengan pesan sendiri
+```
+
+Kebenaran kondisinya mengikuti aturan yang sama dengan `jika`: `0`, `""`,
+daftar/kamus kosong, `kosong`, dan `salah` dianggap gagal.
+
+Gunanya terutama menjaga prakondisi — menyatakan asumsi secara eksplisit
+daripada membiarkan program salah diam-diam:
+
+```indonesiaku
+fungsi bagi(a, b) {
+    pastikan b != 0, "pembagi tidak boleh nol"
+    kembalikan a / b
+}
+```
+
+Karena `GalatPenegasan` adalah turunan `Galat`, penegasan yang gagal bisa
+ditangkap seperti kesalahan lain:
+
+```indonesiaku
+coba {
+    pastikan salah, "ini gagal"
+} kecuali GalatPenegasan sebagai e {
+    cetak(e.pesan)          # ini gagal
+}
+```
+
+Dua hal yang perlu diingat:
+
+- **Pesan hanya dinilai kalau penegasannya gagal.** Jadi
+  `pastikan benar, hitung_mahal()` tidak pernah memanggil `hitung_mahal()`.
+- **Jangan tulis `pastikan(kondisi, pesan)` dengan kurung.** Di sini itu
+  langsung ditolak saat kompilasi (`Harapkan ')' setelah ekspresi`), bukan
+  diam-diam selalu lolos seperti di Python — tetap saja, tulis tanpa kurung.
+  `pastikan(kondisi)` dengan satu argumen sah, kurungnya hanya mengelompokkan
+  ekspresi biasa.
+
+Contoh lengkap: [`examples/pastikan.idk`](../examples/pastikan.idk)
+
+{{embed:examples/pastikan.idk}}
+
+---
+
 ## Penanganan Kesalahan (naikkan / coba / kecuali / akhirnya)
 
 ```indonesiaku

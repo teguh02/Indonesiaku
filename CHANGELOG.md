@@ -7,6 +7,17 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 1
+- ✅ **`pastikan` (assert)** — `pastikan kondisi` atau
+  `pastikan kondisi, "pesan"`. Gagal menaikkan `GalatPenegasan`, kelas yang
+  sudah terdaftar di hierarki galat sejak Fase 1 tetapi belum pernah dipakai.
+  Seperti Python, **ekspresi pesan hanya dinilai saat penegasannya gagal**,
+  sehingga `pastikan benar, hitung_mahal()` tidak memanggil apa pun.
+  Kebenaran kondisinya memakai aturan `isFalsey` yang sama dengan `jika`.
+
+  Tidak ada mode `-O` untuk mematikan penegasan: belum ada satu pun flag
+  runtime di `indk`, dan menambahnya demi fitur ini tidak sepadan.
+
 ### Added — Fase 3
 - 🗄️ **Basis data SQLite tertanam** — 10 fungsi bawaan (`db_buka`,
   `db_eksekusi`, `db_ambil_semua`, `db_ambil_satu`, `db_baris_terpengaruh`,

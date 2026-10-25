@@ -1672,6 +1672,26 @@ static void raiseStatement() {
     emitByte(OP_THROW);
 }
 
+// pastikan <kondisi>[, <pesan>]
+// The message is compiled INSIDE the failure branch so it is only evaluated
+// when the assertion fails, like Python.
+static void assertStatement() {
+    expression();
+    int failJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);                       // condition was true: discard it
+    int doneJump = emitJump(OP_JUMP);
+
+    patchJump(failJump);
+    emitByte(OP_POP);                       // discard the false condition
+    if (match(TOKEN_COMMA)) {
+        expression();
+    } else {
+        emitByte(OP_KOSONG);                // kosong = use the default message
+    }
+    emitByte(OP_PASTIKAN);
+    patchJump(doneJump);
+}
+
 static void importStatement() {
     // impor "path.idk"   -> load & run another file in the same namespace.
     consume(TOKEN_STRING, "Harapkan nama file (string) setelah 'impor'.");
@@ -2076,6 +2096,8 @@ static void statement() {
         tryStatement();
     } else if (match(TOKEN_NAIKKAN)) {
         raiseStatement();
+    } else if (match(TOKEN_PASTIKAN)) {
+        assertStatement();
     } else if (match(TOKEN_IMPOR)) {
         importStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {

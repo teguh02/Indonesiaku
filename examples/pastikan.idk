@@ -1,0 +1,68 @@
+# pastikan — menyatakan "kondisi ini harus benar".
+
+# Lolos tanpa suara.
+pastikan 1 + 1 == 2
+pastikan "ada isinya"
+pastikan [1, 2], "daftar tidak boleh kosong"
+cetak("semua penegasan lolos")
+
+# Kebenaran mengikuti aturan Python: 0, "", [], {} dan kosong adalah salah.
+coba {
+    pastikan []
+} kecuali GalatPenegasan sebagai e {
+    cetak("daftar kosong:", e.pesan)
+}
+
+# Pesan hanya dinilai kalau penegasannya GAGAL.
+fungsi pesan_mahal() {
+    cetak("ini tidak boleh tercetak")
+    kembalikan "tidak terpakai"
+}
+pastikan benar, pesan_mahal()
+cetak("pesan tidak dinilai saat kondisi benar")
+
+# Gagal dengan pesan sendiri.
+coba {
+    pastikan 1 > 2, "satu tidak lebih besar dari dua"
+} kecuali GalatPenegasan sebagai e {
+    cetak("pesan:", e.pesan)
+}
+
+# GalatPenegasan adalah turunan Galat, jadi bisa ditangkap sebagai induknya.
+coba {
+    pastikan salah
+} kecuali Galat sebagai e {
+    cetak("sebagai induk:", e.pesan)
+}
+
+# Pesan boleh berupa angka atau logika, bukan hanya teks.
+coba {
+    pastikan salah, 404
+} kecuali GalatPenegasan sebagai e {
+    cetak("angka:", e.pesan)
+}
+
+# Pemakaian yang sebenarnya: menjaga prakondisi fungsi.
+fungsi bagi(a, b) {
+    pastikan b != 0, "pembagi tidak boleh nol"
+    kembalikan a / b
+}
+
+cetak(bagi(10, 4))
+coba {
+    bagi(1, 0)
+} kecuali GalatPenegasan sebagai e {
+    cetak("prakondisi:", e.pesan)
+}
+
+# Tetap seimbang di dalam perulangan dan bersama 'akhirnya'.
+untuk i dalam rentang(5) {
+    pastikan i >= 0, "indeks negatif"
+}
+coba {
+    pastikan salah, "dibungkus akhirnya"
+} kecuali GalatPenegasan sebagai e {
+    cetak("tertangkap:", e.pesan)
+} akhirnya {
+    cetak("akhirnya tetap jalan")
+}
