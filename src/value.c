@@ -132,6 +132,17 @@ bool hashValue(Value value, uint32_t* out) {
                 AS_OBJ(value)->type == OBJ_RANGE) {
                 return false;   // unhashable, as in Python
             }
+            if (AS_OBJ(value)->type == OBJ_TUPLE) {
+                // tupel hashable bila elemennya semua hashable — rekursif, seperti Python.
+                ObjTuple* tuple = (ObjTuple*)AS_OBJ(value);
+                for (int i = 0; i < tuple->items.count; i++) {
+                    uint32_t sub;
+                    if (!hashValue(tuple->items.values[i], &sub)) return false;
+                    *out ^= sub;
+                    *out *= 16777619u;
+                }
+                return true;
+            }
             {
                 // Instances and other objects hash by identity.
                 uintptr_t p = (uintptr_t)AS_OBJ(value);

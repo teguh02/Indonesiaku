@@ -9,6 +9,40 @@ Python's behavior — truthiness, operator rules, scoping, error model, string
 and collection semantics — but blocks are delimited by `{ }` like PHP/C, never
 by indentation.
 
+## Tata Kelola Proyek, Nama, dan Disclaimer (NON-NEGOTIABLE untuk dokumentasi publik)
+
+Repo ini sudah memiliki identitas kebijakan, nama proyek ("Indonesiaku"), dan
+versi lokal. Jangan menambahkan disclaimer, lisensi, atau pernyataan afiliasi
+baru di luar file yang ada (`README.md`, `website/panduan/README.md`, dll)
+tanpa menyelaraskannya dengan isi yang sudah ada dan tidak memperlakukan proyek
+ini sebagai bahasa baru yang belum ada dokumentasinya.
+
+Poin yang wajib dijaga setiap kali dokumen publik disentuh:
+
+- **Nama proyek tetap "Indonesiaku"** (bukan "Indonesiaku Lang" atau variasi
+  lain). Jika sebuah draft eksternal menyebut nama lain, sesuaikan sebelum
+  masuk ke repo.
+- **Jangan membuat asumsi bahwa proyek ini belum punya roadmap/versi.** Proyek
+  ini sudah menempuh v0.4.0 dengan roadmap di `docs/ROADMAP.md` dan analisis
+  desain di `docs/ANALISIS/`. Dokumen publik harus tetap selaras dengan status
+  tersebut.
+- **Jangan menimbulkan kesan afiliasi resmi** dengan pemerintah atau lembaga
+  negara (lambang negara, identitas kementerian, atribut resmi). Pernyataan
+  independensi boleh ditulis ulang/disederhanakan selama tetap netral dan tidak
+  bertentangan dengan isi yang sudah ada.
+- **Jangan copy-paste disclaimer dari luar mentah-mentahnya.** Jika ada teks
+  disclaimer/identitas dari diskusi eksternal, adaptasi dulu: ganti nama proyek,
+  sesuaikan konteks repo, dan pastikan tidak mengubah makna teknis atauFitur yang sudah tercantum di dokumen lain.
+- **Update bersamaan.** Jika README atau panduan pengguna disentuh untuk bagian
+  independensi/disclaimer, cek apakah bagian lain (identitas proyek, roadmap,
+  daftar fitur) masih konsisten. Tidak ada dokumen publik yang boleh berdiri
+  sendiri dengan klaim yang berbeda.
+
+Singkatnya: nominal proyek, pendekatan nonkomersial, dan larangan kesan afiliasi
+resmi boleh ditambahkan/ diperbarui sebagai langkah dokumentasi, tapi tetap
+mengikuti gaya dan isi repo yang sudah ada — bukan menimpa atau menambah asumsi
+baru tentang "status bahasa baru".
+
 ```indonesiaku
 fungsi sapa(nama) {        # PHP-style braces — no ':' , no indentation rule
     jika nama == "" {
@@ -68,6 +102,13 @@ changed semantics, breaking change — starts as a plan file in
 roadmap, or design notes anywhere else: not in `README.md`, not in
 `CHANGELOG.md`, not in `website/`. `docs/ROADMAP.md` is the single source of
 truth for status.
+
+JANGAN menggunakan nama "Indonesiaku Lang" atau merujuk ke proyek sebagai
+"bahasa baru tanpa dokumentasi". Nama proyek di repo ini adalah "Indonesiaku",
+sudah memiliki roadmap v0.4.0 dan dokumen analisis desain. Jika sebuah instruksi
+eksternal meminta penambahan disclaimer/identitas, sesuaikan teksnya agar tidak
+bentrok dengan identitas yang sudah ada dan tidak memperlakukan proyek ini sebagai
+proyek tanpa sejarah.
 
 **2. When the feature works, update ALL of these in the same change** — this
 list is a checklist, not a suggestion:
@@ -241,6 +282,10 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 - **Embedding example code in docs:** put a marker `{{embed:examples/foo.idk}}` on its own line in a `.md`. The reader fetches that file from `raw.githubusercontent.com/teguh02/Indonesiaku/main/...` so it always mirrors the repo — `examples/` is NOT copied into `docs/`. This means an embedded example must be committed+pushed to `main` before it shows on the live site.
 - Deployment target is our own server, as ONE Docker bundle: the `website/` static files (docs + site) and the playground run together in a container; no Netlify, no `.netlify/`. Whatever serves the static files MUST send `text/markdown; charset=utf-8` for `*.md` and `text/plain; charset=utf-8` for `*.idk`, otherwise `fetch()` in the reader fails. The reader requires HTTP — it does not work over `file://`. For local preview: `python -m http.server 8000 -d website`.
 - When language features change, keep these in sync — see the mandatory checklist in **Feature workflow** at the top: `README.md`, `CHANGELOG.md`, `website/panduan/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), `editors/vscode-indonesiaku/` (keywords, builtins, snippets), `docs/ROADMAP.md`, this `AGENTS.md`, and the Dockerfile `LABEL version`.
+
+Bagian **Tata Kelola Proyek, Nama, dan Disclaimer** di atas tetap berlaku untuk
+setiap perubahan pada `README.md`, `website/panduan/`, atau dokumen publik lain
+yang menyentuh identitas proyek, nama, afiliasi, atau pernyataan independensi.
 
 ## Conventions
 
