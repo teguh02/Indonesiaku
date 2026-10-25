@@ -56,6 +56,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
+- ✅ **List comprehension** `[x * x untuk x dalam rentang(1, 6)]`, **penugasan berganda** `a, b = b, a`, **`buang`** (del)
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap

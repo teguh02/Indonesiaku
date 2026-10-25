@@ -1,4 +1,18 @@
 {
+  "List comprehension": {
+    "prefix": "komprehensi",
+    "body": [
+      "[${1:ekspresi} untuk ${2:x} dalam ${3:urutan} jika ${4:syarat}]"
+    ],
+    "description": "List comprehension Indonesiaku"
+  },
+  "Penugasan berganda": {
+    "prefix": "unpack",
+    "body": [
+      "${1:a}, ${2:b} = ${3:urutan}"
+    ],
+    "description": "Buka beberapa nilai sekaligus"
+  },
   "Fungsi": {
     "prefix": "fungsi",
     "body": [

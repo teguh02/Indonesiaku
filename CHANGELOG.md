@@ -33,6 +33,21 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Semua golden diperiksa satu per satu; yang berubah hanya baris yang memang
   berbeda di Python (mis. `akar(16)` → `4.0`, `7.5 // 2` → `3.0`).
 
+### Added — Fase 2
+- 🔁 **List comprehension** `[ekspresi untuk x dalam urutan jika syarat]`
+  (`examples/komprehensi.idk`). Satu `untuk` dan satu `jika` opsional; boleh
+  bersarang. Variabel loop hanya hidup di dalam comprehension, dan nama luar
+  tetap terlihat.
+- 🧩 **Penugasan berganda & unpacking** `a, b = 1, 2`, `a, b = b, a`,
+  `x, y, z = daftar`, teks per karakter, dan `rentang()`
+  (`examples/penugasan_berganda.idk`). Jumlah yang tidak cocok menimbulkan
+  `GalatNilai` yang bisa ditangkap. Di dalam fungsi, setiap nama tetap menjadi
+  lokal (K3), termasuk yang berada di dalam blok `jika`.
+- 🗑️ **`buang` (padanan `del`)** untuk variabel global/lokal, elemen daftar,
+  kunci kamus, dan atribut objek (`examples/buang.idk`). Membaca nama lokal
+  yang sudah di-buang menimbulkan galat; indeks/kunci/atribut yang tidak ada
+  menimbulkan `GalatIndeks`/`GalatKunci`/`GalatAtribut`.
+
 ### Added — Fase 3
 - 🗄️ **Basis data SQLite tertanam** — 10 fungsi bawaan (`db_buka`,
   `db_eksekusi`, `db_ambil_semua`, `db_ambil_satu`, `db_baris_terpengaruh`,

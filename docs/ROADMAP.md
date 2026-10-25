@@ -80,10 +80,12 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 `bulat` int64 ✅
 ([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md)) — bignum menyusul
-sebagai 2b; `tupel`, `himpunan`, penugasan berganda & unpacking,
-`*args`/`**kwargs`, list comprehension, operator bitwise, `buang` (del),
-kunci kamus non-teks, string per karakter (Unicode), `jenis()` mengembalikan
-kelas, builtin P1–P2 dari 02 §D — lihat
+sebagai 2b; penugasan berganda & unpacking ✅
+([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md)); list comprehension ✅
+([rencana](RENCANA_FITUR/selesai/komprehensi_daftar.md)); `buang` (del) ✅
+([rencana](RENCANA_FITUR/selesai/buang.md)). Belum: `tupel`, `himpunan`,
+`*args`/`**kwargs`, operator bitwise, kunci kamus non-teks, `jenis()`
+mengembalikan kelas, builtin P1–P2 dari 02 §D — lihat
 [`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md)
 (`jumlah`, `terurut`, `semua`, `pasangkan`, `bulatkan`, …; sebagian bisa
 masuk lebih awal di Fase 1 karena tidak butuh tipe baru).

@@ -915,6 +915,62 @@ tetap hemat memori.
 
 > Contoh: [`examples/rentang.idk`](../examples/rentang.idk)
 
+### List comprehension
+
+Cara ringkas membangun daftar baru dari urutan lain, seperti Python:
+
+```indonesiaku
+cetak([x * x untuk x dalam rentang(1, 6)])          # [1, 4, 9, 16, 25]
+cetak([x untuk x dalam rentang(10) jika x % 2 == 0]) # [0, 2, 4, 6, 8]
+cetak([k[0] untuk k dalam ["apel", "bunga"]])        # [a, b]
+```
+
+- Satu `untuk` dan satu `jika` opsional (gabungkan syarat dengan `dan`/`atau`).
+- Variabel loop hanya hidup di dalam comprehension; nama di luar tidak berubah.
+- Boleh bersarang: `[[a * b untuk b dalam rentang(1, 3)] untuk a dalam [1, 2]]`.
+
+> Contoh: [`examples/komprehensi.idk`](../examples/komprehensi.idk)
+
+### Penugasan berganda (unpacking)
+
+Beberapa nama sekaligus dari satu urutan; jumlahnya harus sama persis:
+
+```indonesiaku
+a, b = 1, 2            # dari daftar nilai
+a, b = b, a            # tukar tanpa variabel sementara
+x, y, z = [10, 20, 30]
+p, q = "hi"            # teks dipecah per karakter: h i
+m, n = rentang(2, 4)   # 2 3
+```
+
+Jumlah nilai yang tidak cocok menimbulkan `GalatNilai` yang bisa ditangkap.
+
+> Contoh: [`examples/penugasan_berganda.idk`](../examples/penugasan_berganda.idk)
+
+### Menghapus dengan `buang`
+
+`buang` (padanan `del` Python) menghapus variabel, elemen daftar, kunci kamus,
+atau atribut objek:
+
+```indonesiaku
+angka = [10, 20, 30]
+buang angka[0]        # [20, 30]
+
+kamus = {"a": 1, "b": 2}
+buang kamus["a"]      # {"b": 2}
+
+x = 5
+buang x               # nama 'x' hilang; membacanya lagi = GalatNama
+
+k = Kotak(7)
+buang k.isi           # hapus atribut
+```
+
+Menghapus indeks/kunci/atribut yang tidak ada menimbulkan `GalatIndeks`,
+`GalatKunci`, atau `GalatAtribut` — semuanya bisa ditangkap `coba/kecuali`.
+
+> Contoh: [`examples/buang.idk`](../examples/buang.idk)
+
 ---
 
 ## hentikan & lanjut (break & continue)

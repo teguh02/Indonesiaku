@@ -153,6 +153,25 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 - **Several `kecuali` clauses chain by jump, and `catchClause()` does NOT emit its own rethrow.** It returns the unpatched "no match" jump; `tryStatement` patches it onto the next clause and only the last one falls through to `OP_POP` + `OP_THROW`. An untyped `kecuali e` returns -1 (always matches) and must be last — `semanticError`, not `error`, so there is no panic-mode cascade. `scanTryClauses` must skip EVERY `kecuali` clause in its lookahead loop, otherwise a trailing `akhirnya` goes undetected and its outer handler is never registered.
 - **`declaration()` returns WITHOUT consuming when it sees `}`** — that is how `block()` detects the end of a block. Any loop calling it at top level must therefore guard against `}` itself, or it spins forever: a file containing only `}` used to hang the compiler (exit 124). `compile()` has that guard; add one to any new top-level loop.
 - `akhirnya` (finally): the single-pass compiler peeks ahead with `saveScanner`/`restoreScanner` (`scanTryClauses`) to learn whether `kecuali`/`akhirnya` follow, because a finally needs an OUTER handler registered before the body. The finally block runs with two hidden locals (raised value, rethrow flag) and rethrows via `OP_THROW`. `kembalikan`/`hentikan`/`lanjut` that leave such a `coba` re-compile the finally block inline at the jump (`exitTryBlocks` → `inlineFinallyBlock`, rewinding the scanner to the position saved in `Compiler.finallies[]`), like CPython's duplicated finally code. Errors during that re-compile are silenced (`inlineFinallyDepth`) because the in-place copy reports them. A returned value is evaluated first and parked in a hidden local. `semanticError` reports well-formed-but-forbidden code without panic-mode cascades.
+- **List comprehension `[expr untuk x dalam seq jika cond]` is compiled into
+  an implicit one-parameter function**, called once per element by
+  `OP_APPEND`/`OP_CALL` (`listComprehension` in `compiler.c`). Two reasons, both
+  structural: the element tokens come BEFORE the header that declares `x`, so
+  the compiler peeks ahead (`scanComprehension`) and re-reads them after the
+  header; and the loop state cannot live in hidden locals of the enclosing
+  frame, because an enclosing call's callee/arguments already occupy those
+  slots (slots are stack positions). Only one `untuk` plus one optional `jika`
+  are supported.
+- **`buang` (del)** has its own opcodes: `OP_DELETE_GLOBAL` removes the name
+  from the table, while `OP_DELETE_LOCAL`/`OP_DELETE_UPVALUE` write
+  `VAL_TAKTERISI` into the slot — `OP_GET_LOCAL`/`OP_GET_UPVALUE` therefore
+  check for it and raise "sudah di-buang". `OP_INDEX_DELETE` handles list and
+  dict, `OP_DELETE_PROPERTY` an instance field. Any new read path for locals
+  must keep that check.
+- **`a, b = ...` is a statement-level construct** (`looksLikeUnpack` peeks for
+  `IDENT (, IDENT)+ =`), compiled as the RHS sequence + `OP_UNPACK n` + one
+  assignment per name. `prescanFunctionBody` tracks comma-chains so every name
+  in the list becomes a function-local (K3), not just the last one before `=`.
 - Statements are newline-terminated outside `()`/`[]`; the scanner suppresses newline tokens while its grouping depth is positive. Preserve `ScannerState.groupingDepth` across parser lookahead, and do not add INDENT/DEDENT: `{}` remains the block syntax.
 - Strings are UTF-8 bytes but the language counts **characters**: `ObjString.charCount` is computed at allocation; `panjang`, `teks[i]`, `karakter`, `potong` go through `utf8ByteOffset` (O(1) when `charCount == length`, i.e. ASCII). `ord`/`chr` use code points.
 - `cetak(a, b)` compiles to `OP_PRINT <count>`: one line, space-separated. Numbers print via `numberToString` as the shortest round-trip repr (integral values < 1e16 without `.0`).
