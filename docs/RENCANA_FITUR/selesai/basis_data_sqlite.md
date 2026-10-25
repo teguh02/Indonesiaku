@@ -216,7 +216,38 @@ literal dan di dalam body `CREATE TRIGGER` tidak salah dibaca sebagai pemisah;
 - [x] `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` — `sqlite3` ❌ → ✅
 - [x] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K18 ditulis
 - [x] `editors/vscode-indonesiaku/extension.js` — 10 builtin (82 = 82, cocok dengan `defineNative`) + 3 snippet
-- [x] `AGENTS.md` — `sqlite3.c` jangan disunting; jebakan GC bersarang
+- [ ] `AGENTS.md` — `sqlite3.c` jangan disunting; jebakan GC bersarang
+      (tertunda: berkas instruksi agen terproteksi, perlu persetujuan pemilik repo)
+
+### Sisa yang tertunda (bukan bagian kode)
+
+Dua butir tidak bisa diselesaikan dari sesi ini dan sengaja dibiarkan terbuka
+daripada ditandai selesai:
+
+1. **`AGENTS.md`** — terproteksi sebagai berkas instruksi agen; perlu
+   persetujuan pemilik repo. Isi yang disiapkan: `src/sqlite3.c` tidak boleh
+   disunting (dikompilasi tanpa `-Wall -Wextra` lewat aturan Makefile
+   tersendiri), menambah sumber C berarti memperbarui SEMUA konsumen build
+   bukan hanya `SOURCES`, dan jebakan GC bersarang di `db_ambil_semua`.
+
+2. **`.github/workflows/test.yml`** — `src/db.c` dan `src/sqlite3.c` perlu
+   ditambahkan ke empat daftar sumber gcc/clang manual (`sanitizers`,
+   `valgrind`, `coverage`, `fuzz`). Tanpa itu keempat job gagal *link*; job
+   gating (`test-linux`/`macos`/`windows`) tetap hijau karena lewat `make`.
+   Perubahan ini sudah ditulis dan terverifikasi, tetapi dikeluarkan dari
+   riwayat karena PAT yang dipakai hanya ber-scope `repo` — GitHub menolak
+   push yang menyentuh `.github/workflows/` tanpa scope `workflow`, dan
+   pemeriksaannya **per-commit**, sehingga commit revert tidak menolong.
+
+   Commit lengkapnya tersimpan di branch `backup-sqlite-workflow-20261025`.
+   Untuk menerapkannya dengan token ber-scope `workflow`:
+
+   ```bash
+   gh auth refresh -h github.com -s workflow
+   git checkout backup-sqlite-workflow-20261025 -- .github/workflows/test.yml
+   git commit -m "Perbaiki: tambahkan sumber SQLite ke daftar kompilasi CI"
+   git push origin main
+   ```
 - [x] `docker/images/Dockerfile` — objek host dibersihkan sebelum kompilasi musl
 
 ## 7. Risiko & alternatif
