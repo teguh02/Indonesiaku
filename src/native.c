@@ -1349,3 +1349,278 @@ Value nativeFnSoketTutup(int argCount, Value* args) {
     }
     return KOSONG_VAL;
 }
+
+// ============================================================================
+// AGREGASI & KOLEKSI
+// ============================================================================
+//
+// Semua fungsi di bawah menerima tiga iterable dasar (daftar, rentang, teks)
+// lewat iterCount()/iterAt(), meniru pola nativeFnEnumerasi.
+//
+// GC-SAFETY: iterAt() mengalokasi untuk elemen teks dan writeValueArray dapat
+// menumbuhkan array; daftar hasil WAJIB berada di stack VM selama seluruh
+// loop pengisian. peta()/saring() memanggil balik ke VM lewat callFromNative,
+// yang bisa memicu GC kapan saja.
+
+// Jumlah elemen iterable; -1 bila tipenya tidak iterable.
+static int iterCount(Value v) {
+    if (IS_LIST(v)) return AS_LIST(v)->items.count;
+    if (IS_STRING(v)) return AS_STRING(v)->charCount;
+    if (IS_RANGE(v)) return (int)rangeLength(AS_RANGE(v));
+    return -1;
+}
+
+// Elemen ke-i. Untuk teks ini MENGALOKASI sebuah ObjString baru.
+static Value iterAt(Value v, int i) {
+    if (IS_LIST(v)) return AS_LIST(v)->items.values[i];
+    if (IS_RANGE(v)) {
+        ObjRange* r = AS_RANGE(v);
+        return NUMBER_VAL(r->start + i * r->step);
+    }
+    ObjString* teks = AS_STRING(v);
+    int offset = utf8ByteOffset(teks, i);
+    return OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
+}
+
+// jumlah(d[, awal]) - seperti sum(); hanya angka.
+Value nativeFnJumlah(int argCount, Value* args) {
+    if (argCount < 1 || argCount > 2) {
+        nativeRaise("jumlah() memerlukan 1 atau 2 argumen");
+        return NUMBER_VAL(0);
+    }
+    int count = iterCount(args[0]);
+    if (count < 0) {
+        nativeRaiseTipe("jumlah() hanya menerima daftar, rentang, atau teks");
+        return NUMBER_VAL(0);
+    }
+    if (argCount == 2 && !IS_NUMBER(args[1])) {
+        nativeRaiseTipe("jumlah() nilai awal harus angka");
+        return NUMBER_VAL(0);
+    }
+
+    double total = argCount == 2 ? AS_NUMBER(args[1]) : 0;
+    for (int i = 0; i < count; i++) {
+        Value item = iterAt(args[0], i);
+        if (!IS_NUMBER(item)) {
+            nativeRaiseTipe("jumlah() hanya menerima angka");
+            return NUMBER_VAL(0);
+        }
+        total += AS_NUMBER(item);
+    }
+    return NUMBER_VAL(total);
+}
+
+// semua(d) - seperti all(); daftar kosong -> benar.
+Value nativeFnSemua(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("semua() memerlukan 1 argumen");
+        return BOOL_VAL(false);
+    }
+    int count = iterCount(args[0]);
+    if (count < 0) {
+        nativeRaiseTipe("semua() hanya menerima daftar, rentang, atau teks");
+        return BOOL_VAL(false);
+    }
+    for (int i = 0; i < count; i++) {
+        if (valueIsFalsey(iterAt(args[0], i))) return BOOL_VAL(false);
+    }
+    return BOOL_VAL(true);
+}
+
+// ada_yang(d) - seperti any(); daftar kosong -> salah.
+Value nativeFnAdaYang(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("ada_yang() memerlukan 1 argumen");
+        return BOOL_VAL(false);
+    }
+    int count = iterCount(args[0]);
+    if (count < 0) {
+        nativeRaiseTipe("ada_yang() hanya menerima daftar, rentang, atau teks");
+        return BOOL_VAL(false);
+    }
+    for (int i = 0; i < count; i++) {
+        if (!valueIsFalsey(iterAt(args[0], i))) return BOOL_VAL(true);
+    }
+    return BOOL_VAL(false);
+}
+
+// qsort tidak punya parameter konteks di C11; arah urutan dititipkan di sini.
+// Aman karena VM ini single-threaded dan tidak ada alokasi (apalagi callback)
+// selama qsort berjalan.
+static bool terurutMenurun = false;
+
+static int bandingNilai(const void* a, const void* b) {
+    const Value* x = (const Value*)a;
+    const Value* y = (const Value*)b;
+    int cmp;
+    if (IS_NUMBER(*x)) {
+        double dx = AS_NUMBER(*x), dy = AS_NUMBER(*y);
+        cmp = dx < dy ? -1 : (dx > dy ? 1 : 0);
+    } else {
+        cmp = strcmp(AS_CSTRING(*x), AS_CSTRING(*y));
+        if (cmp < 0) cmp = -1; else if (cmp > 0) cmp = 1;
+    }
+    return terurutMenurun ? -cmp : cmp;
+}
+
+// terurut(d[, menurun]) - seperti sorted(); selalu daftar BARU.
+Value nativeFnTerurut(int argCount, Value* args) {
+    if (argCount < 1 || argCount > 2) {
+        nativeRaise("terurut() memerlukan 1 atau 2 argumen");
+        return KOSONG_VAL;
+    }
+    int count = iterCount(args[0]);
+    if (count < 0) {
+        nativeRaiseTipe("terurut() hanya menerima daftar, rentang, atau teks");
+        return KOSONG_VAL;
+    }
+
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));   // GC: tetap reachable selama diisi
+    bool pakaiAngka = false;
+    for (int i = 0; i < count; i++) {
+        Value item = iterAt(args[0], i);
+        if (i == 0) {
+            pakaiAngka = IS_NUMBER(item);
+            if (!pakaiAngka && !IS_STRING(item)) {
+                pop();
+                nativeRaiseTipe("terurut() hanya menerima angka atau teks");
+                return KOSONG_VAL;
+            }
+        } else if (IS_NUMBER(item) != pakaiAngka || (!pakaiAngka && !IS_STRING(item))) {
+            pop();
+            nativeRaiseTipe("terurut() tidak dapat membandingkan angka dengan teks");
+            return KOSONG_VAL;
+        }
+        push(item);                                   // GC: item teks baru
+        writeValueArray(&hasil->items, item);
+        pop();
+    }
+    terurutMenurun = argCount == 2 && !valueIsFalsey(args[1]);
+    if (count > 1) {
+        qsort(hasil->items.values, (size_t)count, sizeof(Value), bandingNilai);
+    }
+    pop();
+    return OBJ_VAL(hasil);
+}
+
+// terbalik(d) - seperti reversed(), tetapi mengembalikan daftar baru.
+Value nativeFnTerbalik(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaise("terbalik() memerlukan 1 argumen");
+        return KOSONG_VAL;
+    }
+    int count = iterCount(args[0]);
+    if (count < 0) {
+        nativeRaiseTipe("terbalik() hanya menerima daftar, rentang, atau teks");
+        return KOSONG_VAL;
+    }
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));
+    for (int i = count - 1; i >= 0; i--) {
+        Value item = iterAt(args[0], i);
+        push(item);
+        writeValueArray(&hasil->items, item);
+        pop();
+    }
+    pop();
+    return OBJ_VAL(hasil);
+}
+
+// pasangkan(a, b, ...) - seperti zip(); panjang = iterable terpendek.
+Value nativeFnPasangkan(int argCount, Value* args) {
+    if (argCount < 2) {
+        nativeRaise("pasangkan() memerlukan minimal 2 argumen");
+        return KOSONG_VAL;
+    }
+    int shortest = -1;
+    for (int a = 0; a < argCount; a++) {
+        int count = iterCount(args[a]);
+        if (count < 0) {
+            nativeRaiseTipe("pasangkan() hanya menerima daftar, rentang, atau teks");
+            return KOSONG_VAL;
+        }
+        if (shortest < 0 || count < shortest) shortest = count;
+    }
+
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));
+    for (int i = 0; i < shortest; i++) {
+        ObjList* pasangan = newList();
+        push(OBJ_VAL(pasangan));
+        for (int a = 0; a < argCount; a++) {
+            Value item = iterAt(args[a], i);
+            push(item);
+            writeValueArray(&pasangan->items, item);
+            pop();
+        }
+        writeValueArray(&hasil->items, OBJ_VAL(pasangan));
+        pop();
+    }
+    pop();
+    return OBJ_VAL(hasil);
+}
+
+// peta(f, d) - seperti map(), tetapi eager: hasilnya daftar.
+Value nativeFnPeta(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("peta() memerlukan 2 argumen (fungsi, iterable)");
+        return KOSONG_VAL;
+    }
+    int count = iterCount(args[1]);
+    if (count < 0) {
+        nativeRaiseTipe("peta() argumen kedua harus daftar, rentang, atau teks");
+        return KOSONG_VAL;
+    }
+    Value fungsi = args[0];
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));   // GC: harus di stack selama SELURUH loop callback
+    for (int i = 0; i < count; i++) {
+        push(fungsi);
+        push(iterAt(args[1], i));
+        Value nilai;
+        if (!callFromNative(1, &nilai)) {
+            pop();   // hasil
+            return KOSONG_VAL;
+        }
+        push(nilai);
+        writeValueArray(&hasil->items, nilai);
+        pop();
+    }
+    pop();
+    return OBJ_VAL(hasil);
+}
+
+// saring(f, d) - seperti filter(), tetapi eager: hasilnya daftar.
+Value nativeFnSaring(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaise("saring() memerlukan 2 argumen (fungsi, iterable)");
+        return KOSONG_VAL;
+    }
+    int count = iterCount(args[1]);
+    if (count < 0) {
+        nativeRaiseTipe("saring() argumen kedua harus daftar, rentang, atau teks");
+        return KOSONG_VAL;
+    }
+    Value fungsi = args[0];
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));
+    for (int i = 0; i < count; i++) {
+        Value item = iterAt(args[1], i);
+        push(item);          // GC: item teks baru harus selamat dari callback
+        push(fungsi);
+        push(item);
+        Value keputusan;
+        if (!callFromNative(1, &keputusan)) {
+            pop();   // item
+            pop();   // hasil
+            return KOSONG_VAL;
+        }
+        if (!valueIsFalsey(keputusan)) {
+            writeValueArray(&hasil->items, item);
+        }
+        pop();       // item
+    }
+    pop();
+    return OBJ_VAL(hasil);
+}

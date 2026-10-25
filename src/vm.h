@@ -59,6 +59,11 @@ typedef struct {
     int frameCount;
     TryHandler tryHandlers[TRY_MAX];
     int tryCount;
+    int nativeCallDepth;   // >0 while a native is running an Indonesiaku callback
+    // Frame depth at which run() must stop and return instead of continuing.
+    // 0 at top level; raised by callFromNative() so a callback invoked from C
+    // returns to its C caller instead of running the rest of the program.
+    int exitFrame;
     Table globals;
     Table strings;
     Table loadedModules;
@@ -111,5 +116,13 @@ Value pop();
 void runtimeError(const char* format, ...);
 void fatalError(const char* format, ...);
 void nativeRaise(const char* format, ...);
+void nativeRaiseTipe(const char* format, ...);
+// Call an Indonesiaku callable from inside a native function. `callee` and
+// `argCount` arguments must already be on the VM stack (callee first); on
+// success they are replaced by the single result value, which is also
+// returned. Returns false after flagging the error (nativeRaise-style) when
+// the call fails or raises.
+bool callFromNative(int argCount, Value* result);
+bool valueIsFalsey(Value value);
 
 #endif

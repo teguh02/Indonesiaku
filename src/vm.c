@@ -29,6 +29,8 @@ static void resetStack() {
     vm.frameCount = 0;
     vm.openUpvalues = NULL;
     vm.tryCount = 0;
+    vm.exitFrame = 0;
+    vm.nativeCallDepth = 0;
 }
 
 // Print an uncaught error with its traceback and reset the VM.
@@ -79,9 +81,11 @@ void runtimeError(const char* format, ...) {
     vsnprintf(vm.runtimeErrorMessage, sizeof(vm.runtimeErrorMessage), format, args);
     va_end(args);
 
-    if (vm.tryCount > 0) {
+    if (vm.tryCount > 0 || vm.nativeCallDepth > 0) {
         // No allocation here: the error string is created in interpret()
-        // once the stack has been unwound to the handler.
+        // once the stack has been unwound to the handler. With
+        // nativeCallDepth > 0 the pending error is picked up by
+        // callFromNative() and re-raised as a native error instead.
         vm.hadError = true;
         vm.runtimeErrorPending = true;
         vm.runtimeErrorClass = vm.runtimeErrorClass != NULL ? vm.runtimeErrorClass : vm.galat;
@@ -113,6 +117,18 @@ void nativeRaise(const char* format, ...) {
     va_end(args);
 
     vm.nativeErrorValue = OBJ_VAL(newError(vm.galatNilai, buffer));
+    vm.nativeErrorPending = true;
+}
+
+// Same as nativeRaise but tagged GalatTipe.
+void nativeRaiseTipe(const char* format, ...) {
+    char buffer[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    vm.nativeErrorValue = OBJ_VAL(newError(vm.galatTipe, buffer));
     vm.nativeErrorPending = true;
 }
 
@@ -247,6 +263,15 @@ void initVM() {
     defineNative("hapus_pada", nativeFnHapusPada);
     defineNative("sisip", nativeFnSisip);
     defineNative("rentang", nativeFnRentang);
+
+    defineNative("jumlah", nativeFnJumlah);
+    defineNative("semua", nativeFnSemua);
+    defineNative("ada_yang", nativeFnAdaYang);
+    defineNative("terurut", nativeFnTerurut);
+    defineNative("terbalik", nativeFnTerbalik);
+    defineNative("pasangkan", nativeFnPasangkan);
+    defineNative("peta", nativeFnPeta);
+    defineNative("saring", nativeFnSaring);
 
     defineNative("soket_dengar", nativeFnSoketDengar);
     defineNative("soket_terima", nativeFnSoketTerima);
@@ -518,9 +543,13 @@ static bool importModule(ObjString* path) {
 // Unwind to the nearest active 'coba' handler. Restores frame count and
 // stack top to the try-block's entry state and points the current frame's
 // ip at the 'kecuali' handler. Returns false if there is no handler.
+// Handlers registered *below* vm.exitFrame belong to a frame that is waiting
+// on a C stack frame (a native running a callback) and must not be unwound
+// to directly — the native converts the error and re-raises it instead.
 static bool throwValue(Value error) {
     (void)error;
     if (vm.tryCount == 0) return false;
+    if (vm.tryHandlers[vm.tryCount - 1].frameCount <= vm.exitFrame) return false;
 
     TryHandler* handler = &vm.tryHandlers[--vm.tryCount];
     // Close any upvalues that live above the try block's stack top.
@@ -546,6 +575,12 @@ static int resolveNativeError() {
     vm.nativeErrorValue = KOSONG_VAL;
 
     if (!throwValue(error)) {
+        if (vm.nativeCallDepth > 0) {
+            // Inside a callback invoked from C: let the outer native see it.
+            vm.nativeErrorValue = error;
+            vm.nativeErrorPending = true;
+            return -1;
+        }
         if (IS_STRING(error)) {
             runtimeError("%s", AS_CSTRING(error));
         } else if (IS_INSTANCE(error)) {
@@ -1516,6 +1551,13 @@ static InterpretResult run() {
             case OP_THROW: {
                 Value error = pop();
                 if (!throwValue(error)) {
+                    if (vm.nativeCallDepth > 0) {
+                        // Inside a callback invoked from C: hand the value
+                        // back to the native, which re-raises it.
+                        vm.nativeErrorValue = error;
+                        vm.nativeErrorPending = true;
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                     // No handler: report and abort.
                     if (IS_STRING(error)) {
                         runtimeError("Kesalahan tak tertangani: %s", AS_CSTRING(error));
@@ -1576,8 +1618,15 @@ static InterpretResult run() {
                     vm.tryCount--;
                 }
                 vm.frameCount--;
-                if (vm.frameCount == 0) {
-                    pop();
+                if (vm.frameCount == vm.exitFrame) {
+                    if (vm.exitFrame == 0) {
+                        pop();
+                        return INTERPRET_OK;
+                    }
+                    // Returning to a native that invoked this callable from C:
+                    // leave just the result where the callee sat.
+                    vm.stackTop = frame->slots;
+                    push(result);
                     return INTERPRET_OK;
                 }
 
@@ -1594,6 +1643,75 @@ static InterpretResult run() {
 #undef READ_CONSTANT
 #undef READ_STRING
 #undef BINARY_OP
+}
+
+bool valueIsFalsey(Value value) {
+    return isFalsey(value);
+}
+
+// Call an Indonesiaku callable from inside a native. The callee and its
+// arguments must already be on the VM stack. On success they are replaced by
+// the result (also stored in *result). Any error is converted into a pending
+// native error, so the native's own caller unwinds normally.
+bool callFromNative(int argCount, Value* result) {
+    int frameBefore = vm.frameCount;
+    Value* calleeSlot = vm.stackTop - argCount - 1;
+    Value callee = *calleeSlot;
+
+    // Raised while this flag is up, runtimeError only records the message;
+    // we convert it to a catchable native error below.
+    vm.nativeCallDepth++;
+
+    if (!callValue(callee, argCount, NULL)) {
+        vm.nativeCallDepth--;
+        // callValue already raised via runtimeError; it was only recorded
+        // (nativeCallDepth/tryCount), convert it to a native error below.
+        if (vm.runtimeErrorPending) {
+            vm.runtimeErrorPending = false;
+            vm.hadError = false;
+            ObjClass* klass = vm.runtimeErrorClass != NULL ? vm.runtimeErrorClass : vm.galat;
+            vm.runtimeErrorClass = NULL;
+            vm.nativeErrorValue = OBJ_VAL(newError(klass, vm.runtimeErrorMessage));
+            vm.nativeErrorPending = true;
+        }
+        vm.stackTop = calleeSlot;
+        return false;
+    }
+
+    if (vm.frameCount == frameBefore) {
+        // A native callee: callValue already left the result on the stack.
+        vm.nativeCallDepth--;
+        if (vm.nativeErrorPending) { vm.stackTop = calleeSlot; return false; }
+        *result = pop();
+        return true;
+    }
+
+    int savedExit = vm.exitFrame;
+    vm.exitFrame = frameBefore;
+    InterpretResult r = run();
+    vm.nativeCallDepth--;
+    vm.exitFrame = savedExit;
+
+    if (r != INTERPRET_OK) {
+        if (vm.runtimeErrorPending) {
+            vm.runtimeErrorPending = false;
+            vm.hadError = false;
+            ObjClass* klass = vm.runtimeErrorClass != NULL ? vm.runtimeErrorClass : vm.galat;
+            vm.runtimeErrorClass = NULL;
+            vm.nativeErrorValue = OBJ_VAL(newError(klass, vm.runtimeErrorMessage));
+            vm.nativeErrorPending = true;
+        }
+        // Drop any frames and handlers the aborted callback left behind.
+        vm.frameCount = frameBefore;
+        while (vm.tryCount > 0 && vm.tryHandlers[vm.tryCount - 1].frameCount > frameBefore) {
+            vm.tryCount--;
+        }
+        vm.stackTop = calleeSlot;
+        return false;
+    }
+
+    *result = pop();
+    return true;
 }
 
 InterpretResult interpret(const char* source) {

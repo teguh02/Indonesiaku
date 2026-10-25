@@ -163,4 +163,16 @@ Value nativeFnSoketTutup(int argCount, Value* args);   // soket_tutup(soket)
 // Close a raw socket fd (used by the GC to reclaim leaked sockets).
 void indkCloseSocket(long long fd);
 
+// ============================================================================
+// AGREGASI & KOLEKSI (daftar, rentang, teks sebagai iterable)
+// ============================================================================
+
+Value nativeFnJumlah(int argCount, Value* args);     // jumlah(d[, awal])
+Value nativeFnSemua(int argCount, Value* args);      // semua(d)
+Value nativeFnAdaYang(int argCount, Value* args);    // ada_yang(d)
+Value nativeFnTerurut(int argCount, Value* args);    // terurut(d[, menurun])
+Value nativeFnTerbalik(int argCount, Value* args);   // terbalik(d)
+Value nativeFnPasangkan(int argCount, Value* args);  // pasangkan(a, b, ...)
+Value nativeFnPeta(int argCount, Value* args);       // peta(f, d)
+Value nativeFnSaring(int argCount, Value* args);     // saring(f, d)
 #endif
