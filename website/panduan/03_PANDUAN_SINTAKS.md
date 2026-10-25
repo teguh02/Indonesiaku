@@ -873,6 +873,47 @@ Catatan:
 
 ---
 
+## Tupel
+
+Tupel adalah urutan yang **tidak bisa diubah** setelah dibuat. Ditulis dengan
+kurung biasa, persis seperti Python:
+
+```indonesiaku
+titik = (3, 4)
+satu = (5,)        # satu elemen: koma WAJIB
+hampa = ()       # tupel kosong
+bukan_tupel = (5)  # tanpa koma hanya pengelompokan -> 5
+
+cetak(titik[0], titik[-1], panjang(titik))   # 3 4 2
+x, y = titik                                  # dibuka ke dua nama
+cetak((1, 2) + (3,))                          # (1, 2, 3)
+```
+
+Membaca tupel sama seperti membaca daftar: indeks, irisan (hasilnya tupel),
+`untuk ... dalam`, `dalam`, `panjang`, `jumlah`, `terurut`, dan seterusnya.
+Yang berbeda: tupel **tidak bisa diubah**.
+
+```indonesiaku
+titik = (3, 4)
+titik[0] = 10      # GalatTipe: Tupel tidak dapat diubah.
+```
+
+Karena tidak bisa diubah, tupel boleh menjadi **kunci kamus** — cocok untuk
+koordinat atau pasangan nilai:
+
+```indonesiaku
+jarak = {}
+jarak[(0, 0)] = "asal"
+cetak(jarak[(0, 0)])   # asal
+```
+
+Ubah urutan lain menjadi tupel dengan `tupel(...)`: `tupel([1, 2])`,
+`tupel("ab")` → `("a", "b")`.
+
+> Contoh: [`examples/tupel.idk`](../examples/tupel.idk)
+
+---
+
 ## Kamus (Dictionary)
 
 Kamus dibuat dengan **literal `{ }`** atau dengan `kamus()`.

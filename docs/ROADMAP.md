@@ -84,13 +84,13 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 ✅ penugasan berganda & unpacking ([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md));
 ✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md));
 ✅ kunci kamus bukan cuma teks — `Value`-based (`himpunan()`/`tupel()` masih tunggu) ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md));
-✅ operator bitwise `& | ^ ~ << >>` + `&= |= ^= <<= >>=` ([rencana](RENCANA_FITUR/selesai/operator_bitwise.md)).
+✅ operator bitwise `& | ^ ~ << >>` + `&= |= ^= <<= >>=` ([rencana](RENCANA_FITUR/selesai/operator_bitwise.md));
+✅ `tupel` `(1, 2)`/`(1,)`/`()` + `tupel()` ([rencana](RENCANA_FITUR/selesai/tupel.md), K17).
 
 > Fase 2 **baru sebagian selesai** — yang tersisa:
-> ``tupel``, ``himpunan`` (keduanya butuh keputusan sintaks dulu: `(1,)`
-> berbenturan dengan kurung pengelompokan, `{1, 2}` dengan blok `{ }` dan
-> literal kamus — catat di `ANALISIS/03_KEPUTUSAN_DESAIN.md`), builtin
-> ``himpunan()``, ``tupel()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
+> ``himpunan`` (hanya lewat `himpunan([...])`, tanpa literal — K17), tupel
+> tanpa kurung (`x = 1, 2`, `kembalikan a, b` — belum diputuskan, K17), builtin
+> ``himpunan()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
 > ``ke_desimal``, ``daftar()`` — lihat
 > [`RENCANA_FITUR/selesai/builtin_inti.md`](RENCANA_FITUR/selesai/builtin_inti.md)
 > (rencana itu selesai sebagian; builtin di atas belum ada).

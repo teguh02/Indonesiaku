@@ -64,6 +64,7 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)
 - ✅ **Argumen bernama** `gambar("Judul", tengah=benar)` (boleh melewati parameter di tengah)
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
+- ✅ **Tupel** `(1, 2)`, `(1,)`, `()`: urutan yang tidak bisa diubah, bisa jadi kunci kamus, `tupel(...)`
 - ✅ **Operator bitwise** `& | ^ ~ << >>` (dan `&= |= ^= <<= >>=`) pada `bulat`, presedensi seperti Python
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
@@ -89,8 +90,8 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 
 ### Akan Datang
-- 🔲 **Tupel** (immutable, hashable, bisa jadi kunci kamus) dan **himpunan/set**
-  (koleksi anggota unik) — sisa Fase 2, lihat [docs/ROADMAP.md](docs/ROADMAP.md)
+- 🔲 **Himpunan/set** `himpunan([...])` (koleksi anggota unik; tanpa literal `{1, 2}`,
+  lihat K17) — sisa Fase 2, lihat [docs/ROADMAP.md](docs/ROADMAP.md)
 - 🔲 String methods lanjutan & file I/O
 - 🔲 Standard library yang lebih lengkap
 

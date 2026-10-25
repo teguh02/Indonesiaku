@@ -64,6 +64,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Iterasi `untuk k dalam kamus` tetap urutan penyisipan (opcode `OP_SEQ_GET`).
 
 ### Added — Fase 2
+- 📦 **Tupel** (K17) `(1, 2)`, `(1,)` (koma wajib), `()`; `(1)` tetap
+  pengelompokan (`examples/tupel.idk`). Seperti Python: indeks, irisan
+  (hasilnya tupel), unpacking, `untuk`, `dalam`, `+`, `*`, `==` struktural
+  (`(1,) == [1]` salah), dan bisa menjadi **kunci kamus** bila elemennya
+  hashable. Tidak bisa diubah: `t[i] = x`, `buang t[i]`, `tambah`/`hapus`/
+  `sisip`/`hapus_pada` → `GalatTipe`. Builtin `tupel([urutan])`; metode
+  hanya yang tidak mengubah. Parameter SQL `db_*` kini boleh tupel.
 - 🔣 **Operator bitwise** `&`, `|`, `^`, `~`, `<<`, `>>` dan
   `&= |= ^= <<= >>=` (`examples/operator_bitwise.idk`), presedensi seperti
   Python (di atas perbandingan, di bawah `+ -`). Hanya untuk `bulat`;

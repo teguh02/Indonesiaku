@@ -308,7 +308,7 @@ mengembalikan beberapa nilai) dan baru dikerjakan setelah ada keputusan.
 **Himpunan — hanya lewat konstruktor:**
 
 ```indonesiaku
-kosong = himpunan()
+hampa = himpunan()
 angka = himpunan([1, 2, 2, 3])     # himpunan berisi 1, 2, 3
 ```
 

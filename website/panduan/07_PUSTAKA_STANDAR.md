@@ -267,6 +267,18 @@ mengembalikan daftar jadi (*eager*, bukan malas seperti `rentang`), sehingga
 hasilnya bisa langsung di-`panjang()`, diindeks, atau dirangkai seperti pada
 baris terakhir.
 
+### 1.3b Tupel
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `tupel()` | Tupel kosong `()` |
+| `tupel(urutan)` | Tupel baru dari daftar, tupel, teks (per karakter), rentang, atau kamus (kuncinya) |
+
+Metode yang tersedia pada tupel hanya yang **tidak mengubah**: `panjang`,
+`terurut`, `terbalik`, `jumlah`, `semua`, `ada_yang`, `enumerasi`. Fungsi yang
+mengubah daftar (`tambah`, `hapus`, `hapus_pada`, `sisip`) menolak tupel
+dengan `GalatTipe`.
+
 ### 1.4 Kamus (Dictionary)
 
 | Fungsi | Deskripsi |
