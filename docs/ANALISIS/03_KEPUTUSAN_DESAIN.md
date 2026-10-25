@@ -53,6 +53,15 @@ setelah 1.0 tidak mungkin.
 
 ## K2 — Dua tipe angka: `bulat` dan `desimal`
 
+**Catatan pasca-implementasi (0.8):** `jenis()` sengaja tetap memulangkan
+`"angka"` untuk `bulat` maupun `desimal`. Kedua tipe itu nyata di VM
+(`VAL_INT`/`VAL_NUMBER`) tetapi **tidak dapat dibedakan dari dalam bahasa**
+sampai builtin pembeda tiba. Alasannya: memecah `jenis()` menjadi
+`"bulat"`/`"desimal"` adalah perubahan merusak kedua untuk setiap kode yang
+membandingkan `jenis(x) == "angka"`, dan K2 sudah membawa satu perubahan
+merusak. Pembedaannya menyusul bersama `ke_desimal`/`hash`/`turunan_dari`
+(lihat sisa Fase 2 di ROADMAP), supaya pemakai hanya menyesuaikan sekali.
+
 **Usulan:**
 
 - `VAL_INT` (int64) ditambahkan di samping `VAL_NUMBER` (double).

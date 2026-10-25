@@ -32,7 +32,8 @@ Poin yang wajib dijaga setiap kali dokumen publik disentuh:
   bertentangan dengan isi yang sudah ada.
 - **Jangan copy-paste disclaimer dari luar mentah-mentahnya.** Jika ada teks
   disclaimer/identitas dari diskusi eksternal, adaptasi dulu: ganti nama proyek,
-  sesuaikan konteks repo, dan pastikan tidak mengubah makna teknis atauFitur yang sudah tercantum di dokumen lain.
+  sesuaikan konteks repo, dan pastikan tidak mengubah makna teknis atau fitur
+  yang sudah tercantum di dokumen lain.
 - **Update bersamaan.** Jika README atau panduan pengguna disentuh untuk bagian
   independensi/disclaimer, cek apakah bagian lain (identitas proyek, roadmap,
   daftar fitur) masih konsisten. Tidak ada dokumen publik yang boleh berdiri
@@ -102,13 +103,6 @@ changed semantics, breaking change — starts as a plan file in
 roadmap, or design notes anywhere else: not in `README.md`, not in
 `CHANGELOG.md`, not in `website/`. `docs/ROADMAP.md` is the single source of
 truth for status.
-
-JANGAN menggunakan nama "Indonesiaku Lang" atau merujuk ke proyek sebagai
-"bahasa baru tanpa dokumentasi". Nama proyek di repo ini adalah "Indonesiaku",
-sudah memiliki roadmap v0.4.0 dan dokumen analisis desain. Jika sebuah instruksi
-eksternal meminta penambahan disclaimer/identitas, sesuaikan teksnya agar tidak
-bentrok dengan identitas yang sudah ada dan tidak memperlakukan proyek ini sebagai
-proyek tanpa sejarah.
 
 **2. When the feature works, update ALL of these in the same change** — this
 list is a checklist, not a suggestion:
@@ -251,6 +245,12 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 - Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`, `json.idk`, `http.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`, `json_`, `http_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring), `ord`/`chr`, and first-class functions.
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). At script level that means globals; inside a function only a name declared `global` reaches a global this way. Only compound assignment (`+=` etc.) requires the global to already exist.
 - GC-safety when mutating collections: keep operands on the VM stack (`peek`, not `pop`) until after `tableSet`/`writeValueArray`, which can grow and trigger a GC. `OP_INDEX_SET` for dicts and the `sisip` native follow this. `ObjDict.keys` is also a GC-marked insertion-order list: update it only through `dictSet`/`dictDelete`.
+- **Value formatting lives in THREE paths and they must agree:** `printObject` (`object.c`, used by `cetak`), `appendValueText` (`native.c`, used by `ke_teks`/`format`/f-strings), and `nativeFnRepr`. The escape table is shared via `stringEscape(char)` in `object.c`, called by both `printStringRepr` (object.c) and `appendStringRepr` (native.c) — patching only `printObject` makes `cetak(x)` and `ke_teks(x)` disagree. Strings print bare on their own but are quoted as **collection elements** (`cetak(["a"])` → `["a"]`), Python's str/repr split; double quotes, not Python's single, because dict keys already use `"`.
+- **Iterate `ObjDict`/`ObjSet` through `keys`, never `table.entries`** — the table is hash order, `keys` is insertion order, and printing that disagrees with `kunci()` or `untuk ... dalam` on the same dict is a bug users see immediately.
+- **Built-in methods (`"a".huruf_besar()`) cost zero new opcodes** because every relevant native already takes its receiver as `args[0]` and `OP_INVOKE` leaves the stack as `receiver, arg1, …`; `invoke()` just maps name → native. Verify that invariant before adding an entry to the string/list/dict method tables — a native with a different argument order needs a wrapper. Built-in methods can be *called* but not taken as values (no `ObjBoundMethod`); the error message says so explicitly.
+- **Natives reject keyword arguments by default.** `vm.nativeArgNames` is filled only for natives listed in `nativeTakesKeywords()` (currently just `cetak`), so an unsupported `pisah=` is a clear error instead of being silently ignored. `cetak` is a plain native function, **not a keyword** — `OP_PRINT` was removed, and overwriting `cetak` behaves exactly like Python.
+- **Compile AND runtime errors carry a column**, a source snippet and a caret. The chunk stores a column per bytecode plus its source text as an `ObjString`, so the GC keeps a module's source alive for as long as its functions — `readModuleSource` frees its own buffer right after compiling, which is why the source cannot be borrowed. Only the innermost frame prints a snippet. The column points at the **end** of the offending expression (the last token parsed), not at the operator.
+- **f-strings compile their embedded expression from a temporary copy that is then freed** — so never let a token outlive it. `parser.previous` is reset to the f-string token before the free; `ScannerState` saves/restores `source` **and** `sourceEnd`; `lineStartOf` checks **both** buffer bounds (a token from a freed slice can sit at a higher address and pass a start-only check). Columns inside an f-string are pre-computed from the real line before the sub-scanner starts: coarse but never misleading. All three were latent use-after-frees that only ASan caught.
 - `examples/todo_cli.idk` is the Todo-list JSON DB demo (CRUD over a JSON file via `pustaka/json.idk`). Integration-tested in CI by `tests/test_todo_cli.{sh,ps1}` (job `todo-crud`) plus golden tests for `json_pakai`/`todo_demo`.
 - Operators follow Python: `//` floors (`OP_FLOOR_DIVIDE`), `%` takes the divisor's sign, `**` is right-associative and binds tighter than unary minus (`PREC_POWER` > `PREC_UNARY`), `tidak` binds looser than comparisons (`PREC_NOT`). Compound assignment (`+=`, `//=`, ...) is table-driven via `matchCompoundAssign` and its right side is a full `expression()`. **A new compound operator must be added to BOTH `matchCompoundAssign` and `isCompoundAssign`** — the latter feeds `prescanFunctionBody`, so forgetting it makes `x op= 1` inside a function skip K3 local detection. Regression: `examples/operator_aritmetika.idk`.
 - Bitwise `& | ^ << >>` share one handler, `bitwiseBinary` in `vm.c` (operands via `bitwiseOperand`: bulat, or logika as 0/1); `~` is `OP_BIT_NOT`. Precedence levels `PREC_BIT_OR < PREC_BIT_XOR < PREC_BIT_AND < PREC_SHIFT` sit between comparisons and `PREC_TERM`, exactly Python's order. Shifts go through `intShiftLeft`/`intShiftRight` in `value.c`, written without UB (no shift by ≥ 64, no signed left shift, no implementation-defined right shift of negatives) — keep it that way, UBSan in CI checks. `bitwiseBinary` dispatches on operand type on purpose: set union/intersection (`himpunan | himpunan`) and `kamus | kamus` go there as new branches, not new opcodes. Regression: `examples/operator_bitwise.idk`.
