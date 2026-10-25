@@ -485,6 +485,12 @@ const char* scannerSourceStart(void) {
 // tell whether a token actually belongs to this buffer: f-strings compile
 // their embedded expression from a temporary copy, so a stale token can sit
 // at a higher address and pass a start-only check.
+// Nesting depth of ( [ {: at depth 0 a comma can build a tupel, inside any
+// bracket it keeps its existing meaning (arguments, elements, pairs).
+int scannerGroupingDepth(void) {
+    return scanner.groupingDepth;
+}
+
 const char* scannerSourceEnd(void) {
     return scanner.sourceEnd;
 }

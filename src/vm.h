@@ -79,6 +79,7 @@ typedef struct {
     ObjClass* galatNama;
     ObjClass* galatPenegasan;
     ObjClass* galatAtribut;
+    ObjClass* hentiIterasi;
 
     // Keyword argument names for the native call currently running, or NULL.
     // Only natives that opt in (see keywordNatives in vm.c) ever see these;

@@ -123,6 +123,9 @@ static void blackenObject(Obj* object) {
             markValueTable(&((ObjSet*)object)->table);
             markArray(&((ObjSet*)object)->keys);
             break;
+        case OBJ_ITERATOR:
+            markValue(((ObjIterator*)object)->source);
+            break;
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
             markObject((Obj*)klass->name);
@@ -212,6 +215,10 @@ static void freeObject(Obj* object) {
             FREE(ObjSet, object);
             break;
         }
+        case OBJ_ITERATOR:
+            // `source` is a Value owned by the GC; nothing extra to release.
+            FREE(ObjIterator, object);
+            break;
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
             freeTable(&klass->methods);

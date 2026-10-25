@@ -128,8 +128,23 @@ bool hashValue(Value value, uint32_t* out) {
                 *out = AS_STRING(value)->hash;
                 return true;
             }
+            if (AS_OBJ(value)->type == OBJ_SET) {
+                // himpunan_beku is hashable, plain himpunan is not (Python).
+                ObjSet* set = AS_SET(value);
+                if (!set->frozen) return false;
+                // XOR so the hash does not depend on insertion order: two equal
+                // himpunan_beku built in different orders must hash the same.
+                uint32_t h = seed ^ (uint32_t)set->keys.count;
+                for (int i = 0; i < set->keys.count; i++) {
+                    uint32_t member;
+                    if (!hashValue(set->keys.values[i], &member)) return false;
+                    h ^= member;
+                }
+                *out = h;
+                return true;
+            }
             if (AS_OBJ(value)->type == OBJ_LIST || AS_OBJ(value)->type == OBJ_DICT ||
-                AS_OBJ(value)->type == OBJ_RANGE || AS_OBJ(value)->type == OBJ_SET) {
+                AS_OBJ(value)->type == OBJ_RANGE) {
                 return false;   // unhashable, as in Python
             }
             if (AS_OBJ(value)->type == OBJ_TUPLE) {
@@ -358,7 +373,9 @@ static bool valuesEqualDepth(Value a, Value b, int depth) {
         }
         case OBJ_SET: {
             // Same members, order irrelevant. Members are hashable, so a
-            // table lookup in y decides each one.
+            // table lookup in y decides each one. `frozen` is deliberately
+            // NOT compared: himpunan([1]) == himpunan_beku([1]) is benar,
+            // exactly as set([1]) == frozenset([1]) in Python.
             ObjSet* x = AS_SET(a);
             ObjSet* y = AS_SET(b);
             if (x->keys.count != y->keys.count) return false;

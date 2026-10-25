@@ -1,0 +1,4 @@
+turunan_dari() hanya menerima kelas.
+[baris 1, kolom 24] dalam skrip
+    cetak(turunan_dari(1, 2))
+                           ^

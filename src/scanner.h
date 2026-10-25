@@ -80,4 +80,6 @@ void initScannerAt(const char* source, int line);
 const char* scannerSourceStart(void);
 const char* scannerSourceEnd(void);
 
+int scannerGroupingDepth(void);
+
 #endif

@@ -468,6 +468,13 @@ static void endScope() {
     }
 }
 
+// K17: a bare comma builds a tupel ONLY on an assignment right-hand side and
+// after `kembalikan`. Everywhere else a comma already means something
+// (arguments, list elements, dict pairs), so the flag is set by just those two
+// callers and cleared for everything they nest.
+static bool allowTupleRHS = false;
+static void maybeTupleTail();
+
 static void expression();
 static void statement();
 static void declaration();
@@ -1098,6 +1105,7 @@ static void subscript(bool canAssign) {
 
     if (canAssign && match(TOKEN_EQUAL)) {
         expression();
+        maybeTupleTail();           // d["x"] = 1, 2
         emitByte(OP_INDEX_SET);
     } else {
         emitByte(OP_INDEX_GET);
@@ -1495,6 +1503,7 @@ static void namedVariable(Token name, bool canAssign) {
 
     if (canAssign && match(TOKEN_EQUAL)) {
         parsePrecedence(PREC_ASSIGNMENT);
+        maybeTupleTail();           // x = 1, 2
         if (setOp == OP_SET_GLOBAL) {
             emitBytes(OP_DEFINE_GLOBAL, (uint8_t)arg);
             emitBytes(OP_GET_GLOBAL, (uint8_t)arg);
@@ -2116,7 +2125,11 @@ static void varDeclaration() {
     uint8_t global = parseVariable("Harapkan nama variabel.");
 
     if (match(TOKEN_EQUAL)) {
+        bool saved = allowTupleRHS;
+        allowTupleRHS = true;
         expression();
+        maybeTupleTail();           // variabel x = 1, 2
+        allowTupleRHS = saved;
     } else {
         emitByte(OP_KOSONG);
     }
@@ -2125,7 +2138,13 @@ static void varDeclaration() {
 }
 
 static void expressionStatement() {
+    // Statement level: a comma here may build a tupel (x = 1, 2). The flag is
+    // consumed by namedVariable's assignment branch; expressions that are not
+    // assignments simply never look at it.
+    bool saved = allowTupleRHS;
+    allowTupleRHS = true;
     expression();
+    allowTupleRHS = saved;
     emitByte(OP_POP);
 }
 
@@ -2660,7 +2679,11 @@ static void returnStatement() {
         error("Tidak dapat mengembalikan nilai dari 'init'.");
     }
     if (!hasFinally) {
+        bool saved = allowTupleRHS;
+        allowTupleRHS = true;
         expression();
+        maybeTupleTail();           // kembalikan a, b
+        allowTupleRHS = saved;
         emitByte(OP_RETURN);
         return;
     }
@@ -2669,7 +2692,13 @@ static void returnStatement() {
     // it in a hidden local so the inlined blocks' own locals get the right
     // stack slots, then return it.
     beginScope();
-    expression();
+    {
+        bool saved = allowTupleRHS;
+        allowTupleRHS = true;
+        expression();
+        maybeTupleTail();           // kembalikan a, b (dengan 'akhirnya')
+        allowTupleRHS = saved;
+    }
     addLocal(syntheticToken(" kembali"));
     markInitialized();
     uint8_t slot = (uint8_t)(current->localCount - 1);
@@ -2863,6 +2892,32 @@ static bool looksLikeUnpack() {
     parser.current = savedCurrent;
     parser.previous = savedPrevious;
     return matched;
+}
+
+// `x = 1, 2` / `kembalikan 1, 2`. Call right after the first expression was
+// compiled; emits OP_BUILD_TUPLE when a comma really is a tupel builder.
+static void maybeTupleTail() {
+    if (!allowTupleRHS) return;
+    if (!check(TOKEN_COMMA) || scannerGroupingDepth() != 0) return;
+
+    int elements = 1;
+    while (match(TOKEN_COMMA)) {
+        // `x = 1,` -- a trailing comma is a one-element tupel, as in Python.
+        if (check(TOKEN_NEWLINE) || check(TOKEN_EOF) || check(TOKEN_SEMICOLON) ||
+            check(TOKEN_RIGHT_BRACE)) {
+            break;
+        }
+        if (elements == UINT8_COUNT) {
+            error("Terlalu banyak elemen pada tupel.");
+            return;
+        }
+        bool saved = allowTupleRHS;
+        allowTupleRHS = false;      // nested commas belong to this tupel
+        expression();
+        allowTupleRHS = saved;
+        elements++;
+    }
+    emitBytes(OP_BUILD_TUPLE, (uint8_t)elements);
 }
 
 static void unpackStatement() {

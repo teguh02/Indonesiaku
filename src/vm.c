@@ -277,7 +277,7 @@ void initVM() {
     defineErrorClass("GalatImpor", vm.galat);
     defineErrorClass("GalatRekursi", vm.galat);
     vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
-    defineErrorClass("HentiIterasi", vm.galat);
+    vm.hentiIterasi = defineErrorClass("HentiIterasi", vm.galat);
     defineErrorClass("GalatSintaks", vm.galat);
 
     defineNative("db_buka", nativeFnDbBuka);
@@ -310,6 +310,7 @@ void initVM() {
     defineNative("ke_bulat", nativeFnKeBulat);
     defineNative("ke_logika", nativeFnKeLogika);
     defineNative("adalah_instansi", nativeFnAdalahInstansi);
+    defineNative("turunan_dari", nativeFnTurunanDari);
     defineNative("bisa_dipanggil", nativeFnBisaDipanggil);
     defineNative("repr", nativeFnRepr);
     defineNative("id", nativeFnId);
@@ -329,6 +330,11 @@ void initVM() {
     defineNative("enumerasi", nativeFnEnumerasi);
     defineNative("tupel", nativeFnTupel);
     defineNative("himpunan", nativeFnHimpunan);
+    defineNative("himpunan_beku", nativeFnHimpunanBeku);
+    defineNative("daftar", nativeFnDaftar);
+    defineNative("hash", nativeFnHash);
+    defineNative("iter", nativeFnIter);
+    defineNative("lanjutkan", nativeFnLanjutkan);
     defineNative("kunci", nativeFnKunci);
 
     defineNative("jenis", nativeFnJenis);
@@ -336,6 +342,7 @@ void initVM() {
     defineNative("henti", nativeFnHenti);
 
     defineNative("ke_angka", nativeFnKeAngka);
+    defineNative("ke_desimal", nativeFnKeDesimal);
     defineNative("ke_teks", nativeFnKeTeks);
     defineNative("format", nativeFnFormat);
     defineNative("acak_bulat", nativeFnAcakBulat);
@@ -1200,6 +1207,8 @@ static void setOperation(uint8_t op) {
     }
     pop();              // result
     pop(); pop();       // operands
+    // Frozen only when BOTH operands are, like Python's frozenset | set.
+    result->frozen = a->frozen && b->frozen;
     push(OBJ_VAL(result));
 }
 
@@ -1946,7 +1955,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {   // K8: any hashable key
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
+                                     "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     dictSet(dict, key, value);
@@ -2010,7 +2019,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
+                                     "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     Value value;
@@ -2076,7 +2085,7 @@ static InterpretResult run() {
                     if (!hashValue(key, &hash)) {
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
-                                     "(angka, teks, logika, kosong, atau tupel berisi nilai seperti itu).");
+                                     "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     dictSet(dict, key, value);

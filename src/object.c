@@ -77,7 +77,15 @@ ObjSet* newSet() {
     ObjSet* set = ALLOCATE_OBJ(ObjSet, OBJ_SET);
     initValueTable(&set->table);
     initValueArray(&set->keys);
+    set->frozen = false;
     return set;
+}
+
+ObjIterator* newIterator(Value source) {
+    ObjIterator* it = ALLOCATE_OBJ(ObjIterator, OBJ_ITERATOR);
+    it->source = source;
+    it->index = 0;
+    return it;
 }
 
 bool setAdd(ObjSet* set, Value value) {
@@ -370,11 +378,12 @@ void printObject(Value value) {
             // No literal exists (K17), so print the constructor call that
             // rebuilds it: himpunan([1, 2]) and himpunan().
             ObjSet* set = AS_SET(value);
+            const char* nama = set->frozen ? "himpunan_beku" : "himpunan";
             if (set->keys.count == 0) {
-                printf("himpunan()");
+                printf("%s()", nama);
                 break;
             }
-            printf("himpunan([");
+            printf("%s([", nama);
             for (int i = 0; i < set->keys.count; i++) {
                 if (i > 0) printf(", ");
                 printValueRepr(set->keys.values[i]);

@@ -1,0 +1,86 @@
+# Sisa Fase 2: tupel tanpa kurung, himpunan_beku, dan lima builtin baru.
+
+cetak("== tupel tanpa kurung ==")
+x = 1, 2
+cetak(x, jenis(x))
+y = 1,
+cetak(y, panjang(y))
+variabel z = "a", "b", "c"
+cetak(z)
+
+fungsi bagi_sisa(a, b) {
+    kembalikan a // b, a % b
+}
+variabel hasil = bagi_sisa(17, 5)
+cetak(hasil)
+bagi, sisa = bagi_sisa(17, 5)
+cetak(bagi, sisa)
+
+# Koma di dalam kurung TETAP berarti pemisah, bukan tupel.
+fungsi tambah2(a, b) { kembalikan a + b }
+cetak(tambah2(1, 2))
+cetak([1, 2], {"a": 1, "b": 2})
+
+cetak("== himpunan_beku ==")
+variabel beku = himpunan_beku([3, 1, 2])
+cetak(beku, jenis(beku), panjang(beku))
+cetak(himpunan_beku())
+
+# Dapat di-hash: boleh jadi kunci kamus dan anggota himpunan lain.
+variabel peta = {himpunan_beku([1, 2]): "pasangan"}
+cetak(peta[himpunan_beku([2, 1])])
+cetak(panjang(himpunan([himpunan_beku([1]), himpunan_beku([1])])))
+
+# Sama isi = sama, beku atau tidak (seperti Python).
+cetak(himpunan([1, 2]) == himpunan_beku([1, 2]))
+
+# Operator: hasil beku hanya bila kedua operand beku.
+cetak(jenis(beku | himpunan_beku([9])))
+cetak(jenis(beku | himpunan([9])))
+cetak(beku & himpunan_beku([1, 9]))
+cetak(beku - himpunan_beku([1]))
+
+cetak("== hash ==")
+cetak(hash("a") == hash("a"), hash(1) == hash(1.0))
+cetak(hash((1, 2)) == hash((1, 2)))
+
+cetak("== turunan_dari ==")
+cetak(turunan_dari(GalatTipe, Galat))
+cetak(turunan_dari(Galat, Galat))
+cetak(turunan_dari(Galat, GalatTipe))
+
+kelas Hewan {}
+kelas Kucing < Hewan {}
+cetak(turunan_dari(Kucing, Hewan), turunan_dari(Hewan, Kucing))
+
+cetak("== ke_desimal ==")
+cetak(ke_desimal(3), ke_desimal("3"), ke_desimal("2.5"), ke_desimal(benar))
+cetak(jenis(ke_angka("3")), ke_angka("3"), ke_desimal("3"))
+
+cetak("== daftar ==")
+cetak(daftar(), daftar("abc"), daftar((1, 2)))
+cetak(daftar(rentang(3)), daftar({"a": 1, "b": 2}))
+
+# Selalu salinan baru, bukan rujukan ke sumbernya.
+variabel asal = [1, 2]
+variabel salinan = daftar(asal)
+salinan.tambah(3)
+cetak(asal, salinan)
+
+cetak("== iter / lanjutkan ==")
+variabel it = iter([10, 20])
+cetak(lanjutkan(it), lanjutkan(it))
+cetak(lanjutkan(it, "habis"))
+
+variabel huruf = iter("ab")
+cetak(lanjutkan(huruf), lanjutkan(huruf))
+
+# Iterator kamus berjalan di atas kuncinya, urut sisip.
+variabel k = iter({"x": 1, "y": 2})
+cetak(lanjutkan(k), lanjutkan(k))
+
+coba {
+    lanjutkan(iter([]))
+} kecuali HentiIterasi sebagai e {
+    cetak("tertangkap:", e.pesan)
+}
