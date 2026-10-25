@@ -116,6 +116,31 @@ void nativeRaise(const char* format, ...) {
     vm.nativeErrorPending = true;
 }
 
+// Same as nativeRaise, but picks the error class (GalatTipe, GalatBagiNol, ...)
+// so `kecuali GalatTipe` can select it.
+void nativeRaiseKelas(ObjClass* klass, const char* format, ...) {
+    char buffer[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    vm.nativeErrorValue = OBJ_VAL(newError(klass, buffer));
+    vm.nativeErrorPending = true;
+}
+
+// The one instance check in the VM: used by OP_IS_INSTANCE (`kecuali GalatTipe`)
+// and by the builtin adalah_instansi(). Walks the superclass chain.
+bool valueIsInstanceOf(Value value, Value klass) {
+    if (!IS_INSTANCE(value) || !IS_CLASS(klass)) return false;
+    ObjClass* expected = AS_CLASS(klass);
+    for (ObjClass* actual = AS_INSTANCE(value)->klass; actual != NULL;
+         actual = actual->superclass) {
+        if (actual == expected) return true;
+    }
+    return false;
+}
+
 static ObjClass* defineErrorClass(const char* name, ObjClass* superclass) {
     ObjString* className = copyString(name, (int)strlen(name));
     push(OBJ_VAL(className));
@@ -201,6 +226,18 @@ void initVM() {
     defineNative("lantai", nativeFnLantai);
     defineNative("atap", nativeFnAtap);
     defineNative("acak", nativeFnAcak);
+
+    defineNative("bulatkan", nativeFnBulatkan);
+    defineNative("bagi_sisa", nativeFnBagiSisa);
+    defineNative("biner", nativeFnBiner);
+    defineNative("oktal", nativeFnOktal);
+    defineNative("heksa", nativeFnHeksa);
+    defineNative("ke_bulat", nativeFnKeBulat);
+    defineNative("ke_logika", nativeFnKeLogika);
+    defineNative("adalah_instansi", nativeFnAdalahInstansi);
+    defineNative("bisa_dipanggil", nativeFnBisaDipanggil);
+    defineNative("repr", nativeFnRepr);
+    defineNative("id", nativeFnId);
 
     defineNative("panjang", nativeFnPanjang);
     defineNative("huruf_besar", nativeFnHurofBesar);
@@ -693,7 +730,7 @@ static bool chainCompare(ChainCompare op, Value left, Value right, bool* result)
 
 // Python truthiness (K1): salah, kosong, 0, "" and empty list/kamus/rentang
 // are false; everything else (including nan and every instance) is true.
-static bool isFalsey(Value value) {
+bool isFalsey(Value value) {
     switch (value.type) {
         case VAL_KOSONG: return true;
         case VAL_TAKTERISI: return true;   // unreachable; be safe, not crashy
@@ -1530,19 +1567,7 @@ static InterpretResult run() {
             }
             case OP_IS_INSTANCE: {
                 Value target = pop();
-                Value value = peek(0);
-                bool matches = false;
-                if (IS_INSTANCE(value) && IS_CLASS(target)) {
-                    ObjClass* actual = AS_INSTANCE(value)->klass;
-                    ObjClass* expected = AS_CLASS(target);
-                    for (; actual != NULL; actual = actual->superclass) {
-                        if (actual == expected) {
-                            matches = true;
-                            break;
-                        }
-                    }
-                }
-                push(BOOL_VAL(matches));
+                push(BOOL_VAL(valueIsInstanceOf(peek(0), target)));
                 break;
             }
             case OP_IMPORT: {

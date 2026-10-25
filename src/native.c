@@ -39,48 +39,16 @@
 // FUNGSI MATEMATIKA - IMPLEMENTASI
 // ============================================================================
 
-Value nativeFnMin(int argCount, Value* args) {
-    if (argCount < 2) {
-        nativeRaise("min() memerlukan minimal 2 argumen");
-        return NUMBER_VAL(0);
-    }
-    if (!IS_NUMBER(args[0])) {
-        nativeRaise("min() hanya menerima angka");
-        return NUMBER_VAL(0);
-    }
+// Keduanya menerima bentuk varargs LAMA (min(3, 1, 2)) dan satu argumen
+// urutan (min([3, 1, 2])), seperti Python. Lihat minMax() di bawah.
+static Value minMax(int argCount, Value* args, bool wantMax, const char* nama);
 
-    double min = AS_NUMBER(args[0]);
-    for (int i = 1; i < argCount; i++) {
-        if (!IS_NUMBER(args[i])) {
-            nativeRaise("min() hanya menerima angka");
-            return NUMBER_VAL(0);
-        }
-        double num = AS_NUMBER(args[i]);
-        if (num < min) min = num;
-    }
-    return NUMBER_VAL(min);
+Value nativeFnMin(int argCount, Value* args) {
+    return minMax(argCount, args, false, "min");
 }
 
 Value nativeFnMax(int argCount, Value* args) {
-    if (argCount < 2) {
-        nativeRaise("max() memerlukan minimal 2 argumen");
-        return NUMBER_VAL(0);
-    }
-    if (!IS_NUMBER(args[0])) {
-        nativeRaise("max() hanya menerima angka");
-        return NUMBER_VAL(0);
-    }
-
-    double max = AS_NUMBER(args[0]);
-    for (int i = 1; i < argCount; i++) {
-        if (!IS_NUMBER(args[i])) {
-            nativeRaise("max() hanya menerima angka");
-            return NUMBER_VAL(0);
-        }
-        double num = AS_NUMBER(args[i]);
-        if (num > max) max = num;
-    }
-    return NUMBER_VAL(max);
+    return minMax(argCount, args, true, "max");
 }
 
 Value nativeFnAbs(int argCount, Value* args) {
@@ -167,6 +135,339 @@ Value nativeFnAcak(int argCount, Value* args) {
     }
     // Return random number between 0 and 1
     return NUMBER_VAL((double)rand() / RAND_MAX);
+}
+
+// ============================================================================
+// ANGKA & TIPE (padanan round/divmod/bin/oct/hex/int/bool/isinstance/...)
+// ============================================================================
+
+// Baca satu elemen dari urutan yang bisa diiterasi (daftar, rentang, teks).
+// Mengembalikan false bila tipenya bukan urutan.
+static bool seqLength(Value seq, int* length) {
+    if (IS_LIST(seq)) *length = AS_LIST(seq)->items.count;
+    else if (IS_RANGE(seq)) *length = (int)rangeLength(AS_RANGE(seq));
+    else if (IS_STRING(seq)) *length = AS_STRING(seq)->charCount;
+    else return false;
+    return true;
+}
+
+// Alokasi: untuk teks ini membuat ObjString baru, jadi pemanggil wajib
+// menjaga nilai lain yang dipegangnya tetap tereferensi dari stack VM.
+static Value seqGet(Value seq, int i) {
+    if (IS_LIST(seq)) return AS_LIST(seq)->items.values[i];
+    if (IS_RANGE(seq)) {
+        ObjRange* r = AS_RANGE(seq);
+        return NUMBER_VAL(r->start + i * r->step);
+    }
+    ObjString* teks = AS_STRING(seq);
+    int offset = utf8ByteOffset(teks, i);
+    return OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
+}
+
+// Perbandingan '<' seperti operator bahasa: angka dengan angka, teks dengan
+// teks (strcmp). Campuran tipe adalah GalatTipe.
+static bool valueLess(Value a, Value b, const char* nama, bool* less) {
+    if (IS_NUMBER(a) && IS_NUMBER(b)) {
+        *less = AS_NUMBER(a) < AS_NUMBER(b);
+        return true;
+    }
+    if (IS_STRING(a) && IS_STRING(b)) {
+        *less = strcmp(AS_CSTRING(a), AS_CSTRING(b)) < 0;
+        return true;
+    }
+    nativeRaiseKelas(vm.galatTipe, "%s() tidak dapat membandingkan tipe yang berbeda", nama);
+    return false;
+}
+
+// Inti max()/min(): bentuk varargs ATAU satu argumen urutan (daftar, rentang,
+// teks), seperti Python.
+static Value minMax(int argCount, Value* args, bool wantMax, const char* nama) {
+    Value seq;
+    int count;
+    bool fromSeq;
+
+    // Pesan "minimal 2 argumen" dipertahankan apa adanya: golden
+    // kesalahan_native menegaskan teks ini untuk min(5).
+    if (argCount == 0) {
+        nativeRaiseKelas(vm.galatTipe, "%s() memerlukan minimal 2 argumen", nama);
+        return NUMBER_VAL(0);
+    }
+    if (argCount == 1) {
+        if (!seqLength(args[0], &count)) {
+            nativeRaiseKelas(vm.galatTipe, "%s() memerlukan minimal 2 argumen", nama);
+            return NUMBER_VAL(0);
+        }
+        if (count == 0) {
+            nativeRaiseKelas(vm.galatNilai, "%s() dari urutan kosong", nama);
+            return NUMBER_VAL(0);
+        }
+        seq = args[0];
+        fromSeq = true;
+    } else {
+        count = argCount;
+        seq = KOSONG_VAL;
+        fromSeq = false;
+    }
+
+    // Kandidat terbaik disimpan di stack VM: seqGet() dapat mengalokasi
+    // (teks) dan memicu GC saat kandidat sebelumnya belum tereferensi.
+    push(fromSeq ? seqGet(seq, 0) : args[0]);
+    for (int i = 1; i < count; i++) {
+        Value item = fromSeq ? seqGet(seq, i) : args[i];
+        push(item);
+        bool less;
+        if (!valueLess(vm.stackTop[-1], vm.stackTop[-2], nama, &less)) {
+            vm.stackTop -= 2;
+            return NUMBER_VAL(0);
+        }
+        if (less != wantMax) {       // item lebih baik dari kandidat
+            Value better = pop();
+            pop();
+            push(better);
+        } else {
+            pop();
+        }
+    }
+    return pop();
+}
+
+// bulatkan(x[, digit]) - round() Python: pembulatan setengah ke genap.
+// Dikerjakan lewat printf("%.*f") karena glibc membulatkan dari nilai biner
+// yang SEBENARNYA dengan ties-to-even — persis algoritma _Py_dg_dtoa CPython.
+// Karena itu bulatkan(2.675, 2) == 2.67, sama seperti Python (2.675 sejatinya
+// 2.67499...): ini bukan bug, jangan "diperbaiki".
+Value nativeFnBulatkan(int argCount, Value* args) {
+    if (argCount < 1 || argCount > 2) {
+        nativeRaiseKelas(vm.galatTipe, "bulatkan() memerlukan 1 atau 2 argumen");
+        return NUMBER_VAL(0);
+    }
+    if (!IS_NUMBER(args[0])) {
+        nativeRaiseKelas(vm.galatTipe, "bulatkan() hanya menerima angka");
+        return NUMBER_VAL(0);
+    }
+    double x = AS_NUMBER(args[0]);
+    int digit = 0;
+    if (argCount == 2) {
+        if (!IS_NUMBER(args[1]) || AS_NUMBER(args[1]) != floor(AS_NUMBER(args[1]))) {
+            nativeRaiseKelas(vm.galatTipe, "bulatkan() digit harus bilangan bulat");
+            return NUMBER_VAL(0);
+        }
+        double d = AS_NUMBER(args[1]);
+        if (d > 320) return NUMBER_VAL(x);      // sudah lebih presisi dari double
+        if (d < -320) return NUMBER_VAL(x < 0 ? -0.0 : 0.0);
+        digit = (int)d;
+    }
+    if (!isfinite(x)) return NUMBER_VAL(x);
+
+    if (digit < 0) {
+        // printf tidak punya presisi negatif: skala, bulatkan setengah-ke-genap
+        // (mode pembulatan default FPU), lalu kembalikan skalanya.
+        double scale = pow(10.0, -digit);
+        return NUMBER_VAL(nearbyint(x / scale) * scale);
+    }
+    if (fabs(x) >= 1e17) return NUMBER_VAL(x);  // sudah bulat pada presisi itu
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), "%.*f", digit, x);
+    return NUMBER_VAL(strtod(buf, NULL));
+}
+
+// bagi_sisa(a, b) - divmod(): [a // b, a % b], konsisten dengan
+// OP_FLOOR_DIVIDE dan OP_MODULO di vm.c (lantai + sisa bertanda pembagi).
+Value nativeFnBagiSisa(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaiseKelas(vm.galatTipe, "bagi_sisa() memerlukan 2 argumen");
+        return KOSONG_VAL;
+    }
+    if (!IS_NUMBER(args[0]) || !IS_NUMBER(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "bagi_sisa() hanya menerima angka");
+        return KOSONG_VAL;
+    }
+    double a = AS_NUMBER(args[0]);
+    double b = AS_NUMBER(args[1]);
+    if (b == 0) {
+        nativeRaiseKelas(vm.galatBagiNol, "Pembagian dengan nol.");
+        return KOSONG_VAL;
+    }
+    double sisa = fmod(a, b);
+    if (sisa == 0) {
+        sisa = 0;                                // hindari "-0"
+    } else if ((sisa < 0) != (b < 0)) {
+        sisa += b;
+    }
+
+    ObjList* hasil = newList();
+    push(OBJ_VAL(hasil));                        // jaga dari GC saat tumbuh
+    writeValueArray(&hasil->items, NUMBER_VAL(floor(a / b)));
+    writeValueArray(&hasil->items, NUMBER_VAL(sisa));
+    pop();
+    return OBJ_VAL(hasil);
+}
+
+// Inti biner()/oktal()/heksa(): teks berawalan, tanda minus di depan awalan
+// seperti Python ('-0b1010').
+static Value toBase(int argCount, Value* args, int base, const char* prefix,
+                    const char* nama) {
+    if (argCount != 1) {
+        nativeRaiseKelas(vm.galatTipe, "%s() memerlukan 1 argumen", nama);
+        return KOSONG_VAL;
+    }
+    if (!IS_NUMBER(args[0])) {
+        nativeRaiseKelas(vm.galatTipe, "%s() hanya menerima angka", nama);
+        return KOSONG_VAL;
+    }
+    double x = AS_NUMBER(args[0]);
+    if (!isfinite(x) || x != floor(x)) {
+        nativeRaiseKelas(vm.galatTipe, "%s() memerlukan bilangan bulat", nama);
+        return KOSONG_VAL;
+    }
+    if (fabs(x) > 9007199254740992.0) {          // 2^53: di atas ini double tidak eksak
+        nativeRaiseKelas(vm.galatNilai, "%s() angka terlalu besar", nama);
+        return KOSONG_VAL;
+    }
+
+    bool negatif = x < 0;
+    unsigned long long n = (unsigned long long)fabs(x);
+    char digits[72];
+    int len = 0;
+    do {
+        digits[len++] = "0123456789abcdef"[n % (unsigned)base];
+        n /= (unsigned)base;
+    } while (n > 0);
+
+    char buf[80];
+    int pos = 0;
+    if (negatif) buf[pos++] = '-';
+    buf[pos++] = prefix[0];
+    buf[pos++] = prefix[1];
+    while (len > 0) buf[pos++] = digits[--len];
+    return OBJ_VAL(copyString(buf, pos));
+}
+
+Value nativeFnBiner(int argCount, Value* args)  { return toBase(argCount, args, 2,  "0b", "biner"); }
+Value nativeFnOktal(int argCount, Value* args)  { return toBase(argCount, args, 8,  "0o", "oktal"); }
+Value nativeFnHeksa(int argCount, Value* args)  { return toBase(argCount, args, 16, "0x", "heksa"); }
+
+// ke_bulat(x) - int(): memotong KE ARAH NOL (bukan lantai), dan menerima teks.
+Value nativeFnKeBulat(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaiseKelas(vm.galatTipe, "ke_bulat() memerlukan 1 argumen");
+        return NUMBER_VAL(0);
+    }
+    if (IS_BOOL(args[0])) return NUMBER_VAL(AS_BOOL(args[0]) ? 1 : 0);
+    if (IS_NUMBER(args[0])) {
+        double x = AS_NUMBER(args[0]);
+        if (!isfinite(x)) {
+            nativeRaiseKelas(vm.galatNilai, "ke_bulat() tidak dapat mengubah %s",
+                             isnan(x) ? "nan" : "takhingga");
+            return NUMBER_VAL(0);
+        }
+        return NUMBER_VAL(trunc(x));
+    }
+    if (!IS_STRING(args[0])) {
+        nativeRaiseKelas(vm.galatTipe, "ke_bulat() hanya menerima angka, teks, atau logika");
+        return NUMBER_VAL(0);
+    }
+
+    // Seperti int("..."): spasi di tepi boleh, pecahan tidak.
+    const char* s = AS_CSTRING(args[0]);
+    const char* p = s;
+    while (isspace((unsigned char)*p)) p++;
+    const char* mulai = p;
+    if (*p == '+' || *p == '-') p++;
+    if (!isdigit((unsigned char)*p)) {
+        nativeRaiseKelas(vm.galatNilai, "ke_bulat() gagal: '%s' bukan bilangan bulat", s);
+        return NUMBER_VAL(0);
+    }
+    while (isdigit((unsigned char)*p)) p++;
+    const char* selesai = p;
+    while (isspace((unsigned char)*p)) p++;
+    if (*p != '\0') {
+        nativeRaiseKelas(vm.galatNilai, "ke_bulat() gagal: '%s' bukan bilangan bulat", s);
+        return NUMBER_VAL(0);
+    }
+    (void)selesai;
+    return NUMBER_VAL(strtod(mulai, NULL));
+}
+
+// ke_logika(x) - bool(): memakai truthiness K1 yang sama dengan jika/tidak.
+Value nativeFnKeLogika(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaiseKelas(vm.galatTipe, "ke_logika() memerlukan 1 argumen");
+        return BOOL_VAL(false);
+    }
+    return BOOL_VAL(!isFalsey(args[0]));
+}
+
+// adalah_instansi(objek, kelas) - isinstance(). Memakai valueIsInstanceOf()
+// di vm.c, helper yang sama yang dipakai OP_IS_INSTANCE untuk `kecuali`.
+Value nativeFnAdalahInstansi(int argCount, Value* args) {
+    if (argCount != 2) {
+        nativeRaiseKelas(vm.galatTipe, "adalah_instansi() memerlukan 2 argumen");
+        return BOOL_VAL(false);
+    }
+    if (!IS_CLASS(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "adalah_instansi() argumen kedua harus kelas");
+        return BOOL_VAL(false);
+    }
+    return BOOL_VAL(valueIsInstanceOf(args[0], args[1]));
+}
+
+// bisa_dipanggil(x) - callable().
+Value nativeFnBisaDipanggil(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaiseKelas(vm.galatTipe, "bisa_dipanggil() memerlukan 1 argumen");
+        return BOOL_VAL(false);
+    }
+    Value v = args[0];
+    return BOOL_VAL(IS_FUNCTION(v) || IS_CLOSURE(v) || IS_NATIVE(v) ||
+                    IS_CLASS(v) || IS_BOUND_METHOD(v));
+}
+
+// repr(x) - repr(): teks diberi tanda kutip, sisanya seperti ke_teks().
+Value nativeFnRepr(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaiseKelas(vm.galatTipe, "repr() memerlukan 1 argumen");
+        return KOSONG_VAL;
+    }
+    if (IS_STRING(args[0])) {
+        ObjString* teks = AS_STRING(args[0]);
+        int len = teks->length;
+        char* buf = ALLOCATE(char, len + 3);
+        buf[0] = '"';
+        memcpy(buf + 1, teks->chars, len);
+        buf[len + 1] = '"';
+        buf[len + 2] = '\0';
+        return OBJ_VAL(takeString(buf, len + 2));
+    }
+    return nativeFnKeTeks(argCount, args);
+}
+
+// id(x) - identitas objek, konsisten dengan operator `adalah`
+// (valuesIdentical): objek memakai alamat heap-nya, primitif memakai hash
+// 53-bit dari nilainya sehingga dua primitif yang identik selalu seid.
+// ponytail: hash primitif bisa (sangat kecil kemungkinannya) bertabrakan
+// dengan sebuah alamat; cukup sampai ada tipe id yang bukan double.
+Value nativeFnId(int argCount, Value* args) {
+    if (argCount != 1) {
+        nativeRaiseKelas(vm.galatTipe, "id() memerlukan 1 argumen");
+        return NUMBER_VAL(0);
+    }
+    Value v = args[0];
+    if (IS_OBJ(v)) return NUMBER_VAL((double)(uintptr_t)AS_OBJ(v));
+
+    uint64_t hash = 1469598103934665603ULL;      // FNV-1a
+    unsigned char bytes[9];
+    bytes[0] = (unsigned char)v.type;
+    double d = 0;
+    if (IS_BOOL(v)) d = AS_BOOL(v) ? 1 : 0;
+    else if (IS_NUMBER(v)) d = AS_NUMBER(v) + 0.0;   // -0.0 dan 0.0 identik
+    memcpy(bytes + 1, &d, sizeof(double));
+    for (size_t i = 0; i < sizeof(bytes); i++) {
+        hash ^= bytes[i];
+        hash *= 1099511628211ULL;
+    }
+    return NUMBER_VAL((double)(hash & 0x1FFFFFFFFFFFFFULL));   // 53 bit: eksak di double
 }
 
 // ============================================================================

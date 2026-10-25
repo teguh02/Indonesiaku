@@ -111,5 +111,8 @@ Value pop();
 void runtimeError(const char* format, ...);
 void fatalError(const char* format, ...);
 void nativeRaise(const char* format, ...);
+void nativeRaiseKelas(ObjClass* klass, const char* format, ...);
+bool valueIsInstanceOf(Value value, Value klass);
+bool isFalsey(Value value);
 
 #endif
