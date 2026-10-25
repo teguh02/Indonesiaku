@@ -12,7 +12,7 @@ dihapus: 50
 === List Bersarang & Campuran ===
 2
 3
-[1, dua, benar, kosong]
+[1, "dua", benar, kosong]
 jenis: list
 === Bangun List dengan Loop ===
 [1, 4, 9, 16, 25]

@@ -77,7 +77,13 @@ typedef struct {
     ObjClass* galatIndeks;
     ObjClass* galatKunci;
     ObjClass* galatNama;
+    ObjClass* galatPenegasan;
     ObjClass* galatAtribut;
+
+    // Keyword argument names for the native call currently running, or NULL.
+    // Only natives that opt in (see keywordNatives in vm.c) ever see these;
+    // every other native still rejects keywords exactly as before.
+    ObjList* nativeArgNames;
     ObjUpvalue* openUpvalues;
     Obj* objects;
     bool hadError;

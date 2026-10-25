@@ -1,2 +1,4 @@
 Kunci kamus harus nilai yang dapat di-hash (angka, teks, logika, kosong).
-[baris 2] dalam skrip
+[baris 2, kolom 26] dalam skrip
+    variabel d = {[1, 2]: "x"}
+                             ^

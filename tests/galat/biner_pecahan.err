@@ -1,2 +1,4 @@
 biner() memerlukan bilangan bulat
-[baris 2] dalam skrip
+[baris 2, kolom 16] dalam skrip
+    cetak(biner(1.5))
+                   ^

@@ -1,2 +1,4 @@
 Parameter wajib 'a' tidak diisi.
-[baris 5] dalam skrip
+[baris 5, kolom 12] dalam skrip
+    cetak(f(b=1))
+               ^

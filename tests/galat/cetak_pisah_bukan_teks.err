@@ -1,0 +1,4 @@
+cetak(): 'pisah' harus teks
+[baris 2, kolom 24] dalam skrip
+    cetak("a", "b", pisah=5)
+                           ^

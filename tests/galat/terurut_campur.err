@@ -1,2 +1,4 @@
 terurut() tidak dapat membandingkan angka dengan teks
-[baris 2] dalam skrip
+[baris 2, kolom 23] dalam skrip
+    cetak(terurut([1, "a"]))
+                          ^

@@ -31,7 +31,6 @@ typedef enum {
     OP_CHAIN_CLEANUP,
     OP_NOT,
     OP_NEGATE,
-    OP_PRINT,
     OP_JUMP,
     OP_JUMP_IF_FALSE,
     OP_LOOP,
@@ -67,6 +66,7 @@ typedef enum {
     OP_TRY_BEGIN,
     OP_TRY_END,
     OP_THROW,
+    OP_PASTIKAN,
     OP_IS_INSTANCE,
     OP_IMPORT,
     OP_RETURN,
@@ -90,12 +90,22 @@ typedef struct {
     int capacity;
     uint8_t* code;
     int* lines;
+    // ponytail: 4 bytes per bytecode for runtime error columns. Worth it for
+    // a caret under the failing expression; pack with lines into one struct
+    // array if chunk memory ever matters.
+    int* columns;
+    // Source text this chunk was compiled from, so runtime errors can print
+    // the offending line. An ObjString (not a raw char*) so the GC keeps it
+    // alive exactly as long as the function needs it -- module sources used
+    // to be freed right after compile(). Every function from one compile()
+    // shares this pointer; NULL when unavailable.
+    struct ObjString* source;
     ValueArray constants;
 } Chunk;
 
 void initChunk(Chunk* chunk);
 void freeChunk(Chunk* chunk);
-void writeChunk(Chunk* chunk, uint8_t byte, int line);
+void writeChunk(Chunk* chunk, uint8_t byte, int line, int column);
 int addConstant(Chunk* chunk, Value value);
 
 #endif

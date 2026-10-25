@@ -89,6 +89,7 @@ static char* readFile(const char* path) {
     }
 
     buffer[bytesRead] = '\0';
+    normalizeNewlines(buffer, bytesRead);
 
     fclose(file);
     return buffer;

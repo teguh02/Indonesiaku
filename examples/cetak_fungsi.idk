@@ -1,0 +1,62 @@
+# `cetak` adalah fungsi biasa, bukan pernyataan khusus (K12).
+
+# --- Pemakaian dasar -------------------------------------------------------
+
+cetak("satu")
+cetak(1, 2, 3)
+cetak("campur", 42, benar, kosong, 3.5)
+
+# Tanpa argumen: baris kosong.
+cetak()
+
+# --- Pemisah dan akhiran ---------------------------------------------------
+
+cetak("a", "b", "c", pisah="-")
+cetak("tanpa", "spasi", pisah="")
+cetak("tanpa newline", akhir="")
+cetak(" <- lanjut di baris yang sama")
+cetak("x", "y", pisah="+", akhir=" (selesai)\n")
+
+# --- cetak sebagai nilai ---------------------------------------------------
+
+variabel tulis = cetak
+tulis("dipanggil lewat variabel")
+
+cetak(bisa_dipanggil(cetak))
+cetak(jenis(cetak))
+
+fungsi jalankan(fn, pesan) {
+    fn(pesan)
+}
+jalankan(cetak, "dioper sebagai argumen")
+
+# Tetap berfungsi di dalam fungsi dan perulangan.
+fungsi sapa(nama) {
+    cetak("halo", nama)
+}
+sapa("budi")
+
+untuk i dalam rentang(3) {
+    cetak("baris", i)
+}
+
+# --- Galat -----------------------------------------------------------------
+
+coba {
+    cetak("a", pisah=5)
+} kecuali Galat sebagai e {
+    cetak("galat:", e.pesan)
+}
+
+coba {
+    cetak("a", tak_dikenal="x")
+} kecuali Galat sebagai e {
+    cetak("galat:", e.pesan)
+}
+
+# Fungsi bawaan lain tetap menolak argumen bernama.
+coba {
+    cetak(panjang("ab", pisah="-"))
+} kecuali Galat sebagai e {
+    cetak("galat:", e.pesan)
+}

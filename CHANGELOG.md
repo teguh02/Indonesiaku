@@ -7,6 +7,18 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — penggabungan Fase 1 + Fase 2
+- 🐛 List comprehension dengan filter (`[x untuk x dalam a jika syarat]`)
+  gagal kompilasi setelah ekspresi kondisional (`a jika c selain b`) masuk:
+  `jika` pada filter terbaca sebagai awal ekspresi kondisional. Urutan dan
+  filter kini diurai seperti `or_test` di Python; ekspresi kondisional di
+  urutan perlu tanda kurung.
+- 🐛 Berkas sumber ber-CRLF (checkout git di Windows) membocorkan `\r` ke
+  string tiga kutip, `panjang()`, dan potongan baris pada pesan galat. Sumber
+  kini dinormalkan saat dibaca (`\r\n` → `\n`), seperti Python.
+- 🐛 `pastikan salah, 404` menyimpan pesan `404.0`; pesan `bulat` kini tetap
+  `404`.
+
 ### Changed — Fase 2 ⚠️ MERUSAK
 - 🔢 **Dua tipe angka: `bulat` (int64) dan `desimal` (double)** — K2.
   Literal tanpa titik menjadi `bulat`; hasil aritmetika bulat tetap bulat dan
@@ -29,6 +41,9 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   - `biner`/`oktal`/`heksa` menerima `bulat` 64-bit penuh (batas 2⁵³ hilang).
   - SQLite: kolom `INTEGER` menjadi `bulat`; batas ±2⁵³ untuk `INTEGER` hilang.
   - `pustaka/matematika.idk`: `mat_kpk` memakai `//`, jadi hasilnya `bulat`.
+
+  - Literal `0x`/`0b`/`0o` dan `1_000` (dari Fase 1) juga menjadi `bulat`;
+    sebelum K2 semuanya `double`.
 
   Semua golden diperiksa satu per satu; yang berubah hanya baris yang memang
   berbeda di Python (mis. `akar(16)` → `4.0`, `7.5 // 2` → `3.0`).
@@ -56,6 +71,58 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   yang sudah di-buang menimbulkan galat; indeks/kunci/atribut yang tidak ada
   menimbulkan `GalatIndeks`/`GalatKunci`/`GalatAtribut`.
 
+### Added — Fase 1
+- ✅ **Kolom dan potongan baris pada galat runtime** — traceback kini
+  `[baris N, kolom M]` dengan baris sumber dan caret pada bingkai terdalam.
+  Sumber disimpan sebagai objek GC di dalam chunk, sehingga sumber modul
+  `impor` tetap tersedia saat galat terjadi.
+- ✅ **Teks di dalam koleksi dicetak dengan kutip (`repr`)** — `cetak(["a"])`
+  kini `["a"]`, bukan `[a]`. Aturan escape tunggal dipakai bersama oleh
+  `cetak`, `ke_teks`, `format`, f-string, dan `repr`.
+- ✅ **Pesan galat kompilasi dengan kolom, potongan baris, dan caret** —
+  `[baris 2, kolom 11] ...` diikuti baris sumber dan `^` di bawah token.
+  Baris panjang dipotong dengan `…`, tab disalin apa adanya agar caret lurus.
+- ✅ **Saran "Mungkin maksudmu ...?"** untuk nama global yang salah ketik,
+  memakai jarak edit terbatas (≤ 2 dan ≤ sepertiga panjang nama).
+- ✅ **`cetak` menjadi fungsi biasa (K12)** — bukan lagi pernyataan/opcode.
+  Mendukung `pisah=` dan `akhir=`, serta dapat diperlakukan sebagai nilai
+  (disimpan, dioper, `bisa_dipanggil(cetak)`). `OP_PRINT`, `TOKEN_CETAK`, dan
+  `printStatement()` dihapus. Konsekuensi seperti Python: `cetak` kini nama
+  biasa yang bisa ditimpa.
+- ✅ **Metode pada tipe bawaan (K10)** — `"budi".huruf_besar()`,
+  `[3,1,2].terurut()`, `{"a":1}.punya("a")`, dan dapat dirangkai.
+  Setiap metode memanggil native yang sudah ada (semuanya sudah menerima
+  penerima sebagai argumen pertama), jadi tidak ada logika teks/daftar/kamus
+  yang ditulis ulang dan fungsi bebas lama tetap berfungsi.
+  Metode bawaan harus langsung dipanggil; menyimpannya sebagai nilai ditolak
+  dengan pesan yang menjelaskan caranya.
+- ✅ **Literal angka baru** — eksponen (`1e3`, `1.5e-3`), heksadesimal
+  (`0xFF`), biner (`0b1010`), oktal (`0o17`), dan pemisah ribuan
+  (`1_000_000`). Garis bawah wajib di antara digit; `1__0` dan `0b2` ditolak
+  dengan pesan sendiri. Semuanya tetap `double` — bilangan bulat presisi
+  penuh masih menunggu Fase 2.
+- ✅ **String tiga kutip** — `"""..."""` mempertahankan baris baru apa adanya.
+- ✅ **f-string** — `f"Halo {nama}"`. Didesugar menjadi `+` dan `ke_teks()`
+  yang sudah ada, jadi tanpa opcode baru. Mendukung ekspresi apa pun,
+  `{{`/`}}` harfiah, serta kutip di dalam `{ }` (`f"{d["a"]}"`).
+  Belum ada format spec (`{x:.2f}`) — menunggu metode tipe teks.
+- ✅ **Fungsi anonim** — `fungsi(x) { kembalikan x * x }` sebagai ekspresi,
+  closure penuh, mendukung nilai bawaan + argumen bernama. Badannya tetap
+  `{ }` dan `kembalikan`; tidak ada bentuk satu-ekspresi gaya `lambda` supaya
+  cara menulis fungsi tetap satu. Di traceback muncul sebagai `<anonim>`.
+- ✅ **Ekspresi kondisional** — `"lulus" jika nilai >= 60 selain "gagal"`.
+  Kondisi dinilai lebih dulu dan hanya cabang terpilih yang berjalan, jadi
+  `x[0] jika panjang(x) > 0 selain "kosong"` aman pada daftar kosong.
+- ✅ **`pastikan` (assert)** — `pastikan kondisi` atau
+  `pastikan kondisi, "pesan"`. Gagal menaikkan `GalatPenegasan`, kelas yang
+  sudah terdaftar di hierarki galat sejak Fase 1 tetapi belum pernah dipakai.
+  Seperti Python, **ekspresi pesan hanya dinilai saat penegasannya gagal**,
+  sehingga `pastikan benar, hitung_mahal()` tidak memanggil apa pun.
+  Kebenaran kondisinya memakai aturan `isFalsey` yang sama dengan `jika`.
+
+  Tidak ada mode `-O` untuk mematikan penegasan: belum ada satu pun flag
+  runtime di `indk`, dan menambahnya demi fitur ini tidak sepadan.
+
 ### Added — Fase 3
 - 🗄️ **Basis data SQLite tertanam** — 10 fungsi bawaan (`db_buka`,
   `db_eksekusi`, `db_ambil_semua`, `db_ambil_satu`, `db_baris_terpengaruh`,
@@ -75,6 +142,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Ukuran biner naik ~140 KB → ~1,2 MB.
 
 ### Fixed
+- 🐛 **Use-after-free saat mengompilasi f-string** — `restoreScanner` tidak
+  mengembalikan penunjuk sumber, sehingga ia tertinggal menunjuk buffer
+  sementara f-string yang sudah dibebaskan. Tidak terlihat sebelumnya karena
+  penunjuk itu belum pernah dibaca setelah restore.
+- 🐛 **Kamus dicetak sesuai urutan penambahan**, bukan urutan tabel hash.
+  Sebelumnya `cetak(d)` bisa berbeda urutan dari `kunci(d)` dan dari
+  perulangan `untuk ... dalam d` pada kamus yang sama.
 - 🐛 **Kompilator menggantung selamanya pada `}` yang tidak punya pasangan.**
   Berkas yang hanya berisi `}` pun membuat `indk` berputar tanpa henti
   (exit 124) alih-alih melaporkan galat. `declaration()` sengaja kembali

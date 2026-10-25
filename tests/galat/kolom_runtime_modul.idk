@@ -1,0 +1,3 @@
+# Sumber modul harus tetap hidup supaya potongan barisnya bisa dicetak.
+impor "tests/galat/modul_rusak.idk"
+cetak(modul_rusak(5))

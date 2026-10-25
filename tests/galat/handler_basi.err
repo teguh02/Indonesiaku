@@ -1,2 +1,4 @@
 Kesalahan tak tertangani: galat di luar coba
-[baris 8] dalam skrip
+[baris 8, kolom 9] dalam skrip
+    naikkan "galat di luar coba"
+            ^

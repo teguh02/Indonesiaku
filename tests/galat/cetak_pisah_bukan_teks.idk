@@ -1,0 +1,2 @@
+# Parameter 'pisah' pada cetak harus berupa teks.
+cetak("a", "b", pisah=5)

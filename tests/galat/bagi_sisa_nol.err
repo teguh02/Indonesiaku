@@ -1,2 +1,4 @@
 Pembagian dengan nol.
-[baris 2] dalam skrip
+[baris 2, kolom 22] dalam skrip
+    cetak(bagi_sisa(10, 0))
+                         ^

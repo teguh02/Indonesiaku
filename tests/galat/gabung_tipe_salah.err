@@ -1,2 +1,4 @@
 Operand '+' harus dua angka, dua teks, atau dua daftar.
-[baris 3] dalam skrip
+[baris 3, kolom 11] dalam skrip
+    cetak(a + "tiga")
+              ^

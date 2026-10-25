@@ -25,3 +25,10 @@ cetak([i + batas untuk i dalam rentang(3)])
 
 # Urutan kosong menghasilkan daftar kosong.
 cetak([i untuk i dalam []])
+
+# Bersama ekspresi kondisional: 'jika' setelah urutan selalu memulai filter.
+# Ekspresi kondisional boleh di elemen, atau di urutan bila diberi kurung.
+a = [1, 2, 3, 4]
+cetak(["genap" jika x % 2 == 0 selain "ganjil" untuk x dalam a])
+cetak([x untuk x dalam (a jika panjang(a) > 2 selain []) jika x > 2])
+cetak("ada" jika [y untuk y dalam a jika y > 3] selain "tidak ada")

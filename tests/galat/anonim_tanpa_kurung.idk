@@ -1,0 +1,2 @@
+# Fungsi anonim tetap memerlukan daftar parameter.
+variabel f = fungsi { kembalikan 1 }

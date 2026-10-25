@@ -33,6 +33,41 @@ static void resetStack() {
     vm.nativeCallDepth = 0;
 }
 
+// Print the source line for a runtime error with a caret at the column.
+// Mirrors the compiler's snippet format so both kinds of error read the
+// same. Silent when the source isn't available (REPL, or chunks built
+// before a source was attached).
+static void printRuntimeSnippet(ObjString* source, int line, int column) {
+    if (source == NULL || line <= 0 || column <= 0) return;
+
+    // Walk to the start of `line`.
+    const char* p = source->chars;
+    for (int current = 1; current < line; current++) {
+        const char* nl = strchr(p, '\n');
+        if (nl == NULL) return;          // source shorter than claimed
+        p = nl + 1;
+    }
+    const char* lineEnd = p;
+    while (*lineEnd != '\0' && *lineEnd != '\n') lineEnd++;
+    if (column - 1 > lineEnd - p) return;   // column outside the line
+
+    const char* token = p + (column - 1);
+    const int kWindow = 40;
+    const char* from = p;
+    const char* to = lineEnd;
+    bool cutLeft = false, cutRight = false;
+    if (token - from > kWindow) { from = token - kWindow; cutLeft = true; }
+    if (to - token > kWindow)   { to = token + kWindow;   cutRight = true; }
+
+    fprintf(stderr, "    %s%.*s%s\n",
+            cutLeft ? "…" : "", (int)(to - from), from, cutRight ? "…" : "");
+    fprintf(stderr, "    %s", cutLeft ? " " : "");
+    for (const char* q = from; q < token; q++) {
+        fputc(*q == '\t' ? '\t' : ' ', stderr);
+    }
+    fputs("^\n", stderr);
+}
+
 // Print an uncaught error with its traceback and reset the VM.
 static void reportError(const char* message) {
     vm.hadError = true;
@@ -48,6 +83,8 @@ static void reportError(const char* message) {
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
         int line = function->chunk.lines[instruction];
+        int column = function->chunk.columns == NULL
+                         ? 0 : function->chunk.columns[instruction];
         if (function == lastFunction && line == lastLine) {
             repeated++;
             continue;
@@ -58,11 +95,20 @@ static void reportError(const char* message) {
         }
         lastFunction = function;
         lastLine = line;
-        fprintf(stderr, "[baris %d] dalam ", line);
+        if (column > 0) {
+            fprintf(stderr, "[baris %d, kolom %d] dalam ", line, column);
+        } else {
+            fprintf(stderr, "[baris %d] dalam ", line);
+        }
         if (function->name == NULL) {
             fprintf(stderr, "skrip\n");
         } else {
             fprintf(stderr, "%s()\n", function->name->chars);
+        }
+        // Only the innermost frame gets a snippet: printing one per frame
+        // makes deep tracebacks unreadable.
+        if (i == vm.frameCount - 1) {
+            printRuntimeSnippet(function->chunk.source, line, column);
         }
     }
     if (repeated > 0) {
@@ -157,6 +203,18 @@ static ObjClass* defineErrorClass(const char* name, ObjClass* superclass) {
     return klass;
 }
 
+// Pull the ".pesan" field out of an error instance, or NULL when absent.
+static ObjString* errorMessage(ObjInstance* instance) {
+    for (int i = 0; i < instance->fields.capacity; i++) {
+        Entry* entry = &instance->fields.entries[i];
+        if (entry->key != NULL && strcmp(entry->key->chars, "pesan") == 0 &&
+            IS_STRING(entry->value)) {
+            return AS_STRING(entry->value);
+        }
+    }
+    return NULL;
+}
+
 static ObjInstance* newError(ObjClass* klass, const char* message) {
     ObjInstance* error = newInstance(klass);
     push(OBJ_VAL(error));
@@ -185,6 +243,7 @@ void initVM() {
     vm.hadError = false;
     vm.nativeErrorPending = false;
     vm.nativeErrorValue = KOSONG_VAL;
+    vm.nativeArgNames = NULL;
     vm.runtimeErrorPending = false;
 
     srand((unsigned int)time(NULL));
@@ -217,7 +276,7 @@ void initVM() {
     defineErrorClass("GalatOS", vm.galat);
     defineErrorClass("GalatImpor", vm.galat);
     defineErrorClass("GalatRekursi", vm.galat);
-    defineErrorClass("GalatPenegasan", vm.galat);
+    vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
     defineErrorClass("HentiIterasi", vm.galat);
     defineErrorClass("GalatSintaks", vm.galat);
 
@@ -255,6 +314,7 @@ void initVM() {
     defineNative("repr", nativeFnRepr);
     defineNative("id", nativeFnId);
 
+    defineNative("cetak", nativeFnCetak);
     defineNative("panjang", nativeFnPanjang);
     defineNative("huruf_besar", nativeFnHurofBesar);
     defineNative("huruf_kecil", nativeFnHurofKecil);
@@ -434,6 +494,74 @@ static bool call(ObjClosure* closure, int argCount, ObjList* names) {
     return true;
 }
 
+// Natives that read vm.nativeArgNames. Everything else still rejects keyword
+// arguments, so an unsupported `pisah=` is an error rather than a no-op.
+// Levenshtein distance, capped: returns > max as soon as it's clear the
+// strings are too far apart. Two rolling rows instead of a full matrix.
+static int editDistance(const char* a, int alen, const char* b, int blen, int max) {
+    if (abs(alen - blen) > max) return max + 1;
+    if (alen > 64 || blen > 64) return max + 1;
+
+    int prev[65], curr[65];
+    for (int j = 0; j <= blen; j++) prev[j] = j;
+
+    for (int i = 1; i <= alen; i++) {
+        curr[0] = i;
+        int rowBest = curr[0];
+        for (int j = 1; j <= blen; j++) {
+            int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+            int d = prev[j] + 1;
+            if (curr[j - 1] + 1 < d) d = curr[j - 1] + 1;
+            if (prev[j - 1] + cost < d) d = prev[j - 1] + cost;
+            curr[j] = d;
+            if (d < rowBest) rowBest = d;
+        }
+        if (rowBest > max) return max + 1;
+        for (int j = 0; j <= blen; j++) prev[j] = curr[j];
+    }
+    return prev[blen];
+}
+
+// Closest defined global name to `name`, or NULL when nothing is close
+// enough. Only runs when an error is already being raised, so the linear
+// scan over the globals table costs nothing in the happy path.
+static ObjString* namaTerdekat(ObjString* name) {
+    // Allow at most 2 edits, and never more than a third of the name, so
+    // short names don't get wild suggestions ("xyz" -> "abs").
+    int max = name->length / 3;
+    if (max > 2) max = 2;
+    if (max < 1) return NULL;
+
+    ObjString* best = NULL;
+    int bestDistance = max + 1;
+    for (int i = 0; i < vm.globals.capacity; i++) {
+        Entry* entry = &vm.globals.entries[i];
+        if (entry->key == NULL) continue;
+        int d = editDistance(name->chars, name->length,
+                             entry->key->chars, entry->key->length, max);
+        if (d < bestDistance) {
+            bestDistance = d;
+            best = entry->key;
+        }
+    }
+    return bestDistance <= max ? best : NULL;
+}
+
+// Raise "undefined variable", appending a suggestion when one is close.
+static void undefinedVariable(ObjString* name) {
+    ObjString* suggestion = namaTerdekat(name);
+    if (suggestion != NULL) {
+        runtimeError("Variabel tidak terdefinisi '%s'. Mungkin maksudmu '%s'?",
+                     name->chars, suggestion->chars);
+    } else {
+        runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+    }
+}
+
+static bool nativeTakesKeywords(NativeFn fn) {
+    return fn == nativeFnCetak;
+}
+
 static bool callValue(Value callee, int argCount, ObjList* names) {
     if (IS_OBJ(callee)) {
         switch (OBJ_TYPE(callee)) {
@@ -457,13 +585,18 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
             case OBJ_CLOSURE:
                 return call(AS_CLOSURE(callee), argCount, names);
             case OBJ_NATIVE: {
-                if (names != NULL) {
+                NativeFn native = AS_NATIVE(callee);
+                // Only natives that understand keywords receive them; the
+                // rest keep rejecting keywords, so no silently ignored
+                // `pisah=` on a function that never reads it.
+                if (names != NULL && !nativeTakesKeywords(native)) {
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Fungsi bawaan belum menerima argumen bernama.");
                     return false;
                 }
-                NativeFn native = AS_NATIVE(callee);
+                vm.nativeArgNames = names;
                 Value result = native(argCount, vm.stackTop - argCount);
+                vm.nativeArgNames = NULL;
                 vm.stackTop -= argCount + 1;
                 push(result);
                 return true;
@@ -498,10 +631,92 @@ static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
     return call(AS_CLOSURE(method), argCount, NULL);
 }
 
+// K10: methods on built-in types. Every relevant native already takes its
+// receiver as args[0] (huruf_besar(teks), tambah(daftar, nilai), ...), and
+// OP_INVOKE leaves the stack as `receiver, arg1, ...` — exactly the layout a
+// native expects. So a method call reuses the existing native unchanged;
+// only this name->function mapping is new.
+typedef struct {
+    const char* name;
+    NativeFn function;
+} NativeMethod;
+
+static NativeMethod stringMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"huruf_besar", nativeFnHurofBesar},
+    {"huruf_kecil", nativeFnHurofKecil},
+    {"ganti", nativeFnGanti},
+    {"potong", nativeFnPotong},
+    {"karakter", nativeFnKarakter},
+    {"format", nativeFnFormat},
+    {"ord", nativeFnOrd},
+    {NULL, NULL}
+};
+
+static NativeMethod listMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"tambah", nativeFnTambah},
+    {"hapus", nativeFnHapus},
+    {"hapus_pada", nativeFnHapusPada},
+    {"sisip", nativeFnSisip},
+    {"terurut", nativeFnTerurut},
+    {"terbalik", nativeFnTerbalik},
+    {"jumlah", nativeFnJumlah},
+    {"semua", nativeFnSemua},
+    {"ada_yang", nativeFnAdaYang},
+    {"enumerasi", nativeFnEnumerasi},
+    {NULL, NULL}
+};
+
+static NativeMethod dictMethods[] = {
+    {"panjang", nativeFnPanjang},
+    {"punya", nativeFnPunya},
+    {"hapus_kunci", nativeFnHapusKunci},
+    {"kunci", nativeFnKunci},
+    {"enumerasi", nativeFnEnumerasi},
+    {NULL, NULL}
+};
+
+// Which table serves this receiver, and what to call the type in errors.
+static NativeMethod* methodsForValue(Value receiver, const char** typeName) {
+    if (IS_STRING(receiver)) { *typeName = "teks";   return stringMethods; }
+    if (IS_LIST(receiver))   { *typeName = "daftar"; return listMethods; }
+    if (IS_DICT(receiver))   { *typeName = "kamus";  return dictMethods; }
+    *typeName = NULL;
+    return NULL;
+}
+
+// ponytail: linear scan over ~11 entries, cheaper than hashing at this size.
+// Switch to the existing Table if a profile ever says otherwise.
+static NativeFn findNativeMethod(NativeMethod* table, ObjString* name) {
+    for (int i = 0; table[i].name != NULL; i++) {
+        if (strcmp(table[i].name, name->chars) == 0) return table[i].function;
+    }
+    return NULL;
+}
+
 static bool invoke(ObjString* name, int argCount) {
     Value receiver = peek(argCount);
 
     if (!IS_INSTANCE(receiver)) {
+        const char* typeName;
+        NativeMethod* table = methodsForValue(receiver, &typeName);
+        if (table != NULL) {
+            NativeFn fn = findNativeMethod(table, name);
+            if (fn == NULL) {
+                vm.runtimeErrorClass = vm.galatAtribut;
+                runtimeError("Tipe '%s' tidak punya metode '%s'.",
+                             typeName, name->chars);
+                return false;
+            }
+            // The receiver sits just below the arguments, so pass it as
+            // args[0] — the same layout the free function already uses.
+            Value* slot = vm.stackTop - argCount - 1;
+            Value result = fn(argCount + 1, slot);
+            vm.stackTop = slot;
+            push(result);
+            return true;
+        }
         runtimeError("Hanya objek yang memiliki metode.");
         return false;
     }
@@ -540,6 +755,7 @@ static char* readModuleSource(const char* path) {
 
     size_t read = fread(buffer, sizeof(char), (size_t)size, file);
     buffer[read] = '\0';
+    normalizeNewlines(buffer, read);
     fclose(file);
     return buffer;
 }
@@ -621,14 +837,10 @@ static int resolveNativeError() {
         if (IS_STRING(error)) {
             runtimeError("%s", AS_CSTRING(error));
         } else if (IS_INSTANCE(error)) {
-            ObjInstance* instance = AS_INSTANCE(error);
-            for (int i = 0; i < instance->fields.capacity; i++) {
-                Entry* entry = &instance->fields.entries[i];
-                if (entry->key != NULL && strcmp(entry->key->chars, "pesan") == 0 &&
-                    IS_STRING(entry->value)) {
-                    runtimeError("%s", AS_CSTRING(entry->value));
-                    return -1;
-                }
+            ObjString* message = errorMessage(AS_INSTANCE(error));
+            if (message != NULL) {
+                runtimeError("%s", message->chars);
+                return -1;
             }
             runtimeError("Kesalahan tak tertangani dari fungsi bawaan.");
         } else {
@@ -1073,7 +1285,7 @@ static InterpretResult run() {
                 ObjString* name = READ_STRING();
                 Value value;
                 if (!tableGet(&vm.globals, name, &value)) {
-                    runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+                    undefinedVariable(name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 push(value);
@@ -1089,7 +1301,7 @@ static InterpretResult run() {
                 ObjString* name = READ_STRING();
                 if (tableSet(&vm.globals, name, peek(0))) {
                     tableDelete(&vm.globals, name);
-                    runtimeError("Variabel tidak terdefinisi '%s'.", name->chars);
+                    undefinedVariable(name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 // Don't pop - leave value on stack (assignment is an expression)
@@ -1403,16 +1615,6 @@ static InterpretResult run() {
                     break;
                 }
                 push(NUMBER_VAL(-AS_NUMBER(pop())));
-                break;
-            }
-            case OP_PRINT: {
-                int count = READ_BYTE();
-                for (int i = count - 1; i >= 0; i--) {
-                    printValue(peek(i));
-                    if (i > 0) printf(" ");
-                }
-                printf("\n");
-                vm.stackTop -= count;
                 break;
             }
             case OP_LOOP: {
@@ -1773,6 +1975,28 @@ static InterpretResult run() {
                 break;
             case OP_GET_PROPERTY: {
                 if (!IS_INSTANCE(peek(0))) {
+                    // ponytail: built-in methods can be called but not taken
+                    // as values — ObjBoundMethod only carries ObjClosure, and
+                    // a native-bound variant isn't worth a new object type
+                    // yet. Say so plainly instead of "hanya objek...".
+                    const char* typeName;
+                    NativeMethod* table = methodsForValue(peek(0), &typeName);
+                    ObjString* propName = READ_STRING();
+                    if (table != NULL &&
+                        findNativeMethod(table, propName) != NULL) {
+                        vm.runtimeErrorClass = vm.galatAtribut;
+                        runtimeError(
+                            "Metode '%s' pada tipe '%s' harus langsung "
+                            "dipanggil, misalnya x.%s().",
+                            propName->chars, typeName, propName->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    if (table != NULL) {
+                        vm.runtimeErrorClass = vm.galatAtribut;
+                        runtimeError("Tipe '%s' tidak punya properti '%s'.",
+                                     typeName, propName->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                     runtimeError("Hanya objek yang memiliki properti.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -1868,6 +2092,57 @@ static InterpretResult run() {
                 }
                 frame = &vm.frames[vm.frameCount - 1];
                 push(error);  // make the raised value available to 'kecuali'
+                break;
+            }
+            case OP_PASTIKAN: {
+                // The assertion already failed; the stack holds the message
+                // expression, or kosong when none was written.
+                Value given = peek(0);        // keep rooted: newError allocates
+                ObjInstance* error;
+                if (IS_KOSONG(given)) {
+                    error = newError(vm.galatPenegasan, "Penegasan gagal.");
+                } else if (IS_STRING(given)) {
+                    error = newError(vm.galatPenegasan, AS_CSTRING(given));
+                } else {
+                    // ponytail: numbers/booleans only; a full repr would need
+                    // native.c's appendValueText exported. Wrap the message in
+                    // ke_teks() for richer values.
+                    char buffer[64];
+                    if (IS_INT(given)) {
+                        // bulat must not be widened: 404 stays "404" (K2).
+                        snprintf(buffer, sizeof(buffer), "%lld",
+                                 (long long)AS_INT(given));
+                    } else if (IS_NUMBER(given)) {
+                        numberToString(AS_NUMBER(given), buffer, sizeof(buffer));
+                    } else if (IS_BOOL(given)) {
+                        snprintf(buffer, sizeof(buffer), "%s",
+                                 AS_BOOL(given) ? "benar" : "salah");
+                    } else {
+                        snprintf(buffer, sizeof(buffer), "Penegasan gagal.");
+                    }
+                    error = newError(vm.galatPenegasan, buffer);
+                }
+                pop();                        // drop the message expression
+                Value raised = OBJ_VAL(error);
+                if (!throwValue(raised)) {
+                    if (vm.nativeCallDepth > 0) {
+                        vm.nativeErrorValue = raised;
+                        vm.nativeErrorPending = true;
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    ObjString* message = errorMessage(error);
+                    // The default message is already a full sentence; only a
+                    // user-supplied one needs the "Penegasan gagal:" prefix.
+                    if (message == NULL ||
+                        strcmp(message->chars, "Penegasan gagal.") == 0) {
+                        runtimeError("Penegasan gagal.");
+                    } else {
+                        runtimeError("Penegasan gagal: %s", message->chars);
+                    }
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                frame = &vm.frames[vm.frameCount - 1];
+                push(raised);
                 break;
             }
             case OP_IS_INSTANCE: {

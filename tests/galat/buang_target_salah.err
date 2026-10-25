@@ -1,1 +1,3 @@
-[baris 1] Kesalahan di '5': Harapkan nama, elemen, atau atribut setelah 'buang'.
+[baris 1, kolom 7] Kesalahan di '5': Harapkan nama, elemen, atau atribut setelah 'buang'.
+    buang 5
+          ^

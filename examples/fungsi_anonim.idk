@@ -1,0 +1,66 @@
+# Fungsi anonim dan ekspresi kondisional.
+
+# --- Fungsi anonim ---------------------------------------------------------
+
+# Fungsi tanpa nama, disimpan di variabel.
+variabel kuadrat = fungsi(x) { kembalikan x * x }
+cetak(kuadrat(6))
+
+# Dipanggil langsung di tempat.
+cetak(fungsi(a, b) { kembalikan a + b }(3, 4))
+
+# Dioper sebagai argumen — gunanya memang ini.
+fungsi terapkan(f, nilai) {
+    kembalikan f(nilai)
+}
+cetak(terapkan(fungsi(x) { kembalikan x * 10 }, 7))
+
+# Closure: menangkap variabel dari sekitarnya.
+fungsi pembuat_penambah(n) {
+    kembalikan fungsi(x) { kembalikan x + n }
+}
+variabel tambah5 = pembuat_penambah(5)
+variabel tambah9 = pembuat_penambah(9)
+cetak(tambah5(1), tambah9(1))
+
+# Nilai bawaan dan argumen bernama tetap berlaku.
+variabel sapa = fungsi(nama, salam = "Halo") { kembalikan salam + ", " + nama }
+cetak(sapa("Budi"))
+cetak(sapa("Ani", salam="Selamat pagi"))
+
+# --- Ekspresi kondisional --------------------------------------------------
+
+variabel nilai = 75
+cetak("lulus" jika nilai >= 60 selain "gagal")
+cetak("lulus" jika 40 >= 60 selain "gagal")
+
+# Kondisi dinilai lebih dulu, jadi pola penjaga ini aman pada daftar kosong.
+variabel kosong_dulu = []
+cetak(kosong_dulu[0] jika panjang(kosong_dulu) > 0 selain "daftar kosong")
+
+# Hanya cabang yang terpilih yang dijalankan.
+fungsi jejak_a() {
+    cetak("  cabang benar dijalankan")
+    kembalikan "a"
+}
+fungsi jejak_b() {
+    cetak("  cabang salah dijalankan")
+    kembalikan "b"
+}
+cetak("kondisi benar:")
+cetak(jejak_a() jika benar selain jejak_b())
+cetak("kondisi salah:")
+cetak(jejak_a() jika salah selain jejak_b())
+
+# Bersarang, di dalam daftar, dan di dalam fungsi.
+cetak("A" jika 1 selain ("B" jika 0 selain "C"))
+cetak([1 jika benar selain 2, 3 jika salah selain 4])
+
+fungsi tanda(n) {
+    kembalikan "positif" jika n > 0 selain "nol atau negatif"
+}
+cetak(tanda(5), tanda(-5))
+
+# Keduanya digabung: kondisional di dalam fungsi anonim.
+variabel mutlak = fungsi(v) { kembalikan v jika v >= 0 selain 0 - v }
+cetak(mutlak(7), mutlak(-7))

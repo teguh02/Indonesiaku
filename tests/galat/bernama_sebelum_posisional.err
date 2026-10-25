@@ -1,1 +1,3 @@
-[baris 5] Kesalahan di ',': Argumen posisional tidak boleh setelah argumen bernama.
+[baris 5, kolom 12] Kesalahan di ',': Argumen posisional tidak boleh setelah argumen bernama.
+    cetak(f(b=1, 2))
+               ^

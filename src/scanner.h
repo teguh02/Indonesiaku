@@ -28,11 +28,12 @@ typedef enum {
     // Keywords dalam Bahasa Indonesia
     TOKEN_DAN, TOKEN_KELAS, TOKEN_SELAIN, TOKEN_SALAH,
     TOKEN_UNTUK, TOKEN_FUNGSI, TOKEN_JIKA, TOKEN_KOSONG,
-    TOKEN_ATAU, TOKEN_CETAK, TOKEN_KEMBALIKAN, TOKEN_SUPER,
+    TOKEN_ATAU, TOKEN_KEMBALIKAN, TOKEN_SUPER,
     TOKEN_DIRI, TOKEN_BENAR, TOKEN_VARIABEL, TOKEN_SELAGI,
     TOKEN_JIKA_LAIN, TOKEN_DALAM, TOKEN_HENTIKAN, TOKEN_LANJUT,
     TOKEN_BUANG,      // buang (del): hapus variabel/element/atribut
-    TOKEN_LEWATI, TOKEN_IMPOR, TOKEN_DARI, TOKEN_SEBAGAI,
+    TOKEN_LEWATI, TOKEN_IMPOR, TOKEN_DARI, TOKEN_SEBAGAI, TOKEN_PASTIKAN,
+    TOKEN_FSTRING,
     TOKEN_DENGAN, TOKEN_COBA, TOKEN_KECUALI, TOKEN_AKHIRNYA,
     TOKEN_GLOBAL, TOKEN_NONLOKAL,
     TOKEN_NAIKKAN, TOKEN_TIDAK, TOKEN_ADALAH, TOKEN_BUKAN,
@@ -53,11 +54,24 @@ typedef struct {
     const char* current;
     int line;
     int groupingDepth;
+    // Must be saved too: f-strings re-point the scanner at a temporary
+    // buffer, and restoring without this leaves `source` dangling at memory
+    // that the caller frees right after.
+    const char* source;
+    const char* sourceEnd;
 } ScannerState;
 
 void initScanner(const char* source);
 Token scanToken();
 ScannerState saveScanner();
 void restoreScanner(ScannerState state);
+// Re-point the scanner at a NUL-terminated buffer, keeping the reported line
+// number (used to compile f-string expressions without losing their line).
+void initScannerAt(const char* source, int line);
+
+// Start of the buffer currently being scanned. Error reporting uses it to
+// find the beginning of a line; NULL before the first initScanner call.
+const char* scannerSourceStart(void);
+const char* scannerSourceEnd(void);
 
 #endif

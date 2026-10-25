@@ -1,1 +1,3 @@
-[baris 6] Kesalahan di 'nilai': 'nonlokal' harus merujuk variabel pada fungsi pembungkus.
+[baris 6, kolom 5] Kesalahan di 'nilai': 'nonlokal' harus merujuk variabel pada fungsi pembungkus.
+        nilai = 2
+        ^^^^^

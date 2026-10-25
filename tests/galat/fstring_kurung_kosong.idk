@@ -1,0 +1,2 @@
+# Ekspresi di dalam f-string tidak boleh kosong.
+cetak(f"nilai: {}")

@@ -72,6 +72,16 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
+- ✅ **Teks dalam koleksi dikutip**: `cetak(["a"])` → `["a"]`
+- ✅ **Pesan galat menunjuk kolom** (kompilasi *dan* runtime) + saran nama yang mirip
+- ✅ **`cetak` fungsi biasa**: `cetak("a", "b", pisah="-")`, bisa dioper sebagai nilai
+- ✅ **Metode tipe bawaan**: `"budi".huruf_besar()`, `[3,1,2].terurut()`
+- ✅ **f-string**: `f"Halo {nama}, umurmu {umur}"`
+- ✅ **Literal angka**: `1e3`, `0xFF`, `0b1010`, `0o17`, `1_000_000`
+- ✅ **String tiga kutip**: `"""teks\nmulti-baris"""`
+- ✅ **Fungsi anonim**: `fungsi(x) { kembalikan x * x }` sebagai nilai, closure penuh
+- ✅ **Ekspresi kondisional**: `"lulus" jika nilai >= 60 selain "gagal"`
+- ✅ **`pastikan`** (assert) dengan pesan opsional → `GalatPenegasan`
 - ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
 - ✅ `rentang()`, operator `dalam`/`tidak dalam`, truthiness seperti Python
 - ✅ **Sistem modul**: `impor "file.idk"` (namespace global bersama, di-cache)
@@ -619,6 +629,9 @@ pun berjalan. Selengkapnya: `examples/db_sqlite.idk` dan
 - `except` → `kecuali`
 - `finally` → `akhirnya`
 - `raise` → `naikkan`
+- `assert` → `pastikan`
+- `lambda` → `fungsi(x) { ... }` (anonim)
+- `a if c else b` → `a jika c selain b`
 
 Dicadangkan untuk versi mendatang (belum bisa dipakai): `from` → `dari`,
 `as` → `sebagai`, `with` → `dengan`.

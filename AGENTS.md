@@ -202,7 +202,21 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
   header; and the loop state cannot live in hidden locals of the enclosing
   frame, because an enclosing call's callee/arguments already occupy those
   slots (slots are stack positions). Only one `untuk` plus one optional `jika`
-  are supported.
+  are supported. The **iterable and the `jika` filter are parsed with
+  `parsePrecedence(PREC_OR)`, not `expression()`** — Python's `or_test` —
+  because `expression()` also handles the conditional expression
+  `a jika c selain b`, which would swallow the filter's `jika` and demand a
+  `selain`. The element itself is a full `expression()`. A conditional
+  iterable needs parentheses: `[x untuk x dalam (a jika c selain b)]`.
+- **Source files are newline-normalised on load** (`normalizeNewlines` in
+  `common.h`, called by `readFile` in `main.c` and `readModuleSource` in
+  `vm.c`): `\r\n` and lone `\r` become `\n`, like Python's universal newlines.
+  Without it a CRLF checkout (git on Windows) leaked `\r` into triple-quoted
+  strings, `panjang()`, and error snippets. Any new path that reads source
+  must call it too.
+- `number()` in `compiler.c` merges Fase 1 literals with K2: `_` separators,
+  `0b`/`0o`/`0x` and every literal without `.`/exponent are `bulat` (int64,
+  overflow is a compile error); only `.`/`e` literals are `desimal`.
 - **`buang` (del)** has its own opcodes: `OP_DELETE_GLOBAL` removes the name
   from the table, while `OP_DELETE_LOCAL`/`OP_DELETE_UPVALUE` write
   `VAL_TAKTERISI` into the slot — `OP_GET_LOCAL`/`OP_GET_UPVALUE` therefore

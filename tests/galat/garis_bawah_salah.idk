@@ -1,0 +1,2 @@
+# Garis bawah hanya boleh di antara digit.
+cetak(1__000)

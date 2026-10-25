@@ -1,2 +1,4 @@
 jumlah() hanya menerima angka
-[baris 2] dalam skrip
+[baris 2, kolom 24] dalam skrip
+    cetak(jumlah(["a", "b"]))
+                           ^

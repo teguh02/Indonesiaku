@@ -39,7 +39,7 @@ benar
 1
 2
 [1, 2, 3]
-[[5, a], [6, b]]
+[[5, "a"], [6, "b"]]
 === luapan tertangkap ===
 tertangkap: Hasil penjumlahan melebihi jangkauan bilangan bulat.
 tertangkap: Hasil pemangkatan melebihi jangkauan bilangan bulat.

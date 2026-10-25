@@ -42,10 +42,10 @@ Prinsip penamaan:
 | `in` (operator) | `dalam` | ✅ | — |
 | `not in` | `tidak dalam` | ✅ | — |
 | `is` / `is not` | `adalah` / `bukan` | ❌ | 1 |
-| `lambda` | `fungsi(x) { ... }` anonim / `lambda` | ❌ | 1 |
+| `lambda` | `fungsi(x) { ... }` anonim | ✅ | 1 — selesai; badan `{ }`, bukan satu-ekspresi |
 | `global` / `nonlocal` | `global` / `nonlokal` | ✅ | — |
 | `del` | `buang` | ❌ | 2 |
-| `assert` | `pastikan` | ❌ | 1 |
+| `assert` | `pastikan` | ✅ | 1 — selesai; pesan dinilai hanya saat gagal |
 | `with` | `dengan ... sebagai` | ❌ (token ada) | 4 |
 | `yield` | `hasilkan` | ❌ | 5 |
 | `async` / `await` | `asinkron` / `tunggu` | ❌ | 7 |
@@ -56,9 +56,9 @@ Prinsip penamaan:
 | Fitur Python | Contoh | Status | Fase |
 |---|---|---|---|
 | Komentar `#` | | ✅ | — |
-| Docstring / string multi-baris `"""` | | ❌ | 1 |
-| f-string | `f"Halo {nama}"` | ❌ (ada `format()`) | 1 |
-| Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ❌ | 1 |
+| String multi-baris `"""` | | ✅ | 1 — selesai; docstring (atribut) belum |
+| f-string | `f"Halo {nama}"` | ✅ | 1 — selesai; format spec `{x:.2f}` belum |
+| Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ✅ | 1 — selesai |
 | Literal kamus `{"a": 1}` | | ✅ | — |
 | Literal tupel `(1, 2)` | | ❌ | 2 |
 | Literal himpunan `{1, 2}` | | ❌ | 2 |
@@ -68,7 +68,7 @@ Prinsip penamaan:
 | `==` struktural pada daftar/kamus/rentang | | ✅ `adalah` tetap identitas | — |
 | Penugasan berganda `a, b = 1, 2` / tukar | | ❌ | 2 |
 | Unpacking `a, *sisa = daftar` | | ❌ | 2 |
-| Ekspresi kondisional `x jika c selain y` | | ❌ | 1 |
+| Ekspresi kondisional `x jika c selain y` | | ✅ | 1 — selesai; kondisi dinilai lebih dulu |
 | Rantai perbandingan `1 < x < 3` | | ✅ | — |
 | Floor division `//`, `//=` | | ❌ **rusak** (B1) | 0 |
 | Operator bitwise `& \| ^ ~ << >>` | | ❌ | 2 |
@@ -90,8 +90,8 @@ Prinsip penamaan:
 | `int` (tak terbatas) | `bulat` | ❌ | 2 | Saat ini semua `double` |
 | `float` | `desimal` | 🟡 | — | Presisi cetak salah (B10) |
 | `complex` | `kompleks` | ❌ | 8 | Prioritas rendah |
-| `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); tanpa metode |
-| `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; tanpa metode |
+| `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); 8 metode inti sudah ada |
+| `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; 11 metode inti sudah ada |
 | `tuple` | `tupel` | ❌ | 2 | |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
 | `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
@@ -104,11 +104,16 @@ Prinsip penamaan:
 ### C.1 Metode `str` (Python ±47 metode)
 
 Usulan prioritas fase 1–2 (sebagian sudah ada sebagai fungsi `teks_*` di
-`pustaka/teks.idk` — pindahkan ke metode native):
+`pustaka/teks.idk` — pindahkan ke metode native).
+
+**Status:** bentuk metode sudah aktif (K10). Yang bertanda "sebagai fungsi"
+kini juga dapat dipanggil sebagai metode bila namanya terdaftar di
+`stringMethods`/`listMethods`/`dictMethods` di `src/vm.c`; sisanya masih
+menunggu native-nya dibuat.
 
 | Python | Usulan | Ada sekarang? |
 |---|---|---|
-| `upper` / `lower` | `.huruf_besar()` / `.huruf_kecil()` | sebagai fungsi |
+| `upper` / `lower` | `.huruf_besar()` / `.huruf_kecil()` | ✅ metode + fungsi |
 | `strip` / `lstrip` / `rstrip` | `.pangkas()` / `.pangkas_kiri()` / `.pangkas_kanan()` | ❌ |
 | `split` / `join` | `.pisah(sep)` / `sep.gabung(daftar)` | 🟡 pustaka |
 | `replace` | `.ganti(a, b)` | sebagai fungsi |

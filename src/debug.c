@@ -109,8 +109,6 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_NOT", offset);
         case OP_NEGATE:
             return simpleInstruction("OP_NEGATE", offset);
-        case OP_PRINT:
-            return byteInstruction("OP_PRINT", chunk, offset);
         case OP_JUMP:
             return jumpInstruction("OP_JUMP", 1, chunk, offset);
         case OP_JUMP_IF_FALSE:
@@ -209,6 +207,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_TRY_END", offset);
         case OP_THROW:
             return simpleInstruction("OP_THROW", offset);
+        case OP_PASTIKAN:
+            return simpleInstruction("OP_PASTIKAN", offset);
         case OP_IS_INSTANCE:
             return simpleInstruction("OP_IS_INSTANCE", offset);
         case OP_IMPORT:

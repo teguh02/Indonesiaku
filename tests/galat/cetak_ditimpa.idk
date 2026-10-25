@@ -1,0 +1,4 @@
+# 'cetak' kini nama biasa, jadi bisa ditimpa -- dan setelah ditimpa
+# tidak bisa dipanggil lagi, sama seperti Python.
+variabel cetak = 5
+cetak("tidak bisa")

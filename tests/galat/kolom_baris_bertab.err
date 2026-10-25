@@ -1,0 +1,6 @@
+[baris 2, kolom 15] Kesalahan di ')': Harapkan ekspresi.
+    	variabel x = )
+    	             ^
+[baris 4, kolom 1] Kesalahan di akhir: Harapkan '}' setelah blok.
+    
+    ^

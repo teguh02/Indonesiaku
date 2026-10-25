@@ -152,12 +152,23 @@ Butuh fungsi hash per tipe dan `Table` yang berkunci `Value`, bukan
 untuk list, teks (per karakter), kamus (per kunci), rentang. Tahap 2 (fase 5):
 objek dengan `_iter_`/`_berikutnya_` dan generator `hasilkan`.
 
-## K10 — Metode pada tipe bawaan
+## K10 — Metode pada tipe bawaan (terlaksana 0.7.0)
 
 `"abc".huruf_besar()`, `daftar.tambah(4)`, `d.kunci()`. Implementasi: tabel
 metode native per tipe (`vm.listMethods`, `vm.stringMethods`, ...) yang dicari
 di `OP_INVOKE`/`OP_GET_PROPERTY` saat penerima bukan instansi. Fungsi lama
 (`tambah(a, x)`) tetap ada agar kode lama tidak rusak.
+
+Saat diimplementasikan ternyata lebih murah dari dugaan: setiap native yang
+relevan **sudah** menerima penerimanya sebagai `args[0]`, dan `OP_INVOKE`
+meninggalkan stack sebagai `penerima, arg1, ...` — persis tata letak yang
+diharapkan native. Jadi yang ditambahkan hanya tabel pemetaan nama → native
+per tipe; tidak ada logika teks/daftar/kamus yang ditulis ulang, tanpa opcode
+baru, dan tanpa perubahan compiler.
+
+Batas yang diambil sadar: metode bawaan hanya dapat **dipanggil**, belum bisa
+diambil sebagai nilai (`variabel f = x.tambah`), karena `ObjBoundMethod` hanya
+memuat `ObjClosure`. Ditolak dengan pesan yang menyebut cara benarnya.
 
 ## K11 — `jenis()` mengembalikan kelas
 
@@ -165,7 +176,7 @@ di `OP_INVOKE`/`OP_GET_PROPERTY` saat penerima bukan instansi. Fungsi lama
 `jenis(x) == bulat` dan `adalah_instansi(x, bulat)` berfungsi. Tipe bawaan
 menjadi objek kelas sungguhan (lihat 04 §4).
 
-## K12 — `cetak` menjadi fungsi biasa
+## K12 — `cetak` menjadi fungsi biasa (terlaksana 0.7.0)
 
 `cetak(1, 2)` → `1 2`; `cetak()` → baris kosong;
 `cetak("a", "b", pisah="-", akhir="")`. Butuh argumen bernama (fase 1).
@@ -174,6 +185,22 @@ menjadi objek kelas sungguhan (lihat 04 §4).
 Perbedaan cetak di dalam koleksi (seperti Python): `cetak("a")` → `a`,
 tetapi `cetak(["a"])` → `["a"]` (pakai `repr` untuk elemen). Sekarang
 tercetak `[a]`.
+
+**Status 0.7.0:** `cetak` sudah menjadi native biasa dengan `pisah=`/`akhir=`,
+dan `OP_PRINT`/`TOKEN_CETAK`/`printStatement()` dihapus. Argumen bernama untuk
+native ditempuh lewat `vm.nativeArgNames` yang hanya diisi untuk native yang
+terdaftar di `nativeTakesKeywords()` — native lain tetap menolak keyword,
+sehingga `pisah=` pada fungsi yang tidak mengenalnya menjadi galat, bukan
+diam-diam diabaikan.
+
+**Selesai juga:** `repr` untuk elemen koleksi. Ternyata ada **dua** jalur
+cetak (`printObject` di `object.c` dan `appendValueText` di `native.c`) plus
+`repr`; memperbaiki satu saja akan membuat `cetak(x)` dan `ke_teks(x)`
+berbeda. Ketiganya kini memakai satu helper `stringEscape()`.
+
+Sekalian diperbaiki: kedua jalur mengiterasi tabel hash padahal `ObjDict`
+menyimpan `keys` untuk urutan sisip, sehingga `cetak(d)` bisa berbeda urutan
+dari `kunci(d)` dan dari iterasi pada kamus yang sama.
 
 ## K13 — String berbasis karakter
 

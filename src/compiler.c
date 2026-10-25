@@ -136,22 +136,87 @@ static Chunk* currentChunk() {
 // already reported when the block is compiled in place, so stay silent.
 static int inlineFinallyDepth = 0;
 
+// Walk back to the start of the token's line. Returns NULL when the token
+// doesn't belong to the buffer currently being scanned.
+static const char* lineStartOf(Token* token) {
+    const char* source = scannerSourceStart();
+    if (source == NULL || token->start == NULL) return NULL;
+    // Both bounds: a token from a different buffer (a freed f-string slice,
+    // say) can sit above `source` and would otherwise be walked backwards
+    // out of bounds.
+    if (token->start < source || token->start > scannerSourceEnd()) return NULL;
+    const char* lineStart = token->start;
+    while (lineStart > source && lineStart[-1] != '\n') lineStart--;
+    return lineStart;
+}
+
+// Print the offending source line with a caret under the token. Long lines
+// are windowed around the token so a 500-character line doesn't flood the
+// terminal. Tabs are copied verbatim into the caret line so the caret stays
+// aligned whatever the terminal's tab width is.
+static void printSourceSnippet(Token* token, const char* lineStart) {
+    if (lineStart == NULL) return;
+
+    const char* lineEnd = token->start;
+    while (*lineEnd != '\0' && *lineEnd != '\n') lineEnd++;
+
+    // Window a long line around the token.
+    const int kWindow = 40;
+    const char* from = lineStart;
+    const char* to = lineEnd;
+    bool cutLeft = false, cutRight = false;
+    if (token->start - from > kWindow) {
+        from = token->start - kWindow;
+        cutLeft = true;
+    }
+    if (to - token->start > kWindow) {
+        to = token->start + kWindow;
+        cutRight = true;
+    }
+
+    fprintf(stderr, "    %s%.*s%s\n",
+            cutLeft ? "…" : "", (int)(to - from), from, cutRight ? "…" : "");
+
+    // Caret line: same leading whitespace, tabs preserved.
+    fprintf(stderr, "    %s", cutLeft ? " " : "");
+    for (const char* p = from; p < token->start; p++) {
+        fputc(*p == '\t' ? '\t' : ' ', stderr);
+    }
+    int caretLen = token->length > 0 ? token->length : 1;
+    if (token->start + caretLen > to) caretLen = (int)(to - token->start);
+    if (caretLen < 1) caretLen = 1;
+    for (int i = 0; i < caretLen; i++) fputc('^', stderr);
+    fputc('\n', stderr);
+}
+
 static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
     parser.hadError = true;
     if (inlineFinallyDepth > 0) return;
-    fprintf(stderr, "[baris %d] Kesalahan", token->line);
+
+    const char* lineStart = lineStartOf(token);
+
+    if (lineStart != NULL) {
+        fprintf(stderr, "[baris %d, kolom %d] Kesalahan", token->line,
+                (int)(token->start - lineStart) + 1);
+    } else {
+        fprintf(stderr, "[baris %d] Kesalahan", token->line);
+    }
 
     if (token->type == TOKEN_EOF) {
         fprintf(stderr, " di akhir");
     } else if (token->type == TOKEN_ERROR) {
         // Nothing.
+    } else if (token->length == 1 && *token->start == '\n') {
+        // A newline token would break the message across lines.
+        fprintf(stderr, " di akhir baris");
     } else {
         fprintf(stderr, " di '%.*s'", token->length, token->start);
     }
 
     fprintf(stderr, ": %s\n", message);
+    printSourceSnippet(token, lineStart);
     parser.hadError = true;
 }
 
@@ -210,8 +275,27 @@ static bool match(TokenType type) {
     return true;
 }
 
+// While an f-string's embedded expression is compiled, the scanner runs over
+// a temporary copy of just that expression, so a column computed from it
+// would point at the wrong place in the real line -- and the token itself
+// belongs to a buffer that is about to be freed. Columns are therefore
+// pre-computed from the real line before the sub-scanner starts, and every
+// byte emitted inside the expression reuses that value. 0 means "unknown".
+static int columnOverride = 0;
+
 static void emitByte(uint8_t byte) {
-    writeChunk(currentChunk(), byte, parser.previous.line);
+    int column = columnOverride;
+    if (column == 0) {
+        // ponytail: the column is wherever parsing currently sits, which for
+        // a binary operator is the end of its right operand, not the
+        // operator. Close enough to find the expression; pointing at the
+        // operator would mean every parse rule tracking its own token.
+        const char* lineStart = lineStartOf(&parser.previous);
+        if (lineStart != NULL) {
+            column = (int)(parser.previous.start - lineStart) + 1;
+        }
+    }
+    writeChunk(currentChunk(), byte, parser.previous.line, column);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -291,6 +375,10 @@ static void patchJump(int offset) {
     currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
+// Source of the compile() in progress, shared by every function it produces
+// so runtime errors can print the offending line. Reset on each compile().
+static ObjString* compilingSource = NULL;
+
 static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->enclosing = current;
     compiler->function = NULL;
@@ -302,10 +390,17 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->tryDepth = 0;
     compiler->finallyCount = 0;
     compiler->function = newFunction();
+    compiler->function->chunk.source = compilingSource;
     current = compiler;
     if (type != TYPE_SCRIPT) {
-        current->function->name = copyString(parser.previous.start,
-                                            parser.previous.length);
+        if (type == TYPE_FUNCTION && parser.previous.type == TOKEN_FUNGSI) {
+            // Anonymous: parser.previous is the `fungsi` keyword itself, and
+            // a NULL name already means "script" in tracebacks.
+            current->function->name = copyString("<anonim>", 8);
+        } else {
+            current->function->name = copyString(parser.previous.start,
+                                                parser.previous.length);
+        }
     }
 
     Local* local = &current->locals[current->localCount++];
@@ -359,6 +454,7 @@ static void expression();
 static void statement();
 static void declaration();
 static ParseRule* getRule(TokenType type);
+static void function(FunctionType type);
 static void parsePrecedence(Precedence precedence);
 static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
@@ -815,7 +911,9 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
         parser.current = condCurrent;
         parser.previous = condPrevious;
         advance();  // 'jika'
-        expression();
+        // Python's comp_if is an or_test: no conditional expression here,
+        // so a 'jika' inside the condition is never mistaken for one.
+        parsePrecedence(PREC_OR);
         skipJump = emitJump(OP_JUMP_IF_FALSE);
         emitByte(OP_POP);
     }
@@ -860,7 +958,10 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     restoreScanner(seqState);
     parser.current = seqCurrent;
     parser.previous = seqPrevious;
-    expression();
+    // The iterable is an or_test, as in Python: in [x untuk x dalam a jika c]
+    // the 'jika' starts the filter, not a conditional expression 'a jika c
+    // selain ...'. Wrap it in parentheses to use a conditional expression.
+    parsePrecedence(PREC_OR);
     emitBytes(OP_CALL, 1);
 
     restoreScanner(afterState);
@@ -994,33 +1095,98 @@ static void grouping(bool canAssign) {
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
 }
 
-// K2: a literal without a '.' or exponent is a bulat (int64); anything else is
-// a desimal (double). A bulat too large for int64 is a compile error rather
-// than a silent rounding — bignums come later.
+// Numeric literal. Handles `_` separators and 0b/0o/0x bases (Fase 1) and
+// the K2 split: a literal without '.' or exponent — including every 0b/0o/0x
+// literal — is a bulat (int64); anything else is a desimal (double). A bulat
+// too large for int64 is a compile error rather than a silent rounding —
+// bignums come later.
 static void number(bool canAssign) {
-    const char* start = parser.previous.start;
-    int length = parser.previous.length;
+    (void)canAssign;
+    const char* src = parser.previous.start;
+    int len = parser.previous.length;
+
+    // Strip separators into a NUL-terminated buffer. parser.previous.start
+    // points into the source, so length must come from the token, not strlen.
+    char buf[64];
+    if (len >= (int)sizeof(buf)) {
+        error("Angka terlalu panjang.");
+        emitConstant(NUMBER_VAL(0));
+        return;
+    }
+    int n = 0;
+    for (int i = 0; i < len; i++) {
+        char c = src[i];
+        if (c == '_') {
+            // Separators must sit between digits: 1_000 yes, 1__0 / 1_ no.
+            bool okBefore = i > 0 && src[i - 1] != '_' && src[i - 1] != '.';
+            bool okAfter = i + 1 < len && src[i + 1] != '_';
+            if (!okBefore || !okAfter) {
+                error("Garis bawah hanya boleh di antara digit.");
+                emitConstant(NUMBER_VAL(0));
+                return;
+            }
+            continue;
+        }
+        buf[n++] = c;
+    }
+    buf[n] = '\0';
+
+    int base = 10;
+    const char* digits = buf;
+    if (n > 2 && buf[0] == '0') {
+        char prefix = buf[1];
+        if (prefix == 'b' || prefix == 'B') base = 2;
+        if (prefix == 'o' || prefix == 'O') base = 8;
+        if (prefix == 'x' || prefix == 'X') base = 16;
+        if (base != 10) digits = buf + 2;
+    }
     bool isDecimal = false;
-    for (int i = 0; i < length; i++) {
-        if (start[i] == '.' || start[i] == 'e' || start[i] == 'E') { isDecimal = true; break; }
+    if (base == 10) {
+        for (int i = 0; i < n; i++) {
+            if (buf[i] == '.' || buf[i] == 'e' || buf[i] == 'E') {
+                isDecimal = true;
+                break;
+            }
+        }
     }
 
-    if (!isDecimal && length < 32) {
-        char buffer[32];
-        memcpy(buffer, start, (size_t)length);
-        buffer[length] = '\0';
-        errno = 0;
-        long long value = strtoll(buffer, NULL, 10);
-        if (errno == ERANGE) {
-            error("Angka bulat melebihi jangkauan "
-                  "-9223372036854775808..9223372036854775807.");
+    if (isDecimal) {
+        char* end;
+        double value = strtod(buf, &end);
+        if (*end != '\0') {
+            error("Angka tidak sah.");
+            emitConstant(NUMBER_VAL(0));
             return;
         }
-        emitConstant(INT_VAL(value));
+        emitConstant(NUMBER_VAL(value));
         return;
     }
 
-    emitConstant(NUMBER_VAL(strtod(start, NULL)));
+    char* end;
+    errno = 0;
+    long long value = strtoll(digits, &end, base);
+    if (*end != '\0' || end == digits) {
+        error(base == 2  ? "Digit biner tidak sah." :
+              base == 8  ? "Digit oktal tidak sah." :
+              base == 16 ? "Digit heksadesimal tidak sah." :
+                           "Angka tidak sah.");
+        emitConstant(NUMBER_VAL(0));
+        return;
+    }
+    if (errno == ERANGE) {
+        error("Angka bulat melebihi jangkauan "
+              "-9223372036854775808..9223372036854775807.");
+        emitConstant(NUMBER_VAL(0));
+        return;
+    }
+    emitConstant(INT_VAL(value));
+}
+
+// fungsi(x) { ... } used as an expression. function() already emits OP_CLOSURE
+// and its upvalue list, so the closure simply lands on the stack.
+static void anonymousFunction(bool canAssign) {
+    (void)canAssign;
+    function(TYPE_FUNCTION);
 }
 
 static void or_(bool canAssign) {
@@ -1034,11 +1200,153 @@ static void or_(bool canAssign) {
     patchJump(endJump);
 }
 
+// f"halo {nama}" desugars into "halo " + ke_teks(nama), reusing OP_ADD and the
+// existing ke_teks native — no new opcode. Literal chunks are emitted as
+// constants; each {...} is compiled by pointing the scanner at that slice of
+// source, the same rewind trick used by default parameter values.
+static void fstring(bool canAssign) {
+    (void)canAssign;
+    Token token = parser.previous;
+    // The token starts at the `f` prefix: f"..." -> skip 'f' and the quote.
+    const char* src = token.start + 2;
+    int rawLen = token.length - 3;
+
+    ScannerState afterToken = saveScanner();
+    Token afterTokenCurrent = parser.current;
+
+    int parts = 0;
+    char* buf = ALLOCATE(char, rawLen + 1);
+    int len = 0;
+
+    for (int i = 0; i < rawLen; i++) {
+        char c = src[i];
+
+        if (c == '{' && i + 1 < rawLen && src[i + 1] == '{') {
+            buf[len++] = '{'; i++; continue;
+        }
+        if (c == '}' && i + 1 < rawLen && src[i + 1] == '}') {
+            buf[len++] = '}'; i++; continue;
+        }
+        if (c == '}') {
+            FREE_ARRAY(char, buf, rawLen + 1);
+            semanticError("'}' tanpa '{' di dalam f-string.");
+            emitConstant(OBJ_VAL(copyString("", 0)));
+            return;
+        }
+        if (c != '{') {
+            if (c == '\\' && i + 1 < rawLen) {
+                char next = src[++i];
+                switch (next) {
+                    case 'n':  buf[len++] = '\n'; break;
+                    case 't':  buf[len++] = '\t'; break;
+                    case 'r':  buf[len++] = '\r'; break;
+                    case '\\': buf[len++] = '\\'; break;
+                    case '"':  buf[len++] = '"';  break;
+                    case '\'': buf[len++] = '\''; break;
+                    case '0':  buf[len++] = '\0'; break;
+                    default:   buf[len++] = '\\'; buf[len++] = next; break;
+                }
+            } else {
+                buf[len++] = c;
+            }
+            continue;
+        }
+
+        // Flush the literal collected so far.
+        if (len > 0) {
+            emitConstant(OBJ_VAL(copyString(buf, len)));
+            len = 0;
+            parts++;
+            if (parts >= 2) emitByte(OP_ADD);
+        }
+
+        // Find the matching '}', honouring nesting and strings.
+        int start = i + 1;
+        int depth = 1;
+        int j = start;
+        char quote = '\0';
+        for (; j < rawLen; j++) {
+            char e = src[j];
+            if (quote != '\0') {
+                if (e == '\\') { j++; continue; }
+                if (e == quote) quote = '\0';
+                continue;
+            }
+            if (e == '"' || e == '\'') { quote = e; continue; }
+            if (e == '{') depth++;
+            else if (e == '}' && --depth == 0) break;
+        }
+        if (j >= rawLen) {
+            FREE_ARRAY(char, buf, rawLen + 1);
+            semanticError("'{' tidak ditutup di dalam f-string.");
+            emitConstant(OBJ_VAL(copyString("", 0)));
+            return;
+        }
+        if (j == start) {
+            FREE_ARRAY(char, buf, rawLen + 1);
+            semanticError("Ekspresi kosong di dalam f-string.");
+            emitConstant(OBJ_VAL(copyString("", 0)));
+            return;
+        }
+
+        // ke_teks(<expr>) — look the native up by name, then call it.
+        Token keTeks = {TOKEN_IDENTIFIER, "ke_teks", 7, token.line};
+        emitBytes(OP_GET_GLOBAL, identifierConstant(&keTeks));
+
+        // The slice is not NUL-terminated, so compile from a copy. Tokens
+        // point into it only while expression() runs.
+        int exprLen = j - start;
+        char* expr = ALLOCATE(char, exprLen + 1);
+        memcpy(expr, src + start, exprLen);
+        expr[exprLen] = '\0';
+
+        // Column of the f-string token in the *real* source, computed while
+        // that buffer is still the one being scanned.
+        const char* tokenLineStart = lineStartOf(&token);
+        int savedOverride = columnOverride;
+        if (columnOverride == 0 && tokenLineStart != NULL) {
+            columnOverride = (int)(token.start - tokenLineStart) + 1;
+        }
+
+        initScannerAt(expr, token.line);
+        advance();                                // prime parser.current
+        expression();
+        if (!check(TOKEN_EOF)) {
+            semanticError("Ekspresi f-string tidak lengkap.");
+        }
+        columnOverride = savedOverride;
+        restoreScanner(afterToken);
+        parser.current = afterTokenCurrent;
+        // parser.previous still points into `expr`, which is about to be
+        // freed; anything reading it (emitByte's column lookup) would touch
+        // freed memory. Point it back at the f-string token itself, which is
+        // also the right place to blame for the bytecode emitted below.
+        parser.previous = token;
+        FREE_ARRAY(char, expr, exprLen + 1);
+
+        emitBytes(OP_CALL, 1);
+
+        parts++;
+        if (parts >= 2) emitByte(OP_ADD);
+        i = j;
+    }
+
+    if (len > 0 || parts == 0) {
+        emitConstant(OBJ_VAL(copyString(buf, len)));
+        parts++;
+        if (parts >= 2) emitByte(OP_ADD);
+    }
+    FREE_ARRAY(char, buf, rawLen + 1);
+}
+
 static void string(bool canAssign) {
     // The token includes the surrounding quotes. Process escape sequences
     // (\n \t \r \\ \" \' \0) into a fresh buffer, then intern it.
-    const char* src = parser.previous.start + 1;
-    int rawLen = parser.previous.length - 2;
+    // Triple-quoted literals carry three quotes on each side.
+    int quotes = (parser.previous.length >= 6 &&
+                  strncmp(parser.previous.start, "\"\"\"", 3) == 0) ? 3 : 1;
+    const char* src = parser.previous.start + quotes;
+    int rawLen = parser.previous.length - 2 * quotes;
 
     char* chars = ALLOCATE(char, rawLen + 1);
     int len = 0;
@@ -1321,17 +1629,17 @@ ParseRule rules[] = {
   [TOKEN_LESS_EQUAL]    = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
   [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
+  [TOKEN_FSTRING]       = {fstring,  NULL,   PREC_NONE},
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_DAN]           = {NULL,     and_,   PREC_AND},
   [TOKEN_KELAS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SELAIN]        = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SALAH]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_UNTUK]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_FUNGSI]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FUNGSI]        = {anonymousFunction, NULL, PREC_NONE},
   [TOKEN_JIKA]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KOSONG]        = {literal,  NULL,   PREC_NONE},
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
-  [TOKEN_CETAK]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_BUANG]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
@@ -1379,8 +1687,52 @@ static ParseRule* getRule(TokenType type) {
     return &rules[type];
 }
 
+// Conditional expression:  <benar> jika <kondisi> selain <salah>
+//
+// Python evaluates the condition FIRST, but an infix rule only runs after the
+// left operand is already emitted. Emitting it early would break the common
+// guard `x[0] jika panjang(x) > 0 selain "kosong"`, so the left operand's
+// bytecode is truncated and re-parsed inside the true branch instead.
+//
+// ponytail: the left operand is parsed twice and its discarded constants stay
+// in the constant table (a few bytes per conditional, no runtime cost).
+// Buffering the operand's bytecode and splicing it would avoid that; not worth
+// it until a profile says otherwise.
 static void expression() {
+    ScannerState leftStart = saveScanner();
+    Token leftToken = parser.current;
+    int leftOffset = currentChunk()->count;
+
     parsePrecedence(PREC_ASSIGNMENT);
+
+    if (!check(TOKEN_JIKA)) return;
+
+    // Rewind the emitted left operand; it is re-compiled in the true branch.
+    currentChunk()->count = leftOffset;
+
+    advance();                              // consume 'jika'
+    parsePrecedence(PREC_OR);               // the condition
+
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);                       // drop the true condition
+
+    ScannerState afterCond = saveScanner();
+    Token afterCondToken = parser.current;
+
+    restoreScanner(leftStart);
+    parser.current = leftToken;
+    parsePrecedence(PREC_ASSIGNMENT);       // the value, now correctly ordered
+
+    restoreScanner(afterCond);
+    parser.current = afterCondToken;
+
+    int endJump = emitJump(OP_JUMP);
+    patchJump(elseJump);
+    emitByte(OP_POP);                       // drop the false condition
+
+    consume(TOKEN_SELAIN, "Harapkan 'selain' pada ekspresi kondisional.");
+    parsePrecedence(PREC_ASSIGNMENT);
+    patchJump(endJump);
 }
 
 static void block() {
@@ -1519,6 +1871,7 @@ static void skipDefaultExpression() {
 }
 
 static void function(FunctionType type) {
+    bool anonymous = (type == TYPE_FUNCTION && parser.previous.type == TOKEN_FUNGSI);
     Compiler compiler;
     initCompiler(&compiler, type);
     beginScope();
@@ -1531,7 +1884,8 @@ static void function(FunctionType type) {
     LoopCtx* savedLoop = currentLoop;
     currentLoop = NULL;
 
-    consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah nama fungsi.");
+    consume(TOKEN_LEFT_PAREN, anonymous ? "Harapkan '(' setelah 'fungsi'."
+                                        : "Harapkan '(' setelah nama fungsi.");
     // Parameter names are declared first; their default expressions are
     // compiled afterwards as a conditional prologue (see below), so we
     // remember where each '=' sits and rewind the scanner to it.
@@ -1944,6 +2298,26 @@ static void raiseStatement() {
     emitByte(OP_THROW);
 }
 
+// pastikan <kondisi>[, <pesan>]
+// The message is compiled INSIDE the failure branch so it is only evaluated
+// when the assertion fails, like Python.
+static void assertStatement() {
+    expression();
+    int failJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);                       // condition was true: discard it
+    int doneJump = emitJump(OP_JUMP);
+
+    patchJump(failJump);
+    emitByte(OP_POP);                       // discard the false condition
+    if (match(TOKEN_COMMA)) {
+        expression();
+    } else {
+        emitByte(OP_KOSONG);                // kosong = use the default message
+    }
+    emitByte(OP_PASTIKAN);
+    patchJump(doneJump);
+}
+
 static void importStatement() {
     // impor "path.idk"   -> load & run another file in the same namespace.
     consume(TOKEN_STRING, "Harapkan nama file (string) setelah 'impor'.");
@@ -1953,7 +2327,6 @@ static void importStatement() {
     emitByte(OP_IMPORT);
     emitByte(OP_POP);  // discard the module's return value (kosong)
 }
-
 
 // Lookahead helper: having just scanned a '{', skip to its matching '}'.
 static bool skipBalancedBraces() {
@@ -2180,25 +2553,6 @@ static void tryStatement() {
     }
 }
 
-static void printStatement() {
-    // cetak(a, b, c) prints all values on one line separated by spaces, like
-    // Python's print(); cetak() prints an empty line.
-    consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah 'cetak'.");
-    int count = 0;
-    if (!check(TOKEN_RIGHT_PAREN)) {
-        do {
-            expression();
-            if (count == 255) {
-                error("Tidak boleh lebih dari 255 argumen untuk 'cetak'.");
-            }
-            count++;
-        } while (match(TOKEN_COMMA));
-    }
-
-    consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah argumen.");
-    emitBytes(OP_PRINT, (uint8_t)count);
-}
-
 static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
@@ -2272,7 +2626,6 @@ static void synchronize() {
             case TOKEN_UNTUK:
             case TOKEN_JIKA:
             case TOKEN_SELAGI:
-            case TOKEN_CETAK:
             case TOKEN_KEMBALIKAN:
                 return;
 
@@ -2288,7 +2641,8 @@ static void declaration() {
     while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
     if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE)) return;
 
-    if (match(TOKEN_FUNGSI)) {
+    if (check(TOKEN_FUNGSI) && !checkNext(TOKEN_LEFT_PAREN)) {
+        advance();
         funDeclaration();
     } else if (match(TOKEN_KELAS)) {
         classDeclaration();
@@ -2462,8 +2816,6 @@ static void statement() {
         scopeDeclaration(false);
     } else if (match(TOKEN_LEWATI)) {
         // 'lewati' (Python's pass): an explicit no-op statement.
-    } else if (match(TOKEN_CETAK)) {
-        printStatement();
     } else if (match(TOKEN_UNTUK)) {
         forStatement();
     } else if (match(TOKEN_JIKA)) {
@@ -2482,6 +2834,8 @@ static void statement() {
         tryStatement();
     } else if (match(TOKEN_NAIKKAN)) {
         raiseStatement();
+    } else if (match(TOKEN_PASTIKAN)) {
+        assertStatement();
     } else if (match(TOKEN_IMPOR)) {
         importStatement();
     } else if (match(TOKEN_LEFT_BRACE)) {
@@ -2499,6 +2853,9 @@ static void statement() {
 
 ObjFunction* compile(const char* source) {
     initScanner(source);
+    // Keep the source alive as a GC object: module sources are freed by the
+    // caller right after compile(), but runtime errors need them later.
+    compilingSource = copyString(source, (int)strlen(source));
     Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
 
@@ -2522,6 +2879,7 @@ ObjFunction* compile(const char* source) {
     }
 
     ObjFunction* function = endCompiler();
+    compilingSource = NULL;
     return parser.hadError ? NULL : function;
 }
 
@@ -2529,6 +2887,9 @@ ObjFunction* compile(const char* source) {
 // them mid-compilation (a collection can be triggered by allocations in
 // copyString/makeConstant while parsing).
 void markCompilerRoots() {
+    // Not yet reachable from any function while the first chunk is still
+    // being built, and allocations during parsing can trigger a GC.
+    markObject((Obj*)compilingSource);
     Compiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);

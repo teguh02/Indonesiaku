@@ -1,2 +1,4 @@
 Fungsi tidak punya parameter bernama 'warna'.
-[baris 5] dalam skrip
+[baris 5, kolom 30] dalam skrip
+    gambar("Judul", warna="merah")
+                                 ^

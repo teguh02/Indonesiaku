@@ -1,0 +1,4 @@
+Tipe 'teks' tidak punya metode 'belum_ada'.
+[baris 3, kolom 22] dalam skrip
+    cetak(teks.belum_ada())
+                         ^

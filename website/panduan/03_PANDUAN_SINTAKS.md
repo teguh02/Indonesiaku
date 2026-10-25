@@ -1129,6 +1129,321 @@ a.bersuara()   # Rex berkata: Guk
 
 ---
 
+## Metode pada Tipe Bawaan
+
+Teks, daftar, dan kamus punya metode sendiri, jadi operasi bisa ditulis
+berurutan dari kiri ke kanan:
+
+```indonesiaku
+cetak("budi".huruf_besar())        # BUDI
+cetak("a,b,c".ganti(",", "-"))     # a-b-c
+cetak([3, 1, 2].terurut())         # [1, 2, 3]
+cetak({"a": 1}.punya("a"))         # benar
+```
+
+Keduanya setara — metode memanggil fungsi bawaan yang sama, jadi
+`huruf_besar(x)` dan `x.huruf_besar()` selalu memberi hasil identik. Fungsi
+bebas **tetap ada** dan tidak akan dihapus.
+
+Metode bisa dirangkai:
+
+```indonesiaku
+cetak("a,b".ganti(",", "-").huruf_besar())   # A-B
+```
+
+Yang tersedia sekarang:
+
+| Tipe | Metode |
+|---|---|
+| teks | `panjang`, `huruf_besar`, `huruf_kecil`, `ganti`, `potong`, `karakter`, `format`, `ord` |
+| daftar | `panjang`, `tambah`, `hapus`, `hapus_pada`, `sisip`, `terurut`, `terbalik`, `jumlah`, `semua`, `ada_yang`, `enumerasi` |
+| kamus | `panjang`, `punya`, `hapus_kunci`, `kunci`, `enumerasi` |
+
+Metode yang mengubah isi tetap mengubah aslinya, sama seperti bentuk
+fungsinya:
+
+```indonesiaku
+variabel isi = [1, 2]
+isi.tambah(3)
+cetak(isi)                         # [1, 2, 3]
+```
+
+Satu batasan: metode bawaan **harus langsung dipanggil**. Menyimpannya sebagai
+nilai belum didukung dan akan ditolak dengan pesan yang menjelaskan hal itu:
+
+```indonesiaku
+variabel f = "abc".huruf_besar     # ditolak — tulis "abc".huruf_besar()
+```
+
+Contoh lengkap: [`examples/metode_tipe.idk`](../examples/metode_tipe.idk)
+
+{{embed:examples/metode_tipe.idk}}
+
+---
+
+## Cara Menulis Angka
+
+Selain `10` dan `3.5`, angka boleh ditulis dengan basis lain atau pemisah:
+
+```indonesiaku
+cetak(1e3, 1.5e-3)          # eksponen -> 1000  0.0015
+cetak(0xFF, 0b1010, 0o17)   # heksadesimal, biner, oktal -> 255  10  15
+cetak(1_000_000)            # pemisah ribuan -> 1000000
+```
+
+Semuanya tetap bertipe angka biasa — hanya cara menulisnya yang berbeda,
+jadi `0xFF == 255` bernilai `benar`.
+
+Garis bawah hanya boleh berada **di antara** digit: `1_000` sah, sedangkan
+`1__0` dan `1_` ditolak.
+
+---
+
+## String Tiga Kutip
+
+Untuk teks yang membentang beberapa baris, tanpa menyambung `+ "\n" +`:
+
+```indonesiaku
+variabel puisi = """baris pertama
+baris kedua"""
+```
+
+Baris baru disimpan apa adanya, dan kutip tunggal di dalamnya tidak perlu
+di-escape.
+
+---
+
+## f-string (Teks Bersisip)
+
+Awali teks dengan `f`, lalu sisipkan ekspresi di dalam `{ }`:
+
+```indonesiaku
+variabel nama = "Budi"
+variabel umur = 30
+cetak(f"Halo {nama}, umurmu {umur} tahun")
+cetak(f"1 + 2 = {1 + 2}")
+```
+
+Isi `{ }` boleh ekspresi apa pun — pemanggilan fungsi, indeks, bahkan ekspresi
+kondisional. Nilai non-teks ditampilkan sama seperti hasil `ke_teks()`.
+
+Untuk menulis kurung kurawal harfiah, tulis dobel:
+
+```indonesiaku
+cetak(f"kurung {{harfiah}} ok")      # kurung {harfiah} ok
+```
+
+Satu hal yang perlu diperhatikan: kurawal pembuka yang langsung diikuti
+kurawal lain dibaca sebagai kurawal harfiah. Jadi untuk menyisipkan kamus
+literal, beri spasi — sama seperti di Python:
+
+```indonesiaku
+cetak(f"kamus: { {"a": 1} }")        # bukan f"kamus: {{"a": 1}}"
+```
+
+Belum ada format spec seperti `{x:.2f}`; itu menunggu metode pada tipe teks.
+
+Contoh lengkap: [`examples/literal_fstring.idk`](../examples/literal_fstring.idk)
+
+{{embed:examples/literal_fstring.idk}}
+
+---
+
+## Fungsi Anonim
+
+Fungsi tanpa nama, ditulis persis seperti fungsi biasa tetapi langsung menjadi
+nilai:
+
+```indonesiaku
+variabel kuadrat = fungsi(x) { kembalikan x * x }
+cetak(kuadrat(6))                                  # 36
+
+# Dioper langsung sebagai argumen.
+fungsi terapkan(f, nilai) { kembalikan f(nilai) }
+cetak(terapkan(fungsi(x) { kembalikan x * 10 }, 7))   # 70
+```
+
+Badannya tetap memakai `{ }` dan `kembalikan` — tidak ada bentuk satu-ekspresi
+khusus seperti `lambda` di Python, supaya cara menulis fungsi hanya ada satu.
+
+Fungsi anonim adalah closure penuh, jadi ia menangkap variabel di sekitarnya:
+
+```indonesiaku
+fungsi pembuat_penambah(n) {
+    kembalikan fungsi(x) { kembalikan x + n }
+}
+variabel tambah5 = pembuat_penambah(5)
+cetak(tambah5(1))                                  # 6
+```
+
+Nilai bawaan parameter dan argumen bernama berlaku sama seperti fungsi biasa.
+Di pesan kesalahan namanya muncul sebagai `<anonim>`.
+
+---
+
+## Ekspresi Kondisional
+
+Memilih satu dari dua nilai tanpa menulis blok `jika`:
+
+```indonesiaku
+variabel label = "lulus" jika nilai >= 60 selain "gagal"
+```
+
+Urutannya dibaca: *nilai-kalau-benar* `jika` *kondisi* `selain`
+*nilai-kalau-salah* — sama seperti `a if c else b` di Python. Bagian `selain`
+wajib ada.
+
+**Kondisi dinilai lebih dulu, dan hanya cabang yang terpilih yang
+dijalankan.** Karena itu pola penjaga berikut aman walaupun daftarnya kosong:
+
+```indonesiaku
+cetak(x[0] jika panjang(x) > 0 selain "kosong")
+```
+
+Jangan keliru dengan pernyataan `jika`, yang memakai blok dan tidak
+menghasilkan nilai:
+
+```indonesiaku
+jika nilai >= 60 { cetak("lulus") } selain { cetak("gagal") }   # pernyataan
+variabel l = "lulus" jika nilai >= 60 selain "gagal"            # ekspresi
+```
+
+Contoh lengkap: [`examples/fungsi_anonim.idk`](../examples/fungsi_anonim.idk)
+
+{{embed:examples/fungsi_anonim.idk}}
+
+---
+
+## Penegasan (`pastikan`)
+
+`pastikan` menyatakan sesuatu yang **harus** benar. Kalau benar, tidak terjadi
+apa-apa; kalau salah, program menaikkan `GalatPenegasan`.
+
+```indonesiaku
+pastikan umur >= 0
+pastikan umur >= 0, "umur tidak boleh negatif"      # dengan pesan sendiri
+```
+
+Kebenaran kondisinya mengikuti aturan yang sama dengan `jika`: `0`, `""`,
+daftar/kamus kosong, `kosong`, dan `salah` dianggap gagal.
+
+Gunanya terutama menjaga prakondisi — menyatakan asumsi secara eksplisit
+daripada membiarkan program salah diam-diam:
+
+```indonesiaku
+fungsi bagi(a, b) {
+    pastikan b != 0, "pembagi tidak boleh nol"
+    kembalikan a / b
+}
+```
+
+Karena `GalatPenegasan` adalah turunan `Galat`, penegasan yang gagal bisa
+ditangkap seperti kesalahan lain:
+
+```indonesiaku
+coba {
+    pastikan salah, "ini gagal"
+} kecuali GalatPenegasan sebagai e {
+    cetak(e.pesan)          # ini gagal
+}
+```
+
+Dua hal yang perlu diingat:
+
+- **Pesan hanya dinilai kalau penegasannya gagal.** Jadi
+  `pastikan benar, hitung_mahal()` tidak pernah memanggil `hitung_mahal()`.
+- **Jangan tulis `pastikan(kondisi, pesan)` dengan kurung.** Di sini itu
+  langsung ditolak saat kompilasi (`Harapkan ')' setelah ekspresi`), bukan
+  diam-diam selalu lolos seperti di Python — tetap saja, tulis tanpa kurung.
+  `pastikan(kondisi)` dengan satu argumen sah, kurungnya hanya mengelompokkan
+  ekspresi biasa.
+
+Contoh lengkap: [`examples/pastikan.idk`](../examples/pastikan.idk)
+
+{{embed:examples/pastikan.idk}}
+
+---
+
+## Teks di Dalam Koleksi
+
+Teks yang dicetak langsung tampil apa adanya, tetapi teks **di dalam** daftar
+atau kamus tampil dengan kutip — seperti Python:
+
+```indonesiaku
+cetak("a")              # a
+cetak(["a"])            # ["a"]
+cetak(["1", 1])         # ["1", 1]   <- teks dan angka terbedakan
+cetak([""])             # [""]       <- bukan daftar kosong
+```
+
+Karakter khusus ikut di-escape, jadi isinya tidak menyesatkan:
+
+```indonesiaku
+cetak(["a\"b"])          # ["a\"b"]
+cetak(["baris1\nbaris2"]) # ["baris1\nbaris2"]
+```
+
+Aturan yang sama berlaku untuk `ke_teks`, `format`, f-string, dan `repr`,
+sehingga semuanya menghasilkan teks yang sama untuk nilai yang sama.
+
+Kamus dicetak sesuai **urutan penambahan**, sama dengan `kunci()` dan
+perulangan `untuk ... dalam`.
+
+Contoh lengkap: [`examples/repr_koleksi.idk`](../examples/repr_koleksi.idk)
+
+{{embed:examples/repr_koleksi.idk}}
+
+---
+
+## Membaca Pesan Kesalahan
+
+Galat saat kompilasi menyebut baris **dan kolom**, lalu menunjuk bagian yang
+bermasalah:
+
+```
+[baris 2, kolom 11] Kesalahan di '+': Harapkan ekspresi.
+    cetak(a + + 2)
+              ^
+```
+
+Baris yang sangat panjang dipotong di sekitar titik galat dengan penanda `…`,
+jadi tanda `^` tetap lurus di bawah token yang dimaksud.
+
+Kalau nama yang dipakai mirip dengan sesuatu yang sudah ada, pesannya
+menyertakan saran:
+
+```
+Variabel tidak terdefinisi 'cetk'. Mungkin maksudmu 'cetak'?
+```
+
+Saran hanya muncul bila ejaannya memang dekat; nama yang tidak mirip apa pun
+tidak akan ditebak-tebak.
+
+Galat saat program **berjalan** memakai format yang sama:
+
+```
+Operand '+' harus dua angka, dua teks, atau dua daftar.
+[baris 2, kolom 11] dalam skrip
+    cetak(x + "a")
+              ^
+```
+
+Pada traceback berlapis, potongan baris hanya dicetak untuk tempat galat
+benar-benar terjadi; bingkai pemanggil di bawahnya cukup baris dan kolom:
+
+```
+Pembagian dengan nol.
+[baris 2, kolom 20] dalam bagi()
+        kembalikan a / b
+                       ^
+[baris 4, kolom 16] dalam skrip
+```
+
+Catatan: kolom menunjuk **akhir** ekspresi yang bermasalah (token terakhir
+yang diproses), bukan tepat di operatornya.
+
+---
+
 ## Penanganan Kesalahan (naikkan / coba / kecuali / akhirnya)
 
 ```indonesiaku
@@ -1209,11 +1524,60 @@ kelas Kosong { lewati }
 impor "pustaka/teks.idk"
 impor "pustaka/daftar.idk"
 
-cetak(teks_pisah("a,b,c", ","))        # [a, b, c]
+cetak(teks_pisah("a,b,c", ","))        # ["a", "b", "c"]
 cetak(daftar_urutkan([3, 1, 2]))       # [1, 2, 3]
 ```
 > Contoh: [`examples/impor.idk`](../examples/impor.idk)
 > Lihat daftar pustaka standar di [07_PUSTAKA_STANDAR.md](07_PUSTAKA_STANDAR.md).
+
+---
+
+## Mencetak (`cetak`)
+
+`cetak` adalah **fungsi biasa**, bukan kata kunci. Argumen dipisah spasi dan
+diakhiri baris baru:
+
+```indonesiaku
+cetak("satu")
+cetak(1, 2, 3)
+cetak()                      # baris kosong
+```
+
+Pemisah dan akhiran bisa diatur lewat argumen bernama:
+
+```indonesiaku
+cetak("a", "b", "c", pisah="-")        # a-b-c
+cetak("tanpa newline", akhir="")
+cetak("x", "y", pisah="", akhir="!\n") # xy!
+```
+
+Karena fungsi biasa, `cetak` juga sebuah nilai: bisa disimpan, dioper, dan
+diperiksa.
+
+```indonesiaku
+variabel tulis = cetak
+tulis("lewat variabel")
+
+fungsi jalankan(fn) { fn("dioper") }
+jalankan(cetak)
+
+cetak(bisa_dipanggil(cetak))   # benar
+```
+
+Konsekuensinya sama seperti Python: namanya bisa ditimpa, dan sesudah ditimpa
+ia bukan fungsi lagi.
+
+```indonesiaku
+variabel cetak = 5
+# cetak("x")   -> Hanya dapat memanggil fungsi dan kelas.
+```
+
+Fungsi bawaan **lain** belum menerima argumen bernama; hanya `cetak` yang
+menerimanya.
+
+Contoh lengkap: [`examples/cetak_fungsi.idk`](../examples/cetak_fungsi.idk)
+
+{{embed:examples/cetak_fungsi.idk}}
 
 ---
 
@@ -1466,7 +1830,8 @@ selagi angka <= 20 {
 | **Kesalahan** | `naikkan`, `coba`, `kecuali` |
 | **Modul** | `impor` |
 | **Operator logika** | `dan`, `atau`, `tidak` |
-| **Output** | `cetak` |
+
+`cetak` **bukan** kata kunci — ia fungsi bawaan biasa (lihat seksi Mencetak).
 
 ---
 

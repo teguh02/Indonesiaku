@@ -1,0 +1,6 @@
+[baris 2, kolom 21] Kesalahan di '{': Harapkan '(' setelah 'fungsi'.
+    variabel f = fungsi { kembalikan 1 }
+                        ^
+[baris 3, kolom 1] Kesalahan di akhir: Harapkan '}' setelah blok.
+    
+    ^

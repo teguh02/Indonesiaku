@@ -1,2 +1,4 @@
 max() dari urutan kosong
-[baris 2] dalam skrip
+[baris 2, kolom 13] dalam skrip
+    cetak(max([]))
+                ^

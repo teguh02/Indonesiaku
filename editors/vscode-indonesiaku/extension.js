@@ -1,16 +1,16 @@
 const vscode = require("vscode");
 
 const KEYWORDS = [
-  "adalah", "akhirnya", "atau", "benar", "buang", "bukan", "cetak", "coba", "dalam", "dan", "dari",
+  "adalah", "akhirnya", "atau", "benar", "buang", "bukan", "coba", "dalam", "dan", "dari",
   "dengan", "diri", "fungsi", "global", "hentikan", "impor", "jika", "jika_lain", "kecuali",
-  "kelas", "kembalikan", "kosong", "lanjut", "lewati", "naikkan", "nonlokal", "salah",
+  "kelas", "kembalikan", "kosong", "lanjut", "lewati", "naikkan", "nonlokal", "pastikan", "salah",
   "sebagai", "selagi", "selain", "super", "tidak", "untuk", "variabel"
 ];
 
 const BUILTINS = [
   "abs", "acak", "acak_bulat", "ada_berkas", "ada_yang", "adalah_instansi", "akar", "atap", "baca",
   "baca_baris", "baca_semua", "bagi_sisa", "biner", "bisa_dipanggil", "buka_berkas", "bulat", "bulatkan",
-  "chr", "db_ambil_satu", "db_ambil_semua", "db_baris_terpengaruh", "db_batal", "db_buka", "db_eksekusi",
+  "cetak", "chr", "db_ambil_satu", "db_ambil_semua", "db_baris_terpengaruh", "db_batal", "db_buka", "db_eksekusi",
   "db_id_terakhir", "db_komit", "db_mulai", "db_tutup",
   "enumerasi", "format", "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_kunci",
   "hapus_pada", "heksa", "henti", "huruf_besar", "huruf_kecil", "id", "input", "jam", "jenis", "jumlah",

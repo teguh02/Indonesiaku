@@ -1,2 +1,4 @@
 Tidak dapat membuka 3 nilai menjadi 2 nama.
-[baris 1] dalam skrip
+[baris 1, kolom 16] dalam skrip
+    a, b = [1, 2, 3]
+                   ^

@@ -127,6 +127,42 @@
     ],
     "description": "Panggilan dengan argumen bernama; posisional harus mendahului yang bernama"
   },
+  "f-string": {
+    "prefix": "fstring",
+    "body": [
+      "f\"${1:teks} {${2:ekspresi}}\"$0"
+    ],
+    "description": "Teks dengan ekspresi tersisip"
+  },
+  "String tiga kutip": {
+    "prefix": "tigakutip",
+    "body": [
+      "\"\"\"${1:baris pertama}",
+      "${2:baris kedua}\"\"\"$0"
+    ],
+    "description": "Teks multi-baris"
+  },
+  "Fungsi anonim": {
+    "prefix": "fungsianonim",
+    "body": [
+      "fungsi(${1:x}) { kembalikan ${2:x} }$0"
+    ],
+    "description": "Fungsi tanpa nama sebagai nilai (closure)"
+  },
+  "Ekspresi kondisional": {
+    "prefix": "jikaselain",
+    "body": [
+      "${1:nilai_benar} jika ${2:kondisi} selain ${3:nilai_salah}$0"
+    ],
+    "description": "Pilih satu dari dua nilai dalam satu ekspresi"
+  },
+  "Penegasan (assert)": {
+    "prefix": "pastikan",
+    "body": [
+      "pastikan ${1:kondisi}, \"${2:pesan}\"$0"
+    ],
+    "description": "Nyatakan kondisi yang harus benar; gagal -> GalatPenegasan"
+  },
   "Buka basis data SQLite": {
     "prefix": "dbbuka",
     "body": [

@@ -267,6 +267,45 @@ static void printFunction(ObjFunction* function) {
     }
 }
 
+// Escape sequence for a character inside a quoted string, or NULL when the
+// character can be emitted as-is. Single source of truth: printObject,
+// appendValueText (native.c) and repr() all use it, so the three printing
+// paths cannot drift apart.
+const char* stringEscape(char c) {
+    switch (c) {
+        case '"':  return "\\\"";
+        case '\\': return "\\\\";
+        case '\n': return "\\n";
+        case '\t': return "\\t";
+        case '\r': return "\\r";
+        default:   return NULL;
+    }
+}
+
+// Print a string the way it appears *inside* a collection: quoted, escaped.
+static void printStringRepr(ObjString* str) {
+    putchar('"');
+    for (int i = 0; i < str->length; i++) {
+        const char* esc = stringEscape(str->chars[i]);
+        if (esc != NULL) {
+            fputs(esc, stdout);
+        } else {
+            putchar(str->chars[i]);
+        }
+    }
+    putchar('"');
+}
+
+// Like printValue, but strings are quoted. Used for collection elements so
+// ["a", 1] is distinguishable from [a, 1].
+static void printValueRepr(Value value) {
+    if (IS_STRING(value)) {
+        printStringRepr(AS_STRING(value));
+    } else {
+        printValue(value);
+    }
+}
+
 void printObject(Value value) {
     switch (OBJ_TYPE(value)) {
         case OBJ_STRING:
@@ -286,7 +325,7 @@ void printObject(Value value) {
             printf("[");
             for (int i = 0; i < list->items.count; i++) {
                 if (i > 0) printf(", ");
-                printValue(list->items.values[i]);
+                printValueRepr(list->items.values[i]);
             }
             printf("]");
             break;
@@ -295,20 +334,18 @@ void printObject(Value value) {
             ObjDict* dict = AS_DICT(value);
             printf("{");
             bool first = true;
-            // Insertion order, and any hashable key type (K8).
+            // Insertion order (like Python and like kunci()/iteration), any
+            // hashable key type (K8). Keys and values print as repr, so teks
+            // keys appear quoted: {"a": 1, 2: "dua"}.
             for (int i = 0; i < dict->keys.count; i++) {
                 Value key = dict->keys.values[i];
                 Value entryValue;
                 if (!valueTableGet(&dict->table, key, &entryValue)) continue;
                 if (!first) printf(", ");
                 first = false;
-                if (IS_STRING(key)) {
-                    printf("\"%s\": ", AS_CSTRING(key));
-                } else {
-                    printValue(key);
-                    printf(": ");
-                }
-                printValue(entryValue);
+                printValueRepr(key);
+                printf(": ");
+                printValueRepr(entryValue);
             }
             printf("}");
             break;

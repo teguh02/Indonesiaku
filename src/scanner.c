@@ -9,6 +9,12 @@ typedef struct {
     const char* current;
     int line;
     int groupingDepth;
+    // Start of the buffer being scanned, kept so error reporting can walk
+    // back to the beginning of a line and compute a column.
+    const char* source;
+    // Its NUL. Cached: emitByte checks it for every byte emitted, and
+    // rescanning the whole source each time would make compilation O(n^2).
+    const char* sourceEnd;
 } Scanner;
 
 Scanner scanner;
@@ -16,13 +22,26 @@ Scanner scanner;
 void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
+    scanner.source = source;
+    scanner.sourceEnd = source + strlen(source);
     scanner.line = 1;
     scanner.groupingDepth = 0;
 }
 
 ScannerState saveScanner() {
-    ScannerState state = {scanner.start, scanner.current, scanner.line, scanner.groupingDepth};
+    ScannerState state = {scanner.start, scanner.current, scanner.line,
+                          scanner.groupingDepth, scanner.source,
+                          scanner.sourceEnd};
     return state;
+}
+
+void initScannerAt(const char* source, int line) {
+    scanner.start = source;
+    scanner.current = source;
+    scanner.source = source;
+    scanner.sourceEnd = source + strlen(source);
+    scanner.line = line;
+    scanner.groupingDepth = 0;
 }
 
 void restoreScanner(ScannerState state) {
@@ -30,6 +49,8 @@ void restoreScanner(ScannerState state) {
     scanner.current = state.current;
     scanner.line = state.line;
     scanner.groupingDepth = state.groupingDepth;
+    scanner.source = state.source;
+    scanner.sourceEnd = state.sourceEnd;
 }
 
 static bool isAlpha(char c) {
@@ -40,6 +61,10 @@ static bool isAlpha(char c) {
 
 static bool isDigit(char c) {
     return c >= '0' && c <= '9';
+}
+
+static bool isHexDigit(char c) {
+    return isDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 static bool isAtEnd() {
@@ -140,7 +165,8 @@ static TokenType identifierType() {
         case 'c':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
-                    case 'e': return checkKeyword(2, 3, "tak", TOKEN_CETAK);
+                    // 'cetak' is a plain identifier now (K12): it resolves to
+                    // the native, so it can be passed around and shadowed.
                     case 'o': return checkKeyword(2, 2, "ba", TOKEN_COBA);
                 }
             }
@@ -205,6 +231,8 @@ static TokenType identifierType() {
             break;
         case 'g':
             return checkKeyword(1, 5, "lobal", TOKEN_GLOBAL);
+        case 'p':
+            return checkKeyword(1, 7, "astikan", TOKEN_PASTIKAN);
         case 'n':
             if (scanner.current - scanner.start > 1 && scanner.start[1] == 'o') {
                 return checkKeyword(2, 6, "nlokal", TOKEN_NONLOKAL);
@@ -250,20 +278,87 @@ static Token identifier() {
 }
 
 static Token number() {
-    while (isDigit(peek())) advance();
+    // 0x / 0b / 0o prefixes. Only reachable after a leading digit, so an
+    // identifier like `b1010` is unaffected.
+    if (scanner.current[-1] == '0' && !isAtEnd()) {
+        char base = peek();
+        if (base == 'x' || base == 'X' || base == 'b' || base == 'B' ||
+            base == 'o' || base == 'O') {
+            advance();
+            while (isHexDigit(peek()) || peek() == '_') advance();
+            return makeToken(TOKEN_NUMBER);
+        }
+    }
+
+    while (isDigit(peek()) || peek() == '_') advance();
 
     // Look for a fractional part.
     if (peek() == '.' && isDigit(peekNext())) {
         // Consume the ".".
         advance();
 
-        while (isDigit(peek())) advance();
+        while (isDigit(peek()) || peek() == '_') advance();
+    }
+
+    // Exponent: 1e3, 1.5e-3, 2E+8. strtod parses these itself.
+    if (peek() == 'e' || peek() == 'E') {
+        char next = peekNext();
+        // Guard the third char: peekNext() may already be the terminating NUL.
+        char after = next == '\0' ? '\0' : scanner.current[2];
+        if (isDigit(next) || ((next == '+' || next == '-') && isDigit(after))) {
+            advance();                       // 'e'
+            if (peek() == '+' || peek() == '-') advance();
+            while (isDigit(peek()) || peek() == '_') advance();
+        }
     }
 
     return makeToken(TOKEN_NUMBER);
 }
 
+// f"..." may contain quotes inside {...}: f"{d["a"]}". Track brace depth so
+// the literal does not end at the first inner quote.
+static Token fstringBody() {
+    int depth = 0;
+    while (!isAtEnd()) {
+        char c = peek();
+        if (c == '\\' && peekNext() != '\0') { advance(); advance(); continue; }
+        if (c == '\n') scanner.line++;
+        if (c == '{') {
+            if (peekNext() == '{') { advance(); advance(); continue; }
+            depth++;
+        } else if (c == '}') {
+            if (depth == 0 && peekNext() == '}') { advance(); advance(); continue; }
+            if (depth > 0) depth--;
+        } else if (c == '"' && depth == 0) {
+            advance();
+            return makeToken(TOKEN_FSTRING);
+        }
+        advance();
+    }
+    return errorToken("String tidak ditutup.");
+}
+
 static Token string() {
+    // Triple-quoted: """ ... """ keeps newlines verbatim.
+    if (peek() == '"' && peekNext() == '"') {
+        advance();
+        advance();
+        while (!isAtEnd()) {
+            // Guard the third char: peekNext() may already be the NUL.
+            if (peek() == '"' && peekNext() == '"' &&
+                peekNext() != '\0' && scanner.current[2] == '"') {
+                advance();
+                advance();
+                advance();
+                return makeToken(TOKEN_STRING);
+            }
+            if (peek() == '\n') scanner.line++;
+            if (peek() == '\\' && peekNext() != '\0') advance();
+            advance();
+        }
+        return errorToken("String tiga kutip tidak ditutup.");
+    }
+
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
         // Skip escaped characters (e.g. \" \\) so they don't end the string.
@@ -287,6 +382,11 @@ Token scanToken() {
     if (isAtEnd()) return makeToken(TOKEN_EOF);
 
     char c = advance();
+    // f"..." — must be checked before identifier(), which would swallow the f.
+    if (c == 'f' && peek() == '"') {
+        advance();                           // the opening quote
+        return fstringBody();
+    }
     if (isAlpha(c)) return identifier();
     if (isDigit(c)) return number();
 
@@ -356,4 +456,16 @@ Token scanToken() {
     }
 
     return errorToken("Karakter tidak dikenal.");
+}
+
+const char* scannerSourceStart(void) {
+    return scanner.source;
+}
+
+// One past the last byte of the buffer being scanned (its NUL). Needed to
+// tell whether a token actually belongs to this buffer: f-strings compile
+// their embedded expression from a temporary copy, so a stale token can sit
+// at a higher address and pass a start-only check.
+const char* scannerSourceEnd(void) {
+    return scanner.sourceEnd;
 }

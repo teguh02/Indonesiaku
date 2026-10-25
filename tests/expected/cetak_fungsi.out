@@ -1,0 +1,19 @@
+satu
+1 2 3
+campur 42 benar kosong 3.5
+
+a-b-c
+tanpaspasi
+tanpa newline <- lanjut di baris yang sama
+x+y (selesai)
+dipanggil lewat variabel
+benar
+fungsi
+dioper sebagai argumen
+halo budi
+baris 0
+baris 1
+baris 2
+galat: cetak(): 'pisah' harus teks
+galat: cetak() tidak punya parameter bernama 'tak_dikenal'
+galat: Fungsi bawaan belum menerima argumen bernama.
