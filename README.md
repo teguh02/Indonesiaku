@@ -47,7 +47,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 
 ### Saat Ini (v0.4.0)
 - ✅ Ekspresi aritmatika (+, -, *, /, %, **) & assignment gabungan (+=, -=, dll)
-- ✅ Tipe data: angka, boolean (`benar`/`salah`), `kosong`, string
+- ✅ Tipe data: angka (`bulat` int64 + `desimal` double, seperti Python), boolean (`benar`/`salah`), `kosong`, string
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
 - ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
 - ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)

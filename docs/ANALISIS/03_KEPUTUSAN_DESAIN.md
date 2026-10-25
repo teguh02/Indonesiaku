@@ -18,7 +18,7 @@ kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
 | ID | Keputusan | Rekomendasi | Merusak kompatibilitas? | Status |
 |---|---|---|---|---|
 | K1 | Truthiness | Ikuti Python | Ya | disetujui |
-| K2 | Tipe angka | `bulat` + `desimal` | Ya (cetak `7/2`) | disetujui |
+| K2 | Tipe angka | `bulat` + `desimal` | Ya (cetak `7/2`) | dikerjakan — `bulat` int64 ✅ (Fase 2), bignum 2b ⬜ |
 | K3 | Scope assignment di fungsi | Lokal secara bawaan + `global`/`nonlokal` | Ya | disetujui |
 | K4 | Kurung kurawal vs indentasi | Pertahankan `{ }` untuk 1.x | Tidak | disetujui |
 | K5 | Semua error runtime bisa ditangkap | Ya, dengan kelas `Galat*` | Tidak | disetujui — galat bisa ditangkap ✅ (Fase 0); kelas `Galat*` di Fase 1 |

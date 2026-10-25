@@ -78,7 +78,9 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 ### Fase 2 — Tipe data lengkap (0.8)
 
-`bulat` int64 (+ bignum), `tupel`, `himpunan`, penugasan berganda & unpacking,
+`bulat` int64 ✅
+([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md)) — bignum menyusul
+sebagai 2b; `tupel`, `himpunan`, penugasan berganda & unpacking,
 `*args`/`**kwargs`, list comprehension, operator bitwise, `buang` (del),
 kunci kamus non-teks, string per karakter (Unicode), `jenis()` mengembalikan
 kelas, builtin P1–P2 dari 02 §D — lihat

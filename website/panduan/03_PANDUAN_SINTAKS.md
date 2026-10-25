@@ -184,6 +184,44 @@ test()
 
 ## Operator
 
+### Tipe Angka: `bulat` dan `desimal`
+
+Seperti Python, ada dua tipe angka:
+
+| Literal / hasil | Tipe | Contoh |
+|---|---|---|
+| Tanpa titik atau eksponen | `bulat` (int64, presisi penuh) | `7`, `-42`, `9007199254740993` |
+| Ada titik | `desimal` (double) | `7.0`, `3.14` |
+
+```indonesiaku
+cetak(7)              # 7
+cetak(7.0)            # 7.0   (desimal selalu menampilkan .0)
+cetak(6 / 2)          # 3.0   ('/' selalu menghasilkan desimal)
+cetak(7 // 2)         # 3     ('//' dan '%' pada bulat menghasilkan bulat)
+cetak(2 ** 10)        # 1024  (bulat ** bulat dengan pangkat >= 0 tetap bulat)
+cetak(1 + 2.0)        # 3.0
+cetak(1 == 1.0)       # benar
+cetak(1 adalah 1.0)   # salah  ('adalah' = identitas; tipenya berbeda)
+```
+
+`bulat` adalah bilangan 64-bit. Bila hasil aritmetika melampaui jangkauannya
+(-9223372036854775808 sampai 9223372036854775807), program menaikkan
+`GalatLuapan` — nilainya **tidak** pernah berubah diam-diam menjadi `desimal`
+yang kehilangan presisi:
+
+```indonesiaku
+coba {
+    cetak(9223372036854775807 + 1)
+} kecuali GalatLuapan sebagai e {
+    cetak(e.pesan)   # Hasil penjumlahan melebihi jangkauan bilangan bulat.
+}
+```
+
+Bignum (bilangan bulat tanpa batas) belum ada. Untuk angka yang lebih besar,
+gunakan `desimal` dengan kesadaran presisinya 53 bit, atau tunggu Fase 2b.
+
+> Contoh: [`examples/tipe_bulat.idk`](../examples/tipe_bulat.idk)
+
 ### Operator Aritmatika
 
 ```indonesiaku
@@ -193,7 +231,7 @@ b = 3
 jumlah = a + b        # 13 (penjumlahan)
 selisih = a - b       # 7  (pengurangan)
 kali = a * b          # 30 (perkalian)
-bagi = a / b          # 3.333... (pembagian)
+bagi = a / b          # 3.333... (pembagian, selalu desimal)
 bagi_bulat = a // b   # 3  (pembagian bulat, dibulatkan ke bawah)
 sisa = a % b          # 1  (modulo/sisa bagi)
 pangkat = 2 ** 3      # 8  (perpangkatan)

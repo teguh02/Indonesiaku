@@ -126,6 +126,19 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 
 - **Blocks use braces `{ }`, not Python indentation.** The scanner has no INDENT/DEDENT. `jika c { ... } jika_lain c2 { ... } selain { ... }`, `selagi c { ... }`, `fungsi f() { ... }`.
 - Implicit assignment `x = 10` at top level defines a global. **Inside a function, assignment creates a function-local (K3)** — use `global x` to write the script-level variable and `nonlokal x` to write an enclosing function's. `variabel x = ...` still works and names the same local. `prescanFunctionBody` (compiler.c) peeks over the body once before compiling it and pre-declares a slot (`OP_KOSONG`) for every assigned bare name, so a name first assigned inside a `jika`/`selagi`/`untuk` body survives that block's `endScope`. It skips nested `fungsi`/`kelas` bodies (they get their own prescan) and names already taken by `variabel` at the body's own depth. It walks raw tokens, so a future construct whose header can contain `{` (dict literals, anonymous functions) must be taught to it.
+- **Numbers come in two types (K2): `bulat` (int64, `VAL_INT`) and `desimal`
+  (double, `VAL_NUMBER`).** `IS_NUMBER`/`AS_NUMBER` are inline functions that
+  cover both (`asNumber` widens an int to double) — never rewrite them as
+  macros, or `IS_NUMBER(pop())` starts evaluating its argument twice. Use
+  `IS_INT`/`AS_INT` to pick the exact int64 path. Arithmetic opcodes keep
+  int+int in int64 and raise `GalatLuapan` on overflow (`intAddOverflow` etc.
+  in `value.c`); `/` always produces a desimal, `//`/`%`/`**` stay bulat when
+  both operands are bulat. `valuesEqual` compares numerically across the two
+  types (`1 == 1.0` is benar) but `valuesIdentical` does not (`1 adalah 1.0`
+  is salah). `numberToString` prints desimal with a mandatory `.0`, and
+  `rangeNumberToString` prints rentang bounds without it. `rangeElement`
+  (`object.c`) is the only correct way to read a rentang element if you want
+  bulat elements. Truthiness: `0` and `0.0` are false.
 - Truthiness is Python's (K1, `isFalsey` in `vm.c`): `salah`, `kosong`, `0`, `""`, empty list/kamus/rentang are false; every instance is true. Collection emptiness uses live counts (`dictLength` skips tombstones).
 - `rentang()` returns an `OBJ_RANGE` (start/stop/step doubles, no list). `untuk` is desugared to `OP_LIST_LEN` + `OP_INDEX_GET`, so any sequence those two opcodes accept is iterable — currently list, rentang, and teks (per character). Add a type there to make it iterable.
 - `x dalam y` / `x tidak dalam y` compile to `OP_IN` (+ `OP_NOT`) at `PREC_COMPARISON` (`containsValue` in `vm.c`). `TOKEN_TIDAK` now has an infix rule (`notIn`), so because of B16 a line starting with `tidak` right after an expression is a compile error ("Harapkan 'dalam'"). Comparison chaining is not implemented yet.

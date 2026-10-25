@@ -7,6 +7,32 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — Fase 2 ⚠️ MERUSAK
+- 🔢 **Dua tipe angka: `bulat` (int64) dan `desimal` (double)** — K2.
+  Literal tanpa titik menjadi `bulat`; hasil aritmetika bulat tetap bulat dan
+  **tepat** sampai 2⁶³-1 (`9007199254740993 + 1` benar, dulu salah karena
+  double). Pelanggaran jangkauan menaikkan `GalatLuapan` (subkelas
+  `GalatAritmetika`, bisa ditangkap) alih-alih berubah diam-diam menjadi
+  double; literal yang terlalu besar adalah galat kompilasi. Bignum menyusul
+  di Fase 2b.
+
+  Perilaku yang **berubah** (semuanya mengikuti Python 3):
+  - `/` selalu `desimal`: `6 / 2` sekarang `3.0`, dulu `3`.
+  - `desimal` selalu menampilkan `.0`: `cetak(3.0)` sekarang `3.0`, dulu `3`.
+  - `//`, `%`, `**` (pangkat ≥ 0) pada dua `bulat` menghasilkan `bulat`.
+  - `1 == 1.0` → `benar`; `1 adalah 1.0` → `salah`.
+  - `bulat`, `bulatkan` (tanpa `digit`), `lantai`, `atap`, `abs`, `panjang`,
+    `ord`, `ke_bulat`, `ke_angka`, `jumlah` (semua bulat), `biner`/`oktal`/
+    `heksa`, `acak_bulat`, `id`, `hash`, elemen `rentang()`, dan indeks
+    `enumerasi()` kini menghasilkan `bulat` seperti padanan Python-nya.
+  - `bulatkan(x, digit)` tetap `desimal` (seperti `round(x, n)` di Python).
+  - `biner`/`oktal`/`heksa` menerima `bulat` 64-bit penuh (batas 2⁵³ hilang).
+  - SQLite: kolom `INTEGER` menjadi `bulat`; batas ±2⁵³ untuk `INTEGER` hilang.
+  - `pustaka/matematika.idk`: `mat_kpk` memakai `//`, jadi hasilnya `bulat`.
+
+  Semua golden diperiksa satu per satu; yang berubah hanya baris yang memang
+  berbeda di Python (mis. `akar(16)` → `4.0`, `7.5 // 2` → `3.0`).
+
 ### Added — Fase 3
 - 🗄️ **Basis data SQLite tertanam** — 10 fungsi bawaan (`db_buka`,
   `db_eksekusi`, `db_ambil_semua`, `db_ambil_satu`, `db_baris_terpengaruh`,
