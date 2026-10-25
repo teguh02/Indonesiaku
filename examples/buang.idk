@@ -1,0 +1,62 @@
+# 'buang' (del) menghapus elemen daftar, kunci kamus, atribut objek, dan
+# variabel. Galatnya bisa ditangkap coba/kecuali seperti galat lain.
+
+angka = [10, 20, 30, 40]
+buang angka[1]
+cetak(angka)
+buang angka[-1]
+cetak(angka)
+
+kamus = {"a": 1, "b": 2}
+buang kamus["a"]
+cetak(kamus)
+cetak(panjang(kamus))
+
+# Variabel global: nama benar-benar hilang, bukan diisi kosong.
+x = 5
+buang x
+coba {
+    cetak(x)
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+
+# Atribut objek.
+kelas Kotak {
+    init(isi) {
+        diri.isi = isi
+    }
+}
+k = Kotak(7)
+cetak(k.isi)
+buang k.isi
+coba {
+    cetak(k.isi)
+} kecuali e {
+    cetak("tertangkap:", e)
+}
+
+# Indeks dan kunci yang tidak ada menaikkan galat yang tepat.
+coba {
+    buang angka[99]
+} kecuali GalatIndeks sebagai e {
+    cetak("indeks:", e.pesan)
+}
+coba {
+    buang kamus["zzz"]
+} kecuali GalatKunci sebagai e {
+    cetak("kunci:", e.pesan)
+}
+
+# Variabel lokal yang sudah di-buang tidak bisa dibaca lagi.
+fungsi uji() {
+    variabel sisa = 1
+    buang sisa
+    coba {
+        cetak(sisa)
+    } kecuali e {
+        cetak("lokal:", e)
+    }
+    kembalikan panjang(angka)
+}
+cetak(uji())

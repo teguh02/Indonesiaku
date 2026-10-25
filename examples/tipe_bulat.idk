@@ -1,0 +1,65 @@
+# K2: dua tipe angka — bulat (int64) dan desimal (double), seperti Python.
+# Literal tanpa titik/eksponen adalah bulat; '/' selalu menghasilkan desimal.
+
+cetak("=== literal ===")
+cetak(7)
+cetak(7.0)
+cetak(1 + 2)
+cetak(1 + 2.0)
+
+cetak("=== aritmetika bulat ===")
+cetak(7 + 2, 7 - 2, 7 * 2)
+cetak(2 ** 10)
+cetak(2 ** 0)
+cetak(-3 * -4)
+cetak(-(-5))
+# Di atas 2^53 double tidak lagi tepat; bulat tetap tepat.
+cetak(9007199254740993 + 1)
+
+cetak("=== pembagian ===")
+cetak(6 / 2)                    # 3.0 — '/' selalu desimal
+cetak(7 / 2)
+cetak(7 // 2, -7 // 2)          # floor, seperti Python
+cetak(7 % 3, -7 % 3, 7 % -3)    # sisa mengikuti tanda pembagi
+cetak(7.5 // 2)                 # ada desimal -> hasil desimal
+cetak(2 ** -1)                  # pangkat negatif -> desimal
+
+cetak("=== perbandingan ===")
+cetak(1 == 1.0)                 # benar: perbandingan numerik
+cetak(1 adalah 1.0)             # salah: identitas, tipe berbeda
+cetak(2 > 1.5, 2 < 1.5)
+cetak(9007199254740993 > 9007199254740992)
+
+cetak("=== truthiness ===")
+jika 0 { cetak("0 benar") } selain { cetak("0 salah") }
+jika 0.0 { cetak("0.0 benar") } selain { cetak("0.0 salah") }
+jika 1 { cetak("1 benar") }
+
+cetak("=== builtin yang menghasilkan bulat ===")
+cetak(panjang("halo"), panjang([1, 2, 3]))
+cetak(ord("A"), abs(-7), ke_bulat(3.9))
+cetak(bulatkan(2.5), lantai(3.9), atap(3.1))
+cetak(biner(10), oktal(10), heksa(255))
+cetak(jumlah([1, 2, 3]), jumlah([1, 2.5]))
+cetak(ke_angka("42") + 8)
+cetak(ke_angka("3.5") * 2)
+
+cetak("=== rentang & iterasi ===")
+untuk i dalam rentang(3) {
+    cetak(i)                    # 0, 1, 2 sebagai bulat
+}
+cetak(terurut(rentang(3, 0, -1)))
+cetak(enumerasi(["a", "b"], 5))
+
+cetak("=== luapan tertangkap ===")
+coba {
+    cetak(9223372036854775807 + 1)
+} kecuali GalatLuapan sebagai e {
+    cetak("tertangkap:", e.pesan)
+}
+coba {
+    cetak(2 ** 100)
+} kecuali GalatAritmetika sebagai e {
+    cetak("tertangkap:", e.pesan)
+}
+cetak("program tetap berjalan")

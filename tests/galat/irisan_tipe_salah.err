@@ -1,4 +1,4 @@
-Irisan hanya untuk daftar dan teks.
+Irisan hanya untuk daftar, tupel, dan teks.
 [baris 3, kolom 12] dalam skrip
     cetak(r[1:3])
                ^

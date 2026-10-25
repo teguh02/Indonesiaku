@@ -7,6 +7,117 @@
 
 #define TABLE_MAX_LOAD 0.75
 
+// --- K8: Value-keyed table (dictionaries) --------------------------------
+
+void initValueTable(ValueTable* table) {
+    table->count = 0;
+    table->capacity = 0;
+    table->entries = NULL;
+}
+
+void freeValueTable(ValueTable* table) {
+    FREE_ARRAY(ValueEntry, table->entries, table->capacity);
+    initValueTable(table);
+}
+
+static ValueEntry* findValueEntry(ValueEntry* entries, int capacity,
+                                  Value key, uint32_t hash) {
+    uint32_t index = hash % (uint32_t)capacity;
+    ValueEntry* tombstone = NULL;
+
+    for (;;) {
+        ValueEntry* entry = &entries[index];
+        if (entry->state == 0) {
+            return tombstone != NULL ? tombstone : entry;
+        }
+        if (entry->state == 2) {
+            if (tombstone == NULL) tombstone = entry;
+        } else if (valuesEqual(entry->key, key)) {
+            return entry;
+        }
+        index = (index + 1) % (uint32_t)capacity;
+    }
+}
+
+bool valueTableGet(ValueTable* table, Value key, Value* value) {
+    if (table->count == 0) return false;
+    uint32_t hash;
+    if (!hashValue(key, &hash)) return false;
+
+    ValueEntry* entry = findValueEntry(table->entries, table->capacity, key, hash);
+    if (entry->state != 1) return false;
+    *value = entry->value;
+    return true;
+}
+
+static void adjustValueCapacity(ValueTable* table, int capacity) {
+    ValueEntry* entries = ALLOCATE(ValueEntry, capacity);
+    for (int i = 0; i < capacity; i++) {
+        entries[i].state = 0;
+        entries[i].key = KOSONG_VAL;
+        entries[i].value = KOSONG_VAL;
+    }
+
+    table->count = 0;
+    for (int i = 0; i < table->capacity; i++) {
+        ValueEntry* entry = &table->entries[i];
+        if (entry->state != 1) continue;
+        uint32_t hash;
+        if (!hashValue(entry->key, &hash)) continue;
+        ValueEntry* dest = findValueEntry(entries, capacity, entry->key, hash);
+        dest->state = 1;
+        dest->key = entry->key;
+        dest->value = entry->value;
+        table->count++;
+    }
+
+    FREE_ARRAY(ValueEntry, table->entries, table->capacity);
+    table->entries = entries;
+    table->capacity = capacity;
+}
+
+// Returns true when the key is new. The key must be hashable; callers check
+// hashValue() first so an unhashable key reads as a clear GalatTipe.
+bool valueTableSet(ValueTable* table, Value key, Value value) {
+    uint32_t hash;
+    if (!hashValue(key, &hash)) return false;
+
+    if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
+        adjustValueCapacity(table, GROW_CAPACITY(table->capacity));
+    }
+
+    ValueEntry* entry = findValueEntry(table->entries, table->capacity, key, hash);
+    bool isNewKey = entry->state != 1;
+    if (isNewKey && entry->state == 0) table->count++;
+
+    entry->state = 1;
+    entry->key = key;
+    entry->value = value;
+    return isNewKey;
+}
+
+bool valueTableDelete(ValueTable* table, Value key) {
+    if (table->count == 0) return false;
+    uint32_t hash;
+    if (!hashValue(key, &hash)) return false;
+
+    ValueEntry* entry = findValueEntry(table->entries, table->capacity, key, hash);
+    if (entry->state != 1) return false;
+    entry->state = 2;   // tombstone
+    entry->key = KOSONG_VAL;
+    entry->value = KOSONG_VAL;
+    return true;
+}
+
+void markValueTable(ValueTable* table) {
+    for (int i = 0; i < table->capacity; i++) {
+        ValueEntry* entry = &table->entries[i];
+        if (entry->state != 1) continue;
+        markValue(entry->key);
+        markValue(entry->value);
+    }
+}
+
 void initTable(Table* table) {
     table->count = 0;
     table->capacity = 0;

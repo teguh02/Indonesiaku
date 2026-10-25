@@ -1,0 +1,3 @@
+# Tupel tidak bisa diubah: mengisi elemen adalah GalatTipe (seperti TypeError di Python).
+koordinat = (3, 4)
+koordinat[0] = 10

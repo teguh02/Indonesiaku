@@ -1,0 +1,4 @@
+Hasil pemangkatan melebihi jangkauan bilangan bulat.
+[baris 1, kolom 12] dalam skrip
+    cetak(2 ** 100)
+               ^

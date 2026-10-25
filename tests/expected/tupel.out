@@ -1,0 +1,38 @@
+== Literal ==
+(3, 4) (5,) () (1, 2)
+5
+("a", [1, 2])
+== Membaca ==
+3 4 2
+(3,) (4, 3) (2, 3)
+x = 3 y = 4
+3
+== Operator ==
+(1, 2, 3) (1, 2, 1, 2) ()
+benar salah benar
+salah
+benar salah benar
+== Kunci kamus ==
+asal titik benar 2
+2 baru
+== tupel() ==
+() (1, 2) ("a", "b") (0, 1, 2) (7, 8)
+("a", "b")
+== Iterasi & builtin ==
+6
+[2, 4, 6]
+6 2 9 [1, 2, 3]
+2 [1, 2, 3]
+(1, "a") tupel
+() bernilai salah
+== Tidak bisa diubah ==
+GalatTipe: Tupel tidak dapat diubah.
+GalatTipe: Tupel tidak dapat diubah.
+GalatTipe: Tupel tidak dapat diubah.
+Galat: Tipe 'tupel' tidak punya metode 'tambah'.
+t tetap (1, 2)
+== Galat lain ==
+GalatIndeks: Indeks tupel di luar jangkauan (indeks 5, panjang 2).
+GalatNilai: Tidak dapat membuka 2 nilai menjadi 3 nama.
+GalatTipe: Operand '+' harus dua angka, dua teks, dua daftar, atau dua tupel.
+GalatTipe: tupel() hanya menerima daftar, tupel, teks, rentang, atau kamus

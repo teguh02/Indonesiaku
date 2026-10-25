@@ -1,0 +1,71 @@
+# Himpunan (K17): koleksi anggota unik, dibuat hanya lewat himpunan(...).
+# Urutan anggota = urutan penyisipan; hasil dibandingkan lewat terurut().
+
+fungsi dasar() {
+    a = himpunan([3, 1, 3, 2])
+    cetak(a, himpunan(), jenis(a))
+    cetak(panjang(a), panjang(himpunan("halo")))
+    cetak(terurut(himpunan((5, 5, 6))), terurut(himpunan(rentang(4))))
+    cetak(terurut(himpunan({"x": 1, "y": 2})))
+    cetak(2 dalam a, 9 dalam a, 9 tidak dalam a)
+    jika himpunan() { cetak("terisi") } selain { cetak("himpunan kosong itu salah") }
+}
+
+fungsi operasi() {
+    a = himpunan([3, 1, 2])
+    b = himpunan([2, 3, 4])
+    cetak("gabungan", terurut(a | b))
+    cetak("irisan", terurut(a & b))
+    cetak("selisih", terurut(a - b), terurut(b - a))
+    cetak("simetris", terurut(a ^ b))
+    cetak(a == himpunan([2, 1, 3]), a == b, himpunan([1]) == [1])
+    d = himpunan([1, 2])
+    d |= himpunan([3])
+    d -= himpunan([1])
+    cetak(terurut(d))
+}
+
+fungsi ubah() {
+    c = himpunan([1])
+    c.tambah(5)
+    c.tambah(5)
+    tambah(c, 6)
+    cetak(terurut(c), panjang(c))
+    c.hapus(1)
+    cetak(terurut(c))
+    p = himpunan([(1, 2), (1, 2), (3, 4)])
+    cetak(panjang(p), (1, 2) dalam p, (2, 1) dalam p)
+}
+
+fungsi iterasi() {
+    total = 0
+    untuk x dalam himpunan([10, 20, 10]) { total += x }
+    cetak(total, jumlah(himpunan([1, 2, 2])), min(himpunan([4, 2])), max(himpunan([4, 2])))
+    cetak(terurut([x * 2 untuk x dalam himpunan([1, 2, 2])]))
+    cetak(terurut(tupel(himpunan([2, 1, 2]))))
+    cetak(terurut(daftar_unik([3, 3, 1, 2, 1])))
+}
+
+fungsi daftar_unik(xs) {
+    kembalikan [x untuk x dalam himpunan(xs)]
+}
+
+fungsi galat() {
+    s = himpunan([1, 2])
+    coba { himpunan([[1]]) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(s | [3]) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { s.hapus(9) } kecuali GalatKunci sebagai e { cetak("GalatKunci:", e.pesan) }
+    coba { cetak(s[0]) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba {
+        k = {}
+        k[s] = 1
+    } kecuali GalatTipe sebagai e { cetak("GalatTipe: himpunan bukan kunci kamus") }
+    coba { cetak([1] dalam s) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    cetak("s tetap", s)
+}
+
+dasar()
+operasi()
+ubah()
+iterasi()
+galat()

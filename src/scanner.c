@@ -155,10 +155,13 @@ static TokenType identifierType() {
             }
             break;
         case 'b':
-            if (scanner.current - scanner.start > 1 && scanner.start[1] == 'u') {
-                return checkKeyword(1, 4, "ukan", TOKEN_BUKAN);
+            // benar / bukan / buang are all exactly five characters.
+            if (scanner.current - scanner.start == 5) {
+                if (memcmp(scanner.start, "benar", 5) == 0) return TOKEN_BENAR;
+                if (memcmp(scanner.start, "bukan", 5) == 0) return TOKEN_BUKAN;
+                if (memcmp(scanner.start, "buang", 5) == 0) return TOKEN_BUANG;
             }
-            return checkKeyword(1, 4, "enar", TOKEN_BENAR);
+            break;
         case 'c':
             if (scanner.current - scanner.start > 1) {
                 switch (scanner.start[1]) {
@@ -431,11 +434,30 @@ Token scanToken() {
             return makeToken(
                 match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
         case '<':
+            if (match('<')) {
+                return makeToken(
+                    match('=') ? TOKEN_LESS_LESS_EQUAL : TOKEN_LESS_LESS);
+            }
             return makeToken(
                 match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
         case '>':
+            if (match('>')) {
+                return makeToken(
+                    match('=') ? TOKEN_GREATER_GREATER_EQUAL : TOKEN_GREATER_GREATER);
+            }
             return makeToken(
                 match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+        case '&':
+            return makeToken(
+                match('=') ? TOKEN_AMPERSAND_EQUAL : TOKEN_AMPERSAND);
+        case '|':
+            return makeToken(
+                match('=') ? TOKEN_PIPE_EQUAL : TOKEN_PIPE);
+        case '^':
+            return makeToken(
+                match('=') ? TOKEN_CARET_EQUAL : TOKEN_CARET);
+        case '~':
+            return makeToken(TOKEN_TILDE);
         case '"': return string();
         case '\'': {
             // Single quote strings

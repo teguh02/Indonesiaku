@@ -63,24 +63,53 @@ ObjList* newList() {
     return list;
 }
 
+// An empty tupel; callers fill items while it is rooted on the VM stack and
+// never touch it afterwards (tupel is immutable).
+ObjTuple* newTuple() {
+    ObjTuple* tuple = ALLOCATE_OBJ(ObjTuple, OBJ_TUPLE);
+    initValueArray(&tuple->items);
+    return tuple;
+}
+
+// Empty himpunan. Callers root it on the VM stack before adding members:
+// dictSet may grow the table and trigger a GC.
+ObjSet* newSet() {
+    ObjSet* set = ALLOCATE_OBJ(ObjSet, OBJ_SET);
+    initValueTable(&set->table);
+    initValueArray(&set->keys);
+    return set;
+}
+
+bool setAdd(ObjSet* set, Value value) {
+    uint32_t ignored;
+    if (!hashValue(value, &ignored)) return false;   // same rule as dict keys (K8)
+    dictSet(setAsDict(set), value, BOOL_VAL(true));
+    return true;
+}
+
 ObjDict* newDict() {
     ObjDict* dict = ALLOCATE_OBJ(ObjDict, OBJ_DICT);
-    initTable(&dict->table);
+    initValueTable(&dict->table);
     initValueArray(&dict->keys);
     return dict;
 }
 
-bool dictSet(ObjDict* dict, ObjString* key, Value value) {
-    bool isNew = tableSet(&dict->table, key, value);
-    if (isNew) writeValueArray(&dict->keys, OBJ_VAL(key));
+bool dictSet(ObjDict* dict, Value key, Value value) {
+    bool isNew = valueTableSet(&dict->table, key, value);
+    if (isNew) writeValueArray(&dict->keys, key);
     return isNew;
 }
 
-bool dictDelete(ObjDict* dict, ObjString* key) {
-    if (!tableDelete(&dict->table, key)) return false;
+bool dictDelete(ObjDict* dict, Value key) {
+    if (!valueTableDelete(&dict->table, key)) return false;
+    // Remove the key from the insertion-order list, keeping it contiguous so
+    // iteration and dictKeyAt never have to skip tombstones.
     for (int i = 0; i < dict->keys.count; i++) {
-        if (IS_STRING(dict->keys.values[i]) && AS_STRING(dict->keys.values[i]) == key) {
-            dict->keys.values[i] = KOSONG_VAL;
+        if (valuesEqual(dict->keys.values[i], key)) {
+            for (int j = i; j < dict->keys.count - 1; j++) {
+                dict->keys.values[j] = dict->keys.values[j + 1];
+            }
+            dict->keys.count--;
             break;
         }
     }
@@ -88,24 +117,12 @@ bool dictDelete(ObjDict* dict, ObjString* key) {
 }
 
 Value dictKeyAt(ObjDict* dict, int index) {
-    int live = 0;
-    for (int i = 0; i < dict->keys.count; i++) {
-        Value key = dict->keys.values[i];
-        if (!IS_STRING(key)) continue;
-        Value ignored;
-        if (!tableGet(&dict->table, AS_STRING(key), &ignored)) continue;
-        if (live++ == index) return key;
-    }
-    return KOSONG_VAL;
+    if (index < 0 || index >= dict->keys.count) return KOSONG_VAL;
+    return dict->keys.values[index];
 }
 
-// Number of live keys (the table's count also includes tombstones).
 int dictLength(ObjDict* dict) {
-    int n = 0;
-    for (int i = 0; i < dict->table.capacity; i++) {
-        if (dict->table.entries[i].key != NULL) n++;
-    }
-    return n;
+    return dict->keys.count;
 }
 
 ObjRange* newRange(double start, double stop, double step) {
@@ -120,6 +137,17 @@ ObjRange* newRange(double start, double stop, double step) {
 double rangeLength(ObjRange* range) {
     double count = ceil((range->stop - range->start) / range->step);
     return count > 0 ? count : 0;
+}
+
+// K2: a rentang of bulat yields bulat elements, so `untuk i dalam rentang(3)`
+// gives 0, 1, 2 as bulat (like Python's range).
+Value rangeElement(ObjRange* range, int index) {
+    double value = range->start + (double)index * range->step;
+    if (value == floor(value) &&
+        value >= -9223372036854775808.0 && value < 9223372036854775808.0) {
+        return INT_VAL((int64_t)value);
+    }
+    return NUMBER_VAL(value);
 }
 
 bool rangeContains(ObjRange* range, double value) {
@@ -326,22 +354,50 @@ void printObject(Value value) {
             printf("]");
             break;
         }
+        case OBJ_TUPLE: {
+            // Like Python: (1, 2), (1,) -- the comma marks a 1-tuple -- and ().
+            ObjTuple* tuple = AS_TUPLE(value);
+            printf("(");
+            for (int i = 0; i < tuple->items.count; i++) {
+                if (i > 0) printf(", ");
+                printValueRepr(tuple->items.values[i]);
+            }
+            if (tuple->items.count == 1) printf(",");
+            printf(")");
+            break;
+        }
+        case OBJ_SET: {
+            // No literal exists (K17), so print the constructor call that
+            // rebuilds it: himpunan([1, 2]) and himpunan().
+            ObjSet* set = AS_SET(value);
+            if (set->keys.count == 0) {
+                printf("himpunan()");
+                break;
+            }
+            printf("himpunan([");
+            for (int i = 0; i < set->keys.count; i++) {
+                if (i > 0) printf(", ");
+                printValueRepr(set->keys.values[i]);
+            }
+            printf("])");
+            break;
+        }
         case OBJ_DICT: {
             ObjDict* dict = AS_DICT(value);
             printf("{");
             bool first = true;
-            // Insertion order, like Python and like kunci()/iteration -- the
-            // hash table's own order would differ from both.
+            // Insertion order (like Python and like kunci()/iteration), any
+            // hashable key type (K8). Keys and values print as repr, so teks
+            // keys appear quoted: {"a": 1, 2: "dua"}.
             for (int i = 0; i < dict->keys.count; i++) {
-                if (!IS_STRING(dict->keys.values[i])) continue;  // deleted
-                ObjString* key = AS_STRING(dict->keys.values[i]);
-                Value val;
-                if (!tableGet(&dict->table, key, &val)) continue;
+                Value key = dict->keys.values[i];
+                Value entryValue;
+                if (!valueTableGet(&dict->table, key, &entryValue)) continue;
                 if (!first) printf(", ");
                 first = false;
-                printStringRepr(key);
+                printValueRepr(key);
                 printf(": ");
-                printValueRepr(val);
+                printValueRepr(entryValue);
             }
             printf("}");
             break;
@@ -387,12 +443,12 @@ void printObject(Value value) {
             // Printed like Python: range(0, 5) / range(0, 10, 2).
             ObjRange* range = AS_RANGE(value);
             char start[32], stop[32], step[32];
-            numberToString(range->start, start, sizeof(start));
-            numberToString(range->stop, stop, sizeof(stop));
+            rangeNumberToString(range->start, start, sizeof(start));
+            rangeNumberToString(range->stop, stop, sizeof(stop));
             if (range->step == 1) {
                 printf("rentang(%s, %s)", start, stop);
             } else {
-                numberToString(range->step, step, sizeof(step));
+                rangeNumberToString(range->step, step, sizeof(step));
                 printf("rentang(%s, %s, %s)", start, stop, step);
             }
             break;

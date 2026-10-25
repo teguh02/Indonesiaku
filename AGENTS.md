@@ -9,6 +9,40 @@ Python's behavior — truthiness, operator rules, scoping, error model, string
 and collection semantics — but blocks are delimited by `{ }` like PHP/C, never
 by indentation.
 
+## Tata Kelola Proyek, Nama, dan Disclaimer (NON-NEGOTIABLE untuk dokumentasi publik)
+
+Repo ini sudah memiliki identitas kebijakan, nama proyek ("Indonesiaku"), dan
+versi lokal. Jangan menambahkan disclaimer, lisensi, atau pernyataan afiliasi
+baru di luar file yang ada (`README.md`, `website/panduan/README.md`, dll)
+tanpa menyelaraskannya dengan isi yang sudah ada dan tidak memperlakukan proyek
+ini sebagai bahasa baru yang belum ada dokumentasinya.
+
+Poin yang wajib dijaga setiap kali dokumen publik disentuh:
+
+- **Nama proyek tetap "Indonesiaku"** (bukan "Indonesiaku Lang" atau variasi
+  lain). Jika sebuah draft eksternal menyebut nama lain, sesuaikan sebelum
+  masuk ke repo.
+- **Jangan membuat asumsi bahwa proyek ini belum punya roadmap/versi.** Proyek
+  ini sudah menempuh v0.4.0 dengan roadmap di `docs/ROADMAP.md` dan analisis
+  desain di `docs/ANALISIS/`. Dokumen publik harus tetap selaras dengan status
+  tersebut.
+- **Jangan menimbulkan kesan afiliasi resmi** dengan pemerintah atau lembaga
+  negara (lambang negara, identitas kementerian, atribut resmi). Pernyataan
+  independensi boleh ditulis ulang/disederhanakan selama tetap netral dan tidak
+  bertentangan dengan isi yang sudah ada.
+- **Jangan copy-paste disclaimer dari luar mentah-mentahnya.** Jika ada teks
+  disclaimer/identitas dari diskusi eksternal, adaptasi dulu: ganti nama proyek,
+  sesuaikan konteks repo, dan pastikan tidak mengubah makna teknis atauFitur yang sudah tercantum di dokumen lain.
+- **Update bersamaan.** Jika README atau panduan pengguna disentuh untuk bagian
+  independensi/disclaimer, cek apakah bagian lain (identitas proyek, roadmap,
+  daftar fitur) masih konsisten. Tidak ada dokumen publik yang boleh berdiri
+  sendiri dengan klaim yang berbeda.
+
+Singkatnya: nominal proyek, pendekatan nonkomersial, dan larangan kesan afiliasi
+resmi boleh ditambahkan/ diperbarui sebagai langkah dokumentasi, tapi tetap
+mengikuti gaya dan isi repo yang sudah ada — bukan menimpa atau menambah asumsi
+baru tentang "status bahasa baru".
+
 ```indonesiaku
 fungsi sapa(nama) {        # PHP-style braces — no ':' , no indentation rule
     jika nama == "" {
@@ -69,6 +103,13 @@ roadmap, or design notes anywhere else: not in `README.md`, not in
 `CHANGELOG.md`, not in `website/`. `docs/ROADMAP.md` is the single source of
 truth for status.
 
+JANGAN menggunakan nama "Indonesiaku Lang" atau merujuk ke proyek sebagai
+"bahasa baru tanpa dokumentasi". Nama proyek di repo ini adalah "Indonesiaku",
+sudah memiliki roadmap v0.4.0 dan dokumen analisis desain. Jika sebuah instruksi
+eksternal meminta penambahan disclaimer/identitas, sesuaikan teksnya agar tidak
+bentrok dengan identitas yang sudah ada dan tidak memperlakukan proyek ini sebagai
+proyek tanpa sejarah.
+
 **2. When the feature works, update ALL of these in the same change** — this
 list is a checklist, not a suggestion:
 
@@ -126,6 +167,19 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 
 - **Blocks use braces `{ }`, not Python indentation.** The scanner has no INDENT/DEDENT. `jika c { ... } jika_lain c2 { ... } selain { ... }`, `selagi c { ... }`, `fungsi f() { ... }`.
 - Implicit assignment `x = 10` at top level defines a global. **Inside a function, assignment creates a function-local (K3)** — use `global x` to write the script-level variable and `nonlokal x` to write an enclosing function's. `variabel x = ...` still works and names the same local. `prescanFunctionBody` (compiler.c) peeks over the body once before compiling it and pre-declares a slot (`OP_KOSONG`) for every assigned bare name, so a name first assigned inside a `jika`/`selagi`/`untuk` body survives that block's `endScope`. It skips nested `fungsi`/`kelas` bodies (they get their own prescan) and names already taken by `variabel` at the body's own depth. It walks raw tokens, so a future construct whose header can contain `{` (dict literals, anonymous functions) must be taught to it.
+- **Numbers come in two types (K2): `bulat` (int64, `VAL_INT`) and `desimal`
+  (double, `VAL_NUMBER`).** `IS_NUMBER`/`AS_NUMBER` are inline functions that
+  cover both (`asNumber` widens an int to double) — never rewrite them as
+  macros, or `IS_NUMBER(pop())` starts evaluating its argument twice. Use
+  `IS_INT`/`AS_INT` to pick the exact int64 path. Arithmetic opcodes keep
+  int+int in int64 and raise `GalatLuapan` on overflow (`intAddOverflow` etc.
+  in `value.c`); `/` always produces a desimal, `//`/`%`/`**` stay bulat when
+  both operands are bulat. `valuesEqual` compares numerically across the two
+  types (`1 == 1.0` is benar) but `valuesIdentical` does not (`1 adalah 1.0`
+  is salah). `numberToString` prints desimal with a mandatory `.0`, and
+  `rangeNumberToString` prints rentang bounds without it. `rangeElement`
+  (`object.c`) is the only correct way to read a rentang element if you want
+  bulat elements. Truthiness: `0` and `0.0` are false.
 - Truthiness is Python's (K1, `isFalsey` in `vm.c`): `salah`, `kosong`, `0`, `""`, empty list/kamus/rentang are false; every instance is true. Collection emptiness uses live counts (`dictLength` skips tombstones).
 - `rentang()` returns an `OBJ_RANGE` (start/stop/step doubles, no list). `untuk` is desugared to `OP_LIST_LEN` + `OP_INDEX_GET`, so any sequence those two opcodes accept is iterable — currently list, rentang, and teks (per character). Add a type there to make it iterable.
 - `x dalam y` / `x tidak dalam y` compile to `OP_IN` (+ `OP_NOT`) at `PREC_COMPARISON` (`containsValue` in `vm.c`). `TOKEN_TIDAK` now has an infix rule (`notIn`), so because of B16 a line starting with `tidak` right after an expression is a compile error ("Harapkan 'dalam'"). Comparison chaining is not implemented yet.
@@ -133,13 +187,60 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 - Negative indices are resolved in the VM (`OP_INDEX_GET`/`OP_INDEX_SET`) for list, teks, and rentang — NOT for `kamus[angka]`, which means "nth key in insertion order". Error messages report the index the user wrote, not the normalised one.
 - Slicing `a[awal:akhir:langkah]` emits `OP_SLICE` with four stack slots (target + 3 bounds); omitted parts are compiled as `OP_KOSONG` so the VM distinguishes "not given" from a real value. `resolveSlice` in `vm.c` holds the Python clamping rules; a step of 0 raises `GalatNilai`. Slices are read-only — assignment is rejected at compile time.
 - **`==` is structural, `adalah` is identity (K7) — do not conflate them.** `valuesEqual` in `value.c` recurses into lists, dicts, and ranges (dict insertion order is irrelevant; depth capped at `EQUAL_MAX_DEPTH` so self-referential containers can't hang the VM). `valuesIdentical` is the identity version. `OP_EQUAL` uses the first, `OP_IDENTICAL` the second. Two call sites must stay on identity: `chainCompare`'s `CHAIN_IDENTITY`/`CHAIN_NOT_IDENTITY` AND `emitComparison` (the non-chained path) — forgetting the second one silently makes `adalah` structural, which the `gabung_sama` golden exists to catch. `containsValue` (`dalam`) deliberately inherits the structural version.
+- **tupel (K17)** is `OBJ_TUPLE`, deliberately laid out exactly like `ObjList` (`Obj` + `ValueArray items`). Read paths (index, slice, unpack, iterate, `dalam`, `==`, hash, `+`, `*`, native sequence helpers) go through `sequenceItems(v)` in `object.h`, which returns the items of a daftar OR tupel; never write through it. Write paths must reject tupel explicitly: `OP_INDEX_SET`/`OP_INDEX_DELETE` and `rejectTuple` in the mutating natives. A new list-handling site therefore needs a decision: read → `sequenceItems`, write → reject. Literal parsing is in `grouping()`: a comma after the first expression makes a tupel, `()` is empty, `(x)` stays grouping. `hashValue` combines element hashes (structural, so equal tupel are one dict key); an unhashable element makes the whole tupel unhashable.
+- **himpunan (K17)** is `OBJ_SET`, laid out exactly like `ObjDict` (`table` + insertion-order `keys`, guarded by `_Static_assert`), so it reuses `dictSet`/`dictDelete`/`dictLength`/`dictKeyAt` via `setAsDict()`. No literal syntax — only `himpunan(...)`. Members follow the K8 hash rules; a set itself is unhashable (Python's `set`), so it cannot be a dict key — a hashable `himpunan_beku` is future work. `| & ^` go through `bitwiseBinary` → `setBinary`, `-` through the set branch at the top of `OP_SUBTRACT`. Order is insertion order; goldens compare via `terurut`. Regression: `examples/himpunan.idk`.
+- An uncaught typed galat rethrown by `OP_THROW` (no `kecuali` matched) prints its `.pesan` via `errorMessage`; it used to lose the message. Regression: `tests/galat/galat_bertipe_diteruskan`.
+- A single chunk holds at most **256 constants** (one-byte index, as in clox). A long top-level script full of literals hits "Terlalu banyak konstanta dalam satu chunk"; goldens split sections into functions (each has its own table, see `examples/tupel.idk`). Lifting this needs an `OP_CONSTANT_LONG`.
 - `+` accepts two lists (`concatenateLists`, both operands stay on the stack while the result grows); `*` accepts list/teks × angka in either order. `repeatCount` rejects non-integers (`GalatTipe`) and caps results at `REPEAT_MAX` 65535 (`GalatNilai`) so `[0] * 1e9` can't exhaust memory. Negative/zero factors give an empty result, as in Python.
 - Implemented: closures/upvalues, lists `[..]` + indexing, dicts via `kamus()` + string indexing, `untuk x dalam list { }`, `hentikan`/`lanjut`, classes (`kelas`, `init`, `diri`, `<` inheritance, `super`), `naikkan` + `coba/kecuali`, `impor "file.idk"` (shared global namespace, cached).
 - Catchable vs fatal: **every** `runtimeError` is catchable by `kecuali` (the caught value is the message string). When a handler is active, `runtimeError` only records the message (`vm.runtimeErrorPending`, no allocation) and `run()` returns; `interpret()` then unwinds via `throwValue`, pushes the message, and calls `run()` again. Only `fatalError` (stack underflow, bad jump offset — VM bugs) is never catchable. Natives still use `nativeRaise`. Uncaught errors print and exit 70.
 - `coba` handlers: `OP_RETURN` drops handlers registered by the returning frame; `hentikan`/`lanjut` emit `OP_TRY_END` for each `coba` they leave (`Compiler.tryDepth` vs `LoopCtx.tryDepth`).
 - **Several `kecuali` clauses chain by jump, and `catchClause()` does NOT emit its own rethrow.** It returns the unpatched "no match" jump; `tryStatement` patches it onto the next clause and only the last one falls through to `OP_POP` + `OP_THROW`. An untyped `kecuali e` returns -1 (always matches) and must be last — `semanticError`, not `error`, so there is no panic-mode cascade. `scanTryClauses` must skip EVERY `kecuali` clause in its lookahead loop, otherwise a trailing `akhirnya` goes undetected and its outer handler is never registered.
 - **`declaration()` returns WITHOUT consuming when it sees `}`** — that is how `block()` detects the end of a block. Any loop calling it at top level must therefore guard against `}` itself, or it spins forever: a file containing only `}` used to hang the compiler (exit 124). `compile()` has that guard; add one to any new top-level loop.
-- `akhirnya` (finally): the single-pass compiler peeks ahead with `saveScanner`/`restoreScanner` (`scanTryClauses`) to learn whether `kecuali`/`akhirnya` follow, because a finally needs an OUTER handler registered before the body. The finally block runs with two hidden locals (raised value, rethrow flag) and rethrows via `OP_THROW`. `kembalikan`/`hentikan`/`lanjut` that leave such a `coba` re-compile the finally block inline at the jump (`exitTryBlocks` → `inlineFinallyBlock`, rewinding the scanner to the position saved in `Compiler.finallies[]`), like CPython's duplicated finally code. Errors during that re-compile are silenced (`inlineFinallyDepth`) because the in-place copy reports them. A returned value is evaluated first and parked in a hidden local. `semanticError` reports well-formed-but-forbidden code without panic-mode cascades.
+- `akhirnya` (finally): the single-pass compiler peeks ahead with `saveScanner`/`restoreScanner` (`scanTryClauses`) to learn whether `kecuali`/`akhirnya` follow, because a finally needs an OUTER handler registered before the body. The finally block runs with two hidden locals (raised value, rethrow flag) and rethrows via `OP_THROW`. `kembalikan`/`hentikan`/`lanjut` that leave such a `coba` re-compile the finally block inline at the jump (`exitTryBlocks` → `inlineFinallyBlock`, rewinding the scanner to the position saved in `Compiler.finallies[]`), like CPython's duplicated finally code. **Each copy counts against `FINALLY_INLINE_MAX` (64) per function**: a jump inside an `akhirnya` re-inlines the enclosing ones, so nesting grows the code exponentially — the CI fuzzer hung the compiler with it. Past the cap `reportFinallyBudget` prints one error (lifting both inline suppression and panic mode) and sets `suppressFurtherErrors`, because the copies already made overflow the constant table and cascade. Never remove the cap. Errors during that re-compile are silenced (`inlineFinallyDepth`) because the in-place copy reports them. A returned value is evaluated first and parked in a hidden local. `semanticError` reports well-formed-but-forbidden code without panic-mode cascades.
+- **List comprehension `[expr untuk x dalam seq jika cond]` is compiled into
+  an implicit one-parameter function**, called once per element by
+  `OP_APPEND`/`OP_CALL` (`listComprehension` in `compiler.c`). Two reasons, both
+  structural: the element tokens come BEFORE the header that declares `x`, so
+  the compiler peeks ahead (`scanComprehension`) and re-reads them after the
+  header; and the loop state cannot live in hidden locals of the enclosing
+  frame, because an enclosing call's callee/arguments already occupy those
+  slots (slots are stack positions). Only one `untuk` plus one optional `jika`
+  are supported. The **iterable and the `jika` filter are parsed with
+  `parsePrecedence(PREC_OR)`, not `expression()`** — Python's `or_test` —
+  because `expression()` also handles the conditional expression
+  `a jika c selain b`, which would swallow the filter's `jika` and demand a
+  `selain`. The element itself is a full `expression()`. A conditional
+  iterable needs parentheses: `[x untuk x dalam (a jika c selain b)]`.
+- **Source files are newline-normalised on load** (`normalizeNewlines` in
+  `common.h`, called by `readFile` in `main.c` and `readModuleSource` in
+  `vm.c`): `\r\n` and lone `\r` become `\n`, like Python's universal newlines.
+  Without it a CRLF checkout (git on Windows) leaked `\r` into triple-quoted
+  strings, `panjang()`, and error snippets. Any new path that reads source
+  must call it too.
+- `number()` in `compiler.c` merges Fase 1 literals with K2: `_` separators,
+  `0b`/`0o`/`0x` and every literal without `.`/exponent are `bulat` (int64,
+  overflow is a compile error); only `.`/`e` literals are `desimal`.
+- **`buang` (del)** has its own opcodes: `OP_DELETE_GLOBAL` removes the name
+  from the table, while `OP_DELETE_LOCAL`/`OP_DELETE_UPVALUE` write
+  `VAL_TAKTERISI` into the slot — `OP_GET_LOCAL`/`OP_GET_UPVALUE` therefore
+  check for it and raise "sudah di-buang". `OP_INDEX_DELETE` handles list and
+  dict, `OP_DELETE_PROPERTY` an instance field. Any new read path for locals
+  must keep that check.
+- **Dictionaries are keyed by `Value` (K8), not by string.** `ObjDict.table`
+  is a `ValueTable` (`table.c`), separate from the `ObjString*` tables used for
+  globals, string interning, class methods and instance fields. Key equality is
+  `valuesEqual`, so `1` and `1.0` are the same key; `hashValue` in `value.c`
+  must stay consistent with that (it hashes whole doubles as int64).
+  Unhashable keys (list/kamus/rentang) are rejected *before* insertion.
+  `ObjDict.keys` is now a contiguous live-key list in insertion order (delete
+  shifts, no tombstones). Dict iteration cannot use `OP_INDEX_GET` any more —
+  `kamus[i]` is a key lookup — so `untuk`/comprehension use `OP_SEQ_GET`, which
+  maps a kamus position to `dictKeyAt`.
+- **`a, b = ...` is a statement-level construct** (`looksLikeUnpack` peeks for
+  `IDENT (, IDENT)+ =`), compiled as the RHS sequence + `OP_UNPACK n` + one
+  assignment per name. `prescanFunctionBody` tracks comma-chains so every name
+  in the list becomes a function-local (K3), not just the last one before `=`.
 - Statements are newline-terminated outside `()`/`[]`; the scanner suppresses newline tokens while its grouping depth is positive. Preserve `ScannerState.groupingDepth` across parser lookahead, and do not add INDENT/DEDENT: `{}` remains the block syntax.
 - Strings are UTF-8 bytes but the language counts **characters**: `ObjString.charCount` is computed at allocation; `panjang`, `teks[i]`, `karakter`, `potong` go through `utf8ByteOffset` (O(1) when `charCount == length`, i.e. ASCII). `ord`/`chr` use code points.
 - `cetak(a, b)` compiles to `OP_PRINT <count>`: one line, space-separated. Numbers print via `numberToString` as the shortest round-trip repr (integral values < 1e16 without `.0`).
@@ -151,7 +252,8 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). At script level that means globals; inside a function only a name declared `global` reaches a global this way. Only compound assignment (`+=` etc.) requires the global to already exist.
 - GC-safety when mutating collections: keep operands on the VM stack (`peek`, not `pop`) until after `tableSet`/`writeValueArray`, which can grow and trigger a GC. `OP_INDEX_SET` for dicts and the `sisip` native follow this. `ObjDict.keys` is also a GC-marked insertion-order list: update it only through `dictSet`/`dictDelete`.
 - `examples/todo_cli.idk` is the Todo-list JSON DB demo (CRUD over a JSON file via `pustaka/json.idk`). Integration-tested in CI by `tests/test_todo_cli.{sh,ps1}` (job `todo-crud`) plus golden tests for `json_pakai`/`todo_demo`.
-- Operators follow Python: `//` floors (`OP_FLOOR_DIVIDE`), `%` takes the divisor's sign, `**` is right-associative and binds tighter than unary minus (`PREC_POWER` > `PREC_UNARY`), `tidak` binds looser than comparisons (`PREC_NOT`). Compound assignment (`+=`, `//=`, ...) is table-driven via `matchCompoundAssign` and its right side is a full `expression()`. Regression: `examples/operator_aritmetika.idk`.
+- Operators follow Python: `//` floors (`OP_FLOOR_DIVIDE`), `%` takes the divisor's sign, `**` is right-associative and binds tighter than unary minus (`PREC_POWER` > `PREC_UNARY`), `tidak` binds looser than comparisons (`PREC_NOT`). Compound assignment (`+=`, `//=`, ...) is table-driven via `matchCompoundAssign` and its right side is a full `expression()`. **A new compound operator must be added to BOTH `matchCompoundAssign` and `isCompoundAssign`** — the latter feeds `prescanFunctionBody`, so forgetting it makes `x op= 1` inside a function skip K3 local detection. Regression: `examples/operator_aritmetika.idk`.
+- Bitwise `& | ^ << >>` share one handler, `bitwiseBinary` in `vm.c` (operands via `bitwiseOperand`: bulat, or logika as 0/1); `~` is `OP_BIT_NOT`. Precedence levels `PREC_BIT_OR < PREC_BIT_XOR < PREC_BIT_AND < PREC_SHIFT` sit between comparisons and `PREC_TERM`, exactly Python's order. Shifts go through `intShiftLeft`/`intShiftRight` in `value.c`, written without UB (no shift by ≥ 64, no signed left shift, no implementation-defined right shift of negatives) — keep it that way, UBSan in CI checks. `bitwiseBinary` dispatches on operand type on purpose: set union/intersection (`himpunan | himpunan`) and `kamus | kamus` go there as new branches, not new opcodes. Regression: `examples/operator_bitwise.idk`.
 - **Default parameters and keyword arguments share one mechanism — do not reintroduce the old one.** Parameters may have defaults (`fungsi f(a, b=2)`) and calls may name arguments (`f(b=2)`, also for `init`, methods, and `super`). `call()` fills every slot the caller did not supply with the internal marker `VAL_TAKTERISI`, and each default is guarded by `OP_ISI_BAWAAN slot, lompat` so its expression runs only when the slot is still unfilled. An earlier design used a staged prologue (`ObjFunction.entryPoints`, jumping straight to an entry point chosen by `argCount`); it was removed because keyword arguments can leave a gap in the MIDDLE (`f(1, c=9)`) that a single entry point cannot express. Per K15 defaults are evaluated on **every call**, not once at definition — deliberately unlike Python, so `fungsi f(x, daftar=[])` never shares a list; never "fix" this. Golden `argumen_bawaan` exists to catch a regression here.
 - Keyword names are matched in the VM, not the compiler: the callee is a runtime value. `ObjFunction.paramNames` holds the parameter names and `OP_CALL_BERNAMA` carries the caller's name list as a chunk constant. Methods called with keywords fall back to `OP_GET_PROPERTY`/`OP_GET_SUPER` + a normal call, so `OP_INVOKE`/`OP_SUPER_INVOKE` need no keyword variants. Native functions reject keyword arguments with a clear message (`cetak(pisah=, akhir=)` waits on K12).
 - Two GC traps when touching this code, both invisible to the normal suite and only caught by `-DDEBUG_STRESS_GC` + ASan: (1) `paramNames` is `ObjString**`, must be marked in `blackenObject`, and must be NULL-filled immediately after `ALLOCATE` — the `copyString` calls that populate it allocate, and a GC mid-loop would walk uninitialised slots; (2) the keyword-name list in `argumentList` is built on the VM stack as it goes, never in a local C array, or names collected earlier are freed while later arguments allocate.
@@ -199,6 +301,10 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
 - **Embedding example code in docs:** put a marker `{{embed:examples/foo.idk}}` on its own line in a `.md`. The reader fetches that file from `raw.githubusercontent.com/teguh02/Indonesiaku/main/...` so it always mirrors the repo — `examples/` is NOT copied into `docs/`. This means an embedded example must be committed+pushed to `main` before it shows on the live site.
 - Deployment target is our own server, as ONE Docker bundle: the `website/` static files (docs + site) and the playground run together in a container; no Netlify, no `.netlify/`. Whatever serves the static files MUST send `text/markdown; charset=utf-8` for `*.md` and `text/plain; charset=utf-8` for `*.idk`, otherwise `fetch()` in the reader fails. The reader requires HTTP — it does not work over `file://`. For local preview: `python -m http.server 8000 -d website`.
 - When language features change, keep these in sync — see the mandatory checklist in **Feature workflow** at the top: `README.md`, `CHANGELOG.md`, `website/panduan/*.md` (esp. `03_PANDUAN_SINTAKS.md` and `07_PUSTAKA_STANDAR.md`), `editors/vscode-indonesiaku/` (keywords, builtins, snippets), `docs/ROADMAP.md`, this `AGENTS.md`, and the Dockerfile `LABEL version`.
+
+Bagian **Tata Kelola Proyek, Nama, dan Disclaimer** di atas tetap berlaku untuk
+setiap perubahan pada `README.md`, `website/panduan/`, atau dokumen publik lain
+yang menyentuh identitas proyek, nama, afiliasi, atau pernyataan independensi.
 
 ## Conventions
 

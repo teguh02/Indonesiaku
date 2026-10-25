@@ -26,6 +26,12 @@ typedef enum {
     OP_MODULO,
     OP_POWER,
     OP_FLOOR_DIVIDE,
+    OP_BIT_AND,
+    OP_BIT_OR,
+    OP_BIT_XOR,
+    OP_BIT_NOT,
+    OP_SHIFT_LEFT,
+    OP_SHIFT_RIGHT,
     OP_IN,
     OP_CHAIN_COMPARE,
     OP_CHAIN_CLEANUP,
@@ -42,8 +48,17 @@ typedef enum {
     OP_SET_UPVALUE,
     OP_CLOSE_UPVALUE,
     OP_BUILD_LIST,
+    OP_BUILD_TUPLE,  // byte = jumlah elemen; (a, b) / (a,) / ()
     OP_BUILD_DICT,
+    OP_APPEND,       // [daftar, nilai] -> daftar (list comprehension)
+    OP_DELETE_GLOBAL,   // buang nama; byte = nama
+    OP_DELETE_LOCAL,    // buang nama; byte = slot lokal (diisi VAL_TAKTERISI)
+    OP_DELETE_UPVALUE,  // buang nama; byte = upvalue
+    OP_INDEX_DELETE,    // buang d[i] / kamus[k]
+    OP_UNPACK,          // a, b = ... : byte = jumlah nama
+    OP_DELETE_PROPERTY, // buang obj.atribut
     OP_INDEX_GET,
+    OP_SEQ_GET,      // iteration by position: kamus -> kunci ke-i (not a key lookup)
     OP_INDEX_SET,
     OP_SLICE,
     OP_LIST_LEN,

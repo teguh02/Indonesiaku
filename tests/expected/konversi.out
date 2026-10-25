@@ -5,7 +5,7 @@
 0.25
 === ke_angka (string -> angka) ===
 50
-7
+7.0
 === ke_teks (nilai -> string) ===
 100
 benar

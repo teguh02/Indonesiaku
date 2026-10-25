@@ -1,3 +1,0 @@
-# Kunci kamus saat ini harus berupa teks.
-variabel d = {1: "satu"}
-cetak(d)

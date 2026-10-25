@@ -7,6 +7,104 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — pesan galat
+- 🐛 Galat bertipe yang melewati `coba` tanpa `kecuali` yang cocok (mis.
+  `GalatNama` melewati `kecuali GalatTipe`) dulu hanya tercetak
+  "Kesalahan tak tertangani." — kini pesan aslinya ditampilkan
+  (`tests/galat/galat_bertipe_diteruskan`).
+- 🐛 Pengindeksan pada nilai yang tidak berindeks kini `GalatTipe` (dulu kelas
+  umum), dengan pesan yang menyebut daftar/tupel/teks/kamus.
+
+### Fixed — compiler hang (ditemukan fuzzer CI)
+- 🐛 `akhirnya` bersarang yang berisi `kembalikan`/`hentikan`/`lanjut` membuat
+  compiler menyalin blok luar secara eksponensial: kedalaman 6 butuh 24 detik,
+  input fuzzer CI menggantung > 5 menit di bawah ASan. Salinan kini dibatasi
+  64 per fungsi; melewatinya adalah satu galat kompilasi yang jelas
+  (`tests/galat/akhirnya_salinan_berlebih`), tanpa rentetan galat susulan.
+
+### Fixed — penggabungan Fase 1 + Fase 2
+- 🐛 List comprehension dengan filter (`[x untuk x dalam a jika syarat]`)
+  gagal kompilasi setelah ekspresi kondisional (`a jika c selain b`) masuk:
+  `jika` pada filter terbaca sebagai awal ekspresi kondisional. Urutan dan
+  filter kini diurai seperti `or_test` di Python; ekspresi kondisional di
+  urutan perlu tanda kurung.
+- 🐛 Berkas sumber ber-CRLF (checkout git di Windows) membocorkan `\r` ke
+  string tiga kutip, `panjang()`, dan potongan baris pada pesan galat. Sumber
+  kini dinormalkan saat dibaca (`\r\n` → `\n`), seperti Python.
+- 🐛 `pastikan salah, 404` menyimpan pesan `404.0`; pesan `bulat` kini tetap
+  `404`.
+
+### Changed — Fase 2 ⚠️ MERUSAK
+- 🔢 **Dua tipe angka: `bulat` (int64) dan `desimal` (double)** — K2.
+  Literal tanpa titik menjadi `bulat`; hasil aritmetika bulat tetap bulat dan
+  **tepat** sampai 2⁶³-1 (`9007199254740993 + 1` benar, dulu salah karena
+  double). Pelanggaran jangkauan menaikkan `GalatLuapan` (subkelas
+  `GalatAritmetika`, bisa ditangkap) alih-alih berubah diam-diam menjadi
+  double; literal yang terlalu besar adalah galat kompilasi. Bignum menyusul
+  di Fase 2b.
+
+  Perilaku yang **berubah** (semuanya mengikuti Python 3):
+  - `/` selalu `desimal`: `6 / 2` sekarang `3.0`, dulu `3`.
+  - `desimal` selalu menampilkan `.0`: `cetak(3.0)` sekarang `3.0`, dulu `3`.
+  - `//`, `%`, `**` (pangkat ≥ 0) pada dua `bulat` menghasilkan `bulat`.
+  - `1 == 1.0` → `benar`; `1 adalah 1.0` → `salah`.
+  - `bulat`, `bulatkan` (tanpa `digit`), `lantai`, `atap`, `abs`, `panjang`,
+    `ord`, `ke_bulat`, `ke_angka`, `jumlah` (semua bulat), `biner`/`oktal`/
+    `heksa`, `acak_bulat`, `id`, `hash`, elemen `rentang()`, dan indeks
+    `enumerasi()` kini menghasilkan `bulat` seperti padanan Python-nya.
+  - `bulatkan(x, digit)` tetap `desimal` (seperti `round(x, n)` di Python).
+  - `biner`/`oktal`/`heksa` menerima `bulat` 64-bit penuh (batas 2⁵³ hilang).
+  - SQLite: kolom `INTEGER` menjadi `bulat`; batas ±2⁵³ untuk `INTEGER` hilang.
+  - `pustaka/matematika.idk`: `mat_kpk` memakai `//`, jadi hasilnya `bulat`.
+
+  - Literal `0x`/`0b`/`0o` dan `1_000` (dari Fase 1) juga menjadi `bulat`;
+    sebelum K2 semuanya `double`.
+
+  Semua golden diperiksa satu per satu; yang berubah hanya baris yang memang
+  berbeda di Python (mis. `akar(16)` → `4.0`, `7.5 // 2` → `3.0`).
+
+### Changed — Fase 2 (K8) ⚠️ MERUSAK
+- 🗝️ **Kunci kamus tidak lagi hanya teks.** Teks, `bulat`, `desimal`,
+  `benar`/`salah`, dan `kosong` boleh menjadi kunci; daftar/kamus/rentang
+  ditolak dengan `GalatTipe`. `1` dan `1.0` adalah kunci yang sama (seperti
+  Python). Ini membuat **`kamus[1]` berarti kunci `1`**, bukan "kunci pertama
+  menurut urutan penyisipan" — untuk posisi pakai `kunci(kamus)[0]`.
+  Iterasi `untuk k dalam kamus` tetap urutan penyisipan (opcode `OP_SEQ_GET`).
+
+### Added — Fase 2
+- 🧺 **Himpunan** (K17) lewat `himpunan([urutan])` saja, tanpa literal
+  (`examples/himpunan.idk`). Anggota unik dan harus hashable (aturan K8);
+  `dalam`, `panjang`, `untuk`, comprehension, `==` tanpa peduli urutan,
+  `| & - ^` (himpunan baru, kedua operand harus himpunan), `.tambah`,
+  `.hapus` (`GalatKunci` bila tidak ada). Seperti `set` Python, himpunan
+  tidak hashable dan tidak berindeks. Dicetak `himpunan([1, 2])`.
+- 📦 **Tupel** (K17) `(1, 2)`, `(1,)` (koma wajib), `()`; `(1)` tetap
+  pengelompokan (`examples/tupel.idk`). Seperti Python: indeks, irisan
+  (hasilnya tupel), unpacking, `untuk`, `dalam`, `+`, `*`, `==` struktural
+  (`(1,) == [1]` salah), dan bisa menjadi **kunci kamus** bila elemennya
+  hashable. Tidak bisa diubah: `t[i] = x`, `buang t[i]`, `tambah`/`hapus`/
+  `sisip`/`hapus_pada` → `GalatTipe`. Builtin `tupel([urutan])`; metode
+  hanya yang tidak mengubah. Parameter SQL `db_*` kini boleh tupel.
+- 🔣 **Operator bitwise** `&`, `|`, `^`, `~`, `<<`, `>>` dan
+  `&= |= ^= <<= >>=` (`examples/operator_bitwise.idk`), presedensi seperti
+  Python (di atas perbandingan, di bawah `+ -`). Hanya untuk `bulat`;
+  `desimal` → `GalatTipe`, geser negatif → `GalatNilai`, `<<` di luar int64 →
+  `GalatLuapan`. `benar & salah` tetap logika seperti `bool` Python; `~benar`
+  ditolak (pakai `tidak`). `^` adalah XOR, bukan pangkat.
+- 🔁 **List comprehension** `[ekspresi untuk x dalam urutan jika syarat]`
+  (`examples/komprehensi.idk`). Satu `untuk` dan satu `jika` opsional; boleh
+  bersarang. Variabel loop hanya hidup di dalam comprehension, dan nama luar
+  tetap terlihat.
+- 🧩 **Penugasan berganda & unpacking** `a, b = 1, 2`, `a, b = b, a`,
+  `x, y, z = daftar`, teks per karakter, dan `rentang()`
+  (`examples/penugasan_berganda.idk`). Jumlah yang tidak cocok menimbulkan
+  `GalatNilai` yang bisa ditangkap. Di dalam fungsi, setiap nama tetap menjadi
+  lokal (K3), termasuk yang berada di dalam blok `jika`.
+- 🗑️ **`buang` (padanan `del`)** untuk variabel global/lokal, elemen daftar,
+  kunci kamus, dan atribut objek (`examples/buang.idk`). Membaca nama lokal
+  yang sudah di-buang menimbulkan galat; indeks/kunci/atribut yang tidak ada
+  menimbulkan `GalatIndeks`/`GalatKunci`/`GalatAtribut`.
+
 ### Added — Fase 1
 - ✅ **Kolom dan potongan baris pada galat runtime** — traceback kini
   `[baris N, kolom M]` dengan baris sumber dan caret pada bingkai terdalam.

@@ -1,0 +1,6 @@
+# Galat bertipe yang tidak cocok dengan 'kecuali' tetap menampilkan pesannya.
+coba {
+    cetak(tidak_ada)
+} kecuali GalatTipe sebagai e {
+    cetak("tidak tercapai")
+}

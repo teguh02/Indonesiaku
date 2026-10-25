@@ -43,19 +43,34 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - **Menggunakan kata kunci Bahasa Indonesia** untuk semua perintah
 - **Diimplementasikan dengan C** untuk performa yang baik
 
+## ℹ️ Independensi Proyek & Disclaimer
+
+Indonesiaku merupakan proyek bahasa pemrograman open source independen yang dikembangkan sebagai kontribusi terhadap perkembangan teknologi dan ekosistem pemrograman.
+
+Proyek ini **tidak berafiliasi, tidak disponsori, dan tidak mewakili** Pemerintah Republik Indonesia maupun lembaga pemerintahan lainnya.
+
+Indonesiaku dikembangkan untuk kepentingan edukasi, eksplorasi teknologi, dan kolaborasi komunitas pengembang. Nama "Indonesiaku" digunakan sebagai identitas proyek bahasa pemrograman dan tidak dimaksudkan untuk menyatakan kepemilikan, kewenangan, atau representasi resmi atas Negara Republik Indonesia.
+
+Pengembangan proyek dilakukan secara terbuka dan nonkomersial. Partisipasi serta kontribusi komunitas bersifat sukarela tanpa adanya kewajiban atau janji pemberian imbalan finansial.
+
+Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut lain yang dapat memberikan kesan proyek resmi pemerintah.
 ## ✨ Fitur
 
 ### Saat Ini (v0.4.0)
 - ✅ Ekspresi aritmatika (+, -, *, /, %, **) & assignment gabungan (+=, -=, dll)
-- ✅ Tipe data: angka, boolean (`benar`/`salah`), `kosong`, string
+- ✅ Tipe data: angka (`bulat` int64 + `desimal` double, seperti Python), boolean (`benar`/`salah`), `kosong`, string
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
 - ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
 - ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)
 - ✅ **Argumen bernama** `gambar("Judul", tengah=benar)` (boleh melewati parameter di tengah)
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
+- ✅ **Tupel** `(1, 2)`, `(1,)`, `()`: urutan yang tidak bisa diubah, bisa jadi kunci kamus, `tupel(...)`
+- ✅ **Himpunan** `himpunan([1, 2, 2])`: anggota unik, `dalam` cepat, `| & - ^`
+- ✅ **Operator bitwise** `& | ^ ~ << >>` (dan `&= |= ^= <<= >>=`) pada `bulat`, presedensi seperti Python
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
 - ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
+- ✅ **List comprehension** `[x * x untuk x dalam rentang(1, 6)]`, **penugasan berganda** `a, b = b, a`, **`buang`** (del)
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
@@ -76,7 +91,8 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 
 ### Akan Datang
-- 🔲 Literal kamus `{ }`, Set
+- 🔲 Sisa Fase 2 (tupel tanpa kurung, `hash`, `iter`/`next`, ...) — lihat
+  [docs/ROADMAP.md](docs/ROADMAP.md)
 - 🔲 String methods lanjutan & file I/O
 - 🔲 Standard library yang lebih lengkap
 
@@ -778,9 +794,13 @@ git checkout -b feature/nama-fitur
 
 Untuk detail lengkap, baca **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)**.
 
-## 📝 Lisensi
+## 📝 Lisensi & Tata Kelola
 
-Proyek ini dibuat untuk tujuan edukasi dan pembelajaran bahasa pemrograman.
+Proyek ini bersifat open source dan nonkomersial. ===================================================================================================================== this is placeholder - tetap sesuaikan lisensi yang dipakai repo.
+
+Kontribusi komunitas dilakukan secara sukarela dan tidak menjanjikan imbalan
+finansial. Lihat [CONTRIBUTING](website/panduan/04_KONTRIBUSI.md) untuk
+petunjuk berkontribusi.
 
 ## 👨‍💻 Penulis
 

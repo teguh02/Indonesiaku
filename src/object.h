@@ -23,6 +23,8 @@
 
 #define IS_SOCKET(value)       isObjType(value, OBJ_SOCKET)
 #define IS_RANGE(value)        isObjType(value, OBJ_RANGE)
+#define IS_TUPLE(value)        isObjType(value, OBJ_TUPLE)
+#define IS_SET(value)          isObjType(value, OBJ_SET)
 
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
@@ -37,6 +39,8 @@
 #define AS_FILE(value)         ((ObjFile*)AS_OBJ(value))
 #define AS_SOCKET(value)       ((ObjSocket*)AS_OBJ(value))
 #define AS_RANGE(value)        ((ObjRange*)AS_OBJ(value))
+#define AS_TUPLE(value)        ((ObjTuple*)AS_OBJ(value))
+#define AS_SET(value)          ((ObjSet*)AS_OBJ(value))
 
 typedef enum {
     OBJ_STRING,
@@ -53,6 +57,8 @@ typedef enum {
     OBJ_SOCKET,
     OBJ_DB,
     OBJ_RANGE,
+    OBJ_TUPLE,
+    OBJ_SET,
 } ObjType;
 
 struct Obj {
@@ -108,11 +114,32 @@ typedef struct {
     ValueArray items;
 } ObjList;
 
+// tupel (K17): an immutable sequence. Same layout as ObjList on purpose, so
+// every read path can share sequenceItems(); only writes tell them apart.
 typedef struct {
     Obj obj;
-    Table table;
-    ValueArray keys;  // insertion order; deleted keys become kosong
+    ValueArray items;
+} ObjTuple;
+
+typedef struct {
+    Obj obj;
+    ValueTable table;   // K8: any hashable key, not just strings
+    ValueArray keys;    // insertion order; a deleted key is removed from it
 } ObjDict;
+
+// himpunan (K17): members are the keys of a dict-shaped table (values unused).
+// The layout is IDENTICAL to ObjDict on purpose, so the tested dict helpers
+// (dictSet, dictDelete, dictLength, dictKeyAt) work on it via setAsDict().
+typedef struct {
+    Obj obj;
+    ValueTable table;
+    ValueArray keys;    // insertion order of members
+} ObjSet;
+
+_Static_assert(offsetof(ObjSet, table) == offsetof(ObjDict, table) &&
+               offsetof(ObjSet, keys) == offsetof(ObjDict, keys) &&
+               sizeof(ObjSet) == sizeof(ObjDict),
+               "ObjSet must keep ObjDict's layout (setAsDict casts between them)");
 
 // rentang(awal, akhir, langkah): a lazy arithmetic sequence (Python range).
 // Elements are computed on demand; no list is allocated.
@@ -167,14 +194,21 @@ ObjNative* newNative(NativeFn function);
 ObjClosure* newClosure(ObjFunction* function);
 ObjUpvalue* newUpvalue(Value* slot);
 ObjList* newList();
+ObjTuple* newTuple();
 ObjDict* newDict();
+ObjSet* newSet();
+// Adds value; false (nothing added) when it is not hashable. Caller roots both.
+bool setAdd(ObjSet* set, Value value);
 int dictLength(ObjDict* dict);
-bool dictSet(ObjDict* dict, ObjString* key, Value value);
-bool dictDelete(ObjDict* dict, ObjString* key);
+bool dictSet(ObjDict* dict, Value key, Value value);
+bool dictDelete(ObjDict* dict, Value key);
 Value dictKeyAt(ObjDict* dict, int index);
 ObjRange* newRange(double start, double stop, double step);
 double rangeLength(ObjRange* range);
 bool rangeContains(ObjRange* range, double value);
+// K2: element `index` of a rentang, as a bulat when the arithmetic stays
+// whole (a rentang of bulat yields bulat, like Python's range).
+Value rangeElement(ObjRange* range, int index);
 ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method);
@@ -193,6 +227,20 @@ void printObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
+}
+
+// Items of a daftar or tupel, for READ-only paths (index, slice, iterate,
+// unpack, compare, hash). NULL for anything else. Never write through this
+// pointer: a tupel must stay immutable.
+// A himpunan viewed as the dict it is laid out like (see ObjSet).
+static inline ObjDict* setAsDict(ObjSet* set) {
+    return (ObjDict*)set;
+}
+
+static inline ValueArray* sequenceItems(Value value) {
+    if (IS_LIST(value)) return &AS_LIST(value)->items;
+    if (IS_TUPLE(value)) return &AS_TUPLE(value)->items;
+    return NULL;
 }
 
 #endif

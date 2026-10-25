@@ -112,9 +112,16 @@ static void blackenObject(Obj* object) {
         case OBJ_LIST:
             markArray(&((ObjList*)object)->items);
             break;
+        case OBJ_TUPLE:
+            markArray(&((ObjTuple*)object)->items);
+            break;
         case OBJ_DICT:
-            markTable(&((ObjDict*)object)->table);
+            markValueTable(&((ObjDict*)object)->table);
             markArray(&((ObjDict*)object)->keys);
+            break;
+        case OBJ_SET:
+            markValueTable(&((ObjSet*)object)->table);
+            markArray(&((ObjSet*)object)->keys);
             break;
         case OBJ_CLASS: {
             ObjClass* klass = (ObjClass*)object;
@@ -179,6 +186,12 @@ static void freeObject(Obj* object) {
         case OBJ_UPVALUE:
             FREE(ObjUpvalue, object);
             break;
+        case OBJ_TUPLE: {
+            ObjTuple* tuple = (ObjTuple*)object;
+            freeValueArray(&tuple->items);
+            FREE(ObjTuple, object);
+            break;
+        }
         case OBJ_LIST: {
             ObjList* list = (ObjList*)object;
             freeValueArray(&list->items);
@@ -187,9 +200,16 @@ static void freeObject(Obj* object) {
         }
         case OBJ_DICT: {
             ObjDict* dict = (ObjDict*)object;
-            freeTable(&dict->table);
+            freeValueTable(&dict->table);
             freeValueArray(&dict->keys);
             FREE(ObjDict, object);
+            break;
+        }
+        case OBJ_SET: {
+            ObjSet* set = (ObjSet*)object;
+            freeValueTable(&set->table);
+            freeValueArray(&set->keys);
+            FREE(ObjSet, object);
             break;
         }
         case OBJ_CLASS: {

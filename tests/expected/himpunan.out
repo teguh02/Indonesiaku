@@ -1,0 +1,26 @@
+himpunan([3, 1, 2]) himpunan() himpunan
+3 4
+[5, 6] [0, 1, 2, 3]
+["x", "y"]
+benar salah benar
+himpunan kosong itu salah
+gabungan [1, 2, 3, 4]
+irisan [2, 3]
+selisih [1] [4]
+simetris [1, 4]
+benar salah salah
+[2, 3]
+[1, 5, 6] 3
+[5, 6]
+2 benar salah
+30 3 2 4
+[2, 4]
+[1, 2]
+[1, 2, 3]
+GalatTipe: Anggota himpunan harus nilai yang dapat di-hash.
+GalatTipe: Operand '|' pada himpunan harus dua himpunan.
+GalatKunci: Nilai itu bukan anggota himpunan.
+GalatTipe: Pengindeksan tidak valid: gunakan daftar[angka], tupel[angka], teks[angka], atau kamus[kunci].
+GalatTipe: himpunan bukan kunci kamus
+GalatTipe: Nilai yang tidak dapat di-hash tidak mungkin anggota himpunan.
+s tetap himpunan([1, 2])

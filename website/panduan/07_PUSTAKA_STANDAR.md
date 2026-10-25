@@ -20,11 +20,11 @@ luar jangkauan.
 | `max(a, b, ...)` / `max(daftar)` | Nilai terbesar. Dua bentuk, sama seperti `min` |
 | `abs(x)` | Nilai absolut |
 | `akar(x)` | Akar kuadrat (x ≥ 0) |
-| `pangkat(x, y)` | x pangkat y |
-| `bulat(x)` | Pembulatan ke bilangan terdekat, **menjauhi nol** pada nilai ½ (`bulat(2.5) == 3`) |
-| `bulatkan(x, digit=0)` | Pembulatan ke `digit` angka desimal dengan **banker's rounding** (`bulatkan(2.5) == 2`) — baca peringatan di bawah |
-| `lantai(x)` | Pembulatan ke bawah (floor) |
-| `atap(x)` | Pembulatan ke atas (ceil) |
+| `pangkat(x, y)` | x pangkat y. `bulat ** bulat` (pangkat ≥ 0) tetap `bulat`, seperti operator `**` |
+| `bulat(x)` | Pembulatan ke bilangan terdekat, **menjauhi nol** pada nilai ½ (`bulat(2.5) == 3`). Mengembalikan `bulat` |
+| `bulatkan(x, digit=0)` | Pembulatan ke `digit` angka desimal dengan **banker's rounding** (`bulatkan(2.5) == 2`). Tanpa `digit` hasilnya `bulat`; dengan `digit` hasilnya `desimal` — baca peringatan di bawah |
+| `lantai(x)` | Pembulatan ke bawah (floor). Mengembalikan `bulat`, seperti `math.floor` |
+| `atap(x)` | Pembulatan ke atas (ceil). Mengembalikan `bulat`, seperti `math.ceil` |
 | `bagi_sisa(a, b)` | Daftar `[hasil_bagi, sisa]` sekaligus, konsisten dengan `//` dan `%` |
 | `biner(n)` | Teks representasi biner: `"0b1010"` |
 | `oktal(n)` | Teks representasi oktal: `"0o12"` |
@@ -85,7 +85,7 @@ koma (boleh negatif untuk membulatkan ke puluhan/ratusan):
 
 ```indonesiaku
 cetak(bulatkan(3.14159, 2))    # 3.14
-cetak(bulatkan(1234.5678, -2)) # 1200
+cetak(bulatkan(1234.5678, -2)) # 1200.0  (ada 'digit' -> hasilnya desimal)
 ```
 
 #### `bagi_sisa` — hasil bagi dan sisa sekaligus
@@ -122,22 +122,22 @@ coba {
 
 Ketiganya mengembalikan **teks** (bukan angka) lengkap dengan awalan `0b`,
 `0o`, atau `0x`; tanda minus diletakkan di depan awalan. Argumen harus
-bilangan bulat — pecahan menimbulkan `GalatTipe`, dan angka dengan nilai
-mutlak di atas 2^53 menimbulkan `GalatNilai` karena melebihi ketelitian angka
-Indonesiaku.
+bilangan bulat — pecahan menimbulkan `GalatTipe`. `bulat` sampai 64 bit
+dikonversi dengan tepat; hanya `desimal` di luar jangkauan int64 yang
+menimbulkan `GalatNilai`.
 
 ### 1.2 String / Teks
 
 | Fungsi | Deskripsi |
 |--------|-----------|
-| `panjang(x)` | Panjang teks (karakter), list, kamus, atau rentang |
+| `panjang(x)` | Panjang teks (karakter), list, kamus, atau rentang. Mengembalikan `bulat` |
 | `rentang([awal,] akhir[, langkah])` | Deret bilangan bulat malas: `rentang(5)` → 0, 1, 2, 3, 4. Dipakai di `untuk`, bisa `panjang()`, `r[i]`, `x dalam r` |
 | `huruf_besar(s)` | Ubah ke huruf kapital |
 | `huruf_kecil(s)` | Ubah ke huruf kecil |
 | `ganti(teks, cari, ganti)` | Ganti semua kemunculan substring |
 | `karakter(teks, i)` | Karakter (string 1 huruf) pada indeks `i` |
 | `potong(teks, mulai, jumlah)` | Substring mulai dari `mulai` sepanjang `jumlah` |
-| `ord(karakter)` | Kode Unicode dari karakter (`ord("é") == 233`) |
+| `ord(karakter)` | Kode Unicode dari karakter sebagai `bulat` (`ord("é") == 233`) |
 | `chr(kode)` | Karakter dari kode Unicode 0–1114111 (`chr(233) == "é"`) |
 
 Panjang, indeks, `karakter`, dan `potong` menghitung **karakter**, bukan byte,
@@ -156,7 +156,7 @@ Pengindeksan string juga tersedia: `teks[i]` mengembalikan karakter ke-`i`
 | `hapus_pada(list, i)` | Hapus & kembalikan elemen pada indeks `i` (geser sisanya) |
 | `sisip(list, i, nilai)` | Sisipkan `nilai` pada indeks `i` |
 | `panjang(list)` | Jumlah elemen |
-| `jumlah(d, awal=0)` | Total semua elemen angka, dimulai dari `awal` |
+| `jumlah(d, awal=0)` | Total semua elemen angka, dimulai dari `awal`. Semua `bulat` → hasil `bulat`; satu `desimal` → hasil `desimal` |
 | `semua(d)` | `benar` jika **semua** elemen bernilai benar |
 | `ada_yang(d)` | `benar` jika **ada minimal satu** elemen bernilai benar |
 | `terurut(d, menurun=salah)` | **Daftar baru** yang terurut; argumen aslinya tidak berubah |
@@ -267,17 +267,44 @@ mengembalikan daftar jadi (*eager*, bukan malas seperti `rentang`), sehingga
 hasilnya bisa langsung di-`panjang()`, diindeks, atau dirangkai seperti pada
 baris terakhir.
 
+### 1.3b Tupel
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `tupel()` | Tupel kosong `()` |
+| `tupel(urutan)` | Tupel baru dari daftar, tupel, teks (per karakter), rentang, atau kamus (kuncinya) |
+
+Metode yang tersedia pada tupel hanya yang **tidak mengubah**: `panjang`,
+`terurut`, `terbalik`, `jumlah`, `semua`, `ada_yang`, `enumerasi`. Fungsi yang
+mengubah daftar (`tambah`, `hapus`, `hapus_pada`, `sisip`) menolak tupel
+dengan `GalatTipe`.
+
+### 1.3c Himpunan
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `himpunan()` | Himpunan kosong |
+| `himpunan(urutan)` | Himpunan baru dari daftar, tupel, himpunan, teks (per karakter), rentang, atau kamus (kuncinya); duplikat dibuang |
+| `tambah(s, x)` / `s.tambah(x)` | Tambah anggota (tanpa galat bila sudah ada) |
+| `s.hapus(x)` | Buang anggota; `GalatKunci` bila tidak ada |
+
+Metode lain: `panjang`, `terurut`, `jumlah`, `semua`, `ada_yang`. Operator
+`| & - ^` membuat himpunan baru. Anggota harus dapat di-hash (seperti kunci
+kamus); himpunan sendiri tidak dapat di-hash.
+
 ### 1.4 Kamus (Dictionary)
 
 | Fungsi | Deskripsi |
 |--------|-----------|
 | `kamus()` | Buat kamus kosong |
-| `punya(kamus, kunci)` | Apakah kunci ada → boolean |
-| `kunci(kamus)` | List semua kunci |
+| `punya(kamus, kunci)` | Apakah kunci ada → boolean. Kunci boleh nilai apa pun yang hashable |
+| `kunci(kamus)` | List semua kunci, urutan penyisipan |
 | `hapus_kunci(kamus, kunci)` | Hapus pasangan kunci-nilai |
 | `enumerasi(urutan, awal=0)` | List pasangan `[indeks, nilai]` untuk list, teks, rentang, atau kamus |
 
-Akses: `k["kunci"]`, `k["kunci"] = nilai`. Kunci berupa string.
+Akses: `k[kunci]`, `k[kunci] = nilai`. Kunci boleh teks, angka (`bulat`/
+`desimal`), `benar`/`salah`, atau `kosong`; `1` dan `1.0` adalah kunci yang
+sama. Daftar/kamus/rentang tidak bisa menjadi kunci (`GalatTipe`).
 
 ### 1.5 Konversi & Format
 
@@ -285,7 +312,7 @@ Akses: `k["kunci"]`, `k["kunci"] = nilai`. Kunci berupa string.
 |--------|-----------|
 | `ke_angka(teks)` | String → angka (gagal dapat ditangkap) |
 | `ke_teks(nilai)` | Nilai apa pun → string |
-| `ke_bulat(x)` | Angka/teks/boolean → bilangan bulat, **memotong ke arah nol** |
+| `ke_bulat(x)` | Angka/teks/boolean → `bulat`, **memotong ke arah nol** |
 | `ke_logika(x)` | Nilai apa pun → `benar`/`salah` menurut aturan *truthiness* |
 | `repr(x)` | Representasi untuk **debug**: teks ditampilkan **dengan tanda kutip** |
 | `format(pola, ...)` | Ganti setiap `{}` di pola dengan argumen |

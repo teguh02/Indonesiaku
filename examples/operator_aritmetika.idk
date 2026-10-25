@@ -6,7 +6,7 @@ cetak(10 // 3)          # 3
 cetak(1 + 10 // 3)      # 4  (dulu 13: // tidak menghasilkan opcode)
 cetak(-7 // 2)          # -4
 cetak(7 // -2)          # -4
-cetak(7.5 // 2)         # 3
+cetak(7.5 // 2)         # 3.0 (ada desimal -> hasilnya desimal)
 
 # Sisa bagi % mengikuti tanda pembagi
 cetak(7 % 3)            # 1

@@ -1,0 +1,33 @@
+== Dasar ==
+1 7 6
+-6 0 -1
+== Geser ==
+16 12
+-4 -4
+-1 0
+-9223372036854775808
+== Presedensi seperti Python ==
+6
+benar
+7
+4
+== Literal biner & heksadesimal ==
+15 15
+== Logika ==
+salah benar salah
+5 8
+== Penugasan majemuk ==
+15
+60
+48
+207
+25
+== Contoh: izin berkas sebagai flag ==
+boleh tulis: benar
+boleh jalankan: salah
+setelah cabut tulis: 1
+== Galat dapat ditangkap ==
+GalatTipe: Operand '&' harus bilangan bulat.
+GalatNilai: Jumlah geseran tidak boleh negatif.
+GalatLuapan: Hasil geser kiri melebihi jangkauan bilangan bulat.
+GalatTipe: Operand '~' harus bilangan bulat (untuk logika pakai 'tidak').

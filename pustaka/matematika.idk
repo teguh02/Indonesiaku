@@ -44,7 +44,7 @@ fungsi mat_kpk(a, b) {
     jika a == 0 atau b == 0 {
         kembalikan 0
     }
-    kembalikan abs(a * b) / mat_fpb(a, b)
+    kembalikan abs(a * b) // mat_fpb(a, b)
 }
 
 # mat_jumlah(daftar) -> jumlah seluruh elemen.

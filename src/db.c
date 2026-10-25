@@ -93,12 +93,14 @@ static bool dbTailEmpty(const char* tail) {
 
 static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
     if (!dbText(sql)) return NULL;
-    if (!IS_LIST(params) && !IS_KOSONG(params)) {
-        nativeRaiseKelas(vm.galatTipe, "db: params harus daftar");
+    // params: daftar or tupel (Python's sqlite3 takes a tuple too), or kosong.
+    ValueArray* items = sequenceItems(params);
+    if (items == NULL && !IS_KOSONG(params)) {
+        nativeRaiseKelas(vm.galatTipe, "db: params harus daftar atau tupel");
         return NULL;
     }
-    int count = IS_LIST(params) ? AS_LIST(params)->items.count : 0;
-    Value* values = IS_LIST(params) ? AS_LIST(params)->items.values : NULL;
+    int count = items != NULL ? items->count : 0;
+    Value* values = items != NULL ? items->values : NULL;
     // Validate every value before preparing or stepping any SQL.
     for (int i = 0; i < count; i++) {
         Value v = values[i];
@@ -167,7 +169,9 @@ static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
         int rc;
         if (IS_KOSONG(v)) rc = sqlite3_bind_null(stmt, i + 1);
         else if (IS_BOOL(v)) rc = sqlite3_bind_int(stmt, i + 1, AS_BOOL(v) ? 1 : 0);
-        else if (IS_NUMBER(v)) {
+        else if (IS_INT(v)) {
+            rc = sqlite3_bind_int64(stmt, i + 1, (sqlite3_int64)AS_INT(v));
+        } else if (IS_NUMBER(v)) {
             double n = AS_NUMBER(v);
             rc = floor(n) == n ? sqlite3_bind_int64(stmt, i + 1, (sqlite3_int64)n)
                               : sqlite3_bind_double(stmt, i + 1, n);
@@ -186,12 +190,10 @@ fail:
     return NULL;
 }
 
+// K2: SQLite INTEGER is a bulat now, so the old ±2^53 restriction is gone —
+// sqlite3_int64 and our int64 are the same width.
 static Value dbInteger(sqlite3_int64 n) {
-    if (n < -DB_EXACT_INT || n > DB_EXACT_INT) {
-        nativeRaiseKelas(vm.galatNilai, "db: INTEGER di luar rentang tepat double");
-        return KOSONG_VAL;
-    }
-    return NUMBER_VAL((double)n);
+    return INT_VAL((int64_t)n);
 }
 
 static Value dbColumn(sqlite3_stmt* stmt, int i) {
@@ -243,7 +245,7 @@ static Value dbQuery(int count, Value* args, int mode) {
                 pop(); pop(); pop();
                 goto done;
             }
-            dictSet(row, key, value);
+            dictSet(row, OBJ_VAL(key), value);
             pop(); pop();
         }
         if (mode == 1) {

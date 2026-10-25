@@ -15,6 +15,29 @@ typedef struct {
     Entry* entries;
 } Table;
 
+// K8: dictionaries may be keyed by anything hashable (number, boolean, kosong,
+// teks, tupel, instance), so they use a table keyed by Value. The VM's global,
+// string-interning, method and instance-field tables stay keyed by ObjString*
+// for speed — this is deliberately a separate type.
+typedef struct {
+    Value key;
+    Value value;
+    uint8_t state;   // 0 = empty, 1 = filled, 2 = tombstone
+} ValueEntry;
+
+typedef struct {
+    int count;
+    int capacity;
+    ValueEntry* entries;
+} ValueTable;
+
+void initValueTable(ValueTable* table);
+void freeValueTable(ValueTable* table);
+bool valueTableGet(ValueTable* table, Value key, Value* value);
+bool valueTableSet(ValueTable* table, Value key, Value value);
+bool valueTableDelete(ValueTable* table, Value key);
+void markValueTable(ValueTable* table);
+
 void initTable(Table* table);
 void freeTable(Table* table);
 bool tableGet(Table* table, ObjString* key, Value* value);

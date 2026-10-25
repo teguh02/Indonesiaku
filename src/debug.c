@@ -99,6 +99,18 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_POWER", offset);
         case OP_FLOOR_DIVIDE:
             return simpleInstruction("OP_FLOOR_DIVIDE", offset);
+        case OP_BIT_AND:
+            return simpleInstruction("OP_BIT_AND", offset);
+        case OP_BIT_OR:
+            return simpleInstruction("OP_BIT_OR", offset);
+        case OP_BIT_XOR:
+            return simpleInstruction("OP_BIT_XOR", offset);
+        case OP_BIT_NOT:
+            return simpleInstruction("OP_BIT_NOT", offset);
+        case OP_SHIFT_LEFT:
+            return simpleInstruction("OP_SHIFT_LEFT", offset);
+        case OP_SHIFT_RIGHT:
+            return simpleInstruction("OP_SHIFT_RIGHT", offset);
         case OP_IN:
             return simpleInstruction("OP_IN", offset);
         case OP_CHAIN_COMPARE:
@@ -156,12 +168,31 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return byteInstruction("OP_SET_UPVALUE", chunk, offset);
         case OP_CLOSE_UPVALUE:
             return simpleInstruction("OP_CLOSE_UPVALUE", offset);
+        case OP_BUILD_TUPLE:
+            return byteInstruction("OP_BUILD_TUPLE", chunk, offset);
         case OP_BUILD_LIST:
             return byteInstruction("OP_BUILD_LIST", chunk, offset);
         case OP_BUILD_DICT:
             return byteInstruction("OP_BUILD_DICT", chunk, offset);
+        case OP_APPEND:
+            return simpleInstruction("OP_APPEND", offset);
+        case OP_DELETE_GLOBAL:
+            return constantInstruction("OP_DELETE_GLOBAL", chunk, offset);
+        case OP_DELETE_LOCAL:
+        case OP_DELETE_UPVALUE:
+            return byteInstruction(chunk->code[offset] == OP_DELETE_LOCAL
+                                       ? "OP_DELETE_LOCAL" : "OP_DELETE_UPVALUE",
+                                   chunk, offset);
+        case OP_INDEX_DELETE:
+            return simpleInstruction("OP_INDEX_DELETE", offset);
+        case OP_UNPACK:
+            return byteInstruction("OP_UNPACK", chunk, offset);
+        case OP_DELETE_PROPERTY:
+            return constantInstruction("OP_DELETE_PROPERTY", chunk, offset);
         case OP_INDEX_GET:
             return simpleInstruction("OP_INDEX_GET", offset);
+        case OP_SEQ_GET:
+            return simpleInstruction("OP_SEQ_GET", offset);
         case OP_INDEX_SET:
             return simpleInstruction("OP_INDEX_SET", offset);
         case OP_SLICE:

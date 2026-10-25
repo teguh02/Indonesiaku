@@ -1,0 +1,40 @@
+# Penugasan berganda & unpacking: beberapa nama sekaligus dari satu urutan.
+
+a, b = 1, 2
+cetak(a, b)
+
+# Tukar nilai tanpa variabel sementara.
+a, b = b, a
+cetak(a, b)
+
+# Dari daftar, teks (per karakter), dan rentang.
+x, y, z = [10, 20, 30]
+cetak(x, y, z)
+
+p, q = "hi"
+cetak(p, q)
+
+m, n = rentang(2, 4)
+cetak(m, n)
+
+# Dari hasil fungsi.
+fungsi dua() {
+    kembalikan [3, 4]
+}
+g, h = dua()
+cetak(g, h)
+
+# Di dalam fungsi, nama yang di-assign lewat penugasan berganda tetap lokal
+# (K3), termasuk saat berada di dalam blok jika.
+fungsi total() {
+    jika benar {
+        s, t = 5, 6
+    }
+    kembalikan s + t
+}
+cetak(total())
+
+# Nilai boleh berupa ekspresi apa pun.
+hasil = 0
+a, b = 2 * 3, 2 ** 3
+cetak(a, b)

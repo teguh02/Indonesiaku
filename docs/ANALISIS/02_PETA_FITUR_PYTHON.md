@@ -60,8 +60,8 @@ Prinsip penamaan:
 | f-string | `f"Halo {nama}"` | ✅ | 1 — selesai; format spec `{x:.2f}` belum |
 | Literal angka: `1e3`, `0x1F`, `0b101`, `1_000` | | ✅ | 1 — selesai |
 | Literal kamus `{"a": 1}` | | ✅ | — |
-| Literal tupel `(1, 2)` | | ❌ | 2 |
-| Literal himpunan `{1, 2}` | | ❌ | 2 |
+| Literal tupel `(1, 2)` | `(1, 2)`, `(1,)`, `()` (K17) | ✅ | — |
+| Literal himpunan `{1, 2}` | `himpunan([1, 2])` (K17: sengaja tanpa literal) | ✅ | — |
 | Indeks negatif `a[-1]` | | ✅ | — |
 | Irisan `a[1:3]`, `a[::-1]` | | ✅ daftar & teks | — |
 | Gabung `+` / ulang `*` teks & daftar | | ✅ | — |
@@ -71,7 +71,7 @@ Prinsip penamaan:
 | Ekspresi kondisional `x jika c selain y` | | ✅ | 1 — selesai; kondisi dinilai lebih dulu |
 | Rantai perbandingan `1 < x < 3` | | ✅ | — |
 | Floor division `//`, `//=` | | ❌ **rusak** (B1) | 0 |
-| Operator bitwise `& \| ^ ~ << >>` | | ❌ | 2 |
+| Operator bitwise `& \| ^ ~ << >>` | `& \| ^ ~ << >>` (sama) | ✅ | — |
 | List comprehension | `[x*2 untuk x dalam a jika x > 0]` | ❌ | 2 |
 | Dict/set comprehension, generator expression | | ❌ | 5 |
 | Argumen bawaan `def f(a, b=2)` | | ✅ dievaluasi tiap panggilan (K15) | — |
@@ -92,9 +92,9 @@ Prinsip penamaan:
 | `complex` | `kompleks` | ❌ | 8 | Prioritas rendah |
 | `str` | `teks` | 🟡 | 1–2 | Byte, bukan karakter (B11); 8 metode inti sudah ada |
 | `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; 11 metode inti sudah ada |
-| `tuple` | `tupel` | ❌ | 2 | |
+| `tuple` | `tupel` | ✅ | — | Kunci kamus bila elemennya hashable |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
-| `set` / `frozenset` | `himpunan` / `himpunan_beku` | ❌ | 2 | |
+| `set` / `frozenset` | `himpunan` / `himpunan_beku` | 🟡 `himpunan` | 2 | `himpunan_beku` belum |
 | `range` | `rentang` | ✅ | — | Objek malas, seperti Python 3 |
 | `bytes` / `bytearray` | `bita` / `larik_bita` | ❌ | 6 | Diperlukan untuk berkas biner, jaringan |
 | Fungsi, kelas, metode terikat | | ✅ | — | |
@@ -148,7 +148,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `len` | `panjang` | ✅ | — |
 | `type` | `jenis` | 🟡 nama string | 2 |
 | `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_bulat`, `ke_teks`, `ke_logika`, `ke_angka`; `ke_desimal` belum | 1 |
-| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus` | 2 |
+| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus`, `tupel`, `himpunan` | 2 |
 | `range` | `rentang` | ✅ | — |
 | `enumerate` | `enumerasi` | ✅ list pasangan `[indeks, nilai]`, offset opsional | 1 |
 | `zip` | `pasangkan` | ✅ | — |

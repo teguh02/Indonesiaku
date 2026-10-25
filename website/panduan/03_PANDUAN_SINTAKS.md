@@ -184,6 +184,44 @@ test()
 
 ## Operator
 
+### Tipe Angka: `bulat` dan `desimal`
+
+Seperti Python, ada dua tipe angka:
+
+| Literal / hasil | Tipe | Contoh |
+|---|---|---|
+| Tanpa titik atau eksponen | `bulat` (int64, presisi penuh) | `7`, `-42`, `9007199254740993` |
+| Ada titik | `desimal` (double) | `7.0`, `3.14` |
+
+```indonesiaku
+cetak(7)              # 7
+cetak(7.0)            # 7.0   (desimal selalu menampilkan .0)
+cetak(6 / 2)          # 3.0   ('/' selalu menghasilkan desimal)
+cetak(7 // 2)         # 3     ('//' dan '%' pada bulat menghasilkan bulat)
+cetak(2 ** 10)        # 1024  (bulat ** bulat dengan pangkat >= 0 tetap bulat)
+cetak(1 + 2.0)        # 3.0
+cetak(1 == 1.0)       # benar
+cetak(1 adalah 1.0)   # salah  ('adalah' = identitas; tipenya berbeda)
+```
+
+`bulat` adalah bilangan 64-bit. Bila hasil aritmetika melampaui jangkauannya
+(-9223372036854775808 sampai 9223372036854775807), program menaikkan
+`GalatLuapan` — nilainya **tidak** pernah berubah diam-diam menjadi `desimal`
+yang kehilangan presisi:
+
+```indonesiaku
+coba {
+    cetak(9223372036854775807 + 1)
+} kecuali GalatLuapan sebagai e {
+    cetak(e.pesan)   # Hasil penjumlahan melebihi jangkauan bilangan bulat.
+}
+```
+
+Bignum (bilangan bulat tanpa batas) belum ada. Untuk angka yang lebih besar,
+gunakan `desimal` dengan kesadaran presisinya 53 bit, atau tunggu Fase 2b.
+
+> Contoh: [`examples/tipe_bulat.idk`](../examples/tipe_bulat.idk)
+
 ### Operator Aritmatika
 
 ```indonesiaku
@@ -193,7 +231,7 @@ b = 3
 jumlah = a + b        # 13 (penjumlahan)
 selisih = a - b       # 7  (pengurangan)
 kali = a * b          # 30 (perkalian)
-bagi = a / b          # 3.333... (pembagian)
+bagi = a / b          # 3.333... (pembagian, selalu desimal)
 bagi_bulat = a // b   # 3  (pembagian bulat, dibulatkan ke bawah)
 sisa = a % b          # 1  (modulo/sisa bagi)
 pangkat = 2 ** 3      # 8  (perpangkatan)
@@ -209,6 +247,42 @@ Aturannya sama dengan Python:
 ```
 
 > Contoh: [`examples/operator_aritmetika.idk`](../examples/operator_aritmetika.idk)
+
+### Operator Bitwise
+
+Bekerja pada bit-bit bilangan `bulat`, sama seperti di Python:
+
+```indonesiaku
+cetak(5 & 3)      # 1   (AND: bit yang menyala di keduanya)
+cetak(5 | 3)      # 7   (OR: bit yang menyala di salah satu)
+cetak(5 ^ 3)      # 6   (XOR: menyala di salah satu saja)
+cetak(~5)         # -6  (NOT: ~a sama dengan -a - 1)
+cetak(1 << 4)     # 16  (geser kiri = kali 2 sebanyak 4 kali)
+cetak(-8 >> 1)    # -4  (geser kanan, dibulatkan ke bawah)
+
+x = 0b1010
+x |= 0b0101       # 15  (ada juga &=, ^=, <<=, >>=)
+```
+
+Contoh nyata — izin sebagai *flag*:
+
+```indonesiaku
+BACA = 1
+TULIS = 2
+izin = BACA | TULIS
+jika izin & TULIS { cetak("boleh menulis") }
+```
+
+Aturan penting:
+
+- `^` adalah XOR, **bukan** pangkat. Pangkat tetap `**`.
+- Hanya untuk `bulat`. Memakai `desimal` (mis. `2.5 & 1`) menaikkan `GalatTipe`.
+- `benar & salah` menghasilkan logika (`salah`), seperti Python. Untuk
+  membalik logika pakai `tidak`, bukan `~`.
+- Geser dengan jumlah negatif menaikkan `GalatNilai`; hasil `<<` yang melebihi
+  jangkauan bulat 64-bit menaikkan `GalatLuapan`.
+
+> Contoh: [`examples/operator_bitwise.idk`](../examples/operator_bitwise.idk)
 
 > **Akhir baris adalah pemisah pernyataan.** Gunakan satu pernyataan per baris tanpa `;`. Newline di dalam `()` atau `[]` diabaikan sehingga argumen dan list dapat ditulis multi-baris; `{}` tetap digunakan untuk blok.
 
@@ -350,15 +424,19 @@ cetak("apel" dalam harga)         # benar  (kunci kamus)
 Urutan eksekusi dari tertinggi ke terendah:
 
 ```
-1. **           (pangkat, dihitung dari kanan)
-2. -            (minus unary)
-3. *, /, //, %  (perkalian, pembagian, pembagian bulat, modulo)
-4. +, -         (penjumlahan, pengurangan)
-5. <, <=, >, >=, dalam, tidak dalam (perbandingan & keanggotaan)
-6. ==, !=       (kesetaraan)
-7. tidak        (NOT: tidak a == b berarti tidak (a == b))
-8. dan          (AND)
-9. atau         (OR)
+1.  **           (pangkat, dihitung dari kanan)
+2.  -, ~         (minus unary, NOT bitwise)
+3.  *, /, //, %  (perkalian, pembagian, pembagian bulat, modulo)
+4.  +, -         (penjumlahan, pengurangan)
+5.  <<, >>       (geser bit)
+6.  &            (AND bitwise)
+7.  ^            (XOR bitwise)
+8.  |            (OR bitwise)
+9.  <, <=, >, >=, dalam, tidak dalam (perbandingan & keanggotaan)
+10. ==, !=       (kesetaraan)
+11. tidak        (NOT: tidak a == b berarti tidak (a == b))
+12. dan          (AND)
+13. atau         (OR)
 ```
 
 **Contoh:**
@@ -795,6 +873,94 @@ Catatan:
 
 ---
 
+## Tupel
+
+Tupel adalah urutan yang **tidak bisa diubah** setelah dibuat. Ditulis dengan
+kurung biasa, persis seperti Python:
+
+```indonesiaku
+titik = (3, 4)
+satu = (5,)        # satu elemen: koma WAJIB
+hampa = ()       # tupel kosong
+bukan_tupel = (5)  # tanpa koma hanya pengelompokan -> 5
+
+cetak(titik[0], titik[-1], panjang(titik))   # 3 4 2
+x, y = titik                                  # dibuka ke dua nama
+cetak((1, 2) + (3,))                          # (1, 2, 3)
+```
+
+Membaca tupel sama seperti membaca daftar: indeks, irisan (hasilnya tupel),
+`untuk ... dalam`, `dalam`, `panjang`, `jumlah`, `terurut`, dan seterusnya.
+Yang berbeda: tupel **tidak bisa diubah**.
+
+```indonesiaku
+titik = (3, 4)
+titik[0] = 10      # GalatTipe: Tupel tidak dapat diubah.
+```
+
+Karena tidak bisa diubah, tupel boleh menjadi **kunci kamus** — cocok untuk
+koordinat atau pasangan nilai:
+
+```indonesiaku
+jarak = {}
+jarak[(0, 0)] = "asal"
+cetak(jarak[(0, 0)])   # asal
+```
+
+Ubah urutan lain menjadi tupel dengan `tupel(...)`: `tupel([1, 2])`,
+`tupel("ab")` → `("a", "b")`.
+
+> Contoh: [`examples/tupel.idk`](../examples/tupel.idk)
+
+---
+
+## Himpunan
+
+Himpunan adalah koleksi **anggota unik**: duplikat dibuang otomatis, dan
+mengecek `x dalam s` itu cepat. Himpunan hanya dibuat lewat `himpunan(...)` —
+tidak ada literal `{1, 2}` karena `{ }` sudah dipakai untuk blok dan kamus.
+
+```indonesiaku
+hampa = himpunan()
+angka = himpunan([3, 1, 3, 2])
+cetak(angka)               # himpunan([3, 1, 2])
+cetak(himpunan("halo"))    # himpunan(["h", "a", "l", "o"])
+cetak(2 dalam angka)       # benar
+```
+
+Anggota harus nilai yang **dapat di-hash** — aturan yang sama dengan kunci
+kamus: angka, teks, logika, `kosong`, atau tupel berisi nilai seperti itu.
+Daftar, kamus, dan himpunan lain ditolak dengan `GalatTipe`.
+
+Operasi himpunan menghasilkan himpunan **baru**; kedua operand harus himpunan:
+
+```indonesiaku
+a = himpunan([1, 2, 3])
+b = himpunan([2, 3, 4])
+cetak(a | b)   # gabungan         himpunan([1, 2, 3, 4])
+cetak(a & b)   # irisan           himpunan([2, 3])
+cetak(a - b)   # selisih          himpunan([1])
+cetak(a ^ b)   # selisih simetris himpunan([1, 4])
+```
+
+Mengubah isi: `s.tambah(x)` (tidak bergalat bila sudah ada) dan `s.hapus(x)`
+(`GalatKunci` bila `x` bukan anggota). Himpunan bisa dipakai di `untuk`,
+comprehension, `panjang`, `jumlah`, `min`, `max`, `terurut`, dan `tupel(...)`.
+`==` membandingkan anggota tanpa peduli urutan. Himpunan kosong bernilai salah.
+
+Yang perlu diingat:
+
+- Himpunan **tidak berindeks**: `s[0]` → `GalatTipe`. Ubah dulu ke daftar
+  (`terurut(s)`) bila butuh posisi.
+- Seperti `set` Python, himpunan sendiri **tidak dapat di-hash**, jadi tidak
+  bisa menjadi kunci kamus atau anggota himpunan lain.
+- Urutan cetak mengikuti urutan penyisipan. Jangan bergantung pada urutan
+  itu; pakai `terurut(s)` bila urutan penting.
+
+> Contoh: [`examples/himpunan.idk`](../examples/himpunan.idk)
+
+---
+
 ## Kamus (Dictionary)
 
 Kamus dibuat dengan **literal `{ }`** atau dengan `kamus()`.
@@ -817,8 +983,23 @@ cetak(data["dalam"]["inti"])   # ya
 > Karena itu `{"a": 1}` yang berdiri sendiri sebagai satu pernyataan bukan
 > kamus — tulis `x = {"a": 1}` atau `cetak({"a": 1})`.
 
-Kunci harus berupa teks; kunci lain menghasilkan `GalatTipe`. Kunci duplikat:
-nilai terakhir yang menang.
+Kunci boleh nilai apa pun yang **dapat di-hash**: teks, angka (`bulat` atau
+`desimal`), `benar`/`salah`, dan `kosong`. Daftar, kamus, dan rentang tidak
+bisa menjadi kunci (`GalatTipe`). Kunci duplikat: nilai terakhir yang menang,
+posisi tetap yang pertama.
+
+> ⚠️ `kamus[1]` sekarang berarti **kunci `1`**, bukan "kunci pertama". Untuk
+> mengambil kunci menurut posisi pakai `kunci(kamus)[0]`. Ini perubahan yang
+> merusak dari versi 0.4.
+
+```indonesiaku
+d = {1: "satu", 2.5: "dua koma lima", benar: "ya", kosong: "hampa"}
+cetak(d[1], d[2.5], d[benar], d[kosong])   # satu dua koma lima ya hampa
+cetak(d[1.0])                              # satu: 1 dan 1.0 kunci yang sama
+cetak(kunci(d))                            # [1, 2.5, benar, kosong]
+```
+
+> Contoh: [`examples/kamus_kunci.idk`](../examples/kamus_kunci.idk)
 
 ```indonesiaku
 orang = kamus()
@@ -876,6 +1057,62 @@ cetak(r, panjang(r), r[1])                     # rentang(0, 10, 2) 5 2
 tetap hemat memori.
 
 > Contoh: [`examples/rentang.idk`](../examples/rentang.idk)
+
+### List comprehension
+
+Cara ringkas membangun daftar baru dari urutan lain, seperti Python:
+
+```indonesiaku
+cetak([x * x untuk x dalam rentang(1, 6)])          # [1, 4, 9, 16, 25]
+cetak([x untuk x dalam rentang(10) jika x % 2 == 0]) # [0, 2, 4, 6, 8]
+cetak([k[0] untuk k dalam ["apel", "bunga"]])        # [a, b]
+```
+
+- Satu `untuk` dan satu `jika` opsional (gabungkan syarat dengan `dan`/`atau`).
+- Variabel loop hanya hidup di dalam comprehension; nama di luar tidak berubah.
+- Boleh bersarang: `[[a * b untuk b dalam rentang(1, 3)] untuk a dalam [1, 2]]`.
+
+> Contoh: [`examples/komprehensi.idk`](../examples/komprehensi.idk)
+
+### Penugasan berganda (unpacking)
+
+Beberapa nama sekaligus dari satu urutan; jumlahnya harus sama persis:
+
+```indonesiaku
+a, b = 1, 2            # dari daftar nilai
+a, b = b, a            # tukar tanpa variabel sementara
+x, y, z = [10, 20, 30]
+p, q = "hi"            # teks dipecah per karakter: h i
+m, n = rentang(2, 4)   # 2 3
+```
+
+Jumlah nilai yang tidak cocok menimbulkan `GalatNilai` yang bisa ditangkap.
+
+> Contoh: [`examples/penugasan_berganda.idk`](../examples/penugasan_berganda.idk)
+
+### Menghapus dengan `buang`
+
+`buang` (padanan `del` Python) menghapus variabel, elemen daftar, kunci kamus,
+atau atribut objek:
+
+```indonesiaku
+angka = [10, 20, 30]
+buang angka[0]        # [20, 30]
+
+kamus = {"a": 1, "b": 2}
+buang kamus["a"]      # {"b": 2}
+
+x = 5
+buang x               # nama 'x' hilang; membacanya lagi = GalatNama
+
+k = Kotak(7)
+buang k.isi           # hapus atribut
+```
+
+Menghapus indeks/kunci/atribut yang tidak ada menimbulkan `GalatIndeks`,
+`GalatKunci`, atau `GalatAtribut` — semuanya bisa ditangkap `coba/kecuali`.
+
+> Contoh: [`examples/buang.idk`](../examples/buang.idk)
 
 ---
 

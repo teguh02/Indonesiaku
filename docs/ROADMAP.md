@@ -80,20 +80,21 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 ### Fase 2 — Tipe data lengkap (0.8)
 
-`bulat` int64 (+ bignum), `tupel`, `himpunan`, penugasan berganda & unpacking,
-`*args`/`**kwargs`, list comprehension, operator bitwise, `buang` (del),
-kunci kamus non-teks, string per karakter (Unicode), `jenis()` mengembalikan
-kelas, builtin P1–P2 dari 02 §D — lihat
-[`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md)
-(`jumlah`, `terurut`, `semua`, `pasangkan`, `bulatkan`, …; sebagian bisa
-masuk lebih awal di Fase 1 karena tidak butuh tipe baru).
-✅ **Sebagian besar builtin inti sudah selesai** — 19 fungsi sudah masuk di
-Fase 1 (`jumlah`, `semua`, `ada_yang`, `terurut`, `terbalik`, `pasangkan`,
-`peta`, `saring`, `bulatkan`, `bagi_sisa`, `biner`, `oktal`, `heksa`,
-`ke_bulat`, `ke_logika`, `adalah_instansi`, `bisa_dipanggil`, `repr`, `id`),
-plus `max`/`min` dengan satu argumen daftar. Sisanya menunggu tipe baru:
-`himpunan()`, `tupel()`, `daftar()`, `hash`, `iter`/`next`, `turunan_dari`,
-`ke_desimal`, dan `biner` untuk bigint.
+✅ ``bulat`` int64 ([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md));
+✅ penugasan berganda & unpacking ([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md));
+✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md));
+✅ kunci kamus bukan cuma teks — `Value`-based ([rencana](RENCANA_FITUR/selesai/kamus_kunci_hash.md));
+✅ operator bitwise `& | ^ ~ << >>` + `&= |= ^= <<= >>=` ([rencana](RENCANA_FITUR/selesai/operator_bitwise.md));
+✅ `tupel` `(1, 2)`/`(1,)`/`()` + `tupel()` ([rencana](RENCANA_FITUR/selesai/tupel.md), K17);
+✅ `himpunan([...])` + `| & - ^` ([rencana](RENCANA_FITUR/selesai/himpunan.md), K17).
+
+> Fase 2 **baru sebagian selesai** — yang tersisa: tupel
+> tanpa kurung (`x = 1, 2`, `kembalikan a, b` — belum diputuskan, K17),
+> ``himpunan_beku``, builtin ``hash``, ``iter``/``next``, ``turunan_dari``,
+> ``ke_desimal``, ``daftar()`` — lihat
+> [`RENCANA_FITUR/selesai/builtin_inti.md`](RENCANA_FITUR/selesai/builtin_inti.md)
+> (rencana itu selesai sebagian; builtin di atas belum ada).
+
 Ref: K2, K8, K11, K13, 06 §4–6.
 
 ### Fase 3 — Modul & pustaka inti (0.9)

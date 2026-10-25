@@ -1,0 +1,4 @@
+Operand '&' harus bilangan bulat.
+[baris 3, kolom 14] dalam skrip
+    cetak(mask & 2.5)
+                 ^

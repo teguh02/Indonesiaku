@@ -1,0 +1,53 @@
+# Operator bitwise & | ^ ~ << >> (seperti Python). Hanya untuk bulat.
+
+cetak("== Dasar ==")
+cetak(5 & 3, 5 | 3, 5 ^ 3)        # 1 7 6
+cetak(~5, ~-1, ~0)                # -6 0 -1   (~a == -a - 1)
+
+cetak("== Geser ==")
+cetak(1 << 4, 3 << 2)             # 16 12
+cetak(-8 >> 1, -7 >> 1)           # -4 -4     (dibulatkan ke bawah)
+cetak(-1 >> 100, 7 >> 100)        # -1 0
+cetak(-1 << 63)                   # -9223372036854775808
+
+cetak("== Presedensi seperti Python ==")
+cetak(1 + 2 << 1)                 # 6    (+ lebih kuat dari <<)
+cetak(5 & 3 == 1)                 # benar (perbandingan paling lemah)
+cetak(6 | 1 ^ 3 & 2)              # 6    (& lalu ^ lalu |)
+cetak(-2 ** 2 & 7)                # 4
+
+cetak("== Literal biner & heksadesimal ==")
+cetak(0b1010 | 0b0101, 0xFF & 0x0F)   # 15 15
+
+cetak("== Logika ==")
+cetak(benar & salah, benar | salah, benar ^ benar)   # salah benar salah
+cetak(benar | 4, benar << 3)                         # 5 8
+
+cetak("== Penugasan majemuk ==")
+x = 0b1010
+x |= 0b0101
+cetak(x)          # 15
+x <<= 2
+cetak(x)          # 60
+x &= 0xF0
+cetak(x)          # 48
+x ^= 0xFF
+cetak(x)          # 207
+x >>= 3
+cetak(x)          # 25
+
+cetak("== Contoh: izin berkas sebagai flag ==")
+BACA = 1
+TULIS = 2
+JALANKAN = 4
+izin = BACA | TULIS
+cetak("boleh tulis:", izin & TULIS != 0)
+cetak("boleh jalankan:", izin & JALANKAN != 0)
+izin = izin & ~TULIS
+cetak("setelah cabut tulis:", izin)
+
+cetak("== Galat dapat ditangkap ==")
+coba { cetak(1.5 & 1) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+coba { cetak(1 << -1) } kecuali GalatNilai sebagai e { cetak("GalatNilai:", e.pesan) }
+coba { cetak(1 << 63) } kecuali GalatLuapan sebagai e { cetak("GalatLuapan:", e.pesan) }
+coba { cetak(~benar) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }

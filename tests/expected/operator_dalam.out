@@ -23,5 +23,5 @@ ada jeruk
 tidak ada anggur
 vokal: 4
 == galat dapat ditangkap ==
-Operand kanan 'dalam' harus list, teks, kamus, atau rentang.
+Operand kanan 'dalam' harus daftar, tupel, himpunan, teks, kamus, atau rentang.
 'dalam' pada teks memerlukan teks di sebelah kiri.

@@ -1,0 +1,4 @@
+Kunci 'b' tidak ada di kamus.
+[baris 2, kolom 12] dalam skrip
+    buang k["b"]
+               ^

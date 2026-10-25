@@ -35,6 +35,10 @@ typedef enum {
     PREC_NOT,         // tidak (lebih lemah dari perbandingan, seperti Python)
     PREC_EQUALITY,    // == !=
     PREC_COMPARISON,  // < > <= >=
+    PREC_BIT_OR,      // |   (bitwise: Python's order, all above comparisons)
+    PREC_BIT_XOR,     // ^
+    PREC_BIT_AND,     // &
+    PREC_SHIFT,       // << >>
     PREC_TERM,        // + -
     PREC_FACTOR,      // * / % //
     PREC_UNARY,       // - !
@@ -70,6 +74,11 @@ typedef enum {
 } FunctionType;
 
 #define FINALLY_MAX 32
+// Inlined copies of 'akhirnya' blocks allowed per function. A 'kembalikan'
+// inside an 'akhirnya' re-inlines the enclosing ones, so nested blocks grow
+// the code exponentially (the fuzzer hung the compiler with it); real code
+// needs a handful, and the cap keeps compile time linear.
+#define FINALLY_INLINE_MAX 64
 
 struct LoopCtx;
 
@@ -99,6 +108,8 @@ typedef struct Compiler {
     // inline before jumping out (see exitTryBlocks).
     FinallyRegion finallies[FINALLY_MAX];
     int finallyCount;
+    int finallyInlines;           // copies made so far (FINALLY_INLINE_MAX)
+    bool finallyBudgetReported;   // report the cap once per function
 } Compiler;
 
 Parser parser;
@@ -135,6 +146,11 @@ static Chunk* currentChunk() {
 // > 0 while an 'akhirnya' block is being re-compiled inline. Its errors are
 // already reported when the block is compiled in place, so stay silent.
 static int inlineFinallyDepth = 0;
+
+// Set after an error that leaves the rest of the compile meaningless (the
+// 'akhirnya' copy cap): later errors are only fallout from it, so they are
+// counted but not printed. Reset by compile().
+static bool suppressFurtherErrors = false;
 
 // Walk back to the start of the token's line. Returns NULL when the token
 // doesn't belong to the buffer currently being scanned.
@@ -193,7 +209,7 @@ static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
     parser.hadError = true;
-    if (inlineFinallyDepth > 0) return;
+    if (inlineFinallyDepth > 0 || suppressFurtherErrors) return;
 
     const char* lineStart = lineStartOf(token);
 
@@ -389,6 +405,8 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->scopeDepth = 0;
     compiler->tryDepth = 0;
     compiler->finallyCount = 0;
+    compiler->finallyInlines = 0;
+    compiler->finallyBudgetReported = false;
     compiler->function = newFunction();
     compiler->function->chunk.source = compilingSource;
     current = compiler;
@@ -458,6 +476,7 @@ static void function(FunctionType type);
 static void parsePrecedence(Precedence precedence);
 static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
+static Token syntheticToken(const char* text);
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
@@ -680,6 +699,11 @@ static void binary(bool canAssign) {
         case TOKEN_PERCENT:       emitByte(OP_MODULO); break;
         case TOKEN_POWER:         emitByte(OP_POWER); break;
         case TOKEN_SLASH_SLASH:   emitByte(OP_FLOOR_DIVIDE); break;
+        case TOKEN_AMPERSAND:     emitByte(OP_BIT_AND); break;
+        case TOKEN_PIPE:          emitByte(OP_BIT_OR); break;
+        case TOKEN_CARET:         emitByte(OP_BIT_XOR); break;
+        case TOKEN_LESS_LESS:     emitByte(OP_SHIFT_LEFT); break;
+        case TOKEN_GREATER_GREATER: emitByte(OP_SHIFT_RIGHT); break;
         default: return; // Unreachable.
     }
 }
@@ -756,8 +780,235 @@ static void skipNewlines() {
     while (match(TOKEN_NEWLINE)) { }
 }
 
+// Peeks ahead from the current token to decide whether a '[' opens a list
+// comprehension: a 'untuk' at bracket depth 0 before the closing ']'. The
+// scanner and parser tokens are restored, like scanTryClauses.
+static bool scanComprehension(ScannerState* state, Token* current, Token* previous) {
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    bool found = false;
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) break;
+        if (depth == 0 && type == TOKEN_UNTUK) {
+            *state = saveScanner();
+            *current = parser.current;
+            *previous = parser.previous;
+            found = true;
+            break;
+        }
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET ||
+                   type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return found;
+}
+
+// [ekspresi untuk x dalam urutan jika syarat]
+//
+// Token order fights a single-pass compiler: the element expression comes
+// BEFORE the header that declares its loop variable, so compiling it in place
+// would resolve 'x' as an undefined global. The element tokens are therefore
+// re-read from a saved scanner position AFTER the header has declared 'x' —
+// see the layout in the body. (Only one 'untuk' and one optional 'jika' are
+// supported; chain conditions with 'dan'/'atau'.)
+static void listComprehension(ScannerState elemState, Token elemCurrent, Token elemPrevious,
+                              ScannerState untukState, Token untukCurrent, Token untukPrevious) {
+    // Locate the tokens after the header and after the whole comprehension, so
+    // the iterable, the condition and the element can each be re-read later.
+    ScannerState afterState;
+    Token afterCurrent, afterPrevious;
+    ScannerState condState = {0};
+    Token condCurrent = {0}, condPrevious = {0};
+    bool hasCond = false;
+
+    // Header: untuk x dalam ...
+    restoreScanner(untukState);
+    parser.current = untukCurrent;
+    parser.previous = untukPrevious;
+    advance();  // 'untuk'
+    consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'untuk'.");
+    Token varName = parser.previous;
+    consume(TOKEN_DALAM, "Harapkan 'dalam' setelah nama variabel.");
+
+    // The iterable itself is evaluated in the ENCLOSING frame, so skip its
+    // tokens for now and come back to them after the body has been compiled.
+    ScannerState seqState = saveScanner();
+    Token seqCurrent = parser.current;
+    Token seqPrevious = parser.previous;
+
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) {
+            advance();  // consume ']'
+            break;
+        }
+        if (depth == 0 && type == TOKEN_JIKA && !hasCond) {
+            hasCond = true;
+            condState = saveScanner();
+            condCurrent = parser.current;
+            condPrevious = parser.previous;
+        }
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET ||
+                   type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+    afterState = saveScanner();
+    afterCurrent = parser.current;
+    afterPrevious = parser.previous;
+
+    // The per-element work is compiled into an implicit one-parameter function
+    // called once per element. Its own frame keeps the hidden slots away from
+    // the enclosing frame's expression temporaries (the callee and earlier
+    // arguments of an enclosing call sit below them), and enclosing names are
+    // still visible through the normal upvalue machinery.
+    Compiler compFn;
+    initCompiler(&compFn, TYPE_FUNCTION);
+    current->function->name = copyString("listcomp", 8);
+    current->function->arity = 1;
+    current->function->requiredArity = 1;
+    beginScope();
+    LoopCtx* savedLoop = currentLoop;
+    currentLoop = NULL;      // never let 'hentikan'/'lanjut' target the outer loop
+
+    addLocal(syntheticToken("  comp seq"));   // slot 1: the iterable
+    markInitialized();
+    emitByte(OP_KOSONG);
+    addLocal(varName);                        // slot 2: the loop variable
+    markInitialized();
+    int varSlot = current->localCount - 1;
+
+    emitBytes(OP_BUILD_LIST, 0);
+    int resSlot = addSyntheticLocal("  comp hasil");
+
+    emitBytes(OP_GET_LOCAL, 1);
+    emitByte(OP_LIST_LEN);
+    int lenSlot = addSyntheticLocal("  comp len");
+
+    emitConstant(INT_VAL(-1));
+    int idxSlot = addSyntheticLocal("  comp idx");
+
+    int incrementStart = currentChunk()->count;
+
+    // idx = idx + 1
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitConstant(INT_VAL(1));
+    emitByte(OP_ADD);
+    emitBytes(OP_SET_LOCAL, (uint8_t)idxSlot);
+    emitByte(OP_POP);
+
+    // if !(idx < len) goto exit
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitBytes(OP_GET_LOCAL, (uint8_t)lenSlot);
+    emitByte(OP_LESS);
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+
+    // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
+    emitBytes(OP_GET_LOCAL, 1);
+    emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
+    emitByte(OP_SEQ_GET);
+    emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
+    emitByte(OP_POP);
+
+    // Optional 'jika syarat', evaluated inside the loop.
+    int skipJump = -1;
+    if (hasCond) {
+        restoreScanner(condState);
+        parser.current = condCurrent;
+        parser.previous = condPrevious;
+        advance();  // 'jika'
+        // Python's comp_if is an or_test: no conditional expression here,
+        // so a 'jika' inside the condition is never mistaken for one.
+        parsePrecedence(PREC_OR);
+        skipJump = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP);
+    }
+
+    // Element expression, re-read from just after '['.
+    restoreScanner(elemState);
+    parser.current = elemCurrent;
+    parser.previous = elemPrevious;
+    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+    expression();
+    emitByte(OP_APPEND);
+    if (!check(TOKEN_UNTUK)) {
+        error("Harapkan 'untuk' setelah ekspresi pada list comprehension.");
+    }
+
+    if (skipJump != -1) {
+        // The true path must skip the POP that belongs to the false path.
+        int endJump = emitJump(OP_JUMP);
+        patchJump(skipJump);
+        emitByte(OP_POP);
+        patchJump(endJump);
+    }
+
+    emitLoop(incrementStart);
+    patchJump(exitJump);
+    emitByte(OP_POP);
+
+    // Return the result list. endCompiler() appends a dead 'return kosong'.
+    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+    emitByte(OP_RETURN);
+
+    currentLoop = savedLoop;
+    ObjFunction* comprehensionFn = endCompiler();
+
+    // Back in the enclosing frame: closure, iterable, call.
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(comprehensionFn)));
+    for (int i = 0; i < comprehensionFn->upvalueCount; i++) {
+        emitByte(compFn.upvalues[i].isLocal ? 1 : 0);
+        emitByte(compFn.upvalues[i].index);
+    }
+
+    restoreScanner(seqState);
+    parser.current = seqCurrent;
+    parser.previous = seqPrevious;
+    // The iterable is an or_test, as in Python: in [x untuk x dalam a jika c]
+    // the 'jika' starts the filter, not a conditional expression 'a jika c
+    // selain ...'. Wrap it in parentheses to use a conditional expression.
+    parsePrecedence(PREC_OR);
+    emitBytes(OP_CALL, 1);
+
+    restoreScanner(afterState);
+    parser.current = afterCurrent;
+    parser.previous = afterPrevious;
+}
+
 static void listLiteral(bool canAssign) {
-    // '[' already consumed. Parse comma-separated elements.
+    (void)canAssign;
+    // '[' already consumed. A 'untuk' at depth 0 makes this a comprehension.
+    if (!check(TOKEN_RIGHT_BRACKET)) {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehension(&untukState, &untukCurrent, &untukPrevious)) {
+            listComprehension(elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            return;
+        }
+    }
+
+    // Plain literal: comma-separated elements.
     int count = 0;
     if (!check(TOKEN_RIGHT_BRACKET)) {
         do {
@@ -862,13 +1113,38 @@ static void literal(bool canAssign) {
     }
 }
 
+// '(' already consumed. (x) is plain grouping; a comma after the first
+// expression makes a tupel (K17): (a, b), (a,), (a, b,). () is the empty
+// tupel. Newlines inside are free: '(' raises the scanner's grouping depth.
 static void grouping(bool canAssign) {
+    (void)canAssign;
+    if (match(TOKEN_RIGHT_PAREN)) {
+        emitBytes(OP_BUILD_TUPLE, 0);
+        return;
+    }
     expression();
-    consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
+    if (!match(TOKEN_COMMA)) {
+        consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
+        return;
+    }
+    int count = 1;
+    while (!check(TOKEN_RIGHT_PAREN) && !check(TOKEN_EOF)) {
+        expression();
+        if (count == 255) {
+            error("Tidak boleh lebih dari 255 elemen dalam literal tupel.");
+        }
+        count++;
+        if (!match(TOKEN_COMMA)) break;
+    }
+    consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah elemen tupel.");
+    emitBytes(OP_BUILD_TUPLE, (uint8_t)count);
 }
 
-// Numeric literal -> double. Handles 0x/0b/0o bases and `_` separators;
-// strtod already covers plain decimals, fractions and exponents.
+// Numeric literal. Handles `_` separators and 0b/0o/0x bases (Fase 1) and
+// the K2 split: a literal without '.' or exponent — including every 0b/0o/0x
+// literal — is a bulat (int64); anything else is a desimal (double). A bulat
+// too large for int64 is a compile error rather than a silent rounding —
+// bignums come later.
 static void number(bool canAssign) {
     (void)canAssign;
     const char* src = parser.previous.start;
@@ -900,30 +1176,55 @@ static void number(bool canAssign) {
     }
     buf[n] = '\0';
 
-    double value;
-    if (n > 2 && buf[0] == '0' && (buf[1] == 'b' || buf[1] == 'B' ||
-                                   buf[1] == 'o' || buf[1] == 'O')) {
-        int base = (buf[1] == 'b' || buf[1] == 'B') ? 2 : 8;
-        char* end;
-        errno = 0;
-        long parsed = strtol(buf + 2, &end, base);
-        if (*end != '\0' || errno == ERANGE) {
-            error(base == 2 ? "Digit biner tidak sah."
-                            : "Digit oktal tidak sah.");
-            emitConstant(NUMBER_VAL(0));
-            return;
+    int base = 10;
+    const char* digits = buf;
+    if (n > 2 && buf[0] == '0') {
+        char prefix = buf[1];
+        if (prefix == 'b' || prefix == 'B') base = 2;
+        if (prefix == 'o' || prefix == 'O') base = 8;
+        if (prefix == 'x' || prefix == 'X') base = 16;
+        if (base != 10) digits = buf + 2;
+    }
+    bool isDecimal = false;
+    if (base == 10) {
+        for (int i = 0; i < n; i++) {
+            if (buf[i] == '.' || buf[i] == 'e' || buf[i] == 'E') {
+                isDecimal = true;
+                break;
+            }
         }
-        value = (double)parsed;
-    } else {
+    }
+
+    if (isDecimal) {
         char* end;
-        value = strtod(buf, &end);
+        double value = strtod(buf, &end);
         if (*end != '\0') {
             error("Angka tidak sah.");
             emitConstant(NUMBER_VAL(0));
             return;
         }
+        emitConstant(NUMBER_VAL(value));
+        return;
     }
-    emitConstant(NUMBER_VAL(value));
+
+    char* end;
+    errno = 0;
+    long long value = strtoll(digits, &end, base);
+    if (*end != '\0' || end == digits) {
+        error(base == 2  ? "Digit biner tidak sah." :
+              base == 8  ? "Digit oktal tidak sah." :
+              base == 16 ? "Digit heksadesimal tidak sah." :
+                           "Angka tidak sah.");
+        emitConstant(NUMBER_VAL(0));
+        return;
+    }
+    if (errno == ERANGE) {
+        error("Angka bulat melebihi jangkauan "
+              "-9223372036854775808..9223372036854775807.");
+        emitConstant(NUMBER_VAL(0));
+        return;
+    }
+    emitConstant(INT_VAL(value));
 }
 
 // fungsi(x) { ... } used as an expression. function() already emits OP_CLOSURE
@@ -1133,6 +1434,11 @@ static bool isCompoundAssign(TokenType type) {
         case TOKEN_SLASH_SLASH_EQUAL:
         case TOKEN_PERCENT_EQUAL:
         case TOKEN_POWER_EQUAL:
+        case TOKEN_AMPERSAND_EQUAL:
+        case TOKEN_PIPE_EQUAL:
+        case TOKEN_CARET_EQUAL:
+        case TOKEN_LESS_LESS_EQUAL:
+        case TOKEN_GREATER_GREATER_EQUAL:
             return true;
         default:
             return false;
@@ -1148,6 +1454,11 @@ static bool matchCompoundAssign(uint8_t* op) {
         {TOKEN_SLASH_SLASH_EQUAL, OP_FLOOR_DIVIDE},
         {TOKEN_PERCENT_EQUAL,     OP_MODULO},
         {TOKEN_POWER_EQUAL,       OP_POWER},
+        {TOKEN_AMPERSAND_EQUAL,   OP_BIT_AND},
+        {TOKEN_PIPE_EQUAL,        OP_BIT_OR},
+        {TOKEN_CARET_EQUAL,       OP_BIT_XOR},
+        {TOKEN_LESS_LESS_EQUAL,   OP_SHIFT_LEFT},
+        {TOKEN_GREATER_GREATER_EQUAL, OP_SHIFT_RIGHT},
     };
     for (size_t i = 0; i < sizeof(COMPOUND_OPS) / sizeof(COMPOUND_OPS[0]); i++) {
         if (match(COMPOUND_OPS[i].token)) {
@@ -1265,6 +1576,7 @@ static void unary(bool canAssign) {
         case TOKEN_BANG:
         case TOKEN_TIDAK: emitByte(OP_NOT); break;
         case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+        case TOKEN_TILDE: emitByte(OP_BIT_NOT); break;
         default: return; // Unreachable.
     }
 }
@@ -1384,6 +1696,7 @@ ParseRule rules[] = {
   [TOKEN_JIKA]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KOSONG]        = {literal,  NULL,   PREC_NONE},
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
+  [TOKEN_BUANG]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
   [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
@@ -1395,6 +1708,12 @@ ParseRule rules[] = {
   [TOKEN_ADALAH]        = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_BUKAN]         = {NULL,     comparison, PREC_COMPARISON},
   [TOKEN_SLASH_SLASH]   = {NULL,     binary, PREC_FACTOR},
+  [TOKEN_AMPERSAND]     = {NULL,     binary, PREC_BIT_AND},
+  [TOKEN_PIPE]          = {NULL,     binary, PREC_BIT_OR},
+  [TOKEN_CARET]         = {NULL,     binary, PREC_BIT_XOR},
+  [TOKEN_TILDE]         = {unary,    NULL,   PREC_NONE},
+  [TOKEN_LESS_LESS]     = {NULL,     binary, PREC_SHIFT},
+  [TOKEN_GREATER_GREATER] = {NULL,   binary, PREC_SHIFT},
   [TOKEN_SLASH_SLASH_EQUAL] = {NULL, NULL,   PREC_NONE},
   [TOKEN_PLUS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_MINUS_EQUAL]   = {NULL,     NULL,   PREC_NONE},
@@ -1499,6 +1818,8 @@ static void prescanFunctionBody() {
     int pendingCount = 0;
     Token declared[UINT8_COUNT];   // `variabel x` at the body's own depth
     int declaredCount = 0;
+    Token chain[UINT8_COUNT];      // the names in `a, b, c = ...`
+    int chainCount = 0;
     ScannerState saved = saveScanner();
     Token saveCurrent = parser.current;
 
@@ -1539,14 +1860,35 @@ static void prescanFunctionBody() {
             prev2 = token;
             prev = next;
             token = scanToken();
+            chainCount = 0;
             continue;
         } else if (token.type == TOKEN_EQUAL || isCompoundAssign(token.type)) {
             // Only a bare name is a candidate: diri.x = and a[i] = assign
             // through an object, and `variabel x =` declares its own local.
             if (prev.type == TOKEN_IDENTIFIER && prev2.type != TOKEN_DOT &&
-                prev2.type != TOKEN_VARIABEL && pendingCount < UINT8_COUNT) {
-                pending[pendingCount++] = prev;
+                prev2.type != TOKEN_VARIABEL) {
+                // `a, b = ...` assigns EVERY name in the list, not just the last
+                // one — otherwise 'a' would silently become a global (K3).
+                if (chainCount > 1) {
+                    for (int i = 0; i < chainCount && pendingCount < UINT8_COUNT; i++) {
+                        pending[pendingCount++] = chain[i];
+                    }
+                } else if (pendingCount < UINT8_COUNT) {
+                    pending[pendingCount++] = prev;
+                }
             }
+            chainCount = 0;
+        }
+
+        if (token.type == TOKEN_IDENTIFIER) {
+            if (chainCount == 0 || prev.type == TOKEN_COMMA) {
+                if (chainCount < UINT8_COUNT) chain[chainCount++] = token;
+            } else {
+                chainCount = 1;
+                chain[0] = token;
+            }
+        } else if (token.type != TOKEN_COMMA && token.type != TOKEN_EQUAL) {
+            if (token.type != TOKEN_IDENTIFIER) chainCount = 0;
         }
         prev2 = prev;
         prev = token;
@@ -1842,10 +2184,10 @@ static void forStatement() {
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP); // condition
 
-    // x = seq[idx]
+    // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
     emitBytes(OP_GET_LOCAL, (uint8_t)seqSlot);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_INDEX_GET);
+    emitByte(OP_SEQ_GET);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
 
@@ -1931,6 +2273,28 @@ static void inlineFinallyBlock(FinallyRegion* region) {
 // innermost first, and unregister handlers down to targetTryDepth. Each
 // finally block runs with only the handlers outside its own 'coba' active,
 // so an error inside it propagates outward (as in Python).
+// The cap is usually hit deep inside an inlined copy, where errors are
+// silenced (the in-place copy reports them); this one has no in-place twin,
+// so report it with suppression lifted, once per function.
+static void reportFinallyBudget() {
+    parser.hadError = true;
+    if (current->finallyBudgetReported) return;
+    current->finallyBudgetReported = true;
+    // Lift both silencers: inline suppression AND panic mode (a silenced
+    // error inside the copy may have set it), or the message would vanish.
+    int savedDepth = inlineFinallyDepth;
+    bool savedPanic = parser.panicMode;
+    inlineFinallyDepth = 0;
+    parser.panicMode = false;
+    semanticError("Terlalu banyak salinan blok 'akhirnya' dalam satu fungsi: "
+                  "'kembalikan'/'hentikan'/'lanjut' di dalam 'akhirnya' yang "
+                  "bersarang. Sederhanakan alurnya.");
+    inlineFinallyDepth = savedDepth;
+    parser.panicMode = savedPanic;
+    suppressFurtherErrors = true;  // the copies already made overflow the
+                                   // constant table and cascade into noise
+}
+
 static void exitTryBlocks(int targetTryDepth, int targetFinallies) {
     int savedTryDepth = current->tryDepth;
     int savedFinallyCount = current->finallyCount;
@@ -1947,6 +2311,11 @@ static void exitTryBlocks(int targetTryDepth, int targetFinallies) {
         }
         current->tryDepth = region.tryDepth;
         current->finallyCount = i;  // a jump inside it must not re-run it
+        if (current->finallyInlines >= FINALLY_INLINE_MAX) {
+            reportFinallyBudget();
+            break;  // compilation already failed; stop copying
+        }
+        current->finallyInlines++;
         inlineFinallyBlock(&region);
     }
     for (int d = current->tryDepth; d > targetTryDepth; d--) {
@@ -2397,6 +2766,138 @@ static void scopeDeclaration(bool isGlobal) {
     } while (match(TOKEN_COMMA));
 }
 
+// Delete a variable binding: global (removed from the table), local or upvalue
+// (the slot becomes VAL_TAKTERISI, so reading it is an error again).
+static void deleteVariable(Token name) {
+    int arg = resolveLocal(current, &name);
+    if (arg != -1) {
+        emitBytes(OP_DELETE_LOCAL, (uint8_t)arg);
+        return;
+    }
+    int upvalue = resolveUpvalue(current, &name);
+    if (upvalue != -1) {
+        emitBytes(OP_DELETE_UPVALUE, (uint8_t)upvalue);
+        return;
+    }
+    emitBytes(OP_DELETE_GLOBAL, identifierConstant(&name));
+}
+
+// The base (list/kamus/instance) is already on the stack.
+static void buangFromBase() {
+    if (match(TOKEN_LEFT_BRACKET)) {
+        expression();
+        consume(TOKEN_RIGHT_BRACKET, "Harapkan ']' setelah indeks pada 'buang'.");
+        emitByte(OP_INDEX_DELETE);
+    } else if (match(TOKEN_DOT)) {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama atribut setelah '.' pada 'buang'.");
+        emitBytes(OP_DELETE_PROPERTY, identifierConstant(&parser.previous));
+    } else {
+        errorAtCurrent("Harapkan '[' atau '.' setelah nama pada 'buang'.");
+    }
+}
+
+// buang nama | buang wadah[indeks] | buang objek.atribut
+static void buangStatement() {
+    if (match(TOKEN_DIRI)) {
+        namedVariable(syntheticToken("diri"), false);
+        buangFromBase();
+        return;
+    }
+    if (!check(TOKEN_IDENTIFIER)) {
+        errorAtCurrent("Harapkan nama, elemen, atau atribut setelah 'buang'.");
+        return;
+    }
+
+    // A bare name deletes the binding itself; with '[' or '.' the name is the
+    // container/instance instead.
+    if (!checkNext(TOKEN_LEFT_BRACKET) && !checkNext(TOKEN_DOT)) {
+        Token name = parser.current;
+        advance();
+        deleteVariable(name);
+        return;
+    }
+
+    Token name = parser.current;
+    advance();
+    namedVariable(name, false);
+    buangFromBase();
+}
+
+// a, b = 1, 2 / a, b = urutan — assign n names from one sequence.
+static void assignToName(Token name) {
+    int arg = resolveLocal(current, &name);
+    if (arg != -1) {
+        emitBytes(OP_SET_LOCAL, (uint8_t)arg);
+        emitByte(OP_POP);
+        return;
+    }
+    int upvalue = resolveUpvalue(current, &name);
+    if (upvalue != -1) {
+        emitBytes(OP_SET_UPVALUE, (uint8_t)upvalue);
+        emitByte(OP_POP);
+        return;
+    }
+    // Same define-or-update semantics as implicit assignment.
+    emitBytes(OP_DEFINE_GLOBAL, identifierConstant(&name));
+}
+
+static bool looksLikeUnpack() {
+    if (!check(TOKEN_IDENTIFIER)) return false;
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    int count = 0;
+    bool matched = false;
+    for (;;) {
+        if (!check(TOKEN_IDENTIFIER)) break;
+        count++;
+        advance();
+        if (check(TOKEN_COMMA)) {
+            advance();
+            continue;
+        }
+        if (check(TOKEN_EQUAL) && count >= 2) matched = true;
+        break;
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return matched;
+}
+
+static void unpackStatement() {
+    Token names[UINT8_COUNT];
+    int count = 0;
+    do {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama variabel.");
+        if (count == UINT8_COUNT) {
+            error("Terlalu banyak nama pada penugasan berganda.");
+            return;
+        }
+        names[count++] = parser.previous;
+    } while (match(TOKEN_COMMA));
+
+    consume(TOKEN_EQUAL, "Harapkan '=' setelah daftar nama.");
+
+    // `a, b = 1, 2` builds a list; `a, b = urutan` unpacks the sequence itself.
+    expression();
+    if (match(TOKEN_COMMA)) {
+        int elements = 1;
+        do {
+            if (elements == UINT8_COUNT) {
+                error("Terlalu banyak nilai pada penugasan berganda.");
+                return;
+            }
+            expression();
+            elements++;
+        } while (match(TOKEN_COMMA));
+        emitBytes(OP_BUILD_LIST, (uint8_t)elements);
+    }
+
+    emitBytes(OP_UNPACK, (uint8_t)count);
+    for (int i = 0; i < count; i++) assignToName(names[i]);
+}
+
 static void statement() {
     if (match(TOKEN_GLOBAL)) {
         scopeDeclaration(true);
@@ -2416,6 +2917,8 @@ static void statement() {
         breakStatement();
     } else if (match(TOKEN_LANJUT)) {
         continueStatement();
+    } else if (match(TOKEN_BUANG)) {
+        buangStatement();
     } else if (match(TOKEN_COBA)) {
         tryStatement();
     } else if (match(TOKEN_NAIKKAN)) {
@@ -2428,6 +2931,8 @@ static void statement() {
         beginScope();
         block();
         endScope();
+    } else if (looksLikeUnpack()) {
+        unpackStatement();
     } else {
         expressionStatement();
     }
@@ -2445,6 +2950,7 @@ ObjFunction* compile(const char* source) {
 
     parser.hadError = false;
     parser.panicMode = false;
+    suppressFurtherErrors = false;
     callArgStart = NULL;
 
     advance();
