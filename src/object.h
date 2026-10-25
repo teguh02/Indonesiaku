@@ -23,12 +23,8 @@
 
 #define IS_SOCKET(value)       isObjType(value, OBJ_SOCKET)
 #define IS_RANGE(value)        isObjType(value, OBJ_RANGE)
-#define IS_TUPLE(value)        isObjType(value, OBJ_TUPLE)
-#define IS_SET(value)          isObjType(value, OBJ_SET)
 
 #define AS_STRING(value)       ((ObjString*)AS_OBJ(value))
-#define AS_TUPLE(value)        ((ObjTuple*)AS_OBJ(value))
-#define AS_SET(value)          ((ObjSet*)AS_OBJ(value))
 #define AS_CSTRING(value)      (((ObjString*)AS_OBJ(value))->chars)
 #define AS_FUNCTION(value)     ((ObjFunction*)AS_OBJ(value))
 #define AS_NATIVE(value)       (((ObjNative*)AS_OBJ(value))->function)
@@ -50,18 +46,12 @@ typedef enum {
     OBJ_UPVALUE,
     OBJ_LIST,
     OBJ_DICT,
-    OBJ_TUPLE,
-    OBJ_SET,
     OBJ_CLASS,
     OBJ_INSTANCE,
     OBJ_BOUND_METHOD,
     OBJ_FILE,
     OBJ_SOCKET,
     OBJ_DB,
-    OBJ_TUPLE,
-    OBJ_SET,
-    OBJ_TUPLE,
-    OBJ_SET,
     OBJ_RANGE,
 } ObjType;
 
@@ -124,23 +114,6 @@ typedef struct {
     ValueArray keys;    // insertion order; a deleted key is removed from it
 } ObjDict;
 
-// tupel adalah daftar yang tidak bisa diubah setelah dibuat (immutable list).
-// Pakai *nilai* sebagai kunci kamus yang bisa di-hash, berurutan, dan dapat
-// diindeks; tidak boleh list/kamus/rentang di dalamnya.
-typedef struct {
-    Obj obj;
-    ValueArray items;
-} ObjTuple;
-
-// himpunan adalah koleksi nilai hashable yang unik (urutan tidak penting).
-// ObjSet.items adalah daftar nilai unik yang sedang hidup — dipakai untuk
-// iterasi dan cetak; ObjSet.table dipakai untukmembership/penghapusan cepat.
-typedef struct {
-    Obj obj;
-    ValueTable table;
-    ValueArray items;
-} ObjSet;
-
 // rentang(awal, akhir, langkah): a lazy arithmetic sequence (Python range).
 // Elements are computed on demand; no list is allocated.
 typedef struct {
@@ -189,14 +162,6 @@ typedef struct {
 } ObjDb;
 
 ObjDb* newDb(void);
-
-// tupel & himpunan (Fase 2)
-ObjTuple* newTuple(ValueArray items);
-ObjSet* newSet();
-bool setAdd(ObjSet* set, Value value);
-bool setRemove(ObjSet* set, Value value);
-int setLength(ObjSet* set);
-Value setMemberAt(ObjSet* set, int index);
 ObjFunction* newFunction();
 ObjNative* newNative(NativeFn function);
 ObjClosure* newClosure(ObjFunction* function);
@@ -216,14 +181,6 @@ Value rangeElement(ObjRange* range, int index);
 ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method);
-
-// tupel & himpunan (Fase 2)
-ObjTuple* newTuple(ValueArray items);
-ObjSet* newSet();
-bool setAdd(ObjSet* set, Value value);
-bool setRemove(ObjSet* set, Value value);
-int setLength(ObjSet* set);
-Value setMemberAt(ObjSet* set, int index);
 ObjFile* newFile(void* handle, ObjString* path);
 ObjSocket* newSocket(long long fd);
 ObjString* takeString(char* chars, int length);
