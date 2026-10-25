@@ -1,2 +1,4 @@
 db: tepat satu pernyataan SQL diperlukan
-[baris 4] dalam skrip
+[baris 4, kolom 57] dalam skrip
+    …"INSERT INTO t VALUES (1); DROP TABLE t")
+                                             ^

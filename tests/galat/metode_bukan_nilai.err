@@ -1,2 +1,4 @@
 Metode 'tambah' pada tipe 'daftar' harus langsung dipanggil, misalnya x.tambah().
-[baris 3] dalam skrip
+[baris 3, kolom 21] dalam skrip
+    variabel f = daftar.tambah
+                        ^

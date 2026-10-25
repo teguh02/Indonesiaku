@@ -1,2 +1,4 @@
 Hanya dapat memanggil fungsi dan kelas.
-[baris 4] dalam skrip
+[baris 4, kolom 19] dalam skrip
+    cetak("tidak bisa")
+                      ^

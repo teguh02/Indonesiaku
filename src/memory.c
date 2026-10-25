@@ -94,6 +94,8 @@ static void blackenObject(Obj* object) {
                 markObject((Obj*)function->paramNames[i]);
             }
             markArray(&function->chunk.constants);
+            // Source text for runtime error snippets.
+            markObject((Obj*)function->chunk.source);
             break;
         }
         case OBJ_CLOSURE: {

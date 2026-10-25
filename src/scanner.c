@@ -12,6 +12,9 @@ typedef struct {
     // Start of the buffer being scanned, kept so error reporting can walk
     // back to the beginning of a line and compute a column.
     const char* source;
+    // Its NUL. Cached: emitByte checks it for every byte emitted, and
+    // rescanning the whole source each time would make compilation O(n^2).
+    const char* sourceEnd;
 } Scanner;
 
 Scanner scanner;
@@ -20,12 +23,15 @@ void initScanner(const char* source) {
     scanner.start = source;
     scanner.current = source;
     scanner.source = source;
+    scanner.sourceEnd = source + strlen(source);
     scanner.line = 1;
     scanner.groupingDepth = 0;
 }
 
 ScannerState saveScanner() {
-    ScannerState state = {scanner.start, scanner.current, scanner.line, scanner.groupingDepth};
+    ScannerState state = {scanner.start, scanner.current, scanner.line,
+                          scanner.groupingDepth, scanner.source,
+                          scanner.sourceEnd};
     return state;
 }
 
@@ -33,6 +39,7 @@ void initScannerAt(const char* source, int line) {
     scanner.start = source;
     scanner.current = source;
     scanner.source = source;
+    scanner.sourceEnd = source + strlen(source);
     scanner.line = line;
     scanner.groupingDepth = 0;
 }
@@ -42,6 +49,8 @@ void restoreScanner(ScannerState state) {
     scanner.current = state.current;
     scanner.line = state.line;
     scanner.groupingDepth = state.groupingDepth;
+    scanner.source = state.source;
+    scanner.sourceEnd = state.sourceEnd;
 }
 
 static bool isAlpha(char c) {
@@ -448,4 +457,12 @@ Token scanToken() {
 
 const char* scannerSourceStart(void) {
     return scanner.source;
+}
+
+// One past the last byte of the buffer being scanned (its NUL). Needed to
+// tell whether a token actually belongs to this buffer: f-strings compile
+// their embedded expression from a temporary copy, so a stale token can sit
+// at a higher address and pass a start-only check.
+const char* scannerSourceEnd(void) {
+    return scanner.sourceEnd;
 }

@@ -1,2 +1,4 @@
 Langkah irisan tidak boleh nol.
-[baris 3] dalam skrip
+[baris 3, kolom 12] dalam skrip
+    cetak(a[::0])
+               ^

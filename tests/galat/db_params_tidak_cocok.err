@@ -1,2 +1,4 @@
 db: jumlah parameter tidak cocok
-[baris 4] dalam skrip
+[baris 4, kolom 61] dalam skrip
+    …ERT INTO t VALUES (?, ?)", ["cuma satu"])
+                                             ^

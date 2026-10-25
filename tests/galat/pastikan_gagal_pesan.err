@@ -1,2 +1,4 @@
 Penegasan gagal: saldo tidak boleh negatif
-[baris 3] dalam skrip
+[baris 3, kolom 22] dalam skrip
+    pastikan saldo >= 0, "saldo tidak boleh negatif"
+                         ^

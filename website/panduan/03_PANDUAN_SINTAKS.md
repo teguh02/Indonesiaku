@@ -1310,12 +1310,28 @@ Variabel tidak terdefinisi 'cetk'. Mungkin maksudmu 'cetak'?
 Saran hanya muncul bila ejaannya memang dekat; nama yang tidak mirip apa pun
 tidak akan ditebak-tebak.
 
-Galat saat program berjalan masih menyebut baris saja (belum kolom):
+Galat saat program **berjalan** memakai format yang sama:
 
 ```
 Operand '+' harus dua angka, dua teks, atau dua daftar.
-[baris 2] dalam skrip
+[baris 2, kolom 11] dalam skrip
+    cetak(x + "a")
+              ^
 ```
+
+Pada traceback berlapis, potongan baris hanya dicetak untuk tempat galat
+benar-benar terjadi; bingkai pemanggil di bawahnya cukup baris dan kolom:
+
+```
+Pembagian dengan nol.
+[baris 2, kolom 20] dalam bagi()
+        kembalikan a / b
+                       ^
+[baris 4, kolom 16] dalam skrip
+```
+
+Catatan: kolom menunjuk **akhir** ekspresi yang bermasalah (token terakhir
+yang diproses), bukan tepat di operatornya.
 
 ---
 

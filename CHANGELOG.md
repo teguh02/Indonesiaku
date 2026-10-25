@@ -8,6 +8,10 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **Kolom dan potongan baris pada galat runtime** — traceback kini
+  `[baris N, kolom M]` dengan baris sumber dan caret pada bingkai terdalam.
+  Sumber disimpan sebagai objek GC di dalam chunk, sehingga sumber modul
+  `impor` tetap tersedia saat galat terjadi.
 - ✅ **Teks di dalam koleksi dicetak dengan kutip (`repr`)** — `cetak(["a"])`
   kini `["a"]`, bukan `[a]`. Aturan escape tunggal dipakai bersama oleh
   `cetak`, `ke_teks`, `format`, f-string, dan `repr`.
@@ -74,6 +78,10 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Ukuran biner naik ~140 KB → ~1,2 MB.
 
 ### Fixed
+- 🐛 **Use-after-free saat mengompilasi f-string** — `restoreScanner` tidak
+  mengembalikan penunjuk sumber, sehingga ia tertinggal menunjuk buffer
+  sementara f-string yang sudah dibebaskan. Tidak terlihat sebelumnya karena
+  penunjuk itu belum pernah dibaca setelah restore.
 - 🐛 **Kamus dicetak sesuai urutan penambahan**, bukan urutan tabel hash.
   Sebelumnya `cetak(d)` bisa berbeda urutan dari `kunci(d)` dan dari
   perulangan `untuk ... dalam d` pada kamus yang sama.

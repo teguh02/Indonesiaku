@@ -1,2 +1,4 @@
 enumerasi() hanya menerima list, teks, rentang, atau kamus
-[baris 1] dalam skrip
+[baris 1, kolom 12] dalam skrip
+    enumerasi(1)
+               ^

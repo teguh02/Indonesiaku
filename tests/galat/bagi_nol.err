@@ -1,3 +1,5 @@
 Pembagian dengan nol.
-[baris 3] dalam rata_rata()
-[baris 5] dalam skrip
+[baris 3, kolom 35] dalam rata_rata()
+        kembalikan 10 / panjang(daftar)
+                                      ^
+[baris 5, kolom 19] dalam skrip

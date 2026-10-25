@@ -1,2 +1,4 @@
 db: handle sudah ditutup
-[baris 4] dalam skrip
+[baris 4, kolom 27] dalam skrip
+    db_eksekusi(db, "SELECT 1")
+                              ^

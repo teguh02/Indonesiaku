@@ -53,6 +53,11 @@ typedef struct {
     const char* current;
     int line;
     int groupingDepth;
+    // Must be saved too: f-strings re-point the scanner at a temporary
+    // buffer, and restoring without this leaves `source` dangling at memory
+    // that the caller frees right after.
+    const char* source;
+    const char* sourceEnd;
 } ScannerState;
 
 void initScanner(const char* source);
@@ -66,5 +71,6 @@ void initScannerAt(const char* source, int line);
 // Start of the buffer currently being scanned. Error reporting uses it to
 // find the beginning of a line; NULL before the first initScanner call.
 const char* scannerSourceStart(void);
+const char* scannerSourceEnd(void);
 
 #endif

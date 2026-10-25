@@ -140,7 +140,11 @@ static int inlineFinallyDepth = 0;
 // doesn't belong to the buffer currently being scanned.
 static const char* lineStartOf(Token* token) {
     const char* source = scannerSourceStart();
-    if (source == NULL || token->start < source) return NULL;
+    if (source == NULL || token->start == NULL) return NULL;
+    // Both bounds: a token from a different buffer (a freed f-string slice,
+    // say) can sit above `source` and would otherwise be walked backwards
+    // out of bounds.
+    if (token->start < source || token->start > scannerSourceEnd()) return NULL;
     const char* lineStart = token->start;
     while (lineStart > source && lineStart[-1] != '\n') lineStart--;
     return lineStart;
@@ -271,8 +275,27 @@ static bool match(TokenType type) {
     return true;
 }
 
+// While an f-string's embedded expression is compiled, the scanner runs over
+// a temporary copy of just that expression, so a column computed from it
+// would point at the wrong place in the real line -- and the token itself
+// belongs to a buffer that is about to be freed. Columns are therefore
+// pre-computed from the real line before the sub-scanner starts, and every
+// byte emitted inside the expression reuses that value. 0 means "unknown".
+static int columnOverride = 0;
+
 static void emitByte(uint8_t byte) {
-    writeChunk(currentChunk(), byte, parser.previous.line);
+    int column = columnOverride;
+    if (column == 0) {
+        // ponytail: the column is wherever parsing currently sits, which for
+        // a binary operator is the end of its right operand, not the
+        // operator. Close enough to find the expression; pointing at the
+        // operator would mean every parse rule tracking its own token.
+        const char* lineStart = lineStartOf(&parser.previous);
+        if (lineStart != NULL) {
+            column = (int)(parser.previous.start - lineStart) + 1;
+        }
+    }
+    writeChunk(currentChunk(), byte, parser.previous.line, column);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -352,6 +375,10 @@ static void patchJump(int offset) {
     currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
+// Source of the compile() in progress, shared by every function it produces
+// so runtime errors can print the offending line. Reset on each compile().
+static ObjString* compilingSource = NULL;
+
 static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->enclosing = current;
     compiler->function = NULL;
@@ -363,6 +390,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->tryDepth = 0;
     compiler->finallyCount = 0;
     compiler->function = newFunction();
+    compiler->function->chunk.source = compilingSource;
     current = compiler;
     if (type != TYPE_SCRIPT) {
         if (type == TYPE_FUNCTION && parser.previous.type == TOKEN_FUNGSI) {
@@ -1016,14 +1044,28 @@ static void fstring(bool canAssign) {
         memcpy(expr, src + start, exprLen);
         expr[exprLen] = '\0';
 
+        // Column of the f-string token in the *real* source, computed while
+        // that buffer is still the one being scanned.
+        const char* tokenLineStart = lineStartOf(&token);
+        int savedOverride = columnOverride;
+        if (columnOverride == 0 && tokenLineStart != NULL) {
+            columnOverride = (int)(token.start - tokenLineStart) + 1;
+        }
+
         initScannerAt(expr, token.line);
         advance();                                // prime parser.current
         expression();
         if (!check(TOKEN_EOF)) {
             semanticError("Ekspresi f-string tidak lengkap.");
         }
+        columnOverride = savedOverride;
         restoreScanner(afterToken);
         parser.current = afterTokenCurrent;
+        // parser.previous still points into `expr`, which is about to be
+        // freed; anything reading it (emitByte's column lookup) would touch
+        // freed memory. Point it back at the f-string token itself, which is
+        // also the right place to blame for the bytecode emitted below.
+        parser.previous = token;
         FREE_ARRAY(char, expr, exprLen + 1);
 
         emitBytes(OP_CALL, 1);
@@ -2395,6 +2437,9 @@ static void statement() {
 
 ObjFunction* compile(const char* source) {
     initScanner(source);
+    // Keep the source alive as a GC object: module sources are freed by the
+    // caller right after compile(), but runtime errors need them later.
+    compilingSource = copyString(source, (int)strlen(source));
     Compiler compiler;
     initCompiler(&compiler, TYPE_SCRIPT);
 
@@ -2418,6 +2463,7 @@ ObjFunction* compile(const char* source) {
     }
 
     ObjFunction* function = endCompiler();
+    compilingSource = NULL;
     return parser.hadError ? NULL : function;
 }
 
@@ -2425,6 +2471,9 @@ ObjFunction* compile(const char* source) {
 // them mid-compilation (a collection can be triggered by allocations in
 // copyString/makeConstant while parsing).
 void markCompilerRoots() {
+    // Not yet reachable from any function while the first chunk is still
+    // being built, and allocations during parsing can trigger a GC.
+    markObject((Obj*)compilingSource);
     Compiler* compiler = current;
     while (compiler != NULL) {
         markObject((Obj*)compiler->function);

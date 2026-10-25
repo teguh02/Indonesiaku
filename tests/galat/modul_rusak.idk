@@ -1,0 +1,3 @@
+fungsi modul_rusak(x) {
+    kembalikan x / 0
+}

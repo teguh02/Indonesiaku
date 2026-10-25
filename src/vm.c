@@ -33,6 +33,41 @@ static void resetStack() {
     vm.nativeCallDepth = 0;
 }
 
+// Print the source line for a runtime error with a caret at the column.
+// Mirrors the compiler's snippet format so both kinds of error read the
+// same. Silent when the source isn't available (REPL, or chunks built
+// before a source was attached).
+static void printRuntimeSnippet(ObjString* source, int line, int column) {
+    if (source == NULL || line <= 0 || column <= 0) return;
+
+    // Walk to the start of `line`.
+    const char* p = source->chars;
+    for (int current = 1; current < line; current++) {
+        const char* nl = strchr(p, '\n');
+        if (nl == NULL) return;          // source shorter than claimed
+        p = nl + 1;
+    }
+    const char* lineEnd = p;
+    while (*lineEnd != '\0' && *lineEnd != '\n') lineEnd++;
+    if (column - 1 > lineEnd - p) return;   // column outside the line
+
+    const char* token = p + (column - 1);
+    const int kWindow = 40;
+    const char* from = p;
+    const char* to = lineEnd;
+    bool cutLeft = false, cutRight = false;
+    if (token - from > kWindow) { from = token - kWindow; cutLeft = true; }
+    if (to - token > kWindow)   { to = token + kWindow;   cutRight = true; }
+
+    fprintf(stderr, "    %s%.*s%s\n",
+            cutLeft ? "…" : "", (int)(to - from), from, cutRight ? "…" : "");
+    fprintf(stderr, "    %s", cutLeft ? " " : "");
+    for (const char* q = from; q < token; q++) {
+        fputc(*q == '\t' ? '\t' : ' ', stderr);
+    }
+    fputs("^\n", stderr);
+}
+
 // Print an uncaught error with its traceback and reset the VM.
 static void reportError(const char* message) {
     vm.hadError = true;
@@ -48,6 +83,8 @@ static void reportError(const char* message) {
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
         int line = function->chunk.lines[instruction];
+        int column = function->chunk.columns == NULL
+                         ? 0 : function->chunk.columns[instruction];
         if (function == lastFunction && line == lastLine) {
             repeated++;
             continue;
@@ -58,11 +95,20 @@ static void reportError(const char* message) {
         }
         lastFunction = function;
         lastLine = line;
-        fprintf(stderr, "[baris %d] dalam ", line);
+        if (column > 0) {
+            fprintf(stderr, "[baris %d, kolom %d] dalam ", line, column);
+        } else {
+            fprintf(stderr, "[baris %d] dalam ", line);
+        }
         if (function->name == NULL) {
             fprintf(stderr, "skrip\n");
         } else {
             fprintf(stderr, "%s()\n", function->name->chars);
+        }
+        // Only the innermost frame gets a snippet: printing one per frame
+        // makes deep tracebacks unreadable.
+        if (i == vm.frameCount - 1) {
+            printRuntimeSnippet(function->chunk.source, line, column);
         }
     }
     if (repeated > 0) {

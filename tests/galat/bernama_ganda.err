@@ -1,2 +1,4 @@
 Parameter 'a' diisi lebih dari sekali.
-[baris 5] dalam skrip
+[baris 5, kolom 15] dalam skrip
+    cetak(f(1, a=5))
+                  ^

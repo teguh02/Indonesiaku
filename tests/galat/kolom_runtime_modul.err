@@ -1,0 +1,5 @@
+Pembagian dengan nol.
+[baris 2, kolom 20] dalam modul_rusak()
+        kembalikan x / 0
+                       ^
+[baris 3, kolom 20] dalam skrip

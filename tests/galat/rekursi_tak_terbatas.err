@@ -1,4 +1,6 @@
 Call stack overflow: kedalaman maksimal panggilan fungsi 1000 terlampaui. Kemungkinan rekursi tak terbatas?
-[baris 4] dalam terus()
+[baris 4, kolom 27] dalam terus()
+        kembalikan terus(n + 1)
+                              ^
 [baris sebelumnya diulang 998 kali lagi]
-[baris 6] dalam skrip
+[baris 6, kolom 8] dalam skrip

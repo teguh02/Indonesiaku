@@ -60,7 +60,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
 - ✅ **Teks dalam koleksi dikutip**: `cetak(["a"])` → `["a"]`
-- ✅ **Pesan galat menunjuk kolom** + saran nama yang mirip
+- ✅ **Pesan galat menunjuk kolom** (kompilasi *dan* runtime) + saran nama yang mirip
 - ✅ **`cetak` fungsi biasa**: `cetak("a", "b", pisah="-")`, bisa dioper sebagai nilai
 - ✅ **Metode tipe bawaan**: `"budi".huruf_besar()`, `[3,1,2].terurut()`
 - ✅ **f-string**: `f"Halo {nama}, umurmu {umur}"`

@@ -1,2 +1,4 @@
 Harapkan paling banyak 2 argumen tetapi mendapat 3.
-[baris 5] dalam skrip
+[baris 5, kolom 16] dalam skrip
+    cetak(f(1, 2, 3))
+                   ^

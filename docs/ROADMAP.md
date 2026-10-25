@@ -76,7 +76,7 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 | `+`/`*` untuk teks & daftar, `==` struktural | K7 | ✅ |
 | `pastikan` (assert) ([rencana](RENCANA_FITUR/selesai/pastikan.md)) | 02 §A | ✅ |
 | Traceback dengan kolom + potongan baris; saran "mungkin maksudmu…" ([rencana](RENCANA_FITUR/selesai/traceback_kolom.md)) | 04 §5, 05 §5 | ✅ |
-| Kolom pada galat *runtime* (butuh kolom per-bytecode + sumber tetap hidup) | 04 §5 | ⬜ |
+| Kolom pada galat *runtime* ([rencana](RENCANA_FITUR/selesai/kolom_runtime.md)) | 04 §5 | ✅ |
 
 ### Fase 2 — Tipe data lengkap (0.8)
 

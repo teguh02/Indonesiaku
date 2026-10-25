@@ -1,2 +1,4 @@
 Penegasan gagal.
-[baris 3] dalam skrip
+[baris 3, kolom 18] dalam skrip
+    pastikan umur >= 0
+                     ^

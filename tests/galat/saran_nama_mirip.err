@@ -1,2 +1,4 @@
 Variabel tidak terdefinisi 'cetk'. Mungkin maksudmu 'cetak'?
-[baris 2] dalam skrip
+[baris 2, kolom 1] dalam skrip
+    cetk("halo")
+    ^

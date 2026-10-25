@@ -1,0 +1,5 @@
+# Galat runtime menunjuk kolom dan mencetak potongan baris.
+fungsi bagi(a, b) {
+    kembalikan a / b
+}
+cetak(bagi(1, 0))

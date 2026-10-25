@@ -1,0 +1,5 @@
+Pembagian dengan nol.
+[baris 3, kolom 20] dalam bagi()
+        kembalikan a / b
+                       ^
+[baris 5, kolom 16] dalam skrip
