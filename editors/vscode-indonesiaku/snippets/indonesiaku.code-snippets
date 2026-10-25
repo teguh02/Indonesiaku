@@ -113,6 +113,20 @@
     ],
     "description": "Panggilan dengan argumen bernama; posisional harus mendahului yang bernama"
   },
+  "Fungsi anonim": {
+    "prefix": "fungsianonim",
+    "body": [
+      "fungsi(${1:x}) { kembalikan ${2:x} }$0"
+    ],
+    "description": "Fungsi tanpa nama sebagai nilai (closure)"
+  },
+  "Ekspresi kondisional": {
+    "prefix": "jikaselain",
+    "body": [
+      "${1:nilai_benar} jika ${2:kondisi} selain ${3:nilai_salah}$0"
+    ],
+    "description": "Pilih satu dari dua nilai dalam satu ekspresi"
+  },
   "Penegasan (assert)": {
     "prefix": "pastikan",
     "body": [

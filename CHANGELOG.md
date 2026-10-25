@@ -8,6 +8,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✅ **Fungsi anonim** — `fungsi(x) { kembalikan x * x }` sebagai ekspresi,
+  closure penuh, mendukung nilai bawaan + argumen bernama. Badannya tetap
+  `{ }` dan `kembalikan`; tidak ada bentuk satu-ekspresi gaya `lambda` supaya
+  cara menulis fungsi tetap satu. Di traceback muncul sebagai `<anonim>`.
+- ✅ **Ekspresi kondisional** — `"lulus" jika nilai >= 60 selain "gagal"`.
+  Kondisi dinilai lebih dulu dan hanya cabang terpilih yang berjalan, jadi
+  `x[0] jika panjang(x) > 0 selain "kosong"` aman pada daftar kosong.
 - ✅ **`pastikan` (assert)** — `pastikan kondisi` atau
   `pastikan kondisi, "pesan"`. Gagal menaikkan `GalatPenegasan`, kelas yang
   sudah terdaftar di hierarki galat sejak Fase 1 tetapi belum pernah dipakai.

@@ -59,6 +59,8 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
 - ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
   kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
+- ✅ **Fungsi anonim**: `fungsi(x) { kembalikan x * x }` sebagai nilai, closure penuh
+- ✅ **Ekspresi kondisional**: `"lulus" jika nilai >= 60 selain "gagal"`
 - ✅ **`pastikan`** (assert) dengan pesan opsional → `GalatPenegasan`
 - ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
 - ✅ `rentang()`, operator `dalam`/`tidak dalam`, truthiness seperti Python
@@ -605,6 +607,8 @@ pun berjalan. Selengkapnya: `examples/db_sqlite.idk` dan
 - `finally` → `akhirnya`
 - `raise` → `naikkan`
 - `assert` → `pastikan`
+- `lambda` → `fungsi(x) { ... }` (anonim)
+- `a if c else b` → `a jika c selain b`
 
 Dicadangkan untuk versi mendatang (belum bisa dipakai): `from` → `dari`,
 `as` → `sebagai`, `with` → `dengan`.

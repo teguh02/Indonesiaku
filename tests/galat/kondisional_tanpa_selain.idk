@@ -1,0 +1,3 @@
+# Ekspresi kondisional wajib punya cabang 'selain'.
+variabel nilai = 80
+variabel label = "lulus" jika nilai >= 60

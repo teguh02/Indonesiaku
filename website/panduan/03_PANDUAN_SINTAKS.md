@@ -1020,6 +1020,71 @@ a.bersuara()   # Rex berkata: Guk
 
 ---
 
+## Fungsi Anonim
+
+Fungsi tanpa nama, ditulis persis seperti fungsi biasa tetapi langsung menjadi
+nilai:
+
+```indonesiaku
+variabel kuadrat = fungsi(x) { kembalikan x * x }
+cetak(kuadrat(6))                                  # 36
+
+# Dioper langsung sebagai argumen.
+fungsi terapkan(f, nilai) { kembalikan f(nilai) }
+cetak(terapkan(fungsi(x) { kembalikan x * 10 }, 7))   # 70
+```
+
+Badannya tetap memakai `{ }` dan `kembalikan` — tidak ada bentuk satu-ekspresi
+khusus seperti `lambda` di Python, supaya cara menulis fungsi hanya ada satu.
+
+Fungsi anonim adalah closure penuh, jadi ia menangkap variabel di sekitarnya:
+
+```indonesiaku
+fungsi pembuat_penambah(n) {
+    kembalikan fungsi(x) { kembalikan x + n }
+}
+variabel tambah5 = pembuat_penambah(5)
+cetak(tambah5(1))                                  # 6
+```
+
+Nilai bawaan parameter dan argumen bernama berlaku sama seperti fungsi biasa.
+Di pesan kesalahan namanya muncul sebagai `<anonim>`.
+
+---
+
+## Ekspresi Kondisional
+
+Memilih satu dari dua nilai tanpa menulis blok `jika`:
+
+```indonesiaku
+variabel label = "lulus" jika nilai >= 60 selain "gagal"
+```
+
+Urutannya dibaca: *nilai-kalau-benar* `jika` *kondisi* `selain`
+*nilai-kalau-salah* — sama seperti `a if c else b` di Python. Bagian `selain`
+wajib ada.
+
+**Kondisi dinilai lebih dulu, dan hanya cabang yang terpilih yang
+dijalankan.** Karena itu pola penjaga berikut aman walaupun daftarnya kosong:
+
+```indonesiaku
+cetak(x[0] jika panjang(x) > 0 selain "kosong")
+```
+
+Jangan keliru dengan pernyataan `jika`, yang memakai blok dan tidak
+menghasilkan nilai:
+
+```indonesiaku
+jika nilai >= 60 { cetak("lulus") } selain { cetak("gagal") }   # pernyataan
+variabel l = "lulus" jika nilai >= 60 selain "gagal"            # ekspresi
+```
+
+Contoh lengkap: [`examples/fungsi_anonim.idk`](../examples/fungsi_anonim.idk)
+
+{{embed:examples/fungsi_anonim.idk}}
+
+---
+
 ## Penegasan (`pastikan`)
 
 `pastikan` menyatakan sesuatu yang **harus** benar. Kalau benar, tidak terjadi

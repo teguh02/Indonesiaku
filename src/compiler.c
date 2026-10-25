@@ -303,8 +303,14 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->function = newFunction();
     current = compiler;
     if (type != TYPE_SCRIPT) {
-        current->function->name = copyString(parser.previous.start,
-                                            parser.previous.length);
+        if (type == TYPE_FUNCTION && parser.previous.type == TOKEN_FUNGSI) {
+            // Anonymous: parser.previous is the `fungsi` keyword itself, and
+            // a NULL name already means "script" in tracebacks.
+            current->function->name = copyString("<anonim>", 8);
+        } else {
+            current->function->name = copyString(parser.previous.start,
+                                                parser.previous.length);
+        }
     }
 
     Local* local = &current->locals[current->localCount++];
@@ -358,6 +364,7 @@ static void expression();
 static void statement();
 static void declaration();
 static ParseRule* getRule(TokenType type);
+static void function(FunctionType type);
 static void parsePrecedence(Precedence precedence);
 static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
@@ -775,6 +782,13 @@ static void number(bool canAssign) {
     emitConstant(NUMBER_VAL(value));
 }
 
+// fungsi(x) { ... } used as an expression. function() already emits OP_CLOSURE
+// and its upvalue list, so the closure simply lands on the stack.
+static void anonymousFunction(bool canAssign) {
+    (void)canAssign;
+    function(TYPE_FUNCTION);
+}
+
 static void or_(bool canAssign) {
     int elseJump = emitJump(OP_JUMP_IF_FALSE);
     int endJump = emitJump(OP_JUMP);
@@ -1079,7 +1093,7 @@ ParseRule rules[] = {
   [TOKEN_SELAIN]        = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SALAH]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_UNTUK]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_FUNGSI]        = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_FUNGSI]        = {anonymousFunction, NULL, PREC_NONE},
   [TOKEN_JIKA]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KOSONG]        = {literal,  NULL,   PREC_NONE},
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
@@ -1130,8 +1144,52 @@ static ParseRule* getRule(TokenType type) {
     return &rules[type];
 }
 
+// Conditional expression:  <benar> jika <kondisi> selain <salah>
+//
+// Python evaluates the condition FIRST, but an infix rule only runs after the
+// left operand is already emitted. Emitting it early would break the common
+// guard `x[0] jika panjang(x) > 0 selain "kosong"`, so the left operand's
+// bytecode is truncated and re-parsed inside the true branch instead.
+//
+// ponytail: the left operand is parsed twice and its discarded constants stay
+// in the constant table (a few bytes per conditional, no runtime cost).
+// Buffering the operand's bytecode and splicing it would avoid that; not worth
+// it until a profile says otherwise.
 static void expression() {
+    ScannerState leftStart = saveScanner();
+    Token leftToken = parser.current;
+    int leftOffset = currentChunk()->count;
+
     parsePrecedence(PREC_ASSIGNMENT);
+
+    if (!check(TOKEN_JIKA)) return;
+
+    // Rewind the emitted left operand; it is re-compiled in the true branch.
+    currentChunk()->count = leftOffset;
+
+    advance();                              // consume 'jika'
+    parsePrecedence(PREC_OR);               // the condition
+
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);                       // drop the true condition
+
+    ScannerState afterCond = saveScanner();
+    Token afterCondToken = parser.current;
+
+    restoreScanner(leftStart);
+    parser.current = leftToken;
+    parsePrecedence(PREC_ASSIGNMENT);       // the value, now correctly ordered
+
+    restoreScanner(afterCond);
+    parser.current = afterCondToken;
+
+    int endJump = emitJump(OP_JUMP);
+    patchJump(elseJump);
+    emitByte(OP_POP);                       // drop the false condition
+
+    consume(TOKEN_SELAIN, "Harapkan 'selain' pada ekspresi kondisional.");
+    parsePrecedence(PREC_ASSIGNMENT);
+    patchJump(endJump);
 }
 
 static void block() {
@@ -1247,6 +1305,7 @@ static void skipDefaultExpression() {
 }
 
 static void function(FunctionType type) {
+    bool anonymous = (type == TYPE_FUNCTION && parser.previous.type == TOKEN_FUNGSI);
     Compiler compiler;
     initCompiler(&compiler, type);
     beginScope();
@@ -1259,7 +1318,8 @@ static void function(FunctionType type) {
     LoopCtx* savedLoop = currentLoop;
     currentLoop = NULL;
 
-    consume(TOKEN_LEFT_PAREN, "Harapkan '(' setelah nama fungsi.");
+    consume(TOKEN_LEFT_PAREN, anonymous ? "Harapkan '(' setelah 'fungsi'."
+                                        : "Harapkan '(' setelah nama fungsi.");
     // Parameter names are declared first; their default expressions are
     // compiled afterwards as a conditional prologue (see below), so we
     // remember where each '=' sits and rewind the scanner to it.
@@ -2036,7 +2096,8 @@ static void declaration() {
     while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
     if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE)) return;
 
-    if (match(TOKEN_FUNGSI)) {
+    if (check(TOKEN_FUNGSI) && !checkNext(TOKEN_LEFT_PAREN)) {
+        advance();
         funDeclaration();
     } else if (match(TOKEN_KELAS)) {
         classDeclaration();

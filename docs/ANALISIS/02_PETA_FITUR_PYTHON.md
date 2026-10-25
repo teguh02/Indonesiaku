@@ -42,7 +42,7 @@ Prinsip penamaan:
 | `in` (operator) | `dalam` | ✅ | — |
 | `not in` | `tidak dalam` | ✅ | — |
 | `is` / `is not` | `adalah` / `bukan` | ❌ | 1 |
-| `lambda` | `fungsi(x) { ... }` anonim / `lambda` | ❌ | 1 |
+| `lambda` | `fungsi(x) { ... }` anonim | ✅ | 1 — selesai; badan `{ }`, bukan satu-ekspresi |
 | `global` / `nonlocal` | `global` / `nonlokal` | ✅ | — |
 | `del` | `buang` | ❌ | 2 |
 | `assert` | `pastikan` | ✅ | 1 — selesai; pesan dinilai hanya saat gagal |
@@ -68,7 +68,7 @@ Prinsip penamaan:
 | `==` struktural pada daftar/kamus/rentang | | ✅ `adalah` tetap identitas | — |
 | Penugasan berganda `a, b = 1, 2` / tukar | | ❌ | 2 |
 | Unpacking `a, *sisa = daftar` | | ❌ | 2 |
-| Ekspresi kondisional `x jika c selain y` | | ❌ | 1 |
+| Ekspresi kondisional `x jika c selain y` | | ✅ | 1 — selesai; kondisi dinilai lebih dulu |
 | Rantai perbandingan `1 < x < 3` | | ✅ | — |
 | Floor division `//`, `//=` | | ❌ **rusak** (B1) | 0 |
 | Operator bitwise `& \| ^ ~ << >>` | | ❌ | 2 |
