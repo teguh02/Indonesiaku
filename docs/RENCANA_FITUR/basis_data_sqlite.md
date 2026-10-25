@@ -98,7 +98,9 @@ menimbulkan GalatNilai, termasuk db_id_terakhir, bukan konversi lossy.
   bukan "ditambahkan nanti".
 - `db_eksekusi` hanya menjalankan **satu** pernyataan. `sqlite3_prepare_v2`
   mengembalikan sisa string; sisa hanya boleh whitespace/komentar; pernyataan kedua → `GalatNilai`
-  sebelum step pertama (tanpa menyiapkan SQL kedua).
+  sebelum prepare pertama (preflight sqlite3_complete memahami trigger/quote;
+  tanpa menyiapkan SQL kedua). Pengecekan tail tetap dilakukan setelah prepare.
+  Preflight prefix dapat kuadratik pada body trigger sangat besar.
   Ini mencegah `"...; DROP TABLE ..."` lolos lewat satu panggilan.
 - Jumlah `?` harus sama dengan panjang `params`; kalau tidak → `GalatNilai`
   sebelum eksekusi.
@@ -139,9 +141,9 @@ menimbulkan GalatNilai, termasuk db_id_terakhir, bukan konversi lossy.
 |---|---|
 | `src/sqlite3.c`, `src/sqlite3.h` | amalgamation resmi, **vendored apa adanya** |
 | `Makefile` | tambah ke `SOURCES`; `-DSQLITE_OMIT_LOAD_EXTENSION` dll. |
-| `src/object.h` / `object.c` | `OBJ_DB` + `ObjDb { sqlite3* db; bool closed; }` |
-| `src/memory.c` | `freeObject` → `sqlite3_close` bila belum ditutup |
-| `src/native.c` | 10 fungsi di atas |
+| `src/object.h` / `object.c` | `OBJ_DB` + `ObjDb { sqlite3* db; }` (NULL = tertutup) |
+| `src/memory.c` | `freeObject` → `sqlite3_close_v2` bila belum ditutup |
+| `src/db.c`, `src/native.h` | 10 fungsi di atas |
 | `src/vm.c` | `defineNative` di `initVM` |
 | `.gitignore`, CI | amalgamation ikut di-commit (lihat §7) |
 
