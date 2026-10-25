@@ -40,31 +40,35 @@ Pastikan komputer Anda terhubung ke internet untuk:
 
 ## Instalasi di Windows
 
-### 🚀 CARA MUDAH - Download Installer (Recommended!)
+### 🚀 CARA MUDAH - Unduh Paket Siap Pakai (Disarankan)
 
-**Untuk pengguna Windows yang ingin install dengan cepat dan mudah:**
+**Untuk pengguna Windows yang ingin langsung jalan:**
 
-1. **Download Installer**
-   - Buka: https://github.com/teguh02/Indonesiaku/releases
-   - Download file: `Indonesiaku-Setup-v1.0.0.exe` (latest version)
+1. **Unduh paket**
+   - Buka: https://github.com/teguh02/Indonesiaku-Lang/releases/latest
+   - Unduh `indk-windows.zip`
 
-2. **Jalankan Installer**
-   - Double-click file `Indonesiaku-Setup-v1.0.0.exe`
-   - Ikuti wizard instalasi: Next → Next → Install → Finish
-   - Tunggu hingga instalasi selesai (± 1 menit)
+2. **Ekstrak**
+   - Klik kanan → *Extract All…*, misalnya ke `C:\Indonesiaku`
+   - Di dalamnya ada `indk.exe` beserta folder `pustaka\` dan `examples\`
 
-3. **Verifikasi Instalasi**
-   - Buka **PowerShell** atau **Command Prompt** yang BARU
-   - Ketik: `indonesiaku`
-   - Seharusnya melihat REPL prompt `> `
+3. **Verifikasi**
+   - Buka **PowerShell** di folder itu
+   - Ketik: `.\indk.exe -v` → tampil `1.0.0`
+   - Coba contoh: `.\indk.exe examples\hello.idk`
 
-4. **Done! ✅**
-   - Sekarang Anda bisa mulai programming dengan Bahasa Indonesiaku!
+4. **(Opsional) Tambahkan ke PATH**
+   - Agar `indk` bisa dipanggil dari mana saja, tambahkan folder tersebut ke
+     *Environment Variables → Path*
 
-**Keuntungan menggunakan installer:**
-- ✅ 1-click installation (sangat mudah)
-- ✅ Automatic PATH setup (tidak perlu manual config)
-- ✅ File association (.idk files bisa double-click)
+> **Catatan:** installer `.exe` berwizard (`Indonesiaku-Setup-*.exe`) belum
+> tersedia untuk 1.0.0. Skripnya ada di `compiler/indonesiaku_installer.iss`
+> tetapi belum dibangun otomatis, jadi untuk sekarang gunakan paket ZIP di atas.
+
+**Isi paket:**
+- ✅ `indk.exe` — interpreter, tanpa perlu dependensi tambahan
+- ✅ `pustaka/` — pustaka standar, agar `impor matematika` langsung jalan
+- ✅ `examples/` + `SPESIFIKASI.md`
 - ✅ Start Menu shortcuts
 - ✅ Easy uninstall
 
