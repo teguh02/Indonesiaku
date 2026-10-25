@@ -72,11 +72,10 @@ dan untuk latihan di playground yang filesystem-nya read-only.
 | `INTEGER` | angka |
 | `REAL` | angka |
 | `TEXT` | teks |
-| `BLOB` | teks (sementara; `bita` menyusul di Fase 6) |
+| `BLOB` | GalatTipe (belum ada tipe bita) |
 
-Semua angka Indonesiaku adalah `double`, jadi `INTEGER` di atas 2^53 kehilangan
-presisi. Dicatat sebagai batasan yang diketahui sampai `bulat` int64 masuk
-(Fase 2).
+Semua angka Indonesiaku adalah `double`: INTEGER di luar [-2^53, 2^53]
+menimbulkan GalatNilai, termasuk db_id_terakhir, bukan konversi lossy.
 
 ### Fungsi
 
@@ -98,7 +97,8 @@ presisi. Dicatat sebagai batasan yang diketahui sampai `bulat` int64 masuk
   contoh SQL injection. Ini alasan `db_eksekusi` menerima `params` sejak awal,
   bukan "ditambahkan nanti".
 - `db_eksekusi` hanya menjalankan **satu** pernyataan. `sqlite3_prepare_v2`
-  mengembalikan sisa string; bila masih ada sisa non-spasi → `GalatNilai`.
+  mengembalikan sisa string; sisa hanya boleh whitespace/komentar; pernyataan kedua → `GalatNilai`
+  sebelum step pertama (tanpa menyiapkan SQL kedua).
   Ini mencegah `"...; DROP TABLE ..."` lolos lewat satu panggilan.
 - Jumlah `?` harus sama dengan panjang `params`; kalau tidak → `GalatNilai`
   sebelum eksekusi.
@@ -111,6 +111,28 @@ presisi. Dicatat sebagai batasan yang diketahui sampai `bulat` int64 masuk
   yang sudah ada. Pola `freeObject` diikuti apa adanya.
 - Memakai handle yang sudah ditutup → `GalatNilai`, bukan crash.
 
+### Keputusan implementasi awal (belum selesai)
+
+- Sepuluh fungsi: buka, tutup, eksekusi, ambil_semua, ambil_satu,
+  baris_terpengaruh, id_terakhir, mulai, komit, batal.
+- Argumen opsional hanya posisional. Parameter hanya anonymous `?`;
+  named/numbered ditolak. Validasi seluruh tipe/nilai parameter sebelum step.
+- SQL/jalur dengan embedded NUL ditolak; teks parameter/hasil memakai panjang
+  byte eksplisit (NUL pada data tetap didukung). Logika di-bind INTEGER 0/1.
+- Angka parameter non-finite ditolak; bilangan bulat di luar rentang tepat
+  double ditolak. BLOB hasil menimbulkan GalatTipe; INTEGER tidak tepat
+  menimbulkan GalatNilai. SQL DQS=0: petik ganda identifier, tunggal string.
+- Daftar, kamus baris, kunci dan nilai di-root sepanjang alokasi; semua
+  statement difinalisasi pada setiap jalur. Handle NULL berarti tertutup;
+  close/GC memakai sqlite3_close_v2, transaksi terbuka di-rollback saat close.
+- ambil_satu membaca baris pertama saja; kolom bernama sama ditimpa terakhir.
+  Error konversi hasil bukan rollback otomatis atas efek SQL RETURNING.
+- SQLite ATTACH tetap tersedia: mengikuti kebijakan filesystem yang sudah
+  ada, bukan penguatan sandbox. Jangan mengakses DB produksi untuk uji.
+- Vendor resmi dipin dengan URL/versi/SHA256 dan provenance public domain.
+  CI raw source lists, fuzz build, Docker dan clean Windows diaudit.
+  Uji Windows/Alpine tidak boleh diklaim tanpa tool yang benar-benar berjalan.
+
 ## 4. Rencana implementasi
 
 | Bagian | Perubahan |
@@ -119,7 +141,7 @@ presisi. Dicatat sebagai batasan yang diketahui sampai `bulat` int64 masuk
 | `Makefile` | tambah ke `SOURCES`; `-DSQLITE_OMIT_LOAD_EXTENSION` dll. |
 | `src/object.h` / `object.c` | `OBJ_DB` + `ObjDb { sqlite3* db; bool closed; }` |
 | `src/memory.c` | `freeObject` → `sqlite3_close` bila belum ditutup |
-| `src/native.c` | 9 fungsi di atas |
+| `src/native.c` | 10 fungsi di atas |
 | `src/vm.c` | `defineNative` di `initVM` |
 | `.gitignore`, CI | amalgamation ikut di-commit (lihat §7) |
 
@@ -127,7 +149,7 @@ Flag kompilasi (mengecilkan biner, mematikan yang tidak dipakai):
 
 ```
 -DSQLITE_OMIT_LOAD_EXTENSION   # tidak ada .so pihak ketiga
--DSQLITE_DQS=0                 # "x" selalu string, bukan identifier
+-DSQLITE_DQS=0                 # "x" identifier; string SQL memakai petik tunggal
 -DSQLITE_THREADSAFE=0          # VM kita single-thread
 -DSQLITE_DEFAULT_MEMSTATUS=0
 ```
@@ -171,7 +193,7 @@ sedang diisi harus keduanya ada di stack VM saat `dictSet` dipanggil —
 - [ ] `docs/ROADMAP.md` — pindahkan `sqlite` dari Fase 8 ke Fase 3
 - [ ] `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` — `sqlite3` ❌ → ✅
 - [ ] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K18: vendoring amalgamation
-- [ ] `editors/vscode-indonesiaku/extension.js` — 9 builtin baru
+- [ ] `editors/vscode-indonesiaku/extension.js` — 10 builtin baru
 - [ ] `AGENTS.md` — `sqlite3.c` jangan disunting; jebakan GC bersarang
 - [ ] `docker/images/Dockerfile` — pastikan biner tetap jalan di Alpine/musl
 
@@ -188,7 +210,7 @@ dan menahan basis data di belakangnya tidak dibenarkan secara teknis.
 sehingga hasil uji deterministik, dan tidak ada langkah `apt install` untuk
 mahasiswa. Harganya: repo bertambah ~8 MB dan amalgamation harus diperbarui
 manual saat ada CVE. Mitigasi: catat versi persisnya di `CHANGELOG.md` dan
-`src/sqlite3.h`, dan perlakukan pembaruannya seperti dependensi biasa.
+berkas provenance terpisah (jangan edit vendor), dan perlakukan pembaruannya seperti dependensi biasa.
 
 **Ukuran biner** naik dari ~140 KB ke sekitar 1–1,5 MB. Untuk sebuah bahasa
 pemrograman ini wajar; flag `SQLITE_OMIT_*` di atas menekannya.
