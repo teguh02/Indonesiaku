@@ -10,7 +10,7 @@ RUN apk add --no-cache build-base
 WORKDIR /src
 COPY src ./src
 COPY Makefile ./
-RUN make && strip indk
+RUN make clean && make && strip indk
 
 # ---------- runtime ----------
 FROM alpine:3.20

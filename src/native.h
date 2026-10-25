@@ -191,4 +191,14 @@ Value nativeFnTerbalik(int argCount, Value* args);   // terbalik(d)
 Value nativeFnPasangkan(int argCount, Value* args);  // pasangkan(a, b, ...)
 Value nativeFnPeta(int argCount, Value* args);       // peta(f, d)
 Value nativeFnSaring(int argCount, Value* args);     // saring(f, d)
+Value nativeFnDbBuka(int argCount, Value* args);
+Value nativeFnDbTutup(int argCount, Value* args);
+Value nativeFnDbEksekusi(int argCount, Value* args);
+Value nativeFnDbAmbilSemua(int argCount, Value* args);
+Value nativeFnDbAmbilSatu(int argCount, Value* args);
+Value nativeFnDbBarisTerpengaruh(int argCount, Value* args);
+Value nativeFnDbIdTerakhir(int argCount, Value* args);
+Value nativeFnDbMulai(int argCount, Value* args);
+Value nativeFnDbKomit(int argCount, Value* args);
+Value nativeFnDbBatal(int argCount, Value* args);
 #endif

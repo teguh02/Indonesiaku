@@ -8,6 +8,7 @@
 #include "object.h"
 #include "table.h"
 #include "vm.h"
+#include "sqlite3.h"
 
 #ifdef DEBUG_LOG_GC
 #include "debug.h"
@@ -135,6 +136,7 @@ static void blackenObject(Obj* object) {
         case OBJ_FILE:
             markObject((Obj*)((ObjFile*)object)->path);
             break;
+        case OBJ_DB:
         case OBJ_SOCKET:
             break;
         case OBJ_RANGE:   // holds only numbers
@@ -212,6 +214,12 @@ static void freeObject(Obj* object) {
                 file->isOpen = false;
             }
             FREE(ObjFile, object);
+            break;
+        }
+        case OBJ_DB: {
+            ObjDb* db = (ObjDb*)object;
+            if (db->db != NULL) sqlite3_close_v2(db->db);
+            FREE(ObjDb, object);
             break;
         }
         case OBJ_SOCKET: {

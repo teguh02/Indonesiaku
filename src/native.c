@@ -760,6 +760,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("kelas", 5));
     } else if (IS_FILE(args[0])) {
         return OBJ_VAL(copyString("berkas", 6));
+    } else if (IS_DB(args[0])) {
+        return OBJ_VAL(copyString("db", 2));
     } else if (IS_SOCKET(args[0])) {
         return OBJ_VAL(copyString("soket", 5));
     } else if (IS_RANGE(args[0])) {

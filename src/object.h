@@ -18,6 +18,9 @@
 #define IS_INSTANCE(value)     isObjType(value, OBJ_INSTANCE)
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define IS_FILE(value)         isObjType(value, OBJ_FILE)
+#define IS_DB(value)           isObjType(value, OBJ_DB)
+#define AS_DB(value)           ((ObjDb*)AS_OBJ(value))
+
 #define IS_SOCKET(value)       isObjType(value, OBJ_SOCKET)
 #define IS_RANGE(value)        isObjType(value, OBJ_RANGE)
 
@@ -48,6 +51,7 @@ typedef enum {
     OBJ_BOUND_METHOD,
     OBJ_FILE,
     OBJ_SOCKET,
+    OBJ_DB,
     OBJ_RANGE,
 } ObjType;
 
@@ -151,6 +155,13 @@ typedef struct {
     bool isOpen;
 } ObjSocket;
 
+typedef struct sqlite3 sqlite3;
+typedef struct {
+    Obj obj;
+    sqlite3* db; // NULL after close; no VM-owned children.
+} ObjDb;
+
+ObjDb* newDb(void);
 ObjFunction* newFunction();
 ObjNative* newNative(NativeFn function);
 ObjClosure* newClosure(ObjFunction* function);

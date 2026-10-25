@@ -28,6 +28,8 @@ SOURCES = src/main.c \
           src/debug.c \
           src/memory.c \
           src/native.c \
+          src/db.c \
+          src/sqlite3.c \
           src/object.c \
           src/scanner.c \
           src/table.c \
@@ -48,6 +50,12 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo Build berhasil! Jalankan dengan: ./$(TARGET) atau ./$(TARGET) file.idk
+
+SQLITE_FLAGS = -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0
+
+# Preserve upstream bytes and suppress only vendor warnings. Keep sanitizer flags.
+src/sqlite3.o: src/sqlite3.c src/sqlite3.h
+	$(CC) $(filter-out -Wall -Wextra,$(CFLAGS)) $(SQLITE_FLAGS) -c $< -o $@
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@

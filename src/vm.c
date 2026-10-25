@@ -220,6 +220,17 @@ void initVM() {
     defineErrorClass("HentiIterasi", vm.galat);
     defineErrorClass("GalatSintaks", vm.galat);
 
+    defineNative("db_buka", nativeFnDbBuka);
+    defineNative("db_tutup", nativeFnDbTutup);
+    defineNative("db_eksekusi", nativeFnDbEksekusi);
+    defineNative("db_ambil_semua", nativeFnDbAmbilSemua);
+    defineNative("db_ambil_satu", nativeFnDbAmbilSatu);
+    defineNative("db_baris_terpengaruh", nativeFnDbBarisTerpengaruh);
+    defineNative("db_id_terakhir", nativeFnDbIdTerakhir);
+    defineNative("db_mulai", nativeFnDbMulai);
+    defineNative("db_komit", nativeFnDbKomit);
+    defineNative("db_batal", nativeFnDbBatal);
+
     defineNative("jam", clockNative);
     defineNative("min", nativeFnMin);
     defineNative("max", nativeFnMax);

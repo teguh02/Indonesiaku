@@ -160,6 +160,12 @@ ObjFile* newFile(void* handle, ObjString* path) {
     return file;
 }
 
+ObjDb* newDb(void) {
+    ObjDb* db = ALLOCATE_OBJ(ObjDb, OBJ_DB);
+    db->db = NULL;
+    return db;
+}
+
 ObjSocket* newSocket(long long fd) {
     ObjSocket* sock = ALLOCATE_OBJ(ObjSocket, OBJ_SOCKET);
     sock->fd = fd;
@@ -325,6 +331,9 @@ void printObject(Value value) {
                    file->isOpen ? "" : " (tertutup)");
             break;
         }
+        case OBJ_DB:
+            printf("<db%s>", AS_DB(value)->db ? "" : " (tertutup)");
+            break;
         case OBJ_SOCKET: {
             ObjSocket* sock = AS_SOCKET(value);
             printf("<soket%s>", sock->isOpen ? "" : " (tertutup)");
