@@ -24,6 +24,17 @@ if [ ! -x "$BIN" ]; then
     exit 1
 fi
 
+# `timeout` adalah GNU coreutils: ada di Linux, TIDAK ada di macOS bawaan
+# (gtimeout bila coreutils dipasang lewat brew). Tanpa penjaga ini setiap blok
+# keluar 127 dan seluruh suite merah di macOS.
+if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT="timeout 60"
+elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT="gtimeout 60"
+else
+    TIMEOUT=""
+fi
+
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
@@ -59,7 +70,7 @@ for md in website/panduan/*.md; do
         label="$(basename "$md")#$nomor"
 
         stderr_file="$WORK/err.txt"
-        timeout 60 "$BIN" "$blok" >/dev/null 2>"$stderr_file"
+        $TIMEOUT "$BIN" "$blok" >/dev/null 2>"$stderr_file"
         code=$?
         stderr=$(cat "$stderr_file")
 
