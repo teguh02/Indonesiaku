@@ -1,0 +1,58 @@
+# Basis data SQLite — seluruhnya di memori supaya tidak ada berkas tersisa.
+variabel db = db_buka(":memory:")
+
+db_eksekusi(db, "CREATE TABLE siswa (id INTEGER PRIMARY KEY, nama TEXT, nilai REAL)")
+
+# Parameter diikat dengan '?' — jangan pernah merangkai SQL dengan '+'.
+db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", ["Budi", 85.5])
+db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", ["Ani", 91])
+db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", ["Cici", 78])
+cetak("id terakhir:", db_id_terakhir(db))
+
+# Setiap baris adalah kamus: kolom -> nilai.
+variabel baris = db_ambil_semua(db, "SELECT nama, nilai FROM siswa WHERE nilai > ? ORDER BY nilai", [80])
+untuk b dalam baris {
+    cetak(b["nama"], b["nilai"])
+}
+
+variabel satu = db_ambil_satu(db, "SELECT nama FROM siswa WHERE id = ?", [1])
+cetak("satu:", satu["nama"])
+cetak("tidak ada:", db_ambil_satu(db, "SELECT nama FROM siswa WHERE id = ?", [999]))
+
+db_eksekusi(db, "UPDATE siswa SET nilai = nilai + 1 WHERE nilai < ?", [90])
+cetak("terpengaruh:", db_baris_terpengaruh(db))
+
+# NULL di SQLite adalah 'kosong' di Indonesiaku, bolak-balik.
+db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", [kosong, kosong])
+variabel nol = db_ambil_satu(db, "SELECT nama, nilai FROM siswa WHERE nama IS NULL")
+cetak("null:", nol["nama"], nol["nilai"])
+
+# Transaksi: db_batal membatalkan, db_komit menyimpan.
+db_mulai(db)
+db_eksekusi(db, "DELETE FROM siswa")
+db_batal(db)
+cetak("sesudah batal:", db_ambil_satu(db, "SELECT COUNT(*) AS n FROM siswa")["n"])
+
+db_mulai(db)
+db_eksekusi(db, "DELETE FROM siswa WHERE nama IS NULL")
+db_komit(db)
+cetak("sesudah komit:", db_ambil_satu(db, "SELECT COUNT(*) AS n FROM siswa")["n"])
+
+# Teks berbahaya yang dikirim sebagai PARAMETER tersimpan apa adanya,
+# bukan dieksekusi — inilah gunanya '?'.
+variabel jahat = "'; DROP TABLE siswa; --"
+db_eksekusi(db, "INSERT INTO siswa (nama) VALUES (?)", [jahat])
+cetak("tersimpan utuh:", db_ambil_satu(db, "SELECT nama FROM siswa WHERE id = ?", [db_id_terakhir(db)])["nama"] == jahat)
+cetak("tabel masih ada:", db_ambil_satu(db, "SELECT COUNT(*) AS n FROM siswa")["n"])
+
+# Satu panggilan hanya boleh berisi satu pernyataan.
+coba {
+    db_eksekusi(db, "INSERT INTO siswa (nama) VALUES ('x'); DROP TABLE siswa")
+} kecuali GalatNilai sebagai e {
+    cetak("ditolak:", e.pesan)
+}
+cetak("tabel tetap utuh:", db_ambil_satu(db, "SELECT COUNT(*) AS n FROM siswa")["n"])
+
+db_tutup(db)
+db_tutup(db)        # aman dipanggil dua kali
+cetak("selesai")

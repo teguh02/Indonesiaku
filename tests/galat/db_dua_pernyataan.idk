@@ -1,0 +1,4 @@
+# Satu db_eksekusi hanya boleh membawa satu pernyataan SQL.
+variabel db = db_buka(":memory:")
+db_eksekusi(db, "CREATE TABLE t (a)")
+db_eksekusi(db, "INSERT INTO t VALUES (1); DROP TABLE t")

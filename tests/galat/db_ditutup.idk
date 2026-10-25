@@ -1,0 +1,4 @@
+# Memakai handle yang sudah ditutup harus bergalat, bukan crash.
+variabel db = db_buka(":memory:")
+db_tutup(db)
+db_eksekusi(db, "SELECT 1")

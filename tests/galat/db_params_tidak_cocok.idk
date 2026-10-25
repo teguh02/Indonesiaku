@@ -1,0 +1,4 @@
+# Jumlah '?' harus sama dengan panjang daftar parameter.
+variabel db = db_buka(":memory:")
+db_eksekusi(db, "CREATE TABLE t (a, b)")
+db_eksekusi(db, "INSERT INTO t VALUES (?, ?)", ["cuma satu"])
