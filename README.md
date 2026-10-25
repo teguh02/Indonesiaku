@@ -51,6 +51,7 @@ Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
 - ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
 - ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
 - ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)
+- ✅ **Argumen bernama** `gambar("Judul", tengah=benar)` (boleh melewati parameter di tengah)
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
@@ -273,6 +274,13 @@ fungsi sapa_bawaan(nama, salam="Halo") {
 
 sapa_bawaan("Budi")          # Halo, Budi
 sapa_bawaan("Budi", "Hai")   # Hai, Budi
+
+# Argumen bernama: lewati parameter di tengah, urutan bebas
+fungsi gambar(teks, lebar=80, garis="-") {
+    cetak(teks, lebar, garis)
+}
+
+gambar("Judul", garis="=")   # Judul 80 =
 
 # Fungsi dengan return
 fungsi tambah(a, b) {

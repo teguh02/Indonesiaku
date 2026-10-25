@@ -8,6 +8,12 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added — Fase 1
+- ✨ **Argumen bernama:** `gambar("Judul", tengah=benar)` mengirim nilai
+  berdasarkan nama parameter, sehingga parameter di tengah boleh dilewati dan
+  urutannya bebas. Berlaku untuk fungsi, `init`, metode, dan `super`. Argumen
+  posisional wajib mendahului yang bernama; nama tak dikenal, parameter yang
+  diisi dua kali, dan parameter wajib yang kosong menaikkan `GalatTipe` yang
+  menyebut nama parameternya. Fungsi bawaan belum menerimanya.
 - ✨ **Parameter dengan nilai bawaan:** `fungsi sapa(nama, salam="Halo") { }`,
   juga untuk `init` dan metode kelas. Nilai bawaan boleh ekspresi apa pun dan
   boleh merujuk parameter di kirinya (`fungsi f(a, b=a)`). Parameter wajib

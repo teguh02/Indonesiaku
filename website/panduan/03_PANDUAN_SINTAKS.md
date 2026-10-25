@@ -618,6 +618,38 @@ Nilai bawaan juga berlaku untuk `init` dan metode kelas.
 
 > Contoh: [`examples/argumen_bawaan.idk`](../examples/argumen_bawaan.idk)
 
+### Argumen Bernama
+
+Argumen boleh dikirim berdasarkan **nama parameter**, bukan urutannya.
+
+```indonesiaku
+fungsi gambar(teks, lebar=80, garis="-", tengah=salah) {
+    cetak(teks, lebar, garis, tengah)
+}
+
+gambar("Judul")                      # Judul 80 - salah
+gambar("Judul", tengah=benar)        # lewati lebar dan garis
+gambar("Judul", garis="=", lebar=40) # urutan bebas
+gambar(teks="Judul")                 # parameter wajib pun boleh dinamai
+```
+
+Kegunaan utamanya adalah **melewati parameter di tengah** dan membuat
+pemanggilan terbaca sendiri: `gambar("Judul", tengah=benar)` jauh lebih jelas
+daripada `gambar("Judul", 80, "-", benar)`.
+
+Aturannya:
+
+- Argumen posisional harus mendahului argumen bernama —
+  `f(b=1, 2)` adalah galat kompilasi.
+- Nama harus cocok dengan nama parameter; kalau tidak → `GalatTipe`.
+- Satu parameter tidak boleh diisi dua kali (posisional + bernama) → `GalatTipe`.
+- Parameter wajib yang tidak terisi dilaporkan dengan **namanya**:
+  `Parameter wajib 'a' tidak diisi.`
+- Berlaku juga untuk `init`, metode kelas, dan `super`.
+- Fungsi bawaan (`panjang`, `cetak`, dll.) belum menerima argumen bernama.
+
+> Contoh: [`examples/argumen_bernama.idk`](../examples/argumen_bernama.idk)
+
 ### Fungsi dengan Multiple Parameters
 
 ```indonesiaku

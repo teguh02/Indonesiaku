@@ -32,6 +32,7 @@ kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
 | K13 | String | UTF-8 di memori, indeks & panjang per karakter (code point) | Ya | selesai ✅ (Fase 0) |
 | K14 | Kebijakan stabilitas & versi | SemVer + periode deprecation 1 minor | — | disetujui |
 | K15 | Nilai bawaan parameter | Dievaluasi **tiap panggilan**, bukan sekali saat definisi | Ya (beda dari Python) | disetujui — selesai ✅ (Fase 1) |
+| K16 | Argumen bernama | `f(b=2)`, boleh melewati parameter di tengah | Ya | disetujui — selesai ✅ (Fase 1) |
 
 ---
 
@@ -216,9 +217,33 @@ Konsekuensi yang diterima sadar:
 - Nilai bawaan boleh merujuk parameter di kirinya (`fungsi f(a, b=a)`), karena
   ia dijalankan di dalam frame yang slot sebelumnya sudah terisi.
 
-Implementasi: prolog bertingkat. Kode tiap nilai bawaan dipancarkan berurutan
-di awal chunk fungsi, dan `call()` melompat ke titik masuk yang sesuai dengan
-jumlah argumen yang diberikan (`ObjFunction.entryPoints`). Tidak ada opcode
-baru dan tidak ada nilai sentinel.
+Implementasi: prolog bersyarat. `call()` mengisi slot parameter yang tidak
+diberikan pemanggil dengan penanda internal `VAL_TAKTERISI`, lalu tiap nilai
+bawaan diawali `OP_ISI_BAWAAN slot, lompat` yang melewati ekspresinya bila
+slot sudah terisi.
+
+Versi pertama memakai **prolog bertingkat** (`ObjFunction.entryPoints`, lompat
+langsung ke titik masuk sesuai jumlah argumen). Itu diganti saat argumen
+bernama (K16) masuk: titik masuk tunggal hanya bisa mengisi **ekor**
+parameter, sedangkan `f(1, c=9)` meninggalkan lubang di tengah.
 
 **Jangan "perbaiki" ini menjadi perilaku Python.**
+
+## K16 — Argumen bernama
+
+`f(b=2)` mengirim nilai berdasarkan nama parameter. Argumen posisional wajib
+mendahului argumen bernama (seperti Python).
+
+Pencocokan nama terjadi **saat runtime**, bukan saat kompilasi, karena callee
+adalah nilai runtime: `ObjFunction.paramNames` menyimpan nama parameter dan
+`OP_CALL_BERNAMA` membawa daftar nama sebagai konstanta chunk. Mencocokkan
+saat kompilasi untuk fungsi global yang kebetulan sudah dikenal ditolak —
+hasilnya akan bergantung pada urutan definisi, dan menghasilkan dua jalur kode
+untuk satu fitur.
+
+Galat yang dihasilkan menyebut nama parameternya, bukan sekadar jumlah
+argumen: `Parameter wajib 'a' tidak diisi.`, `Fungsi tidak punya parameter
+bernama 'warna'.`, `Parameter 'a' diisi lebih dari sekali.`
+
+Fungsi bawaan (native) belum menerima argumen bernama dan menolaknya dengan
+pesan jelas. `cetak(pisah=, akhir=)` menunggu K12.

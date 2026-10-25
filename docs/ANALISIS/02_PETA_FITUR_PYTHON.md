@@ -75,7 +75,7 @@ Prinsip penamaan:
 | List comprehension | `[x*2 untuk x dalam a jika x > 0]` | ❌ | 2 |
 | Dict/set comprehension, generator expression | | ❌ | 5 |
 | Argumen bawaan `def f(a, b=2)` | | ✅ dievaluasi tiap panggilan (K15) | — |
-| Argumen bernama `f(b=1)` | | ❌ ditolak dengan pesan jelas (B2 ditutup) | 1 |
+| Argumen bernama `f(b=1)` | | ✅ (K16) | — |
 | `*args`, `**kwargs` | | ❌ | 2 |
 | Dekorator `@` | | ❌ | 4 |
 | Walrus `:=` | | 🟡 (assignment sudah ekspresi) | — |
