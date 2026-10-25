@@ -167,7 +167,9 @@ static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
         int rc;
         if (IS_KOSONG(v)) rc = sqlite3_bind_null(stmt, i + 1);
         else if (IS_BOOL(v)) rc = sqlite3_bind_int(stmt, i + 1, AS_BOOL(v) ? 1 : 0);
-        else if (IS_NUMBER(v)) {
+        else if (IS_INT(v)) {
+            rc = sqlite3_bind_int64(stmt, i + 1, (sqlite3_int64)AS_INT(v));
+        } else if (IS_NUMBER(v)) {
             double n = AS_NUMBER(v);
             rc = floor(n) == n ? sqlite3_bind_int64(stmt, i + 1, (sqlite3_int64)n)
                               : sqlite3_bind_double(stmt, i + 1, n);
@@ -186,12 +188,10 @@ fail:
     return NULL;
 }
 
+// K2: SQLite INTEGER is a bulat now, so the old ±2^53 restriction is gone —
+// sqlite3_int64 and our int64 are the same width.
 static Value dbInteger(sqlite3_int64 n) {
-    if (n < -DB_EXACT_INT || n > DB_EXACT_INT) {
-        nativeRaiseKelas(vm.galatNilai, "db: INTEGER di luar rentang tepat double");
-        return KOSONG_VAL;
-    }
-    return NUMBER_VAL((double)n);
+    return INT_VAL((int64_t)n);
 }
 
 static Value dbColumn(sqlite3_stmt* stmt, int i) {

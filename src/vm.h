@@ -71,6 +71,7 @@ typedef struct {
     ObjClass* galat;
     ObjClass* galatAritmetika;
     ObjClass* galatBagiNol;
+    ObjClass* galatLuapan;
     ObjClass* galatTipe;
     ObjClass* galatNilai;
     ObjClass* galatIndeks;

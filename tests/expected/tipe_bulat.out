@@ -1,0 +1,46 @@
+=== literal ===
+7
+7.0
+3
+3.0
+=== aritmetika bulat ===
+9 5 14
+1024
+1
+12
+5
+9007199254740994
+=== pembagian ===
+3.0
+3.5
+3 -4
+1 2 -2
+3.0
+0.5
+=== perbandingan ===
+benar
+salah
+benar salah
+benar
+=== truthiness ===
+0 salah
+0.0 salah
+1 benar
+=== builtin yang menghasilkan bulat ===
+4 3
+65 7 3
+2 3 4
+0b1010 0o12 0xff
+6 3.5
+50
+7.0
+=== rentang & iterasi ===
+0
+1
+2
+[1, 2, 3]
+[[5, a], [6, b]]
+=== luapan tertangkap ===
+tertangkap: Hasil penjumlahan melebihi jangkauan bilangan bulat.
+tertangkap: Hasil pemangkatan melebihi jangkauan bilangan bulat.
+program tetap berjalan

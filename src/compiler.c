@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <errno.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -770,9 +771,33 @@ static void grouping(bool canAssign) {
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah ekspresi.");
 }
 
+// K2: a literal without a '.' or exponent is a bulat (int64); anything else is
+// a desimal (double). A bulat too large for int64 is a compile error rather
+// than a silent rounding — bignums come later.
 static void number(bool canAssign) {
-    double value = strtod(parser.previous.start, NULL);
-    emitConstant(NUMBER_VAL(value));
+    const char* start = parser.previous.start;
+    int length = parser.previous.length;
+    bool isDecimal = false;
+    for (int i = 0; i < length; i++) {
+        if (start[i] == '.' || start[i] == 'e' || start[i] == 'E') { isDecimal = true; break; }
+    }
+
+    if (!isDecimal && length < 32) {
+        char buffer[32];
+        memcpy(buffer, start, (size_t)length);
+        buffer[length] = '\0';
+        errno = 0;
+        long long value = strtoll(buffer, NULL, 10);
+        if (errno == ERANGE) {
+            error("Angka bulat melebihi jangkauan "
+                  "-9223372036854775808..9223372036854775807.");
+            return;
+        }
+        emitConstant(INT_VAL(value));
+        return;
+    }
+
+    emitConstant(NUMBER_VAL(strtod(start, NULL)));
 }
 
 static void or_(bool canAssign) {

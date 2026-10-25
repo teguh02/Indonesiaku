@@ -175,6 +175,9 @@ Value dictKeyAt(ObjDict* dict, int index);
 ObjRange* newRange(double start, double stop, double step);
 double rangeLength(ObjRange* range);
 bool rangeContains(ObjRange* range, double value);
+// K2: element `index` of a rentang, as a bulat when the arithmetic stays
+// whole (a rentang of bulat yields bulat, like Python's range).
+Value rangeElement(ObjRange* range, int index);
 ObjClass* newClass(ObjString* name);
 ObjInstance* newInstance(ObjClass* klass);
 ObjBoundMethod* newBoundMethod(Value receiver, ObjClosure* method);

@@ -1,6 +1,9 @@
 #ifndef indonesiaku_value_h
 #define indonesiaku_value_h
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "common.h"
 
 typedef struct Obj Obj;
@@ -14,7 +17,8 @@ typedef enum {
     // from user code — call() rejects missing required parameters first, and
     // every optional slot is overwritten by its default.
     VAL_TAKTERISI,
-    VAL_NUMBER,
+    VAL_NUMBER,  // desimal (double)
+    VAL_INT,     // bulat (int64, K2)
     VAL_OBJ
 } ValueType;
 
@@ -23,6 +27,7 @@ typedef struct {
     union {
         bool boolean;
         double number;
+        int64_t integer;
         Obj* obj;
     } as;
 } Value;
@@ -30,17 +35,38 @@ typedef struct {
 #define IS_BOOL(value)    ((value).type == VAL_BOOL)
 #define IS_KOSONG(value)  ((value).type == VAL_KOSONG)
 #define IS_TAKTERISI(value) ((value).type == VAL_TAKTERISI)
-#define IS_NUMBER(value)  ((value).type == VAL_NUMBER)
+// K2: two number types. IS_NUMBER() is true for both, so every existing
+// "is this a number?" check keeps working; use IS_INT() to pick the int path.
+// These are inline functions, not macros, because several call sites pass
+// pop()/peek() and must not evaluate their argument twice.
+static inline bool isNumberValue(Value value) {
+    return value.type == VAL_NUMBER || value.type == VAL_INT;
+}
+static inline bool isIntValue(Value value) {
+    return value.type == VAL_INT;
+}
+static inline double asNumber(Value value) {
+    return value.type == VAL_INT ? (double)value.as.integer : value.as.number;
+}
+static inline int64_t asInt(Value value) {
+    return value.type == VAL_INT ? value.as.integer : (int64_t)value.as.number;
+}
+
+#define IS_INT(value)     isIntValue(value)
+#define IS_FLOAT(value)   ((value).type == VAL_NUMBER)
+#define IS_NUMBER(value)  isNumberValue(value)
 #define IS_OBJ(value)     ((value).type == VAL_OBJ)
 
 #define AS_OBJ(value)     ((value).as.obj)
 #define AS_BOOL(value)    ((value).as.boolean)
-#define AS_NUMBER(value)  ((value).as.number)
+#define AS_NUMBER(value)  asNumber(value)
+#define AS_INT(value)     asInt(value)
 
 #define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
 #define KOSONG_VAL        ((Value){VAL_KOSONG, {.number = 0}})
 #define TAKTERISI_VAL     ((Value){VAL_TAKTERISI, {.number = 0}})
-#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
+#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = (double)(value)}})
+#define INT_VAL(value)    ((Value){VAL_INT, {.integer = (int64_t)(value)}})
 #define OBJ_VAL(object)   ((Value){VAL_OBJ, {.obj = (Obj*)object}})
 
 typedef struct {
@@ -51,10 +77,28 @@ typedef struct {
 
 bool valuesEqual(Value a, Value b);
 bool valuesIdentical(Value a, Value b);
+
+// --- K2: int64 arithmetic ------------------------------------------------
+// Each returns true when the mathematical result does not fit in int64; *out
+// is then unspecified. Callers raise GalatLuapan instead of wrapping silently.
+bool intAddOverflow(int64_t a, int64_t b, int64_t* out);
+bool intSubOverflow(int64_t a, int64_t b, int64_t* out);
+bool intMulOverflow(int64_t a, int64_t b, int64_t* out);
+// Python floor division / modulo (result takes the divisor's sign). Both
+// return false for a zero divisor; intFloorDiv also refuses INT64_MIN / -1.
+bool intFloorDiv(int64_t a, int64_t b, int64_t* out);
+bool intModulo(int64_t a, int64_t b, int64_t* out);
+// Exponentiation by squaring. `exp` must be >= 0; *overflow is set instead of
+// wrapping. Negative exponents are handled by the caller as doubles.
+int64_t intPow(int64_t base, int64_t exp, bool* overflow);
+// Numeric comparison that does not lose int64 precision when both sides are
+// bulat. Returns false when either operand is not a number.
+bool numberCompare(Value a, Value b, int* result);
 void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
 void printValue(Value value);
 void numberToString(double value, char* buf, size_t size);
+void rangeNumberToString(double value, char* buf, size_t size);
 
 #endif

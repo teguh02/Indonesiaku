@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <time.h>
+#include <errno.h>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -60,6 +61,14 @@ Value nativeFnAbs(int argCount, Value* args) {
         nativeRaise("abs() hanya menerima angka");
         return NUMBER_VAL(0);
     }
+    if (IS_INT(args[0])) {
+        int64_t n = AS_INT(args[0]);
+        if (n == INT64_MIN) {
+            nativeRaiseKelas(vm.galatLuapan, "abs() melebihi jangkauan bilangan bulat");
+            return NUMBER_VAL(0);
+        }
+        return INT_VAL(n < 0 ? -n : n);       // abs() of a bulat stays bulat
+    }
     return NUMBER_VAL(fabs(AS_NUMBER(args[0])));
 }
 
@@ -89,6 +98,16 @@ Value nativeFnPangkat(int argCount, Value* args) {
         nativeRaise("pangkat() hanya menerima angka");
         return NUMBER_VAL(0);
     }
+    // pangkat() mirrors the '**' operator: bulat ** bulat >= 0 stays bulat.
+    if (IS_INT(args[0]) && IS_INT(args[1]) && AS_INT(args[1]) >= 0) {
+        bool overflow;
+        int64_t hasil = intPow(AS_INT(args[0]), AS_INT(args[1]), &overflow);
+        if (overflow) {
+            nativeRaiseKelas(vm.galatLuapan, "pangkat() melebihi jangkauan bilangan bulat");
+            return NUMBER_VAL(0);
+        }
+        return INT_VAL(hasil);
+    }
     return NUMBER_VAL(pow(AS_NUMBER(args[0]), AS_NUMBER(args[1])));
 }
 
@@ -101,7 +120,13 @@ Value nativeFnBulat(int argCount, Value* args) {
         nativeRaise("bulat() hanya menerima angka");
         return NUMBER_VAL(0);
     }
-    return NUMBER_VAL(round(AS_NUMBER(args[0])));
+    // Python's round() returns an int.
+    double hasil = round(AS_NUMBER(args[0]));
+    if (hasil >= 9223372036854775808.0 || hasil < -9223372036854775808.0) {
+        nativeRaiseKelas(vm.galatLuapan, "bulat() melebihi jangkauan bilangan bulat");
+        return NUMBER_VAL(0);
+    }
+    return INT_VAL((int64_t)hasil);
 }
 
 Value nativeFnLantai(int argCount, Value* args) {
@@ -113,7 +138,13 @@ Value nativeFnLantai(int argCount, Value* args) {
         nativeRaise("lantai() hanya menerima angka");
         return NUMBER_VAL(0);
     }
-    return NUMBER_VAL(floor(AS_NUMBER(args[0])));
+    // math.floor() returns an int in Python.
+    double hasil = floor(AS_NUMBER(args[0]));
+    if (hasil >= 9223372036854775808.0 || hasil < -9223372036854775808.0) {
+        nativeRaiseKelas(vm.galatLuapan, "lantai() melebihi jangkauan bilangan bulat");
+        return NUMBER_VAL(0);
+    }
+    return INT_VAL((int64_t)hasil);
 }
 
 Value nativeFnAtap(int argCount, Value* args) {
@@ -125,7 +156,13 @@ Value nativeFnAtap(int argCount, Value* args) {
         nativeRaise("atap() hanya menerima angka");
         return NUMBER_VAL(0);
     }
-    return NUMBER_VAL(ceil(AS_NUMBER(args[0])));
+    // math.ceil() returns an int in Python.
+    double hasil = ceil(AS_NUMBER(args[0]));
+    if (hasil >= 9223372036854775808.0 || hasil < -9223372036854775808.0) {
+        nativeRaiseKelas(vm.galatLuapan, "atap() melebihi jangkauan bilangan bulat");
+        return NUMBER_VAL(0);
+    }
+    return INT_VAL((int64_t)hasil);
 }
 
 Value nativeFnAcak(int argCount, Value* args) {
@@ -155,10 +192,7 @@ static bool seqLength(Value seq, int* length) {
 // menjaga nilai lain yang dipegangnya tetap tereferensi dari stack VM.
 static Value seqGet(Value seq, int i) {
     if (IS_LIST(seq)) return AS_LIST(seq)->items.values[i];
-    if (IS_RANGE(seq)) {
-        ObjRange* r = AS_RANGE(seq);
-        return NUMBER_VAL(r->start + i * r->step);
-    }
+    if (IS_RANGE(seq)) return rangeElement(AS_RANGE(seq), i);
     ObjString* teks = AS_STRING(seq);
     int offset = utf8ByteOffset(teks, i);
     return OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
@@ -259,6 +293,16 @@ Value nativeFnBulatkan(int argCount, Value* args) {
     }
     if (!isfinite(x)) return NUMBER_VAL(x);
 
+    // Python's round(x) with no digit returns an int (banker's rounding).
+    if (digit == 0) {
+        double hasil = nearbyint(x);
+        if (hasil >= 9223372036854775808.0 || hasil < -9223372036854775808.0) {
+            nativeRaiseKelas(vm.galatLuapan, "bulatkan() melebihi jangkauan bilangan bulat");
+            return NUMBER_VAL(0);
+        }
+        return INT_VAL((int64_t)hasil);
+    }
+
     if (digit < 0) {
         // printf tidak punya presisi negatif: skala, bulatkan setengah-ke-genap
         // (mode pembulatan default FPU), lalu kembalikan skalanya.
@@ -283,6 +327,26 @@ Value nativeFnBagiSisa(int argCount, Value* args) {
         nativeRaiseKelas(vm.galatTipe, "bagi_sisa() hanya menerima angka");
         return KOSONG_VAL;
     }
+    if (IS_INT(args[0]) && IS_INT(args[1])) {
+        int64_t a = AS_INT(args[0]);
+        int64_t b = AS_INT(args[1]);
+        if (b == 0) {
+            nativeRaiseKelas(vm.galatBagiNol, "Pembagian dengan nol.");
+            return KOSONG_VAL;
+        }
+        int64_t hasilBagi, hasilSisa;
+        if (!intFloorDiv(a, b, &hasilBagi) || !intModulo(a, b, &hasilSisa)) {
+            nativeRaiseKelas(vm.galatLuapan, "bagi_sisa() melebihi jangkauan bilangan bulat");
+            return KOSONG_VAL;
+        }
+        ObjList* hasil = newList();
+        push(OBJ_VAL(hasil));
+        writeValueArray(&hasil->items, INT_VAL(hasilBagi));
+        writeValueArray(&hasil->items, INT_VAL(hasilSisa));
+        pop();
+        return OBJ_VAL(hasil);
+    }
+
     double a = AS_NUMBER(args[0]);
     double b = AS_NUMBER(args[1]);
     if (b == 0) {
@@ -316,18 +380,26 @@ static Value toBase(int argCount, Value* args, int base, const char* prefix,
         nativeRaiseKelas(vm.galatTipe, "%s() hanya menerima angka", nama);
         return KOSONG_VAL;
     }
-    double x = AS_NUMBER(args[0]);
-    if (!isfinite(x) || x != floor(x)) {
-        nativeRaiseKelas(vm.galatTipe, "%s() memerlukan bilangan bulat", nama);
-        return KOSONG_VAL;
-    }
-    if (fabs(x) > 9007199254740992.0) {          // 2^53: di atas ini double tidak eksak
-        nativeRaiseKelas(vm.galatNilai, "%s() angka terlalu besar", nama);
-        return KOSONG_VAL;
+    int64_t bulat;
+    if (IS_INT(args[0])) {
+        bulat = AS_INT(args[0]);
+    } else {
+        double x = AS_NUMBER(args[0]);
+        if (!isfinite(x) || x != floor(x)) {
+            nativeRaiseKelas(vm.galatTipe, "%s() memerlukan bilangan bulat", nama);
+            return KOSONG_VAL;
+        }
+        if (x >= 9223372036854775808.0 || x < -9223372036854775808.0) {
+            nativeRaiseKelas(vm.galatNilai, "%s() angka terlalu besar", nama);
+            return KOSONG_VAL;
+        }
+        bulat = (int64_t)x;
     }
 
-    bool negatif = x < 0;
-    unsigned long long n = (unsigned long long)fabs(x);
+    bool negatif = bulat < 0;
+    // Two's-complement magnitude, so INT64_MIN converts without UB.
+    unsigned long long n = negatif ? (unsigned long long)(-(bulat + 1)) + 1
+                                   : (unsigned long long)bulat;
     char digits[72];
     int len = 0;
     do {
@@ -354,7 +426,8 @@ Value nativeFnKeBulat(int argCount, Value* args) {
         nativeRaiseKelas(vm.galatTipe, "ke_bulat() memerlukan 1 argumen");
         return NUMBER_VAL(0);
     }
-    if (IS_BOOL(args[0])) return NUMBER_VAL(AS_BOOL(args[0]) ? 1 : 0);
+    if (IS_BOOL(args[0])) return INT_VAL(AS_BOOL(args[0]) ? 1 : 0);
+    if (IS_INT(args[0])) return args[0];
     if (IS_NUMBER(args[0])) {
         double x = AS_NUMBER(args[0]);
         if (!isfinite(x)) {
@@ -362,7 +435,12 @@ Value nativeFnKeBulat(int argCount, Value* args) {
                              isnan(x) ? "nan" : "takhingga");
             return NUMBER_VAL(0);
         }
-        return NUMBER_VAL(trunc(x));
+        // Truncates toward zero, like Python's int().
+        if (trunc(x) > 9223372036854775807.0 || trunc(x) < -9223372036854775808.0) {
+            nativeRaiseKelas(vm.galatLuapan, "ke_bulat() melebihi jangkauan bilangan bulat");
+            return NUMBER_VAL(0);
+        }
+        return INT_VAL((int64_t)trunc(x));
     }
     if (!IS_STRING(args[0])) {
         nativeRaiseKelas(vm.galatTipe, "ke_bulat() hanya menerima angka, teks, atau logika");
@@ -387,7 +465,13 @@ Value nativeFnKeBulat(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     (void)selesai;
-    return NUMBER_VAL(strtod(mulai, NULL));
+    errno = 0;
+    long long nilai = strtoll(mulai, NULL, 10);
+    if (errno == ERANGE) {
+        nativeRaiseKelas(vm.galatLuapan, "ke_bulat() melebihi jangkauan bilangan bulat");
+        return NUMBER_VAL(0);
+    }
+    return INT_VAL(nilai);
 }
 
 // ke_logika(x) - bool(): memakai truthiness K1 yang sama dengan jika/tidak.
@@ -454,7 +538,7 @@ Value nativeFnId(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     Value v = args[0];
-    if (IS_OBJ(v)) return NUMBER_VAL((double)(uintptr_t)AS_OBJ(v));
+    if (IS_OBJ(v)) return INT_VAL((int64_t)(uintptr_t)AS_OBJ(v));
 
     uint64_t hash = 1469598103934665603ULL;      // FNV-1a
     unsigned char bytes[9];
@@ -467,7 +551,7 @@ Value nativeFnId(int argCount, Value* args) {
         hash ^= bytes[i];
         hash *= 1099511628211ULL;
     }
-    return NUMBER_VAL((double)(hash & 0x1FFFFFFFFFFFFFULL));   // 53 bit: eksak di double
+    return INT_VAL((int64_t)(hash & 0x1FFFFFFFFFFFFFULL));   // 53 bit: eksak di double
 }
 
 // ============================================================================
@@ -480,16 +564,16 @@ Value nativeFnPanjang(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     if (IS_STRING(args[0])) {
-        return NUMBER_VAL(AS_STRING(args[0])->charCount);
+        return INT_VAL(AS_STRING(args[0])->charCount);
     }
     if (IS_LIST(args[0])) {
-        return NUMBER_VAL(AS_LIST(args[0])->items.count);
+        return INT_VAL(AS_LIST(args[0])->items.count);
     }
     if (IS_DICT(args[0])) {
-        return NUMBER_VAL(dictLength(AS_DICT(args[0])));
+        return INT_VAL(dictLength(AS_DICT(args[0])));
     }
     if (IS_RANGE(args[0])) {
-        return NUMBER_VAL(rangeLength(AS_RANGE(args[0])));
+        return INT_VAL((int64_t)rangeLength(AS_RANGE(args[0])));
     }
     nativeRaise("panjang() hanya menerima string, list, kamus, atau rentang");
     return NUMBER_VAL(0);
@@ -588,7 +672,11 @@ Value nativeFnEnumerasi(int argCount, Value* args) {
         return KOSONG_VAL;
     }
 
-    double awal = argCount == 2 ? AS_NUMBER(args[1]) : 0;
+    if (argCount == 2 && AS_NUMBER(args[1]) != floor(AS_NUMBER(args[1]))) {
+        nativeRaise("enumerasi() argumen awal harus bilangan bulat");
+        return KOSONG_VAL;
+    }
+    int64_t awal = argCount == 2 ? (int64_t)AS_NUMBER(args[1]) : 0;
     ObjList* hasil = newList();
     push(OBJ_VAL(hasil));
     for (int i = 0; i < count; i++) {
@@ -601,12 +689,11 @@ Value nativeFnEnumerasi(int argCount, Value* args) {
             int offset = utf8ByteOffset(teks, i);
             nilai = OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
         } else if (IS_RANGE(urutan)) {
-            ObjRange* range = AS_RANGE(urutan);
-            nilai = NUMBER_VAL(range->start + i * range->step);
+            nilai = rangeElement(AS_RANGE(urutan), i);
         } else nilai = dictKeyAt(AS_DICT(urutan), i);
 
         push(nilai);
-        writeValueArray(&pasangan->items, NUMBER_VAL(awal + i));
+        writeValueArray(&pasangan->items, INT_VAL(awal + i));
         writeValueArray(&pasangan->items, nilai);
         pop();
         writeValueArray(&hasil->items, OBJ_VAL(pasangan));
@@ -860,6 +947,9 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
         s = AS_BOOL(v) ? "benar" : "salah";
     } else if (IS_KOSONG(v)) {
         s = "kosong";
+    } else if (IS_INT(v)) {
+        snprintf(tmp, sizeof(tmp), "%lld", (long long)AS_INT(v));
+        s = tmp;
     } else if (IS_NUMBER(v)) {
         numberToString(AS_NUMBER(v), tmp, sizeof(tmp));
         s = tmp;
@@ -896,14 +986,14 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
         // Mirrors printObject: rentang(0, 5) / rentang(0, 10, 2).
         ObjRange* range = AS_RANGE(v);
         char start[32], stop[32], step[32];
-        numberToString(range->start, start, sizeof(start));
-        numberToString(range->stop, stop, sizeof(stop));
+        rangeNumberToString(range->start, start, sizeof(start));
+        rangeNumberToString(range->stop, stop, sizeof(stop));
         appendRaw("rentang(", buf, size, pos);
         appendRaw(start, buf, size, pos);
         appendRaw(", ", buf, size, pos);
         appendRaw(stop, buf, size, pos);
         if (range->step != 1) {
-            numberToString(range->step, step, sizeof(step));
+            rangeNumberToString(range->step, step, sizeof(step));
             appendRaw(", ", buf, size, pos);
             appendRaw(step, buf, size, pos);
         }
@@ -931,6 +1021,24 @@ Value nativeFnKeAngka(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     ObjString* str = AS_STRING(args[0]);
+    // A string of digits is a bulat, like Python's int(); anything else goes
+    // through strtod and becomes a desimal.
+    bool hanyaBulat = true;
+    for (int i = 0; i < str->length; i++) {
+        char c = str->chars[i];
+        if (i == 0 && (c == '+' || c == '-')) continue;
+        if (c < '0' || c > '9') { hanyaBulat = false; break; }
+    }
+    if (hanyaBulat && str->length > 0) {
+        errno = 0;
+        long long bulat = strtoll(str->chars, NULL, 10);
+        if (errno == ERANGE) {
+            nativeRaiseKelas(vm.galatLuapan, "ke_angka() melebihi jangkauan bilangan bulat");
+            return NUMBER_VAL(0);
+        }
+        return INT_VAL(bulat);
+    }
+
     char* end = NULL;
     double v = strtod(str->chars, &end);
     // Reject empty input or trailing non-numeric garbage.
@@ -999,14 +1107,14 @@ Value nativeFnAcakBulat(int argCount, Value* args) {
         nativeRaise("acak_bulat() hanya menerima angka");
         return NUMBER_VAL(0);
     }
-    long lo = (long)AS_NUMBER(args[0]);
-    long hi = (long)AS_NUMBER(args[1]);
+    long long lo = (long long)AS_NUMBER(args[0]);
+    long long hi = (long long)AS_NUMBER(args[1]);
     if (lo > hi) {
         nativeRaise("acak_bulat(): min tidak boleh lebih besar dari maks");
         return NUMBER_VAL(0);
     }
-    long range = hi - lo + 1;
-    return NUMBER_VAL((double)(lo + (rand() % range)));
+    long long range = hi - lo + 1;
+    return INT_VAL(lo + (rand() % range));
 }
 
 // ============================================================================
@@ -1158,7 +1266,7 @@ Value nativeFnTulis(int argCount, Value* args) {
         nativeRaise("tulis() gagal menulis ke '%s'", file->path->chars);
         return KOSONG_VAL;
     }
-    return NUMBER_VAL((double)written);
+    return INT_VAL((int64_t)written);
 }
 
 Value nativeFnBacaSemua(int argCount, Value* args) {
@@ -1199,7 +1307,7 @@ static Value writeWholeFile(const char* path, ObjString* text, const char* mode,
         nativeRaise("%s() gagal menulis ke '%s'", fname, path);
         return KOSONG_VAL;
     }
-    return NUMBER_VAL((double)written);
+    return INT_VAL((int64_t)written);
 }
 
 Value nativeFnTulisSemua(int argCount, Value* args) {
@@ -1437,7 +1545,7 @@ Value nativeFnOrd(int argCount, Value* args) {
         nativeRaise("ord() memerlukan string tepat 1 karakter (panjang %d)", s->charCount);
         return NUMBER_VAL(0);
     }
-    return NUMBER_VAL((double)decodeUtf8(s->chars, s->length));
+    return INT_VAL((int64_t)decodeUtf8(s->chars, s->length));
 }
 
 // chr(kode) - Karakter dari kode Unicode 0-0x10FFFF (dikodekan sebagai UTF-8).
@@ -1731,10 +1839,7 @@ static int iterCount(Value v) {
 // Elemen ke-i. Untuk teks ini MENGALOKASI sebuah ObjString baru.
 static Value iterAt(Value v, int i) {
     if (IS_LIST(v)) return AS_LIST(v)->items.values[i];
-    if (IS_RANGE(v)) {
-        ObjRange* r = AS_RANGE(v);
-        return NUMBER_VAL(r->start + i * r->step);
-    }
+    if (IS_RANGE(v)) return rangeElement(AS_RANGE(v), i);
     ObjString* teks = AS_STRING(v);
     int offset = utf8ByteOffset(teks, i);
     return OBJ_VAL(copyString(teks->chars + offset, utf8CharBytes(teks, offset)));
@@ -1756,16 +1861,34 @@ Value nativeFnJumlah(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
 
-    double total = argCount == 2 ? AS_NUMBER(args[1]) : 0;
+    // sum() of bulat stays bulat (and raises GalatLuapan instead of silently
+    // losing precision); one desimal turns the whole total into a desimal.
+    int64_t totalBulat = 0;
+    double total = 0;
+    bool semuaBulat = true;
+    if (argCount == 2) {
+        if (IS_INT(args[1])) totalBulat = AS_INT(args[1]);
+        else { semuaBulat = false; total = AS_NUMBER(args[1]); }
+    }
     for (int i = 0; i < count; i++) {
         Value item = iterAt(args[0], i);
         if (!IS_NUMBER(item)) {
             nativeRaiseKelas(vm.galatTipe, "jumlah() hanya menerima angka");
             return NUMBER_VAL(0);
         }
-        total += AS_NUMBER(item);
+        if (semuaBulat && IS_INT(item)) {
+            int64_t baru;
+            if (intAddOverflow(totalBulat, AS_INT(item), &baru)) {
+                nativeRaiseKelas(vm.galatLuapan, "jumlah() melebihi jangkauan bilangan bulat");
+                return NUMBER_VAL(0);
+            }
+            totalBulat = baru;
+        } else {
+            if (semuaBulat) { total = (double)totalBulat; semuaBulat = false; }
+            total += AS_NUMBER(item);
+        }
     }
-    return NUMBER_VAL(total);
+    return semuaBulat ? INT_VAL(totalBulat) : NUMBER_VAL(total);
 }
 
 // semua(d) - seperti all(); daftar kosong -> benar.
@@ -1812,8 +1935,8 @@ static int bandingNilai(const void* a, const void* b) {
     const Value* y = (const Value*)b;
     int cmp;
     if (IS_NUMBER(*x)) {
-        double dx = AS_NUMBER(*x), dy = AS_NUMBER(*y);
-        cmp = dx < dy ? -1 : (dx > dy ? 1 : 0);
+        // numberCompare keeps int64 exact when both sides are bulat.
+        numberCompare(*x, *y, &cmp);
     } else {
         cmp = strcmp(AS_CSTRING(*x), AS_CSTRING(*y));
         if (cmp < 0) cmp = -1; else if (cmp > 0) cmp = 1;

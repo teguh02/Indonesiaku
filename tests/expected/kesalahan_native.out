@@ -3,10 +3,10 @@ tertangkap: akar() tidak dapat menerima angka negatif
 tertangkap: min() memerlukan minimal 2 argumen
 tertangkap: panjang() hanya menerima string, list, kamus, atau rentang
 === Program Tetap Berjalan ===
-4
+4.0
 2
 === Tangkap dalam Perulangan ===
-1
-2
-3
-4
+1.0
+2.0
+3.0
+4.0

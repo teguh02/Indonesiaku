@@ -122,6 +122,17 @@ double rangeLength(ObjRange* range) {
     return count > 0 ? count : 0;
 }
 
+// K2: a rentang of bulat yields bulat elements, so `untuk i dalam rentang(3)`
+// gives 0, 1, 2 as bulat (like Python's range).
+Value rangeElement(ObjRange* range, int index) {
+    double value = range->start + (double)index * range->step;
+    if (value == floor(value) &&
+        value >= -9223372036854775808.0 && value < 9223372036854775808.0) {
+        return INT_VAL((int64_t)value);
+    }
+    return NUMBER_VAL(value);
+}
+
 bool rangeContains(ObjRange* range, double value) {
     if (value != floor(value)) return false;
     bool inBounds = range->step > 0
@@ -343,12 +354,12 @@ void printObject(Value value) {
             // Printed like Python: range(0, 5) / range(0, 10, 2).
             ObjRange* range = AS_RANGE(value);
             char start[32], stop[32], step[32];
-            numberToString(range->start, start, sizeof(start));
-            numberToString(range->stop, stop, sizeof(stop));
+            rangeNumberToString(range->start, start, sizeof(start));
+            rangeNumberToString(range->stop, stop, sizeof(stop));
             if (range->step == 1) {
                 printf("rentang(%s, %s)", start, stop);
             } else {
-                numberToString(range->step, step, sizeof(step));
+                rangeNumberToString(range->step, step, sizeof(step));
                 printf("rentang(%s, %s, %s)", start, stop, step);
             }
             break;

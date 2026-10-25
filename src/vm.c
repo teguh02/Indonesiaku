@@ -205,6 +205,7 @@ void initVM() {
     vm.galat = defineErrorClass("Galat", NULL);
     vm.galatAritmetika = defineErrorClass("GalatAritmetika", vm.galat);
     vm.galatBagiNol = defineErrorClass("GalatBagiNol", vm.galatAritmetika);
+    vm.galatLuapan = defineErrorClass("GalatLuapan", vm.galatAritmetika);
     ObjClass* galatPencarian = defineErrorClass("GalatPencarian", vm.galat);
     vm.galatIndeks = defineErrorClass("GalatIndeks", galatPencarian);
     defineErrorClass("GalatKunci", galatPencarian);
@@ -752,10 +753,18 @@ static bool chainCompare(ChainCompare op, Value left, Value right, bool* result)
                 runtimeError("Operand harus berupa angka atau dua string.");
                 return false;
             }
-            *result = op == CHAIN_GREATER ? AS_NUMBER(left) > AS_NUMBER(right) :
-                      op == CHAIN_GREATER_EQUAL ? AS_NUMBER(left) >= AS_NUMBER(right) :
-                      op == CHAIN_LESS ? AS_NUMBER(left) < AS_NUMBER(right) :
-                      AS_NUMBER(left) <= AS_NUMBER(right);
+            {
+                // Compare int64 exactly even when one side is a desimal.
+                int cmp;
+                if (!numberCompare(left, right, &cmp)) {
+                    runtimeError("Operand harus berupa angka atau dua string.");
+                    return false;
+                }
+                if (cmp == 2) { *result = false; return true; }   // NaN
+                *result = op == CHAIN_GREATER ? cmp > 0 :
+                          op == CHAIN_GREATER_EQUAL ? cmp >= 0 :
+                          op == CHAIN_LESS ? cmp < 0 : cmp <= 0;
+            }
             return true;
     }
     fatalError("Operator rantai perbandingan tidak valid.");
@@ -770,6 +779,7 @@ bool isFalsey(Value value) {
         case VAL_TAKTERISI: return true;   // unreachable; be safe, not crashy
         case VAL_BOOL:   return !AS_BOOL(value);
         case VAL_NUMBER: return AS_NUMBER(value) == 0;
+        case VAL_INT:    return AS_INT(value) == 0;
         case VAL_OBJ:
             switch (OBJ_TYPE(value)) {
                 case OBJ_STRING: return AS_STRING(value)->length == 0;
@@ -898,17 +908,6 @@ static InterpretResult run() {
 
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 
-#define BINARY_OP(valueType, op) \
-    do { \
-      if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
-        runtimeError("Operand harus berupa angka."); \
-        return INTERPRET_RUNTIME_ERROR; \
-      } \
-      double b = AS_NUMBER(pop()); \
-      double a = AS_NUMBER(pop()); \
-      push(valueType(a op b)); \
-    } while (false)
-
     for (;;) {
         // A runtime error may have been raised by push()/pop() or a native
         // function without a direct return path. Abort cleanly instead of
@@ -994,7 +993,13 @@ static InterpretResult run() {
                     ObjString* a = AS_STRING(pop());
                     push(BOOL_VAL(strcmp(a->chars, b->chars) > 0));
                 } else {
-                    BINARY_OP(BOOL_VAL, >);
+                    int cmp;
+                    if (!numberCompare(peek(1), peek(0), &cmp)) {
+                        runtimeError("Operand harus berupa angka.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(BOOL_VAL(cmp == 1));   // NaN (2) is never greater
                 }
                 break;
             }
@@ -1004,7 +1009,13 @@ static InterpretResult run() {
                     ObjString* a = AS_STRING(pop());
                     push(BOOL_VAL(strcmp(a->chars, b->chars) < 0));
                 } else {
-                    BINARY_OP(BOOL_VAL, <);
+                    int cmp;
+                    if (!numberCompare(peek(1), peek(0), &cmp)) {
+                        runtimeError("Operand harus berupa angka.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(BOOL_VAL(cmp == -1));  // NaN (2) is never less
                 }
                 break;
             }
@@ -1013,6 +1024,15 @@ static InterpretResult run() {
                     concatenate();
                 } else if (IS_LIST(peek(0)) && IS_LIST(peek(1))) {
                     concatenateLists();
+                } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+                    int64_t result;
+                    if (intAddOverflow(AS_INT(peek(1)), AS_INT(peek(0)), &result)) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil penjumlahan melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(INT_VAL(result));
                 } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     double b = AS_NUMBER(pop());
                     double a = AS_NUMBER(pop());
@@ -1024,11 +1044,42 @@ static InterpretResult run() {
                 }
                 break;
             }
-            case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
+            case OP_SUBTRACT: {
+                if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
+                    runtimeError("Operand harus berupa angka.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+                    int64_t result;
+                    if (intSubOverflow(AS_INT(peek(1)), AS_INT(peek(0)), &result)) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil pengurangan melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(INT_VAL(result));
+                } else {
+                    double b = AS_NUMBER(pop());
+                    double a = AS_NUMBER(pop());
+                    push(NUMBER_VAL(a - b));
+                }
+                break;
+            }
             case OP_MULTIPLY: {
                 // daftar * n, n * daftar, teks * n, n * teks, angka * angka
                 Value b = peek(0);
                 Value a = peek(1);
+                if (IS_INT(a) && IS_INT(b)) {
+                    int64_t result;
+                    if (intMulOverflow(AS_INT(a), AS_INT(b), &result)) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil perkalian melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(INT_VAL(result));
+                    break;
+                }
                 if (IS_NUMBER(a) && IS_NUMBER(b)) {
                     double y = AS_NUMBER(pop());
                     double x = AS_NUMBER(pop());
@@ -1107,6 +1158,17 @@ static InterpretResult run() {
                     runtimeError("Pembagian dengan nol.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+                    int64_t result;
+                    if (!intModulo(AS_INT(peek(1)), AS_INT(peek(0)), &result)) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil modulo melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(INT_VAL(result));
+                    break;
+                }
                 double b = AS_NUMBER(pop());
                 double a = AS_NUMBER(pop());
                 // Python semantics: the result takes the sign of the divisor,
@@ -1157,6 +1219,17 @@ static InterpretResult run() {
                     runtimeError("Pembagian dengan nol.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+                    int64_t result;
+                    if (!intFloorDiv(AS_INT(peek(1)), AS_INT(peek(0)), &result)) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil pembagian bulat melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(INT_VAL(result));
+                    break;
+                }
                 double b = AS_NUMBER(pop());
                 double a = AS_NUMBER(pop());
                 // Rounds toward negative infinity, like Python: -7 // 2 == -4.
@@ -1172,6 +1245,19 @@ static InterpretResult run() {
                     runtimeError("0 tidak dapat dipangkatkan dengan bilangan negatif.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                // A bulat base with a non-negative bulat exponent stays bulat.
+                if (IS_INT(peek(0)) && IS_INT(peek(1)) && AS_INT(peek(0)) >= 0) {
+                    bool overflow;
+                    int64_t result = intPow(AS_INT(peek(1)), AS_INT(peek(0)), &overflow);
+                    if (overflow) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil pemangkatan melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop -= 2;
+                    push(INT_VAL(result));
+                    break;
+                }
                 double b = AS_NUMBER(pop());
                 double a = AS_NUMBER(pop());
                 push(NUMBER_VAL(pow(a, b)));
@@ -1180,13 +1266,25 @@ static InterpretResult run() {
             case OP_NOT:
                 push(BOOL_VAL(isFalsey(pop())));
                 break;
-            case OP_NEGATE:
+            case OP_NEGATE: {
                 if (!IS_NUMBER(peek(0))) {
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
+                if (IS_INT(peek(0))) {
+                    int64_t value = AS_INT(peek(0));
+                    if (value == INT64_MIN) {
+                        vm.runtimeErrorClass = vm.galatLuapan;
+                        runtimeError("Hasil negasi melebihi jangkauan bilangan bulat.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    vm.stackTop--;
+                    push(INT_VAL(-value));
+                    break;
+                }
                 push(NUMBER_VAL(-AS_NUMBER(pop())));
                 break;
+            }
             case OP_PRINT: {
                 int count = READ_BYTE();
                 for (int i = count - 1; i >= 0; i--) {
@@ -1340,7 +1438,7 @@ static InterpretResult run() {
                                      index, length);
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    push(NUMBER_VAL(range->start + index * range->step));
+                    push(rangeElement(range, (int)index));
                 } else if (IS_DICT(peek(1)) && IS_NUMBER(peek(0))) {
                     int index = (int)AS_NUMBER(pop());
                     ObjDict* dict = AS_DICT(pop());
@@ -1476,13 +1574,13 @@ static InterpretResult run() {
                 // with OP_INDEX_GET, so any indexable sequence works.
                 Value seq = pop();
                 if (IS_LIST(seq)) {
-                    push(NUMBER_VAL(AS_LIST(seq)->items.count));
+                    push(INT_VAL(AS_LIST(seq)->items.count));
                 } else if (IS_RANGE(seq)) {
-                    push(NUMBER_VAL(rangeLength(AS_RANGE(seq))));
+                    push(INT_VAL((int64_t)rangeLength(AS_RANGE(seq))));
                 } else if (IS_DICT(seq)) {
-                    push(NUMBER_VAL(dictLength(AS_DICT(seq))));
+                    push(INT_VAL(dictLength(AS_DICT(seq))));
                 } else if (IS_STRING(seq)) {
-                    push(NUMBER_VAL(AS_STRING(seq)->charCount));
+                    push(INT_VAL(AS_STRING(seq)->charCount));
                 } else {
                     runtimeError("'untuk ... dalam' hanya dapat mengiterasi list, teks, atau rentang.");
                     return INTERPRET_RUNTIME_ERROR;
