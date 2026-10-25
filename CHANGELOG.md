@@ -7,6 +7,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — compiler hang (ditemukan fuzzer CI)
+- 🐛 `akhirnya` bersarang yang berisi `kembalikan`/`hentikan`/`lanjut` membuat
+  compiler menyalin blok luar secara eksponensial: kedalaman 6 butuh 24 detik,
+  input fuzzer CI menggantung > 5 menit di bawah ASan. Salinan kini dibatasi
+  64 per fungsi; melewatinya adalah satu galat kompilasi yang jelas
+  (`tests/galat/akhirnya_salinan_berlebih`), tanpa rentetan galat susulan.
+
 ### Fixed — penggabungan Fase 1 + Fase 2
 - 🐛 List comprehension dengan filter (`[x untuk x dalam a jika syarat]`)
   gagal kompilasi setelah ekspresi kondisional (`a jika c selain b`) masuk:
