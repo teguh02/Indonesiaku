@@ -1,6 +1,6 @@
 # Rencana Fitur: Builtin inti yang masih hilang
 
-- **Status:** usulan
+- **Status:** selesai (sebagian — sisa menunggu tipe baru di Fase 2)
 - **Target versi:** 0.7.0 (Fase 1–2)
 - **Pemilik:** Teguh
 - **Keputusan terkait:** 02 §D, K10, calon K17
@@ -173,13 +173,13 @@ seluruh loop.
 
 ## 6. Dampak dokumentasi
 
-- [ ] `website/panduan/07_PUSTAKA_STANDAR.md` — seluruh fungsi baru
-- [ ] `website/panduan/03_PANDUAN_SINTAKS.md` — contoh `terurut`/`pasangkan`
-- [ ] `README.md` + `CHANGELOG.md`
-- [ ] `docs/ROADMAP.md` + `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` §D → ✅
-- [ ] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K17: `bulat` vs `bulatkan`
-- [ ] `editors/vscode-indonesiaku/extension.js` — BUILTINS (53 → ±72)
-- [ ] `AGENTS.md` — jebakan: `peta`/`saring` memanggil balik ke VM
+- [x] `website/panduan/07_PUSTAKA_STANDAR.md` — seluruh fungsi baru
+- [x] `website/panduan/03_PANDUAN_SINTAKS.md` — contoh `terurut`/`pasangkan`
+- [x] `README.md` + `CHANGELOG.md`
+- [x] `docs/ROADMAP.md` + `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` §D → ✅
+- [x] `docs/ANALISIS/03_KEPUTUSAN_DESAIN.md` — K17: `bulat` vs `bulatkan`
+- [x] `editors/vscode-indonesiaku/extension.js` — BUILTINS (53 → ±72)
+- [x] `AGENTS.md` — jebakan: `peta`/`saring` memanggil balik ke VM
 
 ## 7. Risiko & alternatif
 
