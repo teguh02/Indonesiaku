@@ -168,6 +168,16 @@ the full verification matrix, `git fetch` + rebase, re-test, push.
   check for it and raise "sudah di-buang". `OP_INDEX_DELETE` handles list and
   dict, `OP_DELETE_PROPERTY` an instance field. Any new read path for locals
   must keep that check.
+- **Dictionaries are keyed by `Value` (K8), not by string.** `ObjDict.table`
+  is a `ValueTable` (`table.c`), separate from the `ObjString*` tables used for
+  globals, string interning, class methods and instance fields. Key equality is
+  `valuesEqual`, so `1` and `1.0` are the same key; `hashValue` in `value.c`
+  must stay consistent with that (it hashes whole doubles as int64).
+  Unhashable keys (list/kamus/rentang) are rejected *before* insertion.
+  `ObjDict.keys` is now a contiguous live-key list in insertion order (delete
+  shifts, no tombstones). Dict iteration cannot use `OP_INDEX_GET` any more —
+  `kamus[i]` is a key lookup — so `untuk`/comprehension use `OP_SEQ_GET`, which
+  maps a kamus position to `dictKeyAt`.
 - **`a, b = ...` is a statement-level construct** (`looksLikeUnpack` peeks for
   `IDENT (, IDENT)+ =`), compiled as the RHS sequence + `OP_UNPACK n` + one
   assignment per name. `prescanFunctionBody` tracks comma-chains so every name

@@ -78,24 +78,16 @@ fungsi) selalu benar atau gagal dengan pesan jelas. Tanpa fitur besar baru.
 
 ### Fase 2 — Tipe data lengkap (0.8)
 
-`bulat` int64 ✅
-([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md)) — bignum menyusul
-sebagai 2b; penugasan berganda & unpacking ✅
-([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md)); list comprehension ✅
-([rencana](RENCANA_FITUR/selesai/komprehensi_daftar.md)); `buang` (del) ✅
-([rencana](RENCANA_FITUR/selesai/buang.md)). Belum: `tupel`, `himpunan`,
-`*args`/`**kwargs`, operator bitwise, kunci kamus non-teks, `jenis()`
-mengembalikan kelas, builtin P1–P2 dari 02 §D — lihat
-[`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md)
-(`jumlah`, `terurut`, `semua`, `pasangkan`, `bulatkan`, …; sebagian bisa
-masuk lebih awal di Fase 1 karena tidak butuh tipe baru).
-✅ **Sebagian besar builtin inti sudah selesai** — 19 fungsi sudah masuk di
-Fase 1 (`jumlah`, `semua`, `ada_yang`, `terurut`, `terbalik`, `pasangkan`,
-`peta`, `saring`, `bulatkan`, `bagi_sisa`, `biner`, `oktal`, `heksa`,
-`ke_bulat`, `ke_logika`, `adalah_instansi`, `bisa_dipanggil`, `repr`, `id`),
-plus `max`/`min` dengan satu argumen daftar. Sisanya menunggu tipe baru:
-`himpunan()`, `tupel()`, `daftar()`, `hash`, `iter`/`next`, `turunan_dari`,
-`ke_desimal`, dan `biner` untuk bigint.
+✅ ``bulat`` int64 ([rencana](RENCANA_FITUR/selesai/tipe_angka_bulat.md));
+✅ penugasan berganda & unpacking ([rencana](RENCANA_FITUR/selesai/penugasan_berganda.md));
+✅ `buang` (del) ([rencana](RENCANA_FITUR/selesai/buang.md)).
+
+Sisa butir Fase 2 yang **belum selesai**:
+- ``tupel`` dan ``himpunan``, operator bitwise ``& | ^ ~ << >>``, builtin
+  ``himpunan()``, ``tupel()``, ``hash``, ``iter``/``next``, ``turunan_dari``,
+  ``ke_desimal``, ``daftar()`` — lihat
+  [`RENCANA_FITUR/builtin_inti.md`](RENCANA_FITUR/builtin_inti.md).
+
 Ref: K2, K8, K11, K13, 06 §4–6.
 
 ### Fase 3 — Modul & pustaka inti (0.9)

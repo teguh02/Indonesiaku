@@ -855,8 +855,23 @@ cetak(data["dalam"]["inti"])   # ya
 > Karena itu `{"a": 1}` yang berdiri sendiri sebagai satu pernyataan bukan
 > kamus — tulis `x = {"a": 1}` atau `cetak({"a": 1})`.
 
-Kunci harus berupa teks; kunci lain menghasilkan `GalatTipe`. Kunci duplikat:
-nilai terakhir yang menang.
+Kunci boleh nilai apa pun yang **dapat di-hash**: teks, angka (`bulat` atau
+`desimal`), `benar`/`salah`, dan `kosong`. Daftar, kamus, dan rentang tidak
+bisa menjadi kunci (`GalatTipe`). Kunci duplikat: nilai terakhir yang menang,
+posisi tetap yang pertama.
+
+> ⚠️ `kamus[1]` sekarang berarti **kunci `1`**, bukan "kunci pertama". Untuk
+> mengambil kunci menurut posisi pakai `kunci(kamus)[0]`. Ini perubahan yang
+> merusak dari versi 0.4.
+
+```indonesiaku
+d = {1: "satu", 2.5: "dua koma lima", benar: "ya", kosong: "hampa"}
+cetak(d[1], d[2.5], d[benar], d[kosong])   # satu dua koma lima ya hampa
+cetak(d[1.0])                              # satu: 1 dan 1.0 kunci yang sama
+cetak(kunci(d))                            # [1, 2.5, benar, kosong]
+```
+
+> Contoh: [`examples/kamus_kunci.idk`](../examples/kamus_kunci.idk)
 
 ```indonesiaku
 orang = kamus()

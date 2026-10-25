@@ -272,12 +272,14 @@ baris terakhir.
 | Fungsi | Deskripsi |
 |--------|-----------|
 | `kamus()` | Buat kamus kosong |
-| `punya(kamus, kunci)` | Apakah kunci ada → boolean |
-| `kunci(kamus)` | List semua kunci |
+| `punya(kamus, kunci)` | Apakah kunci ada → boolean. Kunci boleh nilai apa pun yang hashable |
+| `kunci(kamus)` | List semua kunci, urutan penyisipan |
 | `hapus_kunci(kamus, kunci)` | Hapus pasangan kunci-nilai |
 | `enumerasi(urutan, awal=0)` | List pasangan `[indeks, nilai]` untuk list, teks, rentang, atau kamus |
 
-Akses: `k["kunci"]`, `k["kunci"] = nilai`. Kunci berupa string.
+Akses: `k[kunci]`, `k[kunci] = nilai`. Kunci boleh teks, angka (`bulat`/
+`desimal`), `benar`/`salah`, atau `kosong`; `1` dan `1.0` adalah kunci yang
+sama. Daftar/kamus/rentang tidak bisa menjadi kunci (`GalatTipe`).
 
 ### 1.5 Konversi & Format
 

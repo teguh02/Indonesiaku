@@ -33,6 +33,14 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Semua golden diperiksa satu per satu; yang berubah hanya baris yang memang
   berbeda di Python (mis. `akar(16)` → `4.0`, `7.5 // 2` → `3.0`).
 
+### Changed — Fase 2 (K8) ⚠️ MERUSAK
+- 🗝️ **Kunci kamus tidak lagi hanya teks.** Teks, `bulat`, `desimal`,
+  `benar`/`salah`, dan `kosong` boleh menjadi kunci; daftar/kamus/rentang
+  ditolak dengan `GalatTipe`. `1` dan `1.0` adalah kunci yang sama (seperti
+  Python). Ini membuat **`kamus[1]` berarti kunci `1`**, bukan "kunci pertama
+  menurut urutan penyisipan" — untuk posisi pakai `kunci(kamus)[0]`.
+  Iterasi `untuk k dalam kamus` tetap urutan penyisipan (opcode `OP_SEQ_GET`).
+
 ### Added — Fase 2
 - 🔁 **List comprehension** `[ekspresi untuk x dalam urutan jika syarat]`
   (`examples/komprehensi.idk`). Satu `untuk` dan satu `jika` opsional; boleh
