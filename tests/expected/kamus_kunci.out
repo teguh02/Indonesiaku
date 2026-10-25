@@ -1,0 +1,12 @@
+{1: satu, 2.5: dua koma lima, benar: ya, kosong: hampa, "a": 1}
+satu dua koma lima ya hampa 1
+satu
+6 [1, 2.5, benar, kosong, a, 3]
+benar benar
+salah 5
+1 satu
+2.5 dua koma lima
+benar ya
+kosong hampa
+a 1
+tipe: Kunci kamus harus nilai yang dapat di-hash (angka, teks, logika, kosong).

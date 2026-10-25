@@ -706,9 +706,9 @@ static bool containsValue(Value container, Value item, bool* found) {
         return true;
     }
     if (IS_DICT(container)) {
+        // Any hashable key; an unhashable one simply is not a key.
         Value ignored;
-        *found = IS_STRING(item) &&
-                 tableGet(&AS_DICT(container)->table, AS_STRING(item), &ignored);
+        *found = valueTableGet(&AS_DICT(container)->table, item, &ignored);
         return true;
     }
     if (IS_RANGE(container)) {
@@ -1022,10 +1022,20 @@ static InterpretResult run() {
                         list->items.values[i] = list->items.values[i + 1];
                     }
                     list->items.count--;
-                } else if (IS_DICT(container) && IS_STRING(key)) {
-                    if (!dictDelete(AS_DICT(container), AS_STRING(key))) {
+                } else if (IS_DICT(container)) {
+                    uint32_t hash;
+                    if (!hashValue(key, &hash)) {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("Kunci kamus harus nilai yang dapat di-hash.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    if (!dictDelete(AS_DICT(container), key)) {
                         vm.runtimeErrorClass = vm.galatKunci;
-                        runtimeError("Kunci '%s' tidak ada di kamus.", AS_CSTRING(key));
+                        if (IS_STRING(key)) {
+                            runtimeError("Kunci '%s' tidak ada di kamus.", AS_CSTRING(key));
+                        } else {
+                            runtimeError("Kunci tidak ada di kamus.");
+                        }
                         return INTERPRET_RUNTIME_ERROR;
                     }
                 } else {
@@ -1530,18 +1540,39 @@ static InterpretResult run() {
                 for (int i = count; i >= 1; i--) {
                     Value key = peek(i * 2);        // +1 for the dict itself
                     Value value = peek(i * 2 - 1);
-                    if (!IS_STRING(key)) {
+                    uint32_t hash;
+                    if (!hashValue(key, &hash)) {   // K8: any hashable key
                         vm.runtimeErrorClass = vm.galatTipe;
-                        runtimeError("Kunci kamus harus berupa teks.");
+                        runtimeError("Kunci kamus harus nilai yang dapat di-hash "
+                                     "(angka, teks, logika, kosong).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    dictSet(dict, AS_STRING(key), value);
+                    dictSet(dict, key, value);
                 }
                 pop();                          // the dict
                 vm.stackTop -= count * 2;       // the pairs
                 push(OBJ_VAL(dict));
                 break;
             }
+            case OP_SEQ_GET:
+                // 'untuk' / comprehension read sequences by position. A kamus
+                // yields its keys in insertion order — the integer here is a
+                // position, not a key (kamus[1] is a key lookup).
+                if (IS_DICT(peek(1))) {
+                    int index = (int)AS_NUMBER(peek(0));
+                    ObjDict* dict = AS_DICT(peek(1));
+                    if (!IS_NUMBER(peek(0)) || index < 0 || index >= dict->keys.count) {
+                        vm.runtimeErrorClass = vm.galatIndeks;
+                        runtimeError("Indeks kamus di luar jangkauan.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    Value key = dictKeyAt(dict, index);
+                    vm.stackTop -= 2;
+                    push(key);
+                    break;
+                }
+                // Everything else behaves like ordinary indexing.
+                // fall through
             case OP_INDEX_GET: {
                 if (IS_LIST(peek(1)) && IS_NUMBER(peek(0))) {
                     int given = (int)AS_NUMBER(pop());
@@ -1565,19 +1596,21 @@ static InterpretResult run() {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     push(rangeElement(range, (int)index));
-                } else if (IS_DICT(peek(1)) && IS_NUMBER(peek(0))) {
-                    int index = (int)AS_NUMBER(pop());
-                    ObjDict* dict = AS_DICT(pop());
-                    if (index < 0 || index >= dictLength(dict)) {
-                        runtimeError("Indeks kamus di luar jangkauan.");
+                } else if (IS_DICT(peek(1))) {
+                    // K8: the index IS the key now — kamus[1] no longer means
+                    // "the first key". Use kunci(kamus)[i] for that.
+                    Value key = peek(0);
+                    ObjDict* dict = AS_DICT(peek(1));
+                    uint32_t hash;
+                    if (!hashValue(key, &hash)) {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("Kunci kamus harus nilai yang dapat di-hash "
+                                     "(angka, teks, logika, kosong).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    push(dictKeyAt(dict, index));
-                } else if (IS_DICT(peek(1)) && IS_STRING(peek(0))) {
-                    ObjString* key = AS_STRING(pop());
-                    ObjDict* dict = AS_DICT(pop());
                     Value value;
-                    if (!tableGet(&dict->table, key, &value)) {
+                    vm.stackTop -= 2;
+                    if (!valueTableGet(&dict->table, key, &value)) {
                         push(KOSONG_VAL);
                     } else {
                         push(value);
@@ -1619,13 +1652,20 @@ static InterpretResult run() {
                     }
                     list->items.values[index] = value;
                     push(value);
-                } else if (IS_DICT(peek(2)) && IS_STRING(peek(1))) {
-                    // Keep operands on the stack while tableSet runs — it can
+                } else if (IS_DICT(peek(2))) {
+                    // Keep operands on the stack while dictSet runs — it can
                     // grow the table and trigger a GC that would otherwise
                     // free the dict/key/value.
                     ObjDict* dict = AS_DICT(peek(2));
-                    ObjString* key = AS_STRING(peek(1));
+                    Value key = peek(1);
                     Value value = peek(0);
+                    uint32_t hash;
+                    if (!hashValue(key, &hash)) {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("Kunci kamus harus nilai yang dapat di-hash "
+                                     "(angka, teks, logika, kosong).");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                     dictSet(dict, key, value);
                     pop();  // value
                     pop();  // key

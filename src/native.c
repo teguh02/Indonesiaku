@@ -630,12 +630,12 @@ Value nativeFnPunya(int argCount, Value* args) {
         nativeRaise("punya() memerlukan 2 argumen (kamus, kunci)");
         return BOOL_VAL(false);
     }
-    if (!IS_DICT(args[0]) || !IS_STRING(args[1])) {
-        nativeRaise("punya() memerlukan (kamus, string)");
+    if (!IS_DICT(args[0])) {
+        nativeRaise("punya() memerlukan (kamus, kunci)");
         return BOOL_VAL(false);
     }
     Value tmp;
-    return BOOL_VAL(tableGet(&AS_DICT(args[0])->table, AS_STRING(args[1]), &tmp));
+    return BOOL_VAL(valueTableGet(&AS_DICT(args[0])->table, args[1], &tmp));
 }
 
 Value nativeFnHapusKunci(int argCount, Value* args) {
@@ -643,11 +643,11 @@ Value nativeFnHapusKunci(int argCount, Value* args) {
         nativeRaise("hapus_kunci() memerlukan 2 argumen (kamus, kunci)");
         return BOOL_VAL(false);
     }
-    if (!IS_DICT(args[0]) || !IS_STRING(args[1])) {
-        nativeRaise("hapus_kunci() memerlukan (kamus, string)");
+    if (!IS_DICT(args[0])) {
+        nativeRaise("hapus_kunci() memerlukan (kamus, kunci)");
         return BOOL_VAL(false);
     }
-    return BOOL_VAL(dictDelete(AS_DICT(args[0]), AS_STRING(args[1])));
+    return BOOL_VAL(dictDelete(AS_DICT(args[0]), args[1]));
 }
 
 // enumerasi(urutan[, awal]) - pasangan [indeks, nilai] untuk iterable dasar
@@ -970,15 +970,22 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
         ObjDict* dict = AS_DICT(v);
         appendRaw("{", buf, size, pos);
         bool first = true;
-        for (int i = 0; i < dict->table.capacity; i++) {
-            Entry* entry = &dict->table.entries[i];
-            if (entry->key == NULL) continue;
+        // Insertion order, any hashable key type (K8).
+        for (int i = 0; i < dict->keys.count; i++) {
+            Value key = dict->keys.values[i];
+            Value entryValue;
+            if (!valueTableGet(&dict->table, key, &entryValue)) continue;
             if (!first) appendRaw(", ", buf, size, pos);
             first = false;
-            appendRaw("\"", buf, size, pos);
-            appendRaw(entry->key->chars, buf, size, pos);
-            appendRaw("\": ", buf, size, pos);
-            appendValueText(entry->value, buf, size, pos);
+            if (IS_STRING(key)) {
+                appendRaw("\"", buf, size, pos);
+                appendRaw(AS_CSTRING(key), buf, size, pos);
+                appendRaw("\": ", buf, size, pos);
+            } else {
+                appendValueText(key, buf, size, pos);
+                appendRaw(": ", buf, size, pos);
+            }
+            appendValueText(entryValue, buf, size, pos);
         }
         appendRaw("}", buf, size, pos);
         return;
@@ -1383,7 +1390,7 @@ Value nativeFnWaktu(int argCount, Value* args) {
 static void dictSetNum(ObjDict* dict, const char* key, double num) {
     ObjString* k = copyString(key, (int)strlen(key));
     push(OBJ_VAL(k));  // keep reachable during dictionary growth
-    dictSet(dict, k, NUMBER_VAL(num));
+    dictSet(dict, OBJ_VAL(k), NUMBER_VAL(num));
     pop();
 }
 

@@ -243,7 +243,7 @@ static Value dbQuery(int count, Value* args, int mode) {
                 pop(); pop(); pop();
                 goto done;
             }
-            dictSet(row, key, value);
+            dictSet(row, OBJ_VAL(key), value);
             pop(); pop();
         }
         if (mode == 1) {

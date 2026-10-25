@@ -65,22 +65,27 @@ ObjList* newList() {
 
 ObjDict* newDict() {
     ObjDict* dict = ALLOCATE_OBJ(ObjDict, OBJ_DICT);
-    initTable(&dict->table);
+    initValueTable(&dict->table);
     initValueArray(&dict->keys);
     return dict;
 }
 
-bool dictSet(ObjDict* dict, ObjString* key, Value value) {
-    bool isNew = tableSet(&dict->table, key, value);
-    if (isNew) writeValueArray(&dict->keys, OBJ_VAL(key));
+bool dictSet(ObjDict* dict, Value key, Value value) {
+    bool isNew = valueTableSet(&dict->table, key, value);
+    if (isNew) writeValueArray(&dict->keys, key);
     return isNew;
 }
 
-bool dictDelete(ObjDict* dict, ObjString* key) {
-    if (!tableDelete(&dict->table, key)) return false;
+bool dictDelete(ObjDict* dict, Value key) {
+    if (!valueTableDelete(&dict->table, key)) return false;
+    // Remove the key from the insertion-order list, keeping it contiguous so
+    // iteration and dictKeyAt never have to skip tombstones.
     for (int i = 0; i < dict->keys.count; i++) {
-        if (IS_STRING(dict->keys.values[i]) && AS_STRING(dict->keys.values[i]) == key) {
-            dict->keys.values[i] = KOSONG_VAL;
+        if (valuesEqual(dict->keys.values[i], key)) {
+            for (int j = i; j < dict->keys.count - 1; j++) {
+                dict->keys.values[j] = dict->keys.values[j + 1];
+            }
+            dict->keys.count--;
             break;
         }
     }
@@ -88,24 +93,12 @@ bool dictDelete(ObjDict* dict, ObjString* key) {
 }
 
 Value dictKeyAt(ObjDict* dict, int index) {
-    int live = 0;
-    for (int i = 0; i < dict->keys.count; i++) {
-        Value key = dict->keys.values[i];
-        if (!IS_STRING(key)) continue;
-        Value ignored;
-        if (!tableGet(&dict->table, AS_STRING(key), &ignored)) continue;
-        if (live++ == index) return key;
-    }
-    return KOSONG_VAL;
+    if (index < 0 || index >= dict->keys.count) return KOSONG_VAL;
+    return dict->keys.values[index];
 }
 
-// Number of live keys (the table's count also includes tombstones).
 int dictLength(ObjDict* dict) {
-    int n = 0;
-    for (int i = 0; i < dict->table.capacity; i++) {
-        if (dict->table.entries[i].key != NULL) n++;
-    }
-    return n;
+    return dict->keys.count;
 }
 
 ObjRange* newRange(double start, double stop, double step) {
@@ -302,13 +295,20 @@ void printObject(Value value) {
             ObjDict* dict = AS_DICT(value);
             printf("{");
             bool first = true;
-            for (int i = 0; i < dict->table.capacity; i++) {
-                Entry* entry = &dict->table.entries[i];
-                if (entry->key == NULL) continue;
+            // Insertion order, and any hashable key type (K8).
+            for (int i = 0; i < dict->keys.count; i++) {
+                Value key = dict->keys.values[i];
+                Value entryValue;
+                if (!valueTableGet(&dict->table, key, &entryValue)) continue;
                 if (!first) printf(", ");
                 first = false;
-                printf("\"%s\": ", entry->key->chars);
-                printValue(entry->value);
+                if (IS_STRING(key)) {
+                    printf("\"%s\": ", AS_CSTRING(key));
+                } else {
+                    printValue(key);
+                    printf(": ");
+                }
+                printValue(entryValue);
             }
             printf("}");
             break;

@@ -52,6 +52,7 @@ typedef enum {
     OP_UNPACK,          // a, b = ... : byte = jumlah nama
     OP_DELETE_PROPERTY, // buang obj.atribut
     OP_INDEX_GET,
+    OP_SEQ_GET,      // iteration by position: kamus -> kunci ke-i (not a key lookup)
     OP_INDEX_SET,
     OP_SLICE,
     OP_LIST_LEN,

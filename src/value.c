@@ -83,6 +83,67 @@ void numberToString(double value, char* buf, size_t size) {
     }
 }
 
+// --- K8: hashing for dictionary keys --------------------------------------
+
+static uint32_t hashBytes(const void* data, size_t length, uint32_t hash) {
+    const unsigned char* bytes = (const unsigned char*)data;
+    for (size_t i = 0; i < length; i++) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+bool hashValue(Value value, uint32_t* out) {
+    const uint32_t seed = 2166136261u;   // FNV-1a offset basis
+    switch (value.type) {
+        case VAL_BOOL: {
+            int64_t n = AS_BOOL(value) ? 1 : 0;
+            *out = hashBytes(&n, sizeof n, seed);
+            return true;
+        }
+        case VAL_KOSONG: {
+            uint64_t n = 0x4b4f534f4e47ULL;   // "KOSONG"
+            *out = hashBytes(&n, sizeof n, seed);
+            return true;
+        }
+        case VAL_INT: {
+            int64_t n = AS_INT(value);
+            *out = hashBytes(&n, sizeof n, seed);
+            return true;
+        }
+        case VAL_NUMBER: {
+            double d = AS_NUMBER(value) + 0.0;   // -0.0 hashes like 0.0
+            // A whole desimal is the same dict key as its bulat twin (1 == 1.0).
+            if (d == floor(d) && d >= -9223372036854775808.0 && d < 9223372036854775808.0) {
+                int64_t n = (int64_t)d;
+                *out = hashBytes(&n, sizeof n, seed);
+            } else {
+                *out = hashBytes(&d, sizeof d, seed);
+            }
+            return true;
+        }
+        case VAL_OBJ:
+            if (IS_STRING(value)) {
+                *out = AS_STRING(value)->hash;
+                return true;
+            }
+            if (AS_OBJ(value)->type == OBJ_LIST || AS_OBJ(value)->type == OBJ_DICT ||
+                AS_OBJ(value)->type == OBJ_RANGE) {
+                return false;   // unhashable, as in Python
+            }
+            {
+                // Instances and other objects hash by identity.
+                uintptr_t p = (uintptr_t)AS_OBJ(value);
+                *out = hashBytes(&p, sizeof p, seed);
+                return true;
+            }
+        case VAL_TAKTERISI:
+            return false;
+    }
+    return false;
+}
+
 // --- K2: int64 arithmetic -------------------------------------------------
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -251,10 +312,9 @@ static bool valuesEqualDepth(Value a, Value b, int depth) {
             // Insertion order does not affect equality: look every live key up.
             for (int i = 0; i < x->keys.count; i++) {
                 Value key = x->keys.values[i];
-                if (!IS_STRING(key)) continue;    // tombstone
                 Value xv, yv;
-                if (!tableGet(&x->table, AS_STRING(key), &xv)) continue;
-                if (!tableGet(&y->table, AS_STRING(key), &yv)) return false;
+                if (!valueTableGet(&x->table, key, &xv)) continue;
+                if (!valueTableGet(&y->table, key, &yv)) return false;
                 if (!valuesEqualDepth(xv, yv, depth + 1)) return false;
             }
             return true;

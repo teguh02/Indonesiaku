@@ -110,8 +110,8 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    Table table;
-    ValueArray keys;  // insertion order; deleted keys become kosong
+    ValueTable table;   // K8: any hashable key, not just strings
+    ValueArray keys;    // insertion order; a deleted key is removed from it
 } ObjDict;
 
 // rentang(awal, akhir, langkah): a lazy arithmetic sequence (Python range).
@@ -169,8 +169,8 @@ ObjUpvalue* newUpvalue(Value* slot);
 ObjList* newList();
 ObjDict* newDict();
 int dictLength(ObjDict* dict);
-bool dictSet(ObjDict* dict, ObjString* key, Value value);
-bool dictDelete(ObjDict* dict, ObjString* key);
+bool dictSet(ObjDict* dict, Value key, Value value);
+bool dictDelete(ObjDict* dict, Value key);
 Value dictKeyAt(ObjDict* dict, int index);
 ObjRange* newRange(double start, double stop, double step);
 double rangeLength(ObjRange* range);

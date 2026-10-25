@@ -801,10 +801,10 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
 
-    // x = seq[idx]
+    // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
     emitBytes(OP_GET_LOCAL, 1);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_INDEX_GET);
+    emitByte(OP_SEQ_GET);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
 
@@ -1768,10 +1768,10 @@ static void forStatement() {
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP); // condition
 
-    // x = seq[idx]
+    // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
     emitBytes(OP_GET_LOCAL, (uint8_t)seqSlot);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_INDEX_GET);
+    emitByte(OP_SEQ_GET);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
 

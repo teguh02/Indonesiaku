@@ -1,0 +1,26 @@
+# K8: kunci kamus tidak lagi hanya teks. Angka, desimal, logika, dan kosong
+# semuanya boleh — dan 1 dengan 1.0 adalah kunci yang sama, seperti Python.
+
+d = {1: "satu", 2.5: "dua koma lima", benar: "ya", kosong: "hampa", "a": 1}
+cetak(d)
+cetak(d[1], d[2.5], d[benar], d[kosong], d["a"])
+cetak(d[1.0])
+
+d[3] = "tiga"
+cetak(panjang(d), kunci(d))
+cetak(1 dalam d, 99 tidak dalam d)
+
+buang d[3]
+cetak(punya(d, 3), panjang(d))
+
+# Iterasi kamus tetap urutan penyisipan (kunci, bukan posisi).
+untuk k dalam d {
+    cetak(k, d[k])
+}
+
+# Kunci yang tidak bisa di-hash ditolak dengan GalatTipe.
+coba {
+    d[[1, 2]] = "x"
+} kecuali GalatTipe sebagai e {
+    cetak("tipe:", e.pesan)
+}

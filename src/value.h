@@ -94,6 +94,11 @@ int64_t intPow(int64_t base, int64_t exp, bool* overflow);
 // Numeric comparison that does not lose int64 precision when both sides are
 // bulat. Returns false when either operand is not a number.
 bool numberCompare(Value a, Value b, int* result);
+
+// K8: hash for dictionary keys. Returns false for unhashable values (list,
+// kamus, rentang). Numerically equal keys hash equally: 1 and 1.0 land in the
+// same bucket because they are the same Python dict key.
+bool hashValue(Value value, uint32_t* out);
 void initValueArray(ValueArray* array);
 void writeValueArray(ValueArray* array, Value value);
 void freeValueArray(ValueArray* array);
