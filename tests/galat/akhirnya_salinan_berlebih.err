@@ -1,0 +1,3 @@
+[baris 10, kolom 43] Kesalahan di '0': Terlalu banyak salinan blok 'akhirnya' dalam satu fungsi: 'kembalikan'/'hentikan'/'lanjut' di dalam 'akhirnya' yang bersarang. Sederhanakan alurnya.
+    …ba { jika a { kembalikan 6 } kembalikan 0 } akhirnya {
+                                             ^

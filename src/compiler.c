@@ -74,6 +74,11 @@ typedef enum {
 } FunctionType;
 
 #define FINALLY_MAX 32
+// Inlined copies of 'akhirnya' blocks allowed per function. A 'kembalikan'
+// inside an 'akhirnya' re-inlines the enclosing ones, so nested blocks grow
+// the code exponentially (the fuzzer hung the compiler with it); real code
+// needs a handful, and the cap keeps compile time linear.
+#define FINALLY_INLINE_MAX 64
 
 struct LoopCtx;
 
@@ -103,6 +108,8 @@ typedef struct Compiler {
     // inline before jumping out (see exitTryBlocks).
     FinallyRegion finallies[FINALLY_MAX];
     int finallyCount;
+    int finallyInlines;           // copies made so far (FINALLY_INLINE_MAX)
+    bool finallyBudgetReported;   // report the cap once per function
 } Compiler;
 
 Parser parser;
@@ -139,6 +146,11 @@ static Chunk* currentChunk() {
 // > 0 while an 'akhirnya' block is being re-compiled inline. Its errors are
 // already reported when the block is compiled in place, so stay silent.
 static int inlineFinallyDepth = 0;
+
+// Set after an error that leaves the rest of the compile meaningless (the
+// 'akhirnya' copy cap): later errors are only fallout from it, so they are
+// counted but not printed. Reset by compile().
+static bool suppressFurtherErrors = false;
 
 // Walk back to the start of the token's line. Returns NULL when the token
 // doesn't belong to the buffer currently being scanned.
@@ -197,7 +209,7 @@ static void errorAt(Token* token, const char* message) {
     if (parser.panicMode) return;
     parser.panicMode = true;
     parser.hadError = true;
-    if (inlineFinallyDepth > 0) return;
+    if (inlineFinallyDepth > 0 || suppressFurtherErrors) return;
 
     const char* lineStart = lineStartOf(token);
 
@@ -393,6 +405,8 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->scopeDepth = 0;
     compiler->tryDepth = 0;
     compiler->finallyCount = 0;
+    compiler->finallyInlines = 0;
+    compiler->finallyBudgetReported = false;
     compiler->function = newFunction();
     compiler->function->chunk.source = compilingSource;
     current = compiler;
@@ -2237,6 +2251,28 @@ static void inlineFinallyBlock(FinallyRegion* region) {
 // innermost first, and unregister handlers down to targetTryDepth. Each
 // finally block runs with only the handlers outside its own 'coba' active,
 // so an error inside it propagates outward (as in Python).
+// The cap is usually hit deep inside an inlined copy, where errors are
+// silenced (the in-place copy reports them); this one has no in-place twin,
+// so report it with suppression lifted, once per function.
+static void reportFinallyBudget() {
+    parser.hadError = true;
+    if (current->finallyBudgetReported) return;
+    current->finallyBudgetReported = true;
+    // Lift both silencers: inline suppression AND panic mode (a silenced
+    // error inside the copy may have set it), or the message would vanish.
+    int savedDepth = inlineFinallyDepth;
+    bool savedPanic = parser.panicMode;
+    inlineFinallyDepth = 0;
+    parser.panicMode = false;
+    semanticError("Terlalu banyak salinan blok 'akhirnya' dalam satu fungsi: "
+                  "'kembalikan'/'hentikan'/'lanjut' di dalam 'akhirnya' yang "
+                  "bersarang. Sederhanakan alurnya.");
+    inlineFinallyDepth = savedDepth;
+    parser.panicMode = savedPanic;
+    suppressFurtherErrors = true;  // the copies already made overflow the
+                                   // constant table and cascade into noise
+}
+
 static void exitTryBlocks(int targetTryDepth, int targetFinallies) {
     int savedTryDepth = current->tryDepth;
     int savedFinallyCount = current->finallyCount;
@@ -2253,6 +2289,11 @@ static void exitTryBlocks(int targetTryDepth, int targetFinallies) {
         }
         current->tryDepth = region.tryDepth;
         current->finallyCount = i;  // a jump inside it must not re-run it
+        if (current->finallyInlines >= FINALLY_INLINE_MAX) {
+            reportFinallyBudget();
+            break;  // compilation already failed; stop copying
+        }
+        current->finallyInlines++;
         inlineFinallyBlock(&region);
     }
     for (int d = current->tryDepth; d > targetTryDepth; d--) {
@@ -2887,6 +2928,7 @@ ObjFunction* compile(const char* source) {
 
     parser.hadError = false;
     parser.panicMode = false;
+    suppressFurtherErrors = false;
     callArgStart = NULL;
 
     advance();

@@ -1,0 +1,25 @@
+# akhirnya bersarang yang masing-masing berisi 'kembalikan' menyalin blok luar
+# berulang kali (tumbuh eksponensial). Compiler membatasi salinannya dan
+# melaporkan satu galat, alih-alih hang (ditemukan fuzzer CI).
+fungsi f(a) {
+coba { jika a { kembalikan 1 } kembalikan 0 } akhirnya {
+coba { jika a { kembalikan 2 } kembalikan 0 } akhirnya {
+coba { jika a { kembalikan 3 } kembalikan 0 } akhirnya {
+coba { jika a { kembalikan 4 } kembalikan 0 } akhirnya {
+coba { jika a { kembalikan 5 } kembalikan 0 } akhirnya {
+coba { jika a { kembalikan 6 } kembalikan 0 } akhirnya {
+jika a { kembalikan 99 }
+jika a { kembalikan 1 }
+}
+jika a { kembalikan 2 }
+}
+jika a { kembalikan 3 }
+}
+jika a { kembalikan 4 }
+}
+jika a { kembalikan 5 }
+}
+jika a { kembalikan 6 }
+}
+}
+cetak(f(salah))
