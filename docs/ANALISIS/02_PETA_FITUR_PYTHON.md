@@ -94,7 +94,7 @@ Prinsip penamaan:
 | `list` | `daftar` | 🟡 | 1 | Irisan, `+`, `*` sudah ada; 11 metode inti sudah ada |
 | `tuple` | `tupel` | ✅ | — | Kunci kamus bila elemennya hashable |
 | `dict` | `kamus` | 🟡 | 1–2 | Kunci hanya string; literal `{ }` sudah ada |
-| `set` / `frozenset` | `himpunan` / `himpunan_beku` | 🟡 `himpunan` | 2 | `himpunan_beku` belum |
+| `set` / `frozenset` | `himpunan` / `himpunan_beku` | ✅ | 2 | keduanya ada |
 | `range` | `rentang` | ✅ | — | Objek malas, seperti Python 3 |
 | `bytes` / `bytearray` | `bita` / `larik_bita` | ❌ | 6 | Diperlukan untuk berkas biner, jaringan |
 | Fungsi, kelas, metode terikat | | ✅ | — | |
@@ -147,8 +147,8 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `input` | `input` / `masukan` | ✅ | — |
 | `len` | `panjang` | ✅ | — |
 | `type` | `jenis` | 🟡 nama string | 2 |
-| `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | 🟡 `ke_bulat`, `ke_teks`, `ke_logika`, `ke_angka`; `ke_desimal` belum | 1 |
-| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | 🟡 `kamus`, `tupel`, `himpunan` | 2 |
+| `int` / `float` / `str` / `bool` | `ke_bulat` / `ke_desimal` / `ke_teks` / `ke_logika` | ✅ | 1 | plus `ke_angka` (bulat bila teksnya bulat) |
+| `list` / `dict` / `set` / `tuple` | `daftar()` / `kamus()` / `himpunan()` / `tupel()` | ✅ | 2 |
 | `range` | `rentang` | ✅ | — |
 | `enumerate` | `enumerasi` | ✅ list pasangan `[indeks, nilai]`, offset opsional | 1 |
 | `zip` | `pasangkan` | ✅ | — |
@@ -157,14 +157,14 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `sum` / `min` / `max` | `jumlah` / `min` / `max` | ✅ min/max juga menerima satu daftar | — |
 | `abs` / `round` / `pow` / `divmod` | `abs` / `bulatkan` / `pangkat` / `bagi_sisa` | ✅ (`bulatkan` = round banker's; `bulat` lama tetap beda) | — |
 | `all` / `any` | `semua` / `ada_yang` | ✅ | — |
-| `isinstance` / `issubclass` | `adalah_instansi` / `turunan_dari` | 🟡 `adalah_instansi`; `turunan_dari` belum | 2 |
+| `isinstance` / `issubclass` | `adalah_instansi` / `turunan_dari` | ✅ | 2 |
 | `hasattr` / `getattr` / `setattr` / `delattr` | `punya_atribut` / `ambil_atribut` / `atur_atribut` / `buang_atribut` | ❌ | 4 |
 | `callable` | `bisa_dipanggil` | ✅ | — |
 | `repr` / `str` | `repr` / `ke_teks` | ✅ | — |
 | `ord` / `chr` | `ord` / `chr` | ✅ | — |
 | `bin` / `oct` / `hex` | `biner` / `oktal` / `heksa` | ✅ (int64; bigint belum) | — |
-| `hash` / `id` | `hash` / `id` | 🟡 `id`; `hash` belum | 2 |
-| `iter` / `next` | `iterator` / `berikutnya` | ❌ | 5 |
+| `hash` / `id` | `hash` / `id` | ✅ | 2 |
+| `iter` / `next` | `iter` / `lanjutkan` | ✅ | 5 | `next` dinamai `lanjutkan` (`lanjut` sudah kata kunci) |
 | `open` | `buka` | 🟡 `buka_berkas` | 4: `dengan buka(...) sebagai f` |
 | `format` | `format` | ✅ | — |
 | `dir` / `vars` / `globals` / `locals` / `help` | `daftar_atribut` / `vars` / `global_()` / `lokal()` / `bantuan` | ❌ | 6 |
@@ -173,7 +173,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | `object` / `super` | `objek` / `super` | 🟡 `super` | 4 |
 | `slice` | `irisan` | ✅ sintaks `[a:b:c]` | — |
 | `bytes` / `bytearray` / `memoryview` | `bita` / `larik_bita` / — | ❌ | 6 |
-| `frozenset` / `complex` | `himpunan_beku` / `kompleks` | ❌ | 8 |
+| `frozenset` / `complex` | `himpunan_beku` / `kompleks` | 🟡 `himpunan_beku` ada; `kompleks` belum | 8 |
 | `breakpoint` | `titik_henti` | ❌ | 7 |
 | `aiter` / `anext` / `__import__` / `ascii` | — | ❌ | 8 (opsional) |
 

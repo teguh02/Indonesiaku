@@ -7,6 +7,37 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 2 tuntas
+- ✨ **Tupel tanpa kurung** — `x = 1, 2` dan `kembalikan a, b` membentuk tupel
+  tanpa tanda kurung, termasuk `y = 1,` untuk satu elemen. Hanya berlaku di
+  sisi kanan penugasan dan setelah `kembalikan`; di dalam kurung mana pun koma
+  tetap berarti pemisah, jadi `f(1, 2)`, `[1, 2]`, dan `{"a": 1, "b": 2}` tidak
+  berubah arti.
+- ✨ **`himpunan_beku([...])`** — himpunan yang tidak dapat diubah dan **dapat
+  di-hash**, sehingga boleh menjadi kunci kamus atau anggota himpunan lain
+  (`frozenset` Python). Operator `| & - ^` menghasilkan himpunan beku hanya
+  bila kedua operand beku; `tambah`/`hapus` menolaknya dengan `GalatTipe`.
+  `himpunan([1]) == himpunan_beku([1])` tetap `benar`, seperti Python.
+- ✨ **`hash(x)`** — nilai hash sebuah nilai; `GalatTipe` bila tidak dapat
+  di-hash.
+- ✨ **`iter(urutan)` + `lanjutkan(it[, bawaan])`** — iterator eksplisit.
+  Dinamai `lanjutkan` karena `lanjut` sudah menjadi kata kunci perulangan.
+  Tanpa `bawaan`, iterator yang habis menaikkan `HentiIterasi` (kelas galat
+  yang selama ini terdaftar tetapi belum pernah dipakai).
+- ✨ **`turunan_dari(kelas, induk)`** — `issubclass`; sebuah kelas adalah
+  turunan dari dirinya sendiri.
+- ✨ **`ke_desimal(x)`** — `float()`; dibutuhkan sejak K2 membuat
+  `ke_angka("3")` menghasilkan `bulat`.
+- ✨ **`daftar([urutan])`** — `list()`; selalu salinan baru, termasuk saat
+  argumennya sudah berupa daftar.
+- `jenis()` kini membedakan `"himpunan_beku"` dan `"iterator"`.
+
+### Fixed — ekstensi VS Code
+- 🐛 35 builtin tidak pernah ter-highlight di tmLanguage (termasuk `rentang`,
+  `terurut`, `himpunan`, `tupel`, `repr`, dan seluruh fungsi `db_*`). Daftar
+  pola kini dibangkitkan dari `defineNative()` di `src/vm.c`, diurutkan dari
+  nama terpanjang supaya `himpunan_beku` tidak kalah oleh `himpunan`.
+
 ### Fixed — pesan galat
 - 🐛 Galat bertipe yang melewati `coba` tanpa `kecuali` yang cocok (mis.
   `GalatNama` melewati `kecuali GalatTipe`) dulu hanya tercetak

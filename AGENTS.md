@@ -269,6 +269,19 @@ Before committing:
 - Command-line args after the script path are exposed as the global list `argumen`.
 - Standard library written **in the language itself** lives in `pustaka/` (`teks.idk`, `daftar.idk`, `matematika.idk`, `kamus.idk`, `json.idk`, `http.idk`), imported via `impor "pustaka/..."`. Functions are prefixed (`teks_`, `daftar_`, `mat_`, `kamus_`, `json_`, `http_`) because globals share one namespace. They build on the C primitives `karakter`/`potong` (string char/substring), `ord`/`chr`, and first-class functions.
 - Implicit assignment `x = 10` to a global-target name uses define-semantics (create-or-update) at ANY scope depth — so it works inside `jika`/`selagi`/`untuk` bodies (which are their own scopes). At script level that means globals; inside a function only a name declared `global` reaches a global this way. Only compound assignment (`+=` etc.) requires the global to already exist.
+- `ObjSet` carries a `frozen` flag instead of a separate `OBJ_FROZENSET` type, so every
+  `ObjType` switch stays untouched. Consequences: `hashValue` accepts a frozen set (XOR of
+  member hashes, so insertion order does not matter), `valuesEqual` deliberately ignores
+  `frozen` (`himpunan([1]) == himpunan_beku([1])` is benar, as in Python), and every write
+  path goes through `rejectFrozenSet` — there are exactly two (`tambah`, `hapus`).
+- The editor's builtin highlight list is GENERATED from `defineNative()` in `src/vm.c`,
+  sorted longest-name-first so `himpunan_beku` wins the alternation against `himpunan`.
+  Do not hand-edit it: 35 builtins silently went unhighlighted for months that way.
+- `allowTupleRHS` in `compiler.c` gates the bare-comma tupel (`x = 1, 2`). It is enabled by
+  exactly four callers — `expressionStatement`, `varDeclaration`, `returnStatement` (both
+  branches), and the `OP_INDEX_SET` path — and `maybeTupleTail` additionally requires
+  `scannerGroupingDepth() == 0`. Both guards are needed: without the depth check a comma
+  inside `f(x = 1, y)` or `[a, b]` would start building a tupel.
 - GC-safety when mutating collections: keep operands on the VM stack (`peek`, not `pop`) until after `tableSet`/`writeValueArray`, which can grow and trigger a GC. `OP_INDEX_SET` for dicts and the `sisip` native follow this. `ObjDict.keys` is also a GC-marked insertion-order list: update it only through `dictSet`/`dictDelete`.
 - **Value formatting lives in THREE paths and they must agree:** `printObject` (`object.c`, used by `cetak`), `appendValueText` (`native.c`, used by `ke_teks`/`format`/f-strings), and `nativeFnRepr`. The escape table is shared via `stringEscape(char)` in `object.c`, called by both `printStringRepr` (object.c) and `appendStringRepr` (native.c) — patching only `printObject` makes `cetak(x)` and `ke_teks(x)` disagree. Strings print bare on their own but are quoted as **collection elements** (`cetak(["a"])` → `["a"]`), Python's str/repr split; double quotes, not Python's single, because dict keys already use `"`.
 - **Iterate `ObjDict`/`ObjSet` through `keys`, never `table.entries`** — the table is hash order, `keys` is insertion order, and printing that disagrees with `kunci()` or `untuk ... dalam` on the same dict is a bug users see immediately.

@@ -66,6 +66,9 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
 - ✅ **Tupel** `(1, 2)`, `(1,)`, `()`: urutan yang tidak bisa diubah, bisa jadi kunci kamus, `tupel(...)`
 - ✅ **Himpunan** `himpunan([1, 2, 2])`: anggota unik, `dalam` cepat, `| & - ^`
+- ✅ **Himpunan beku** `himpunan_beku([1, 2])`: dapat di-hash, bisa jadi kunci kamus
+- ✅ **Tupel tanpa kurung** `x = 1, 2` dan `kembalikan a, b`
+- ✅ **Iterator** `iter(urutan)` + `lanjutkan(it[, bawaan])`
 - ✅ **Operator bitwise** `& | ^ ~ << >>` (dan `&= |= ^= <<= >>=`) pada `bulat`, presedensi seperti Python
 - ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
 - ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
@@ -91,8 +94,7 @@ Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
 - ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
 
 ### Akan Datang
-- 🔲 Sisa Fase 2 (tupel tanpa kurung, `hash`, `iter`/`next`, ...) — lihat
-  [docs/ROADMAP.md](docs/ROADMAP.md)
+- 🔲 Fase 3: modul & pustaka inti — lihat [docs/ROADMAP.md](docs/ROADMAP.md)
 - 🔲 String methods lanjutan & file I/O
 - 🔲 Standard library yang lebih lengkap
 

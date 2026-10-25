@@ -290,7 +290,73 @@ dengan `GalatTipe`.
 
 Metode lain: `panjang`, `terurut`, `jumlah`, `semua`, `ada_yang`. Operator
 `| & - ^` membuat himpunan baru. Anggota harus dapat di-hash (seperti kunci
-kamus); himpunan sendiri tidak dapat di-hash.
+kamus); himpunan biasa **tidak** dapat di-hash — gunakan `himpunan_beku`.
+
+### 1.3d Himpunan Beku
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `himpunan_beku()` | Himpunan beku kosong |
+| `himpunan_beku(urutan)` | Himpunan beku dari daftar, tupel, himpunan, teks, rentang, atau kamus (kuncinya) |
+
+`himpunan_beku` adalah himpunan yang tidak dapat diubah, dan karena itu
+**dapat di-hash**: ia boleh menjadi kunci kamus atau anggota himpunan lain.
+
+```indonesiaku
+variabel beku = himpunan_beku([3, 1, 2])
+cetak(beku)                               # himpunan_beku([3, 1, 2])
+cetak(jenis(beku))                        # himpunan_beku
+
+variabel peta = {himpunan_beku([1, 2]): "pasangan"}
+cetak(peta[himpunan_beku([2, 1])])        # pasangan
+```
+
+Isi yang sama berarti sama, beku atau tidak:
+
+```indonesiaku
+cetak(himpunan([1, 2]) == himpunan_beku([1, 2]))   # benar
+```
+
+Operator `| & - ^` bekerja untuk keduanya. Hasilnya beku hanya bila **kedua**
+operand beku:
+
+```indonesiaku
+variabel beku = himpunan_beku([1, 2])
+cetak(jenis(beku | himpunan_beku([3])))   # himpunan_beku
+cetak(jenis(beku | himpunan([3])))        # himpunan
+```
+
+`tambah` dan `hapus` menolak himpunan beku dengan `GalatTipe`.
+
+### 1.3e Iterator
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `iter(urutan)` | Iterator atas daftar, tupel, himpunan, teks, rentang, atau kamus (kuncinya) |
+| `lanjutkan(it)` | Elemen berikutnya; `HentiIterasi` bila sudah habis |
+| `lanjutkan(it, bawaan)` | Elemen berikutnya, atau `bawaan` bila sudah habis |
+
+Dinamai `lanjutkan` karena `lanjut` sudah menjadi kata kunci perulangan.
+
+```indonesiaku
+variabel it = iter([10, 20])
+cetak(lanjutkan(it))          # 10
+cetak(lanjutkan(it))          # 20
+cetak(lanjutkan(it, "habis")) # habis
+```
+
+Tanpa nilai bawaan, iterator yang habis menaikkan `HentiIterasi`:
+
+```indonesiaku
+coba {
+    lanjutkan(iter([]))
+} kecuali HentiIterasi sebagai e {
+    cetak("tertangkap:", e.pesan)   # tertangkap: Iterator sudah habis.
+}
+```
+
+Untuk perulangan biasa, `untuk ... dalam` lebih ringkas; `iter` berguna saat
+posisi iterasi perlu disimpan atau dilanjutkan belakangan.
 
 ### 1.4 Kamus (Dictionary)
 
@@ -313,10 +379,39 @@ sama. Daftar/kamus/rentang tidak bisa menjadi kunci (`GalatTipe`).
 | `ke_angka(teks)` | String → angka (gagal dapat ditangkap) |
 | `ke_teks(nilai)` | Nilai apa pun → string |
 | `ke_bulat(x)` | Angka/teks/boolean → `bulat`, **memotong ke arah nol** |
+| `ke_desimal(x)` | Angka/teks/logika → `desimal`, selalu berkoma |
 | `ke_logika(x)` | Nilai apa pun → `benar`/`salah` menurut aturan *truthiness* |
+| `daftar([urutan])` | Daftar baru dari daftar, tupel, himpunan, teks, rentang, atau kamus (kuncinya) |
+| `hash(x)` | Nilai hash (bulat); `GalatTipe` bila tidak dapat di-hash |
+| `turunan_dari(kelas, induk)` | `benar` bila `kelas` turunan `induk` (kelas adalah turunan dirinya sendiri) |
 | `repr(x)` | Representasi untuk **debug**: teks ditampilkan **dengan tanda kutip** |
 | `format(pola, ...)` | Ganti setiap `{}` di pola dengan argumen |
-| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
+| `jenis(x)` | Nama tipe: `"angka"`, `"string"`, `"boolean"`, `"kosong"`, `"list"`, `"tupel"`, `"himpunan"`, `"himpunan_beku"`, `"iterator"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
+
+#### `ke_desimal` — memaksa desimal
+
+Sejak `bulat` dan `desimal` dipisah (K2), `ke_angka("3")` memberi **bulat**.
+Pakai `ke_desimal` bila hasilnya harus desimal:
+
+```indonesiaku
+cetak(ke_angka("3"))      # 3
+cetak(ke_desimal("3"))    # 3.0
+cetak(ke_desimal(3))      # 3.0
+cetak(ke_desimal(benar))  # 1.0
+```
+
+#### `daftar` — selalu salinan baru
+
+```indonesiaku
+cetak(daftar("abc"))              # ["a", "b", "c"]
+cetak(daftar(rentang(3)))         # [0, 1, 2]
+cetak(daftar({"a": 1, "b": 2}))   # ["a", "b"]
+
+variabel asal = [1, 2]
+variabel salinan = daftar(asal)
+salinan.tambah(3)
+cetak(asal, salinan)              # [1, 2] [1, 2, 3]
+```
 
 #### `ke_bulat` — memotong, bukan membulatkan
 
