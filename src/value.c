@@ -129,7 +129,7 @@ bool hashValue(Value value, uint32_t* out) {
                 return true;
             }
             if (AS_OBJ(value)->type == OBJ_LIST || AS_OBJ(value)->type == OBJ_DICT ||
-                AS_OBJ(value)->type == OBJ_RANGE) {
+                AS_OBJ(value)->type == OBJ_RANGE || AS_OBJ(value)->type == OBJ_SET) {
                 return false;   // unhashable, as in Python
             }
             if (AS_OBJ(value)->type == OBJ_TUPLE) {
@@ -353,6 +353,18 @@ static bool valuesEqualDepth(Value a, Value b, int depth) {
                 if (!valueTableGet(&x->table, key, &xv)) continue;
                 if (!valueTableGet(&y->table, key, &yv)) return false;
                 if (!valuesEqualDepth(xv, yv, depth + 1)) return false;
+            }
+            return true;
+        }
+        case OBJ_SET: {
+            // Same members, order irrelevant. Members are hashable, so a
+            // table lookup in y decides each one.
+            ObjSet* x = AS_SET(a);
+            ObjSet* y = AS_SET(b);
+            if (x->keys.count != y->keys.count) return false;
+            for (int i = 0; i < x->keys.count; i++) {
+                Value ignored;
+                if (!valueTableGet(&y->table, x->keys.values[i], &ignored)) return false;
             }
             return true;
         }

@@ -182,6 +182,7 @@ Value nativeFnAcak(int argCount, Value* args) {
 // Mengembalikan false bila tipenya bukan urutan.
 static bool seqLength(Value seq, int* length) {
     if (sequenceItems(seq) != NULL) *length = sequenceItems(seq)->count;
+    else if (IS_SET(seq)) *length = AS_SET(seq)->keys.count;
     else if (IS_RANGE(seq)) *length = (int)rangeLength(AS_RANGE(seq));
     else if (IS_STRING(seq)) *length = AS_STRING(seq)->charCount;
     else return false;
@@ -192,6 +193,7 @@ static bool seqLength(Value seq, int* length) {
 // menjaga nilai lain yang dipegangnya tetap tereferensi dari stack VM.
 static Value seqGet(Value seq, int i) {
     if (sequenceItems(seq) != NULL) return sequenceItems(seq)->values[i];
+    if (IS_SET(seq)) return AS_SET(seq)->keys.values[i];
     if (IS_RANGE(seq)) return rangeElement(AS_RANGE(seq), i);
     ObjString* teks = AS_STRING(seq);
     int offset = utf8ByteOffset(teks, i);
@@ -568,6 +570,9 @@ Value nativeFnPanjang(int argCount, Value* args) {
     if (IS_STRING(args[0])) {
         return INT_VAL(AS_STRING(args[0])->charCount);
     }
+    if (IS_SET(args[0])) {
+        return INT_VAL(AS_SET(args[0])->keys.count);
+    }
     if (sequenceItems(args[0]) != NULL) {          // daftar or tupel
         return INT_VAL(sequenceItems(args[0])->count);
     }
@@ -595,6 +600,12 @@ Value nativeFnTambah(int argCount, Value* args) {
         return KOSONG_VAL;
     }
     if (rejectTuple(args[0])) return KOSONG_VAL;
+    if (IS_SET(args[0])) {   // tambah(himpunan, x): already a member is fine
+        if (!setAdd(AS_SET(args[0]), args[1])) {
+            nativeRaiseKelas(vm.galatTipe, "Anggota himpunan harus nilai yang dapat di-hash.");
+        }
+        return args[0];
+    }
     if (!IS_LIST(args[0])) {
         nativeRaise("tambah() argumen pertama harus list");
         return KOSONG_VAL;
@@ -676,11 +687,12 @@ Value nativeFnEnumerasi(int argCount, Value* args) {
     Value urutan = args[0];
     int count;
     if (sequenceItems(urutan) != NULL) count = sequenceItems(urutan)->count;
+    else if (IS_SET(urutan)) count = AS_SET(urutan)->keys.count;
     else if (IS_STRING(urutan)) count = AS_STRING(urutan)->charCount;
     else if (IS_RANGE(urutan)) count = (int)rangeLength(AS_RANGE(urutan));
     else if (IS_DICT(urutan)) count = dictLength(AS_DICT(urutan));
     else {
-        nativeRaise("enumerasi() hanya menerima daftar, tupel, teks, rentang, atau kamus");
+        nativeRaise("enumerasi() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus");
         return KOSONG_VAL;
     }
 
@@ -696,6 +708,7 @@ Value nativeFnEnumerasi(int argCount, Value* args) {
         push(OBJ_VAL(pasangan));
         Value nilai;
         if (sequenceItems(urutan) != NULL) nilai = sequenceItems(urutan)->values[i];
+        else if (IS_SET(urutan)) nilai = AS_SET(urutan)->keys.values[i];
         else if (IS_STRING(urutan)) {
             ObjString* teks = AS_STRING(urutan);
             int offset = utf8ByteOffset(teks, i);
@@ -853,6 +866,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("list", 4));
     } else if (IS_TUPLE(args[0])) {
         return OBJ_VAL(copyString("tupel", 5));
+    } else if (IS_SET(args[0])) {
+        return OBJ_VAL(copyString("himpunan", 8));
     } else if (IS_DICT(args[0])) {
         return OBJ_VAL(copyString("kamus", 5));
     } else if (IS_INSTANCE(args[0])) {
@@ -1005,6 +1020,20 @@ static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
             appendValueRepr(list->items.values[i], buf, size, pos);
         }
         appendRaw("]", buf, size, pos);
+        return;
+    } else if (IS_SET(v)) {
+        // himpunan([1, 2]) / himpunan() -- same as printObject (K17: no literal).
+        ObjSet* set = AS_SET(v);
+        if (set->keys.count == 0) {
+            appendRaw("himpunan()", buf, size, pos);
+            return;
+        }
+        appendRaw("himpunan([", buf, size, pos);
+        for (int i = 0; i < set->keys.count; i++) {
+            if (i > 0) appendRaw(", ", buf, size, pos);
+            appendValueRepr(set->keys.values[i], buf, size, pos);
+        }
+        appendRaw("])", buf, size, pos);
         return;
     } else if (IS_TUPLE(v)) {
         // (1, 2), (1,), () -- same as printObject and Python.
@@ -1886,6 +1915,7 @@ Value nativeFnSoketTutup(int argCount, Value* args) {
 // Jumlah elemen iterable; -1 bila tipenya tidak iterable.
 static int iterCount(Value v) {
     if (sequenceItems(v) != NULL) return sequenceItems(v)->count;
+    if (IS_SET(v)) return AS_SET(v)->keys.count;
     if (IS_STRING(v)) return AS_STRING(v)->charCount;
     if (IS_RANGE(v)) return (int)rangeLength(AS_RANGE(v));
     return -1;
@@ -1894,6 +1924,7 @@ static int iterCount(Value v) {
 // Elemen ke-i. Untuk teks ini MENGALOKASI sebuah ObjString baru.
 static Value iterAt(Value v, int i) {
     if (sequenceItems(v) != NULL) return sequenceItems(v)->values[i];
+    if (IS_SET(v)) return AS_SET(v)->keys.values[i];
     if (IS_RANGE(v)) return rangeElement(AS_RANGE(v), i);
     ObjString* teks = AS_STRING(v);
     int offset = utf8ByteOffset(teks, i);
@@ -1929,6 +1960,54 @@ Value nativeFnTupel(int argCount, Value* args) {
     }
     pop();
     return OBJ_VAL(tuple);
+}
+
+// himpunan() / himpunan(urutan) - koleksi anggota unik (K17: satu-satunya cara
+// membuat himpunan; tidak ada literal {1, 2}). Seperti set() di Python.
+Value nativeFnHimpunan(int argCount, Value* args) {
+    if (argCount > 1) {
+        nativeRaise("himpunan() memerlukan 0 atau 1 argumen, bukan %d", argCount);
+        return KOSONG_VAL;
+    }
+    ObjSet* set = newSet();
+    if (argCount == 0) return OBJ_VAL(set);
+
+    Value src = args[0];
+    int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
+    if (count < 0) {
+        nativeRaiseKelas(vm.galatTipe,
+                         "himpunan() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus");
+        return KOSONG_VAL;
+    }
+    // GC: the himpunan and each member stay rooted while the table grows --
+    // iterAt allocates a fresh string per character for teks.
+    push(OBJ_VAL(set));
+    for (int i = 0; i < count; i++) {
+        Value member = IS_DICT(src) ? dictKeyAt(AS_DICT(src), i) : iterAt(src, i);
+        push(member);
+        bool added = setAdd(set, member);
+        pop();
+        if (!added) {
+            pop();
+            nativeRaiseKelas(vm.galatTipe, "Anggota himpunan harus nilai yang dapat di-hash.");
+            return KOSONG_VAL;
+        }
+    }
+    pop();
+    return OBJ_VAL(set);
+}
+
+// s.hapus(x) - buang anggota x; GalatKunci bila x bukan anggota (Python's
+// set.remove raises KeyError; 'buang' is a keyword, so the method is 'hapus').
+Value nativeFnHimpunanHapus(int argCount, Value* args) {
+    if (argCount != 2 || !IS_SET(args[0])) {
+        nativeRaise("hapus() pada himpunan memerlukan 1 argumen (anggota)");
+        return KOSONG_VAL;
+    }
+    if (!dictDelete(setAsDict(AS_SET(args[0])), args[1])) {
+        nativeRaiseKelas(vm.galatKunci, "Nilai itu bukan anggota himpunan.");
+    }
+    return KOSONG_VAL;
 }
 
 // jumlah(d[, awal]) - seperti sum(); hanya angka.

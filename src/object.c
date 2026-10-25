@@ -71,6 +71,22 @@ ObjTuple* newTuple() {
     return tuple;
 }
 
+// Empty himpunan. Callers root it on the VM stack before adding members:
+// dictSet may grow the table and trigger a GC.
+ObjSet* newSet() {
+    ObjSet* set = ALLOCATE_OBJ(ObjSet, OBJ_SET);
+    initValueTable(&set->table);
+    initValueArray(&set->keys);
+    return set;
+}
+
+bool setAdd(ObjSet* set, Value value) {
+    uint32_t ignored;
+    if (!hashValue(value, &ignored)) return false;   // same rule as dict keys (K8)
+    dictSet(setAsDict(set), value, BOOL_VAL(true));
+    return true;
+}
+
 ObjDict* newDict() {
     ObjDict* dict = ALLOCATE_OBJ(ObjDict, OBJ_DICT);
     initValueTable(&dict->table);
@@ -348,6 +364,22 @@ void printObject(Value value) {
             }
             if (tuple->items.count == 1) printf(",");
             printf(")");
+            break;
+        }
+        case OBJ_SET: {
+            // No literal exists (K17), so print the constructor call that
+            // rebuilds it: himpunan([1, 2]) and himpunan().
+            ObjSet* set = AS_SET(value);
+            if (set->keys.count == 0) {
+                printf("himpunan()");
+                break;
+            }
+            printf("himpunan([");
+            for (int i = 0; i < set->keys.count; i++) {
+                if (i > 0) printf(", ");
+                printValueRepr(set->keys.values[i]);
+            }
+            printf("])");
             break;
         }
         case OBJ_DICT: {

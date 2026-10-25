@@ -1,0 +1,3 @@
+# Daftar tidak dapat di-hash, jadi tidak boleh menjadi anggota himpunan.
+s = himpunan([1, 2])
+s.tambah([3])

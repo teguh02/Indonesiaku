@@ -1,4 +1,4 @@
-enumerasi() hanya menerima daftar, tupel, teks, rentang, atau kamus
+enumerasi() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus
 [baris 1, kolom 12] dalam skrip
     enumerasi(1)
                ^

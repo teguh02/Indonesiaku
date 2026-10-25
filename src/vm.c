@@ -328,6 +328,7 @@ void initVM() {
     defineNative("hapus_kunci", nativeFnHapusKunci);
     defineNative("enumerasi", nativeFnEnumerasi);
     defineNative("tupel", nativeFnTupel);
+    defineNative("himpunan", nativeFnHimpunan);
     defineNative("kunci", nativeFnKunci);
 
     defineNative("jenis", nativeFnJenis);
@@ -682,6 +683,19 @@ static NativeMethod tupleMethods[] = {
     {NULL, NULL}
 };
 
+// himpunan: tambah/hapus mutate (a himpunan is mutable, unlike tupel);
+// the rest are the read-only sequence builtins.
+static NativeMethod setMethods[] = {
+    {"tambah", nativeFnTambah},
+    {"hapus", nativeFnHimpunanHapus},
+    {"panjang", nativeFnPanjang},
+    {"terurut", nativeFnTerurut},
+    {"jumlah", nativeFnJumlah},
+    {"semua", nativeFnSemua},
+    {"ada_yang", nativeFnAdaYang},
+    {NULL, NULL}
+};
+
 static NativeMethod dictMethods[] = {
     {"panjang", nativeFnPanjang},
     {"punya", nativeFnPunya},
@@ -696,6 +710,7 @@ static NativeMethod* methodsForValue(Value receiver, const char** typeName) {
     if (IS_STRING(receiver)) { *typeName = "teks";   return stringMethods; }
     if (IS_LIST(receiver))   { *typeName = "daftar"; return listMethods; }
     if (IS_TUPLE(receiver))  { *typeName = "tupel";  return tupleMethods; }
+    if (IS_SET(receiver))    { *typeName = "himpunan"; return setMethods; }
     if (IS_DICT(receiver))   { *typeName = "kamus";  return dictMethods; }
     *typeName = NULL;
     return NULL;
@@ -916,6 +931,19 @@ static bool stringContains(ObjString* haystack, ObjString* needle) {
 // `item dalam container` (Python 'in'). Returns false after raising a
 // runtime error when the container type does not support membership.
 static bool containsValue(Value container, Value item, bool* found) {
+    if (IS_SET(container)) {
+        // Hash lookup. An unhashable item can never be a member; Python
+        // raises TypeError for it ([1] in {1}), and so do we.
+        uint32_t ignored;
+        if (!hashValue(item, &ignored)) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("Nilai yang tidak dapat di-hash tidak mungkin anggota himpunan.");
+            return false;
+        }
+        Value unused;
+        *found = valueTableGet(&AS_SET(container)->table, item, &unused);
+        return true;
+    }
     ValueArray* items = sequenceItems(container);   // daftar or tupel
     if (items != NULL) {
         *found = false;
@@ -942,7 +970,7 @@ static bool containsValue(Value container, Value item, bool* found) {
         *found = IS_NUMBER(item) && rangeContains(AS_RANGE(container), AS_NUMBER(item));
         return true;
     }
-    runtimeError("Operand kanan 'dalam' harus daftar, tupel, teks, kamus, atau rentang.");
+    runtimeError("Operand kanan 'dalam' harus daftar, tupel, himpunan, teks, kamus, atau rentang.");
     return false;
 }
 
@@ -1012,6 +1040,7 @@ bool isFalsey(Value value) {
                 case OBJ_STRING: return AS_STRING(value)->length == 0;
                 case OBJ_LIST:   return AS_LIST(value)->items.count == 0;
                 case OBJ_TUPLE:  return AS_TUPLE(value)->items.count == 0;
+                case OBJ_SET:    return AS_SET(value)->keys.count == 0;
                 case OBJ_DICT:   return dictLength(AS_DICT(value)) == 0;
                 case OBJ_RANGE:  return rangeLength(AS_RANGE(value)) == 0;
                 default:         return false;
@@ -1147,9 +1176,50 @@ static const char* bitwiseSymbol(uint8_t op) {
 // a OP b for & | ^ << >>, replacing the two operands on the stack. Dispatches
 // on operand type so set union/intersection (himpunan | himpunan) can be added
 // here later without new opcodes. Returns false after raising a runtime error.
+// a OP b for two himpunan, replacing both on the stack with a NEW himpunan:
+// | union, & intersection, - difference (OP_SUBTRACT), ^ symmetric
+// difference. Order is deterministic: members of a first (in a's order),
+// then the new ones from b. Operands stay rooted while the result grows.
+static void setOperation(uint8_t op) {
+    ObjSet* a = AS_SET(peek(1));
+    ObjSet* b = AS_SET(peek(0));
+    ObjSet* result = newSet();
+    push(OBJ_VAL(result));
+    Value ignored;
+    for (int i = 0; i < a->keys.count; i++) {
+        Value member = a->keys.values[i];
+        bool inB = valueTableGet(&b->table, member, &ignored);
+        bool keep = op == OP_BIT_OR || (op == OP_BIT_AND ? inB : !inB);
+        if (keep) setAdd(result, member);
+    }
+    if (op == OP_BIT_OR || op == OP_BIT_XOR) {
+        for (int i = 0; i < b->keys.count; i++) {
+            Value member = b->keys.values[i];
+            if (!valueTableGet(&a->table, member, &ignored)) setAdd(result, member);
+        }
+    }
+    pop();              // result
+    pop(); pop();       // operands
+    push(OBJ_VAL(result));
+}
+
+// Set operators need two himpunan on both sides (Python rejects set | list
+// too). Returns false after raising; true when the operation was done.
+static bool setBinary(uint8_t op, const char* symbol) {
+    if (!IS_SET(peek(0)) || !IS_SET(peek(1)) ||
+        op == OP_SHIFT_LEFT || op == OP_SHIFT_RIGHT) {
+        vm.runtimeErrorClass = vm.galatTipe;
+        runtimeError("Operand '%s' pada himpunan harus dua himpunan.", symbol);
+        return false;
+    }
+    setOperation(op);
+    return true;
+}
+
 static bool bitwiseBinary(uint8_t op) {
     Value left = peek(1);
     Value right = peek(0);
+    if (IS_SET(left) || IS_SET(right)) return setBinary(op, bitwiseSymbol(op));
     int64_t a, b;
     if (!bitwiseOperand(left, &a) || !bitwiseOperand(right, &b)) {
         vm.runtimeErrorClass = vm.galatTipe;
@@ -1466,6 +1536,10 @@ static InterpretResult run() {
                 break;
             }
             case OP_SUBTRACT: {
+                if (IS_SET(peek(0)) || IS_SET(peek(1))) {   // himpunan - himpunan
+                    if (!setBinary(OP_SUBTRACT, "-")) return INTERPRET_RUNTIME_ERROR;
+                    break;
+                }
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -1886,9 +1960,10 @@ static InterpretResult run() {
                 // 'untuk' / comprehension read sequences by position. A kamus
                 // yields its keys in insertion order — the integer here is a
                 // position, not a key (kamus[1] is a key lookup).
-                if (IS_DICT(peek(1))) {
+                if (IS_DICT(peek(1)) || IS_SET(peek(1))) {
+                    // A himpunan is dict-shaped (ObjSet): its members are the keys.
                     int index = (int)AS_NUMBER(peek(0));
-                    ObjDict* dict = AS_DICT(peek(1));
+                    ObjDict* dict = IS_SET(peek(1)) ? setAsDict(AS_SET(peek(1))) : AS_DICT(peek(1));
                     if (!IS_NUMBER(peek(0)) || index < 0 || index >= dict->keys.count) {
                         vm.runtimeErrorClass = vm.galatIndeks;
                         runtimeError("Indeks kamus di luar jangkauan.");
@@ -1962,7 +2037,10 @@ static InterpretResult run() {
                     vm.stackTop -= 2;
                     push(OBJ_VAL(ch));
                 } else {
-                    runtimeError("Pengindeksan tidak valid: gunakan list[angka], kamus[string], atau teks[angka].");
+                    // Python: TypeError ('set' object is not subscriptable).
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Pengindeksan tidak valid: gunakan daftar[angka], tupel[angka], "
+                                 "teks[angka], atau kamus[kunci].");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -2007,10 +2085,11 @@ static InterpretResult run() {
                     pop();  // dict
                     push(value);
                 } else {
+                    vm.runtimeErrorClass = vm.galatTipe;   // Python: TypeError
                     if (IS_STRING(peek(2))) {
                         runtimeError("String tidak dapat diubah; gunakan potong()/gabungan untuk membuat string baru.");
                     } else {
-                        runtimeError("Pengindeksan tidak valid: gunakan list[angka] atau kamus[string].");
+                        runtimeError("Pengindeksan tidak valid: gunakan daftar[angka] atau kamus[kunci].");
                     }
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -2082,10 +2161,12 @@ static InterpretResult run() {
                     push(INT_VAL((int64_t)rangeLength(AS_RANGE(seq))));
                 } else if (IS_DICT(seq)) {
                     push(INT_VAL(dictLength(AS_DICT(seq))));
+                } else if (IS_SET(seq)) {
+                    push(INT_VAL(AS_SET(seq)->keys.count));
                 } else if (IS_STRING(seq)) {
                     push(INT_VAL(AS_STRING(seq)->charCount));
                 } else {
-                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, tupel, teks, rentang, atau kamus.");
+                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, tupel, himpunan, teks, rentang, atau kamus.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
@@ -2220,6 +2301,12 @@ static InterpretResult run() {
                     // No handler: report and abort.
                     if (IS_STRING(error)) {
                         runtimeError("Kesalahan tak tertangani: %s", AS_CSTRING(error));
+                    } else if (IS_INSTANCE(error) &&
+                               errorMessage(AS_INSTANCE(error)) != NULL) {
+                        // A typed galat no 'kecuali' matched (e.g. a GalatNama
+                        // through 'kecuali GalatTipe'): show its message, just as
+                        // if it had never passed through a 'coba'.
+                        runtimeError("%s", errorMessage(AS_INSTANCE(error))->chars);
                     } else {
                         runtimeError("Kesalahan tak tertangani.");
                     }

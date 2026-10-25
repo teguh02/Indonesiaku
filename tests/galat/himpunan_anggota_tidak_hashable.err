@@ -1,0 +1,4 @@
+Anggota himpunan harus nilai yang dapat di-hash.
+[baris 3, kolom 13] dalam skrip
+    s.tambah([3])
+                ^
