@@ -108,7 +108,12 @@ jobs:
           # arsip, melanggar spec ZIP: 'unzip' di Linux/macOS lalu menghasilkan
           # berkas datar bernama 'indk-windows\indk.exe'. 7z sudah terpasang
           # di runner dan menulis '/' yang benar.
-          7z a -tzip "dist/$pkg.zip" "dist/$pkg" | Out-Null
+          # 7z menyimpan path APA ADANYA, jadi "dist/$pkg" menaruh lapisan
+          # 'dist/' berlebih di dalam arsip. Masuk ke dist/ dulu agar isinya
+          # 'indk-windows/indk.exe', sejajar dengan paket Linux/macOS.
+          Push-Location dist
+          7z a -tzip "$pkg.zip" "$pkg" | Out-Null
+          Pop-Location
           Get-Item "dist/$pkg.zip"
 
       - name: Upload artifact
