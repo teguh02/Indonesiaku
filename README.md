@@ -1,821 +1,216 @@
 # 🇮🇩 Bahasa Pemrograman Indonesiaku
 
-**Indonesiaku** adalah bahasa pemrograman dengan sintaks Bahasa Indonesia yang terinspirasi dari Python. Bahasa ini menggunakan Virtual Machine (VM) berbasis bytecode yang diimplementasikan dalam bahasa C.
+**Indonesiaku** adalah bahasa pemrograman dengan sintaks Bahasa Indonesia yang
+terinspirasi dari Python, dijalankan oleh *virtual machine* bytecode yang
+ditulis dalam C.
+
+Semantiknya mengikuti Python, tetapi **blok kode memakai kurung kurawal `{ }`**
+seperti PHP/C — **tidak ada aturan indentasi**, sehingga kode yang ditulis rata
+kiri pun tetap sah.
+
+```indonesiaku
+fungsi sapa(nama) {
+    jika nama == "" {
+        kembalikan "Halo, dunia!"
+    }
+    kembalikan "Halo, " + nama
+}
+
+cetak(sapa("Teguh"))
+```
+
+[![Rilis](https://img.shields.io/github/v/release/teguh02/Indonesiaku-Lang)](https://github.com/teguh02/Indonesiaku-Lang/releases/latest)
+[![Lisensi](https://img.shields.io/badge/lisensi-MIT-blue)](LICENSE)
+[![Docker](https://img.shields.io/docker/pulls/teguh02/indonesiaku)](https://hub.docker.com/r/teguh02/indonesiaku)
 
 ---
 
-## 📚 DOKUMENTASI LENGKAP
+## 📚 Dokumentasi
 
-**Dokumentasi terstruktur tersedia di folder `website/panduan/`** (folder `website/` juga berisi situs dokumentasi & playground):
+**Dokumentasi lengkap ada di folder [`website/panduan/`](website/panduan/README.md)** —
+panduan sintaks, instalasi, dan referensi pustaka standar semuanya di sana.
+README ini sengaja dibuat ringkas.
 
-| Dokumen | Deskripsi |
-|---------|-----------|
-| **[website/panduan/README.md](website/panduan/README.md)** | 📖 Hub utama dokumentasi |
-| **[website/panduan/01_PERKENALAN.md](website/panduan/01_PERKENALAN.md)** | 🎯 Visi, misi, fitur |
-| **[website/panduan/02_INSTALASI.md](website/panduan/02_INSTALASI.md)** | 🔧 Instalasi untuk Windows, Linux, macOS |
-| **[website/panduan/03_PANDUAN_SINTAKS.md](website/panduan/03_PANDUAN_SINTAKS.md)** | 📝 Panduan syntax lengkap dengan contoh |
-| **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)** | 🤝 Cara berkontribusi & setup dev |
-| **[website/panduan/05_CREATOR.md](website/panduan/05_CREATOR.md)** | 👤 Profile & motivasi creator |
-| **[website/panduan/06_PENUTUP.md](website/panduan/06_PENUTUP.md)** | ✅ Kesimpulan, FAQ, resources |
-| **[website/panduan/07_PUSTAKA_STANDAR.md](website/panduan/07_PUSTAKA_STANDAR.md)** | 📚 Referensi lengkap fungsi bawaan & pustaka standar |
+| Dokumen | Isi |
+|---------|-----|
+| [01_PERKENALAN](website/panduan/01_PERKENALAN.md) | Visi, misi, dan gambaran fitur |
+| [02_INSTALASI](website/panduan/02_INSTALASI.md) | Pemasangan di Windows, Linux, macOS |
+| [03_PANDUAN_SINTAKS](website/panduan/03_PANDUAN_SINTAKS.md) | Panduan sintaks lengkap beserta contoh |
+| [04_KONTRIBUSI](website/panduan/04_KONTRIBUSI.md) | Cara berkontribusi & menyiapkan lingkungan dev |
+| [05_CREATOR](website/panduan/05_CREATOR.md) | Profil dan motivasi pembuat |
+| [06_PENUTUP](website/panduan/06_PENUTUP.md) | Kesimpulan, FAQ, rujukan lain |
+| [07_PUSTAKA_STANDAR](website/panduan/07_PUSTAKA_STANDAR.md) | Referensi fungsi bawaan & pustaka standar |
 
-Rencana pengembangan bahasa (internal, bukan panduan pengguna) ada di **[docs/](docs/README.md)**.
+- Situs dokumentasi & playground: **[idk-lang.web.id](https://idk-lang.web.id)**
+- Spesifikasi bahasa yang normatif: **[docs/SPESIFIKASI.md](docs/SPESIFIKASI.md)**
+- Rencana pengembangan (internal, bukan panduan pengguna): **[docs/](docs/README.md)**
 
 ---
 
-## 📋 Daftar Isi
+## 🚀 Pemasangan Cepat
 
-- [Tentang Proyek](#tentang-proyek)
-- [Fitur](#fitur)
-- [Instalasi](#instalasi)
-- [Cara Menggunakan](#cara-menggunakan)
-- [Sintaks Dasar](#sintaks-dasar)
-- [Contoh Program](#contoh-program)
-- [Kata Kunci](#kata-kunci)
-- [Roadmap](#roadmap)
-- [Kontribusi](#kontribusi)
+### Unduh binari (disarankan)
 
-## 🎯 Tentang Proyek
+Ambil paket untuk sistem operasi Anda di
+**[halaman rilis](https://github.com/teguh02/Indonesiaku-Lang/releases/latest)**:
+`indk-windows.zip`, `indk-linux.tar.gz`, atau `indk-macos.tar.gz`.
 
-Proyek ini bertujuan untuk membuat bahasa pemrograman yang:
-- **Mudah dipahami** oleh penutur Bahasa Indonesia
-- **Mirip Python** dalam struktur dan filosofi (dinamis, ekspresif); blok kode menggunakan kurung kurawal `{ }`
-- **Menggunakan kata kunci Bahasa Indonesia** untuk semua perintah
-- **Diimplementasikan dengan C** untuk performa yang baik
+Setiap paket sudah berisi `indk`, pustaka standar, dan contoh program — cukup
+diekstrak lalu dijalankan. Langkah rincinya ada di
+[02_INSTALASI](website/panduan/02_INSTALASI.md).
 
-## ℹ️ Independensi Proyek & Disclaimer
+### Docker
 
-Indonesiaku merupakan proyek bahasa pemrograman open source independen yang dikembangkan sebagai kontribusi terhadap perkembangan teknologi dan ekosistem pemrograman.
-
-Proyek ini **tidak berafiliasi, tidak disponsori, dan tidak mewakili** Pemerintah Republik Indonesia maupun lembaga pemerintahan lainnya.
-
-Indonesiaku dikembangkan untuk kepentingan edukasi, eksplorasi teknologi, dan kolaborasi komunitas pengembang. Nama "Indonesiaku" digunakan sebagai identitas proyek bahasa pemrograman dan tidak dimaksudkan untuk menyatakan kepemilikan, kewenangan, atau representasi resmi atas Negara Republik Indonesia.
-
-Pengembangan proyek dilakukan secara terbuka dan nonkomersial. Partisipasi serta kontribusi komunitas bersifat sukarela tanpa adanya kewajiban atau janji pemberian imbalan finansial.
-
-Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut lain yang dapat memberikan kesan proyek resmi pemerintah.
-## ✨ Fitur
-
-### Saat Ini (v1.0.0)
-- ✅ Ekspresi aritmatika (+, -, *, /, %, **) & assignment gabungan (+=, -=, dll)
-- ✅ Tipe data: angka (`bulat` int64 + `desimal` double, seperti Python), boolean (`benar`/`salah`), `kosong`, string
-- ✅ Percabangan `jika`/`jika_lain`/`selain`, perulangan `selagi`
-- ✅ Fungsi, rekursi, **closure** (dengan `variabel` untuk lokal)
-- ✅ **Parameter bernilai bawaan** `fungsi sapa(nama, salam="Halo")` (dievaluasi tiap panggilan)
-- ✅ **Argumen bernama** `gambar("Judul", tengah=benar)` (boleh melewati parameter di tengah)
-- ✅ **List** `[..]` + indexing, **Kamus** literal `{"a": 1}` + indexing string
-- ✅ **Tupel** `(1, 2)`, `(1,)`, `()`: urutan yang tidak bisa diubah, bisa jadi kunci kamus, `tupel(...)`
-- ✅ **Himpunan** `himpunan([1, 2, 2])`: anggota unik, `dalam` cepat, `| & - ^`
-- ✅ **Himpunan beku** `himpunan_beku([1, 2])`: dapat di-hash, bisa jadi kunci kamus
-- ✅ **Tupel tanpa kurung** `x = 1, 2` dan `kembalikan a, b`
-- ✅ **Iterator** `iter(urutan)` + `lanjutkan(it[, bawaan])`
-- ✅ **Operator bitwise** `& | ^ ~ << >>` (dan `&= |= ^= <<= >>=`) pada `bulat`, presedensi seperti Python
-- ✅ **Indeks negatif** `a[-1]` dan **irisan** `a[1:3]`, `a[::-1]` (daftar & teks)
-- ✅ **Gabung & ulang** `[1] + [2]`, `"-" * 20`, `[0] * 5`; **`==` struktural**
-- ✅ **`untuk ... dalam`** (for-in), **`hentikan`/`lanjut`** (break/continue)
-- ✅ **List comprehension** `[x * x untuk x dalam rentang(1, 6)]`, **penugasan berganda** `a, b = b, a`, **`buang`** (del)
-- ✅ **Kelas & OOP**: `kelas`, `init`, `diri`, pewarisan (`<`), `super`
-- ✅ **Penanganan kesalahan**: `naikkan` + `coba`/`kecuali`/`akhirnya`; semua
-  kesalahan runtime (indeks, bagi nol, variabel tak terdefinisi) bisa ditangkap
-- ✅ **Teks dalam koleksi dikutip**: `cetak(["a"])` → `["a"]`
-- ✅ **Pesan galat menunjuk kolom** (kompilasi *dan* runtime) + saran nama yang mirip
-- ✅ **`cetak` fungsi biasa**: `cetak("a", "b", pisah="-")`, bisa dioper sebagai nilai
-- ✅ **Metode tipe bawaan**: `"budi".huruf_besar()`, `[3,1,2].terurut()`
-- ✅ **f-string**: `f"Halo {nama}, umurmu {umur}"`
-- ✅ **Literal angka**: `1e3`, `0xFF`, `0b1010`, `0o17`, `1_000_000`
-- ✅ **String tiga kutip**: `"""teks\nmulti-baris"""`
-- ✅ **Fungsi anonim**: `fungsi(x) { kembalikan x * x }` sebagai nilai, closure penuh
-- ✅ **Ekspresi kondisional**: `"lulus" jika nilai >= 60 selain "gagal"`
-- ✅ **`pastikan`** (assert) dengan pesan opsional → `GalatPenegasan`
-- ✅ `lewati` (pernyataan kosong), teks Unicode dihitung per karakter
-- ✅ `rentang()`, operator `dalam`/`tidak dalam`, truthiness seperti Python
-- ✅ **Sistem modul**: `impor matematika` (namespace sendiri per modul),
-  `impor x sebagai y`, `dari x impor y`, paket `impor a.b`, jalur pencarian
-  `INDK_PATH`, dan `__nama__`/`__utama__`. Bentuk lama `impor "file.idk"`
-  (namespace bersama) tetap berlaku
-- ✅ **Garbage Collector** mark-sweep
-- ✅ REPL interaktif, operator logika `dan`/`atau`/`tidak`
-
-### Akan Datang
-- 🔲 Fase 3: modul & pustaka inti — lihat [docs/ROADMAP.md](docs/ROADMAP.md)
-- 🔲 String methods lanjutan & file I/O
-- 🔲 Standard library yang lebih lengkap
-
-## 🔧 Instalasi
-
-### Prasyarat
-- GCC atau Clang compiler
-- Make (opsional, untuk menggunakan Makefile)
-- Git (untuk clone repository)
-
-### Langkah Instalasi
-
-#### Windows (PowerShell/CMD)
 ```bash
-# Clone repository (jika dari Git)
-git clone <repository-url>
-cd Indonesiaku
-
-# Compile dengan GCC
-gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
-
-# Atau gunakan Make (jika tersedia)
-make
+docker run --rm -v "$PWD:/kode" teguh02/indonesiaku /kode/program.idk
 ```
 
-#### Linux/Mac
+### Kompilasi dari sumber
+
+Membutuhkan kompilator C11 (GCC/Clang) dan `make`.
+
 ```bash
-# Clone repository
-git clone <repository-url>
-cd Indonesiaku
-
-# Compile dengan GCC
-gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
-
-# Atau gunakan Make
+git clone https://github.com/teguh02/Indonesiaku-Lang.git
+cd Indonesiaku-Lang
 make
-```
-
-### Menggunakan VS Code
-
-1. Buka folder proyek di VS Code
-2. Tekan `Ctrl+Shift+B` untuk build
-3. Pilih task **"Build Indonesiaku (C VM)"**
-4. Untuk menjalankan file .idk yang sedang dibuka, pilih task **"Run Indonesiaku (file aktif)"**
-
-## 🚀 Cara Menggunakan
-
-### Menjalankan File .idk
-```bash
-# Windows
-indk.exe examples/hello.idk
-
-# Linux/Mac
 ./indk examples/hello.idk
 ```
 
-### Mode REPL (Interactive)
-```bash
-# Windows
-indk.exe
-
-# Linux/Mac
-./indk
-```
-
-Dalam mode REPL, Anda bisa menulis kode langsung:
-```
-> cetak("Halo!")
-Halo!
-> x = 10
-> cetak(x * 2)
-20
-```
-
-## 📖 Sintaks Dasar
-
-### Komentar
-```python
-# Ini adalah komentar
-cetak("Halo")  # Komentar di akhir baris
-```
-
-### Variabel
-```python
-nama = "Budi"
-umur = 25
-tinggi = 170.5
-aktif = benar
-data = kosong
-```
-
-### Akhir Baris
-Setiap baris di luar `()` dan `[]` mengakhiri pernyataan; `;` tetap boleh untuk dua pernyataan pada satu baris. Newline di dalam panggilan atau list dapat dipakai untuk format multi-baris.
-
-```python
-cetak(
-    "Halo",
-    nama
-)
-```
-
-### Cetak (Print)
-```python
-cetak("Halo, dunia!")
-cetak("Nama:", nama, "Umur:", umur)
-```
-
-### Escape String
-String mendukung urutan escape: `\n` (baris baru), `\t` (tab), `\r`, `\"` (kutip), `\\` (backslash).
-```python
-cetak("baris satu\nbaris dua")
-cetak("kolom1\tkolom2")
-cetak("dia bilang \"halo\"")
-cetak("path: C:\\folder")
-```
-
-### Operasi Aritmatika
-```python
-x = 10
-y = 3
-
-jumlah = x + y      # 13
-selisih = x - y     # 7
-kali = x * y        # 30
-bagi = x / y        # 3.333...
-sisa = x % y        # 1
-pangkat = x ** 2    # 100
-```
-
-### Percabangan
-```python
-nilai = 85
-
-jika nilai >= 90 {
-    cetak("Nilai A")
-} jika_lain nilai >= 80 {
-    cetak("Nilai B")
-} jika_lain nilai >= 70 {
-    cetak("Nilai C")
-} selain {
-    cetak("Nilai D")
-}
-```
-
-### Operator Logika
-```python
-umur = 20
-punya_sim = benar
-
-jika umur >= 17 dan punya_sim {
-    cetak("Boleh menyetir")
-} selain {
-    cetak("Tidak boleh menyetir")
-}
-
-jika umur < 13 atau umur > 65 {
-    cetak("Diskon khusus")
-}
-
-jika tidak punya_sim {
-    cetak("Harus punya SIM dulu")
-}
-```
-
-### Perulangan (While)
-```python
-# Hitung mundur
-i = 5
-selagi i > 0 {
-    cetak(i)
-    i = i - 1
-}
-cetak("Selesai!")
-
-# Jumlah 1 sampai 10
-i = 1
-jumlah = 0
-selagi i <= 10 {
-    jumlah = jumlah + i
-    i = i + 1
-}
-cetak("Jumlah:", jumlah)
-```
-
-### Fungsi
-```python
-# Fungsi tanpa parameter
-fungsi sapa() {
-    cetak("Halo!")
-}
-
-sapa()
-
-# Fungsi dengan parameter
-fungsi sapa_nama(nama) {
-    cetak("Halo,", nama)
-}
-
-sapa_nama("Budi")
-
-# Parameter dengan nilai bawaan (dievaluasi tiap panggilan, beda dari Python)
-fungsi sapa_bawaan(nama, salam="Halo") {
-    cetak(salam + ", " + nama)
-}
-
-sapa_bawaan("Budi")          # Halo, Budi
-sapa_bawaan("Budi", "Hai")   # Hai, Budi
-
-# Argumen bernama: lewati parameter di tengah, urutan bebas
-fungsi gambar(teks, lebar=80, garis="-") {
-    cetak(teks, lebar, garis)
-}
-
-gambar("Judul", garis="=")   # Judul 80 =
-
-# Fungsi dengan return
-fungsi tambah(a, b) {
-    kembalikan a + b
-}
-
-hasil = tambah(5, 3)
-cetak("Hasil:", hasil)
-
-# Fungsi rekursif
-fungsi faktorial(n) {
-    jika n <= 1 {
-        kembalikan 1
-    } selain {
-        kembalikan n * faktorial(n - 1)
-    }
-}
-
-cetak("5! =", faktorial(5))  # Output: 120
-```
-
-## 🎨 Contoh Program
-
-### Hello World
-```python
-cetak("Halo, dunia!")
-cetak("Selamat datang di Bahasa Indonesiaku!")
-```
-
-### Fibonacci
-```python
-fungsi fibonacci(n) {
-    jika n <= 1 {
-        kembalikan n
-    } selain {
-        kembalikan fibonacci(n - 1) + fibonacci(n - 2)
-    }
-}
-
-i = 0
-selagi i < 10 {
-    cetak("Fibonacci(", i, ") =", fibonacci(i))
-    i = i + 1
-}
-```
-
-### Cek Bilangan Prima
-```python
-fungsi adalah_prima(n) {
-    jika n <= 1 {
-        kembalikan salah
-    }
-
-    jika n == 2 {
-        kembalikan benar
-    }
-
-    jika n % 2 == 0 {
-        kembalikan salah
-    }
-
-    i = 3
-    selagi i * i <= n {
-        jika n % i == 0 {
-            kembalikan salah
-        }
-        i = i + 2
-    }
-
-    kembalikan benar
-}
-
-angka = 1
-selagi angka <= 20 {
-    jika adalah_prima(angka) {
-        cetak(angka, "adalah bilangan prima")
-    }
-    angka = angka + 1
-}
-```
-
-Lebih banyak contoh tersedia di folder `examples/`.
-
-## 🚀 Fitur Lanjutan
-
-### List & Kamus
-```python
-angka = [10, 20, 30]
-cetak(angka[0])          # 10
-cetak(angka[-1])         # 30  (indeks negatif)
-tambah(angka, 40)        # [10, 20, 30, 40]
-cetak(panjang(angka))    # 4
-
-# Literal kamus; kunci harus teks
-orang = {"nama": "Budi", "umur": 25}
-cetak(orang["nama"])         # Budi
-cetak(punya(orang, "kota"))  # salah
-
-# Gabung, ulang, dan perbandingan isi
-cetak([1, 2] + [3])          # [1, 2, 3]
-cetak("-" * 20)              # garis pemisah
-cetak([1, 2] == [1, 2])      # benar  (== membandingkan isi)
-cetak([1, 2] adalah [1, 2])  # salah  (adalah = identitas objek)
-```
-
-`{` di posisi ekspresi = literal kamus, di posisi pernyataan = blok. Jadi
-`{"a": 1}` berdiri sendiri bukan kamus — tulis `x = {"a": 1}`.
-
-### Indeks Negatif & Irisan
-```python
-a = [10, 20, 30, 40, 50]
-cetak(a[-1])      # 50
-cetak(a[1:3])     # [20, 30]
-cetak(a[:2])      # [10, 20]
-cetak(a[3:])      # [40, 50]
-cetak(a[::2])     # [10, 30, 50]
-cetak(a[::-1])    # [50, 40, 30, 20, 10]
-cetak("halo dunia"[0:4])   # halo
-```
-Batas di-*clamp* seperti Python (`a[4:1]` → `[]`), irisan daftar menghasilkan
-salinan dangkal, dan irisan teks menghitung karakter UTF-8.
-
-### Perulangan untuk...dalam, hentikan, lanjut
-```python
-untuk x dalam [1, 2, 3, 4, 5] {
-    jika x == 4 { hentikan }   # break
-    jika x == 2 { lanjut }     # continue
-    cetak(x)
-}
-```
-
-### Closure
-```python
-fungsi buat_pencacah() {
-    variabel n = 0             # 'variabel' wajib agar bisa ditangkap closure
-    fungsi naik() {
-        nonlokal n             # tanpa 'nonlokal', n = n + 1 jadi lokal baru
-        n = n + 1
-        kembalikan n
-    }
-    kembalikan naik
-}
-c = buat_pencacah()
-cetak(c())  # 1
-cetak(c())  # 2
-```
-
-### Lingkup Assignment (`global` / `nonlokal`)
-Di tingkat skrip `x = 5` membuat global; **di dalam fungsi `x = 5` membuat
-variabel lokal** (seperti Python). Pakai `global`/`nonlokal` untuk menulis ke
-luar fungsi. Keduanya menerima beberapa nama: `global a, b`.
-```python
-variabel pesan = "skrip"
-fungsi ubah() {
-    global pesan
-    pesan = "diubah"
-}
-ubah()
-cetak(pesan)       # diubah
-```
-
-### Kelas & Pewarisan
-```python
-kelas Hewan {
-    init(nama) { diri.nama = nama }
-    bersuara() { cetak(diri.nama, "bersuara") }
-}
-kelas Anjing < Hewan {
-    bersuara() {
-        super.bersuara()
-        cetak(diri.nama, "menggonggong")
-    }
-}
-Anjing("Rex").bersuara()
-```
-
-### Penanganan Kesalahan
-```python
-coba {
-    naikkan "terjadi kesalahan"
-} kecuali e {
-    cetak("tertangkap:", e)
-}
-```
-
-### Impor Modul
-```python
-impor "examples/pustaka_matematika.idk"
-cetak(luas_lingkaran(2))
-```
-
-## 📦 Pustaka Standar (ditulis dalam Indonesiaku)
-
-Pustaka di folder `pustaka/` ditulis dalam bahasa Indonesiaku sendiri dan
-di-`impor` sesuai kebutuhan. Fungsi diberi awalan agar tidak bentrok dengan
-namespace global.
-
-```python
-impor "pustaka/teks.idk"
-impor "pustaka/daftar.idk"
-impor "pustaka/matematika.idk"
-impor "pustaka/kamus.idk"
-
-# Teks
-cetak(teks_pisah("a,b,c", ","))          # [a, b, c]
-cetak(teks_gabung(["x","y"], "-"))       # x-y
-cetak(teks_balik("halo"))                # olah
-
-# Daftar (list) — fungsi tingkat tinggi
-fungsi kali2(x) { kembalikan x * 2 }
-cetak(daftar_peta([1,2,3], kali2))       # [2, 4, 6]
-cetak(daftar_urutkan([3,1,2]))           # [1, 2, 3]
-
-# Matematika
-cetak(mat_faktorial(5))                  # 120
-cetak(mat_fpb(48, 36))                   # 12
-
-# Kamus
-d = kamus_dari_pasangan([["a",1],["b",2]])
-cetak(d["a"])                            # 1
-```
-
-| Pustaka | Fungsi utama |
-|---------|--------------|
-| `pustaka/teks.idk` | `teks_cari`, `teks_pisah`, `teks_gabung`, `teks_mulai_dengan`, `teks_akhiri_dengan`, `teks_pangkas`, `teks_ulang`, `teks_balik`, `teks_berisi` |
-| `pustaka/daftar.idk` | `daftar_peta`, `daftar_saring`, `daftar_lipat`, `daftar_urutkan`, `daftar_berisi`, `daftar_indeks_dari`, `daftar_iris`, `daftar_balik` |
-| `pustaka/matematika.idk` | `MAT_PI`, `MAT_E`, `mat_faktorial`, `mat_fpb`, `mat_kpk`, `mat_genap`, `mat_ganjil`, `mat_jumlah`, `mat_rata_rata`, `mat_adalah_prima` |
-| `pustaka/kamus.idk` | `kamus_nilai`, `kamus_gabung`, `kamus_dari_pasangan`, `kamus_salin`, `kamus_ambil` |
-
-Primitif teks bawaan yang mendasari pustaka: `karakter(teks, i)`, `potong(teks, mulai, jumlah)`.
-
-### Contoh Aplikasi: Todo-list JSON DB
-
-`examples/todo_cli.idk` adalah aplikasi CRUD Todo-list yang menyimpan data di
-berkas JSON, memetakan operasi REST ke perintah command-line:
+### Menjalankan
 
 ```bash
-indk examples/todo_cli.idk tambah "beli susu"     # POST  (buat)
-indk examples/todo_cli.idk daftar                 # GET   (semua)
-indk examples/todo_cli.idk lihat 1                # GET   (satu)
-indk examples/todo_cli.idk selesai 1              # PUT   (tandai selesai)
-indk examples/todo_cli.idk ubah 1 "beli roti"     # PUT   (ubah teks)
-indk examples/todo_cli.idk hapus 1                # DELETE
+indk program.idk    # jalankan berkas
+indk                # REPL interaktif
+indk -v             # versi
 ```
-
-Dibangun di atas `pustaka/json.idk` (serialisasi/parsing JSON yang ditulis
-dalam Indonesiaku sendiri) dan fungsi berkas bawaan.
-
-### Contoh Aplikasi: REST API HTTP (Todo-list)
-
-`examples/todo_server.idk` adalah **server REST API HTTP** sungguhan (soket TCP,
-`127.0.0.1`) untuk Todo-list dengan penyimpanan JSON:
-
-```bash
-indk examples/todo_server.idk 8080        # jalankan server
-
-# di terminal lain:
-curl http://127.0.0.1:8080/todos                              # GET semua
-curl -X POST -d '{"teks":"beli susu"}' http://127.0.0.1:8080/todos   # POST
-curl http://127.0.0.1:8080/todos/1                            # GET satu
-curl -X PUT -d '{"selesai":true}' http://127.0.0.1:8080/todos/1      # PUT
-curl -X DELETE http://127.0.0.1:8080/todos/1                  # DELETE
-```
-
-Dibangun di atas native soket TCP (`soket_dengar`/`soket_terima`/...) dan
-`pustaka/http.idk` (parsing request + pembuatan response). Server single-thread
-& blocking untuk tujuan edukasi.
-
-## 🗄️ Basis Data SQLite
-
-SQLite tertanam langsung di dalam `indk` — tidak ada yang perlu dipasang.
-
-```indonesiaku
-variabel db = db_buka(":memory:")          # atau "sekolah.db"
-db_eksekusi(db, "CREATE TABLE siswa (id INTEGER PRIMARY KEY, nama TEXT, nilai REAL)")
-db_eksekusi(db, "INSERT INTO siswa (nama, nilai) VALUES (?, ?)", ["Budi", 85.5])
-
-untuk b dalam db_ambil_semua(db, "SELECT nama, nilai FROM siswa WHERE nilai > ?", [80]) {
-    cetak(b["nama"], b["nilai"])           # tiap baris adalah kamus
-}
-db_tutup(db)
-```
-
-**Selalu pakai `?`, jangan merangkai SQL dengan `+`.** Nilai lewat parameter
-disimpan sebagai data, tidak pernah dieksekusi. Satu panggilan hanya menerima
-satu pernyataan, sehingga `"INSERT ...; DROP TABLE ..."` ditolak sebelum apa
-pun berjalan. Selengkapnya: `examples/db_sqlite.idk` dan
-[panduan pustaka standar](website/panduan/07_PUSTAKA_STANDAR.md).
-
-## 🔤 Kata Kunci
-
-### Tabel Pemetaan (Python → Indonesiaku)
-
-| Python | Indonesiaku | Keterangan |
-|--------|-------------|------------|
-| `True` | `benar` | Boolean benar |
-| `False` | `salah` | Boolean salah |
-| `None` | `kosong` | Null/None |
-| `and` | `dan` | Operator logika AND |
-| `or` | `atau` | Operator logika OR |
-| `not` | `tidak` | Operator logika NOT |
-| `if` | `jika` | Percabangan if |
-| `elif` | `jika_lain` | Percabangan elif |
-| `else` | `selain` | Percabangan else |
-| `while` | `selagi` | Perulangan while |
-| `for` | `untuk` | Perulangan for |
-| `in` | `dalam` | Operator in |
-| `def` | `fungsi` | Definisi fungsi |
-| `return` | `kembalikan` | Return value |
-| `print` | `cetak` | Print/output |
-| `class` | `kelas` | Definisi kelas (v0.3+) |
-| `self` | `diri` | Self reference (v0.3+) |
-
-### Kata Kunci Tambahan
-- `break` → `hentikan`
-- `continue` → `lanjut`
-- `pass` → `lewati`
-- `import` → `impor`
-- `try` → `coba`
-- `except` → `kecuali`
-- `finally` → `akhirnya`
-- `raise` → `naikkan`
-- `assert` → `pastikan`
-- `lambda` → `fungsi(x) { ... }` (anonim)
-- `a if c else b` → `a jika c selain b`
-
-Dicadangkan untuk versi mendatang (belum bisa dipakai): `from` → `dari`,
-`as` → `sebagai`, `with` → `dengan`.
-
-## 🧰 Fungsi Bawaan (Built-in)
-
-Fungsi berikut tersedia langsung tanpa impor (didefinisikan di `src/native.c`):
-
-### Matematika
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `min(a, b, ...)` | Nilai terkecil (min. 2 argumen) |
-| `max(a, b, ...)` | Nilai terbesar (min. 2 argumen) |
-| `abs(x)` | Nilai absolut |
-| `akar(x)` | Akar kuadrat (x tidak boleh negatif) |
-| `pangkat(x, y)` | x pangkat y |
-| `bulat(x)` | Pembulatan ke bilangan terdekat |
-| `lantai(x)` | Pembulatan ke bawah (floor) |
-| `atap(x)` | Pembulatan ke atas (ceil) |
-| `acak()` | Angka acak antara 0 dan 1 |
-
-### String
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `panjang(x)` | Panjang string, list, atau kamus |
-| `huruf_besar(s)` | Ubah ke huruf kapital |
-| `huruf_kecil(s)` | Ubah ke huruf kecil |
-| `ganti(teks, cari, ganti)` | Ganti semua kemunculan substring |
-
-### List
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `tambah(list, nilai)` | Tambah elemen ke akhir list |
-| `hapus(list)` | Hapus & kembalikan elemen terakhir |
-
-### Kamus
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `kamus()` | Buat kamus kosong |
-| `punya(kamus, kunci)` | Apakah kunci ada |
-| `kunci(kamus)` | List berisi semua kunci |
-| `hapus_kunci(kamus, kunci)` | Hapus pasangan kunci-nilai |
-
-### Utilitas
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `jenis(x)` | Nama tipe: `"angka"`, `"teks"`, `"logika"`, `"kosong"`, `"daftar"`, `"kamus"`, `"objek"`, `"kelas"`, `"berkas"` |
-| `input(prompt)` | Baca satu baris dari stdin (prompt opsional) |
-| `henti(detik)` | Jeda eksekusi selama `detik` detik |
-| `jam()` | Waktu CPU berjalan (detik) |
-| `argumen` | Variabel global: list argumen baris perintah |
-
-### Konversi & Format
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `ke_angka(teks)` | String → angka (gagal dapat ditangkap `coba/kecuali`) |
-| `ke_teks(nilai)` | Nilai apa pun → string |
-| `format(pola, ...)` | Ganti setiap `{}` di pola dengan argumen berikutnya |
-| `acak_bulat(min, maks)` | Bilangan bulat acak dalam `[min, maks]` |
-
-### Berkas (File I/O)
-Semua kegagalan dapat ditangkap dengan `coba/kecuali`.
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `buka_berkas(path, mode)` | Buka berkas → handle. Mode: `"b"` baca, `"t"` tulis, `"s"` sambung |
-| `tutup(berkas)` | Tutup handle berkas |
-| `baca(berkas)` | Baca seluruh sisa isi berkas → string |
-| `baca_baris(berkas)` | Baca satu baris → string, atau `kosong` di akhir berkas |
-| `tulis(berkas, teks)` | Tulis teks ke handle → jumlah byte |
-| `baca_semua(path)` | Baca seluruh isi berkas dari path → string |
-| `tulis_semua(path, teks)` | Tulis (timpa) teks ke path |
-| `tambah_berkas(path, teks)` | Tambahkan teks ke akhir berkas |
-| `ada_berkas(path)` | Apakah berkas ada → boolean |
-| `hapus_berkas(path)` | Hapus berkas |
-
-### Waktu & Tanggal
-| Fungsi | Deskripsi |
-|--------|-----------|
-| `waktu()` | Detik sejak epoch (Unix time) |
-| `tanggal()` | Kamus `{tahun, bulan, hari, jam, menit, detik, hari_minggu, hari_tahun}` |
-| `format_tanggal(pola)` | Format waktu sekarang dengan pola `strftime` (mis. `"%Y-%m-%d"`) |
-
-## 🗺️ Roadmap
-
-Roadmap **satu-satunya** ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** (status
-per fitur + rencana detail). Ringkasnya: semua fitur inti (closure, list/kamus,
-kelas & warisan, exception, modul, GC, file I/O, JSON, HTTP, soket TCP) sudah
-selesai di v1.0.0, dan Fase 0 (stabilisasi: operator, `akhirnya`, `lewati`,
-galat yang bisa ditangkap, teks Unicode) sedang menuju rilis berikutnya.
-
-## 🏗️ Arsitektur
-
-Proyek ini menggunakan arsitektur bytecode VM:
-
-```
-Kode Sumber (.idk)
-    ↓
-Scanner/Lexer (Token)
-    ↓
-Compiler single-pass (Pratt parser → Bytecode langsung, tanpa AST)
-    ↓
-Virtual Machine (Eksekusi bytecode berbasis stack)
-```
-
-### Struktur Proyek
-```
-Indonesiaku/
-├── src/
-│   ├── main.c          # Entry point
-│   ├── scanner.c/.h    # Lexer (tokenizer)
-│   ├── compiler.c/.h   # Parser & code generator
-│   ├── chunk.c/.h      # Bytecode container
-│   ├── vm.c/.h         # Virtual machine
-│   ├── value.c/.h      # Value representation
-│   ├── object.c/.h     # Object system
-│   ├── table.c/.h      # Hash table
-│   ├── memory.c/.h     # Memory management + GC
-│   ├── debug.c/.h      # Debugging tools
-│   └── native.c/.h     # Fungsi bawaan (builtin)
-├── pustaka/            # Pustaka standar (ditulis dalam Indonesiaku)
-├── examples/           # Contoh program .idk (sekaligus golden test)
-├── tests/              # Harness golden-output + integrasi
-├── website/            # Situs dokumentasi + panduan pengguna (website/panduan/)
-├── docs/               # Perencanaan bahasa (roadmap, rencana fitur)
-├── docker/             # Image Docker (indk)
-└── Makefile            # Build system
-```
-
-## 🤝 Kontribusi
-
-Kontribusi sangat diterima! Silakan baca panduan lengkap di **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)**.
-
-Beberapa area yang bisa dikontribusikan:
-
-1. **Fitur Baru**: Implementasi fitur yang ada di roadmap
-2. **Bug Fixes**: Perbaikan bug yang ditemukan
-3. **Dokumentasi**: Perbaikan atau penambahan dokumentasi
-4. **Contoh Program**: Tambahkan contoh program .idk yang menarik
-5. **Testing**: Buat test cases dan laporan bug
-6. **Optimasi**: Perbaikan performa
-
-### Quick Start untuk Kontributor
-
-```bash
-# 1. Clone repository
-git clone https://github.com/teguhriyan/Indonesiaku.git
-cd Indonesiaku
-
-# 2. Build
-make
-
-# 3. Run tests
-powershell -ExecutionPolicy Bypass -File tests/test_all.ps1
-
-# 4. Create feature branch
-git checkout -b feature/nama-fitur
-
-# 5. Buat perubahan, commit, dan submit PR
-```
-
-Untuk detail lengkap, baca **[website/panduan/04_KONTRIBUSI.md](website/panduan/04_KONTRIBUSI.md)**.
-
-## 📝 Lisensi & Tata Kelola
-
-Proyek ini bersifat open source dan nonkomersial. ===================================================================================================================== this is placeholder - tetap sesuaikan lisensi yang dipakai repo.
-
-Kontribusi komunitas dilakukan secara sukarela dan tidak menjanjikan imbalan
-finansial. Lihat [CONTRIBUTING](website/panduan/04_KONTRIBUSI.md) untuk
-petunjuk berkontribusi.
-
-## 👨‍💻 Penulis
-
-Proyek Indonesiaku - Bahasa Pemrograman dengan Sintaks Bahasa Indonesia
 
 ---
 
-**Selamat Coding dengan Bahasa Indonesia! 🇮🇩**
+## ✨ Fitur (v1.0.0)
 
-Untuk pertanyaan, saran, atau laporan bug, silakan buat issue di repository ini.
+Mulai rilis 1.0 berlaku **kebijakan stabilitas**: tidak ada perubahan yang
+merusak kompatibilitas sampai 2.0.
 
+- **Tipe data** — `bulat` (int64) & `desimal`, teks Unicode, `logika`, `kosong`,
+  daftar, kamus, tupel, himpunan, dan `himpunan_beku`
+- **Alur kendali** — `jika`/`jika_lain`/`selain`, `selagi`, `untuk ... dalam`,
+  `hentikan`/`lanjut`, serta ekspresi kondisional
+- **Fungsi** — rekursi, closure penuh, parameter bernilai bawaan, argumen
+  bernama, dan fungsi anonim
+- **OOP** — `kelas`, `init`, `diri`, pewarisan (`<`), dan `super`
+- **Penanganan galat** — `naikkan` + `coba`/`kecuali`/`akhirnya`; semua galat
+  runtime dapat ditangkap
+- **Modul** — `impor matematika`, `impor x sebagai y`, `dari x impor y`, paket,
+  jalur pencarian `INDK_PATH`, serta `__nama__`/`__utama__`
+- **Kemudahan menulis** — f-string, irisan & indeks negatif, *list
+  comprehension*, penugasan berganda, operator bitwise, metode tipe bawaan
+- **Pustaka standar** — berkas I/O, JSON, HTTP, soket TCP, dan SQLite tertanam
+- **Mesin** — *garbage collector* mark-sweep dan REPL interaktif
 
-<!-- Security scan triggered at 2026-10-07 11:44:59 -->
+Daftar lengkap beserta contoh tiap fitur ada di
+[03_PANDUAN_SINTAKS](website/panduan/03_PANDUAN_SINTAKS.md) dan
+[07_PUSTAKA_STANDAR](website/panduan/07_PUSTAKA_STANDAR.md).
+
+### Contoh aplikasi nyata
+
+| Berkas | Isi |
+|--------|-----|
+| `examples/todo_cli.idk` | Aplikasi CRUD Todo-list dengan penyimpanan JSON |
+| `examples/todo_server.idk` | Server REST API HTTP di atas soket TCP |
+| `examples/db_sqlite.idk` | Penggunaan SQLite dengan parameter `?` |
+
+Selebihnya ada di folder [`examples/`](examples/) — sekaligus dipakai sebagai
+*golden test*.
+
+---
+
+## 🗺️ Rencana Selanjutnya
+
+Fase 0–3 sudah selesai di v1.0.0. Berikutnya: OOP lengkap (dekorator, manajer
+konteks, MRO), iterator & generator, lalu pustaka standar yang lebih luas.
+
+Status per fitur ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** — itulah
+satu-satunya sumber status yang resmi.
+
+---
+
+## 🏗️ Arsitektur
+
+```
+Kode Sumber (.idk)
+    ↓  Scanner/Lexer        → token
+    ↓  Compiler single-pass → bytecode (Pratt parser, tanpa AST)
+    ↓  Virtual Machine      → eksekusi berbasis stack + GC mark-sweep
+```
+
+```
+Indonesiaku/
+├── src/          # Interpreter C11 (scanner, compiler, VM, GC, native)
+├── pustaka/      # Pustaka standar, ditulis dalam Indonesiaku sendiri
+├── examples/     # Contoh program .idk (sekaligus golden test)
+├── tests/        # Harness pengujian
+├── website/      # Situs + panduan pengguna (website/panduan/)
+├── docs/         # Spesifikasi & perencanaan bahasa
+├── editors/      # Ekstensi VS Code
+├── docker/       # Image Docker
+└── Makefile
+```
+
+Catatan teknis untuk pengembang interpreter ada di [AGENTS.md](AGENTS.md).
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi sangat diterima — fitur baru, perbaikan bug, dokumentasi, contoh
+program, pengujian, maupun optimasi.
+
+```bash
+git clone https://github.com/teguh02/Indonesiaku-Lang.git
+cd Indonesiaku-Lang
+make
+bash tests/test_all.sh          # Windows: powershell -File tests/test_all.ps1
+git checkout -b fitur/nama-fitur
+```
+
+Panduan lengkapnya di **[04_KONTRIBUSI](website/panduan/04_KONTRIBUSI.md)**.
+
+---
+
+## ℹ️ Independensi Proyek & Disclaimer
+
+Indonesiaku merupakan proyek bahasa pemrograman open source independen yang
+dikembangkan sebagai kontribusi terhadap perkembangan teknologi dan ekosistem
+pemrograman.
+
+Proyek ini **tidak berafiliasi, tidak disponsori, dan tidak mewakili**
+Pemerintah Republik Indonesia maupun lembaga pemerintahan lainnya.
+
+Indonesiaku dikembangkan untuk kepentingan edukasi, eksplorasi teknologi, dan
+kolaborasi komunitas pengembang. Nama "Indonesiaku" digunakan sebagai identitas
+proyek bahasa pemrograman dan tidak dimaksudkan untuk menyatakan kepemilikan,
+kewenangan, atau representasi resmi atas Negara Republik Indonesia.
+
+Pengembangan proyek dilakukan secara terbuka dan nonkomersial. Partisipasi serta
+kontribusi komunitas bersifat sukarela tanpa adanya kewajiban atau janji
+pemberian imbalan finansial.
+
+Proyek ini tidak menggunakan lambang negara, identitas kementerian, atau atribut
+lain yang dapat memberikan kesan proyek resmi pemerintah.
+
+---
+
+## 📝 Lisensi
+
+Dirilis di bawah **[Lisensi MIT](LICENSE)**.
+
+## 👨‍💻 Penulis
+
+**Teguh Rijanandi** — [@teguh02](https://github.com/teguh02)
+
+---
+
+**Selamat ngoding dengan Bahasa Indonesia! 🇮🇩**
+
+Ada pertanyaan, saran, atau laporan bug? Silakan buka
+[issue](https://github.com/teguh02/Indonesiaku-Lang/issues).
