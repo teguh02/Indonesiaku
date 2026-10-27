@@ -1,0 +1,371 @@
+# pustaka/koleksi.idk - Wadah data (modul `koleksi`).
+# Pemakaian:
+#     impor koleksi
+#     dari koleksi impor Penghitung, KamusBawaan, Antrian
+#
+# Padanan `collections` Python. Ditulis dalam Indonesiaku di atas builtin;
+# semuanya memakai metode ajaib K19, bukan tipe objek C baru.
+#
+# Catatan: `tupel_bernama` (namedtuple) ditunda — ia butuh fungsi variadik
+# untuk membuat konstruktor dengan jumlah bidang dinamis, dan bahasa ini
+# belum punya `*args` (lihat docs/RENCANA_FITUR/pustaka_fase6_modul_dasar.md).
+
+# Kelas galat bawaan belum punya `init`, jadi pesan kustom butuh subkelas.
+kelas GalatKoleksi < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+# --- Penghitung (Counter) -------------------------------------------------
+
+# _urut_pasangan(pasangan) -> urut stabil menurun berdasar hitungan (elemen
+# ke-1). Urut stabil: yang muncul lebih dulu menang saat hitungan seri,
+# seperti `most_common` Python.
+fungsi _urut_pasangan(pasangan) {
+    variabel hasil = []
+    untuk p dalam pasangan {
+        variabel posisi = panjang(hasil)
+        variabel i = 0
+        selagi i < panjang(hasil) {
+            jika p[1] > hasil[i][1] {
+                posisi = i
+                hentikan
+            }
+            i = i + 1
+        }
+        sisip(hasil, posisi, p)
+    }
+    kembalikan hasil
+}
+
+kelas Penghitung {
+    init(urutan = kosong) {
+        diri.hitung = kamus()
+        jika urutan != kosong {
+            diri.tambah_banyak(urutan)
+        }
+    }
+
+    # tambah_banyak(urutan) -> tambah 1 untuk tiap elemen (Counter.update).
+    tambah_banyak(urutan) {
+        untuk v dalam urutan {
+            diri.tambah(v)
+        }
+    }
+
+    # tambah(v, n = 1) -> naikkan hitungan v sebanyak n.
+    tambah(v, n = 1) {
+        jika punya(diri.hitung, v) {
+            diri.hitung[v] = diri.hitung[v] + n
+        } selain {
+            diri.hitung[v] = n
+        }
+    }
+
+    # kurang(v, n = 1) -> turunkan hitungan v sebanyak n.
+    kurang(v, n = 1) {
+        diri.tambah(v, 0 - n)
+    }
+
+    # paling_umum(n = kosong) -> daftar [nilai, hitungan] menurun; semua bila n
+    # tidak diberikan.
+    paling_umum(n = kosong) {
+        variabel pasangan = []
+        untuk k dalam kunci(diri.hitung) {
+            tambah(pasangan, [k, diri.hitung[k]])
+        }
+        variabel urut = _urut_pasangan(pasangan)
+        jika n == kosong atau n >= panjang(urut) {
+            kembalikan urut
+        }
+        variabel hasil = []
+        variabel i = 0
+        selagi i < n {
+            tambah(hasil, urut[i])
+            i = i + 1
+        }
+        kembalikan hasil
+    }
+
+    total() {
+        kembalikan jumlah(diri.nilai())
+    }
+
+    kunci() { kembalikan kunci(diri.hitung) }
+
+    # ke_daftar() -> kunci sebagai daftar. Perlu karena `daftar(objek)` dan
+    # `terurut(objek)` belum mengenali objek ber-`_iter_` (celah bahasa yang
+    # dicatat di panduan): pakai `terurut(p.ke_daftar())`, bukan `terurut(p)`.
+    ke_daftar() { kembalikan kunci(diri.hitung) }
+
+    nilai() {
+        variabel hasil = []
+        untuk k dalam kunci(diri.hitung) {
+            tambah(hasil, diri.hitung[k])
+        }
+        kembalikan hasil
+    }
+
+    punya(v) { kembalikan punya(diri.hitung, v) }
+
+    kosongkan() { diri.hitung = kamus() }
+
+    salin() {
+        variabel baru = Penghitung()
+        untuk k dalam kunci(diri.hitung) {
+            baru.hitung[k] = diri.hitung[k]
+        }
+        kembalikan baru
+    }
+
+    _panjang_() { kembalikan panjang(diri.hitung) }
+
+    _iter_() { kembalikan kunci(diri.hitung) }
+
+    # c[k] -> hitungan k (0 bila belum ada, seperti Counter.__getitem__).
+    _ambil_(k) {
+        jika punya(diri.hitung, k) {
+            kembalikan diri.hitung[k]
+        }
+        kembalikan 0
+    }
+
+    _logika_() { kembalikan panjang(diri.hitung) > 0 }
+
+    # c1 + c2 -> gabungan hitungan (nilai <= 0 dibuang, seperti Python).
+    _tambah_(lain) {
+        variabel baru = diri.salin()
+        untuk k dalam kunci(lain.hitung) {
+            baru.tambah(k, lain.hitung[k])
+        }
+        kembalikan _buang_tak_positif(baru)
+    }
+
+    # c1 - c2 -> selisih hitungan; hasil <= 0 dibuang.
+    _kurangi_(lain) {
+        variabel baru = diri.salin()
+        untuk k dalam kunci(lain.hitung) {
+            baru.kurang(k, lain.hitung[k])
+        }
+        kembalikan _buang_tak_positif(baru)
+    }
+
+    # Perbandingan mengabaikan urutan; kunci yang tidak ada dianggap 0.
+    _sama_(lain) {
+        jika tidak adalah_instansi(lain, Penghitung) {
+            kembalikan salah
+        }
+        untuk k dalam kunci(diri.hitung) {
+            jika diri._ambil_(k) != lain._ambil_(k) {
+                kembalikan salah
+            }
+        }
+        untuk k dalam kunci(lain.hitung) {
+            jika diri._ambil_(k) != lain._ambil_(k) {
+                kembalikan salah
+            }
+        }
+        kembalikan benar
+    }
+
+    _teks_() { kembalikan "Penghitung(" + repr(diri.hitung) + ")" }
+    _repr_() { kembalikan diri._teks_() }
+}
+
+# _buang_tak_positif(penghitung) -> salinan tanpa kunci berhitungan <= 0.
+fungsi _buang_tak_positif(penghitung) {
+    variabel baru = Penghitung()
+    untuk k dalam kunci(penghitung.hitung) {
+        jika penghitung.hitung[k] > 0 {
+            baru.hitung[k] = penghitung.hitung[k]
+        }
+    }
+    kembalikan baru
+}
+
+# --- KamusBawaan (defaultdict) -------------------------------------------
+
+kelas KamusBawaan {
+    # pabrik: fungsi tanpa argumen yang menghasilkan nilai bawaan, mis.
+    # `daftar` (list baru) atau `kamus` (dict baru).
+    init(pabrik) {
+        diri.pabrik = pabrik
+        diri.isi = kamus()
+    }
+
+    # kb[k] -> panggil pabrik bila kunci absen, simpan, lalu kembalikan.
+    _ambil_(k) {
+        jika punya(diri.isi, k) {
+            kembalikan diri.isi[k]
+        }
+        variabel bawaan = diri.pabrik()
+        diri.isi[k] = bawaan
+        kembalikan bawaan
+    }
+
+    _atur_(k, v) { diri.isi[k] = v }
+    _iter_() { kembalikan kunci(diri.isi) }
+    _panjang_() { kembalikan panjang(diri.isi) }
+
+    # ambil(k, bawaan = kosong) -> TIDAK membuat nilai baru (seperti dict.get).
+    ambil(k, bawaan = kosong) {
+        jika punya(diri.isi, k) {
+            kembalikan diri.isi[k]
+        }
+        kembalikan bawaan
+    }
+
+    punya(k) { kembalikan punya(diri.isi, k) }
+    kunci() { kembalikan kunci(diri.isi) }
+    ke_daftar() { kembalikan kunci(diri.isi) }
+    hapus(k) { hapus_kunci(diri.isi, k) }
+    kosongkan() { diri.isi = kamus() }
+
+    nilai() {
+        variabel hasil = []
+        untuk k dalam kunci(diri.isi) {
+            tambah(hasil, diri.isi[k])
+        }
+        kembalikan hasil
+    }
+
+    salin() {
+        variabel baru = KamusBawaan(diri.pabrik)
+        untuk k dalam kunci(diri.isi) {
+            baru.isi[k] = diri.isi[k]
+        }
+        kembalikan baru
+    }
+
+    _logika_() { kembalikan panjang(diri.isi) > 0 }
+    _teks_() { kembalikan "KamusBawaan(" + repr(diri.isi) + ")" }
+    _repr_() { kembalikan diri._teks_() }
+}
+
+# `KamusBerurut` = kamus biasa: kamus diIndonesiaku sudah berurut penyisipan.
+KamusBerurut = kamus
+
+# --- Antrian (deque) -----------------------------------------------------
+
+# Antrian dua ujung. Di dalam ada DUA daftar: `depan_rev` menyimpan bagian
+# depan secara TERBALIK (elemen depan = elemen terakhir), `belakang` menyimpan
+# bagian belakang apa adanya. Tambah/ambil di kedua ujung jadi O(1)
+# teramortisasi, seperti `collections.deque`.
+kelas Antrian {
+    init(urutan = kosong, maks_panjang = kosong) {
+        diri.depan_rev = []
+        diri.belakang = []
+        diri.maks = maks_panjang
+        jika urutan != kosong {
+            untuk v dalam urutan {
+                diri.tambah_kanan(v)
+            }
+        }
+    }
+
+    tambah_kanan(v) {
+        tambah(diri.belakang, v)
+        diri._pangkas("kiri")
+    }
+
+    tambah_kiri(v) {
+        tambah(diri.depan_rev, v)
+        diri._pangkas("kanan")
+    }
+
+    # _pangkas(sisi) -> jaga maks_panjang; buang dari sisi yang berlawanan.
+    _pangkas(sisi) {
+        selagi diri.maks != kosong dan diri._panjang_() > diri.maks {
+            jika sisi == "kiri" {
+                diri.ambil_kiri()
+            } selain {
+                diri.ambil_kanan()
+            }
+        }
+    }
+
+    # _isi_depan() -> pastikan bagian depan punya elemen, membalik `belakang`.
+    _isi_depan() {
+        jika panjang(diri.depan_rev) == 0 dan panjang(diri.belakang) > 0 {
+            diri.depan_rev = terbalik(diri.belakang)
+            diri.belakang = []
+        }
+    }
+
+    _isi_belakang() {
+        jika panjang(diri.belakang) == 0 dan panjang(diri.depan_rev) > 0 {
+            diri.belakang = terbalik(diri.depan_rev)
+            diri.depan_rev = []
+        }
+    }
+
+    ambil_kiri() {
+        diri._isi_depan()
+        jika panjang(diri.depan_rev) == 0 {
+            naikkan GalatKoleksi("Antrian.ambil_kiri: antrian kosong")
+        }
+        kembalikan hapus(diri.depan_rev)
+    }
+
+    ambil_kanan() {
+        diri._isi_belakang()
+        jika panjang(diri.belakang) == 0 {
+            naikkan GalatKoleksi("Antrian.ambil_kanan: antrian kosong")
+        }
+        kembalikan hapus(diri.belakang)
+    }
+
+    # putar(n = 1) -> geser n langkah; n positif memindah ujung kanan ke kiri.
+    putar(n = 1) {
+        variabel data = diri._ke_daftar()
+        variabel len = panjang(data)
+        jika len == 0 {
+            kembalikan
+        }
+        variabel langkah = n % len
+        jika langkah < 0 {
+            langkah = langkah + len
+        }
+        jika langkah != 0 {
+            variabel potong_awal = []
+            variabel potong_akhir = []
+            variabel i = 0
+            selagi i < len {
+                jika i < len - langkah {
+                    tambah(potong_awal, data[i])
+                } selain {
+                    tambah(potong_akhir, data[i])
+                }
+                i = i + 1
+            }
+            data = potong_akhir + potong_awal
+        }
+        diri.depan_rev = terbalik(data)
+        diri.belakang = []
+    }
+
+    # _ke_daftar() -> daftar datar urut depan -> belakang.
+    _ke_daftar() {
+        kembalikan terbalik(diri.depan_rev) + diri.belakang
+    }
+
+    daftar() { kembalikan diri._ke_daftar() }
+    ke_daftar() { kembalikan diri._ke_daftar() }
+    panjang() { kembalikan diri._panjang_() }
+    kosongkan() {
+        diri.depan_rev = []
+        diri.belakang = []
+    }
+
+    _panjang_() {
+        kembalikan panjang(diri.depan_rev) + panjang(diri.belakang)
+    }
+
+    _iter_() { kembalikan diri._ke_daftar() }
+
+    _ambil_(i) { kembalikan diri._ke_daftar()[i] }
+
+    _logika_() { kembalikan diri._panjang_() > 0 }
+
+    _teks_() { kembalikan "Antrian(" + repr(diri._ke_daftar()) + ")" }
+    _repr_() { kembalikan diri._teks_() }
+}
