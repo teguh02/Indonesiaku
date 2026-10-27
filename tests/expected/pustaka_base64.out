@@ -1,0 +1,26 @@
+== panjang 0/1/2/3 mod 4 ==
+
+YQ==
+YWI=
+YWJj
+SGFsbw==
+== non-ASCII (UTF-8) ==
+Y2Fmw6k=
+8J+YgA==
+== dekode -> daftar byte / teks ==
+[72, 97, 108, 111]
+Halo
+café
+== varian URL-safe ==
++/8=
+-_8=
+[251, 255]
+== round-trip ==
+benar
+benar
+benar
+benar
+benar
+== galat dapat ditangkap ==
+dekode: panjang base64 tidak sah
+dekode: karakter base64 tidak sah: @

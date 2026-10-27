@@ -1,0 +1,3 @@
+# GalatBase64 yang tidak tertangkap -> exit non-zero.
+dari base64 impor dekode
+cetak(dekode("SGFsb"))

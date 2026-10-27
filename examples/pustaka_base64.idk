@@ -1,0 +1,43 @@
+# Modul `base64` (Fase 6): encoding Base64 (+ varian URL-safe).
+
+impor base64
+dari base64 impor enkode, dekode, dekode_teks, enkode_url, dekode_url, GalatBase64
+dari bita impor ke_teks
+
+cetak("== panjang 0/1/2/3 mod 4 ==")
+cetak(enkode(""))
+cetak(enkode("a"))
+cetak(enkode("ab"))
+cetak(enkode("abc"))
+cetak(enkode("Halo"))
+
+cetak("== non-ASCII (UTF-8) ==")
+cetak(enkode("café"))
+cetak(enkode("😀"))
+
+cetak("== dekode -> daftar byte / teks ==")
+cetak(dekode("SGFsbw=="))
+cetak(dekode_teks("SGFsbw=="))
+cetak(ke_teks(dekode("Y2Fmw6k=")))
+
+cetak("== varian URL-safe ==")
+cetak(enkode([251, 255]))
+cetak(enkode_url([251, 255]))
+cetak(dekode_url("-_8="))
+
+cetak("== round-trip ==")
+untuk t dalam ["", "abc", "café", "日本語", "😀🚀"] {
+    cetak(ke_teks(dekode(enkode(t))) == t)
+}
+
+cetak("== galat dapat ditangkap ==")
+coba {
+    dekode("SGFsb")
+} kecuali GalatBase64 sebagai e {
+    cetak(e.pesan)
+}
+coba {
+    dekode("S@Fsbw==")
+} kecuali GalatBase64 sebagai e {
+    cetak(e.pesan)
+}
