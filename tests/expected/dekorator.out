@@ -1,0 +1,16 @@
+=== dekorator tunggal ===
+sebelum
+sesudah
+42
+=== bertumpuk: yang terdekat dijalankan lebih dulu ===
+pasang b
+pasang a
+a(b(nilai))
+=== dekorator dengan argumen ===
+halo
+halo
+halo
+=== dekorator dijalankan sekali, saat definisi ===
+1
+=== dekorator boleh menukar nilainya sama sekali ===
+bukan fungsi lagi

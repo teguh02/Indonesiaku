@@ -30,6 +30,15 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4: dekorator
+- ✨ **`@dekorator`** sebelum definisi `fungsi` — bertumpuk (diterapkan dari
+  yang terdekat), boleh berargumen (`@ulangi(3)`), dijalankan sekali saat
+  definisi. Tanpa opcode baru: penerapannya adalah `OP_CALL 1` biasa.
+- ⚠️ Dekorator kustom **pada metode** ditolak compiler dengan pesan jelas:
+  `diri` implisit di Indonesiaku, jadi fungsi pembungkus tidak membawa
+  penerima. `@properti`/`@metode_statis`/`@metode_kelas` menyusul terpisah.
+- Contoh: [`examples/dekorator.idk`](examples/dekorator.idk).
+
 ### Added — Fase 4: `dengan ... sebagai` (manajer konteks)
 - ✨ **`dengan <ekspresi> [sebagai <nama>] { ... }`** — `_masuk_()` sebelum
   blok, `_keluar_()` sesudahnya. Dijamin dipanggil pada jalur normal, galat,

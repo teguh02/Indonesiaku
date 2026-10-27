@@ -383,5 +383,18 @@
       "}"
     ],
     "description": "Membuat kelas bisa dipakai di blok 'dengan'"
+  },
+  "Dekorator": {
+    "prefix": "dekorator",
+    "body": [
+      "fungsi ${1:nama}(f) {",
+      "\tfungsi bungkus(${2:x}) {",
+      "\t\t$0",
+      "\t\tkembalikan f(${2:x})",
+      "\t}",
+      "\tkembalikan bungkus",
+      "}"
+    ],
+    "description": "Kerangka fungsi dekorator"
   }
 }

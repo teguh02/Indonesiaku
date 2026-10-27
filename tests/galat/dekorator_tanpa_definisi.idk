@@ -1,0 +1,4 @@
+# '@' harus diikuti definisi fungsi.
+
+@sesuatu
+cetak("bukan definisi")

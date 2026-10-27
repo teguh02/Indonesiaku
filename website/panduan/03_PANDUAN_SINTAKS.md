@@ -1690,6 +1690,75 @@ sesudahnya.
 
 > Contoh lengkap: [`examples/oop/dengan_sebagai.idk`](../examples/oop/dengan_sebagai.idk)
 
+### Dekorator
+
+`@nama` di baris sebelum definisi fungsi berarti: definisikan fungsinya, lalu
+ganti nilainya dengan `nama(fungsi_itu)`.
+
+```indonesiaku
+fungsi bungkus(f) {
+    fungsi isi(x) {
+        cetak("sebelum")
+        hasil = f(x)
+        cetak("sesudah")
+        kembalikan hasil
+    }
+    kembalikan isi
+}
+
+@bungkus
+fungsi kali2(x) { kembalikan x * 2 }
+
+cetak(kali2(21))
+# sebelum
+# sesudah
+# 42
+```
+
+Boleh bertumpuk — yang paling dekat dengan definisi dijalankan lebih dulu,
+jadi `@a` di atas `@b` berarti `a(b(f))`:
+
+```indonesiaku
+fungsi a(f) { fungsi w(x) { kembalikan "a(" + f(x) + ")" } kembalikan w }
+fungsi b(f) { fungsi w(x) { kembalikan "b(" + f(x) + ")" } kembalikan w }
+
+@a
+@b
+fungsi dasar(x) { kembalikan x }
+
+cetak(dasar("nilai"))   # a(b(nilai))
+```
+
+Yang ditulis sesudah `@` adalah ekspresi biasa, jadi dekorator berargumen juga
+sah — cukup kembalikan dekoratornya:
+
+```indonesiaku
+fungsi ulangi(n) {
+    fungsi deko(f) {
+        fungsi w() {
+            untuk i dalam rentang(0, n) { f() }
+        }
+        kembalikan w
+    }
+    kembalikan deko
+}
+
+@ulangi(3)
+fungsi sapa() { cetak("halo") }
+
+sapa()   # halo, halo, halo
+```
+
+Dekorator dijalankan **sekali**, saat definisinya dibuat.
+
+> **Belum didukung: dekorator kustom pada metode di dalam kelas.** Di
+> Indonesiaku `diri` bersifat implisit, sehingga fungsi pembungkus yang
+> dikembalikan dekorator tidak membawa penerima — `f()` di dalamnya akan
+> kehilangan `diri`. Compiler menolaknya dengan pesan yang jelas, bukan
+> membiarkannya gagal jauh di dalam metode.
+
+> Contoh lengkap: [`examples/dekorator.idk`](../examples/dekorator.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

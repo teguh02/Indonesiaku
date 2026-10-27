@@ -1,0 +1,84 @@
+# Dekorator: @nama sebelum definisi fungsi.
+#
+# @d di atas sebuah fungsi berarti: definisikan fungsinya, lalu ganti nilainya
+# dengan d(fungsi_itu).
+
+fungsi bungkus(f) {
+    fungsi isi(x) {
+        cetak("sebelum")
+        hasil = f(x)
+        cetak("sesudah")
+        kembalikan hasil
+    }
+    kembalikan isi
+}
+
+@bungkus
+fungsi kali2(x) { kembalikan x * 2 }
+
+cetak("=== dekorator tunggal ===")
+cetak(kali2(21))
+
+cetak("=== bertumpuk: yang terdekat dijalankan lebih dulu ===")
+
+fungsi a(f) {
+    cetak("pasang a")
+    fungsi w(x) { kembalikan "a(" + f(x) + ")" }
+    kembalikan w
+}
+
+fungsi b(f) {
+    cetak("pasang b")
+    fungsi w(x) { kembalikan "b(" + f(x) + ")" }
+    kembalikan w
+}
+
+@a
+@b
+fungsi dasar(x) { kembalikan x }
+
+cetak(dasar("nilai"))
+
+cetak("=== dekorator dengan argumen ===")
+
+fungsi ulangi(n) {
+    fungsi deko(f) {
+        fungsi w() {
+            untuk i dalam rentang(0, n) { f() }
+        }
+        kembalikan w
+    }
+    kembalikan deko
+}
+
+@ulangi(3)
+fungsi sapa() { cetak("halo") }
+
+sapa()
+
+cetak("=== dekorator dijalankan sekali, saat definisi ===")
+
+variabel berapa = 0
+
+fungsi catat(f) {
+    global berapa
+    berapa = berapa + 1
+    kembalikan f
+}
+
+@catat
+fungsi dipanggil_sering() { kembalikan 1 }
+
+dipanggil_sering()
+dipanggil_sering()
+dipanggil_sering()
+cetak(berapa)
+
+cetak("=== dekorator boleh menukar nilainya sama sekali ===")
+
+fungsi ganti(f) { kembalikan "bukan fungsi lagi" }
+
+@ganti
+fungsi apa_saja() { kembalikan 1 }
+
+cetak(apa_saja)

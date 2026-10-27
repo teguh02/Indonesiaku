@@ -492,6 +492,7 @@ static void maybeTupleTail();
 static void expression();
 static void statement();
 static void withStatement();
+static void funDeclarationDecorated(int decorators);
 static void declaration();
 static ParseRule* getRule(TokenType type);
 static void function(FunctionType type);
@@ -2066,14 +2067,77 @@ static void function(FunctionType type) {
     }
 }
 
+#define DECORATOR_MAX 16
+
+// Compile the '@' decorators in front of a definition, pushing each one onto
+// the stack in source order. Returns how many were pushed.
+//
+// The whole feature needs no new opcode: with [d0, d1, nilai] on the stack,
+// one OP_CALL 1 leaves [d0, d1(nilai)] and the next leaves [d0(d1(nilai))] --
+// exactly Python's bottom-up application order, and the final value ends up
+// in the slot where d0 was pushed. That is why the declared variable may be
+// declared BEFORE the decorators are pushed: its slot is d0's slot.
+static int decoratorList() {
+    int count = 0;
+    while (match(TOKEN_AT)) {
+        if (count == DECORATOR_MAX) {
+            error("Terlalu banyak dekorator pada satu definisi.");
+            return count;
+        }
+        // A decorator is an ordinary expression, so @nama, @modul.nama, and
+        // @pabrik(arg) all work. It must stay on one line: the newline is the
+        // terminator, which keeps error messages pointing at the '@' line.
+        expression();
+        count++;
+        if (!check(TOKEN_EOF) && !match(TOKEN_NEWLINE) && !match(TOKEN_SEMICOLON)) {
+            error("Harapkan baris baru setelah dekorator.");
+            return count;
+        }
+        while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
+    }
+    return count;
+}
+
+static void applyDecorators(int count) {
+    for (int i = 0; i < count; i++) {
+        emitBytes(OP_CALL, 1);
+    }
+}
+
 static void funDeclaration() {
+    funDeclarationDecorated(0);
+}
+
+// `decorators` of them are already on the stack, pushed before the name was
+// declared, so the decorated result lands exactly in the variable's slot.
+static void funDeclarationDecorated(int decorators) {
     uint8_t global = parseVariable("Harapkan nama fungsi.");
     markInitialized();
     function(TYPE_FUNCTION);
+    applyDecorators(decorators);
     defineVariable(global);
 }
 
 static void method() {
+    // Custom decorators on methods are rejected, and it is not an oversight:
+    // `diri` is implicit here (K3), so a wrapper returned by a decorator is a
+    // plain function with no receiver. Calling f() inside it loses `diri`, and
+    // the failure surfaces far away, inside the method. Python only gets away
+    // with this because `self` is an explicit parameter it can forward.
+    // The three builtin decorators are handled at method-definition time
+    // instead; see RENCANA_FITUR/selesai/dekorator.md.
+    if (check(TOKEN_AT)) {
+        error("Dekorator pada metode belum didukung: 'diri' tidak terbawa ke "
+              "fungsi pembungkus.");
+        // Must consume something: classDeclaration()'s loop calls method()
+        // until '}' or EOF, so returning with '@' still current would spin
+        // forever instead of reporting the error.
+        while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF) &&
+               !check(TOKEN_NEWLINE)) {
+            advance();
+        }
+        return;
+    }
     consume(TOKEN_IDENTIFIER, "Harapkan nama metode.");
     uint8_t constant = identifierConstant(&parser.previous);
 
@@ -2954,7 +3018,20 @@ static void declaration() {
     while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
     if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE)) return;
 
-    if (check(TOKEN_FUNGSI) && !checkNext(TOKEN_LEFT_PAREN)) {
+    if (check(TOKEN_AT)) {
+        // Decorators are pushed BEFORE the name is declared: the decorated
+        // result ends up in the first decorator's stack slot, which is exactly
+        // the slot parseVariable() hands the new variable.
+        int decorators = decoratorList();
+        if (check(TOKEN_FUNGSI) && !checkNext(TOKEN_LEFT_PAREN)) {
+            advance();
+            funDeclarationDecorated(decorators);
+        } else if (check(TOKEN_KELAS)) {
+            error("Dekorator pada 'kelas' belum didukung.");
+        } else {
+            error("Dekorator harus diikuti definisi 'fungsi'.");
+        }
+    } else if (check(TOKEN_FUNGSI) && !checkNext(TOKEN_LEFT_PAREN)) {
         advance();
         funDeclaration();
     } else if (match(TOKEN_KELAS)) {

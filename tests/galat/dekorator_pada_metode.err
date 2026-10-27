@@ -1,0 +1,6 @@
+[baris 7, kolom 10] Kesalahan di akhir baris: Dekorator pada metode belum didukung: 'diri' tidak terbawa ke fungsi pembungkus.
+    kelas K {
+             ^
+[baris 10, kolom 1] Kesalahan di akhir: Harapkan '}' setelah blok.
+    
+    ^

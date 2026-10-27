@@ -1,0 +1,9 @@
+# Dekorator kustom pada metode belum didukung: 'diri' implisit, jadi fungsi
+# pembungkus yang dikembalikan dekorator tidak membawa penerima.
+
+fungsi hias(f) { kembalikan f }
+
+kelas K {
+    @hias
+    nama() { kembalikan "K" }
+}

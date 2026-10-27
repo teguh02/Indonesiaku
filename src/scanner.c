@@ -402,6 +402,7 @@ Token scanToken() {
         case '\n': scanner.line++; return makeToken(TOKEN_NEWLINE);
         case ',': return makeToken(TOKEN_COMMA);
         case '.': return makeToken(TOKEN_DOT);
+        case '@': return makeToken(TOKEN_AT);
         case '-':
             return makeToken(
                 match('=') ? TOKEN_MINUS_EQUAL : TOKEN_MINUS);
