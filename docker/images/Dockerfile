@@ -27,9 +27,13 @@ WORKDIR /opt/indonesiaku
 # Interpreter binary.
 COPY --from=build /opt/indonesiaku/indk /usr/local/bin/indk
 
-# Bundle the standard library and examples so `impor "pustaka/..."` and the
-# example programs work out of the box.
-COPY pustaka ./pustaka
+# Standard library at the conventional PREFIX/share location: the
+# interpreter at /usr/local/bin finds /usr/local/share/indonesiaku/pustaka by
+# itself, so `impor pola` works from ANY working directory (docker run -w
+# /app ...). /opt/indonesiaku/pustaka stays as a symlink for `impor
+# "pustaka/..."` from this WORKDIR and for the playground's PUSTAKA_DIR.
+COPY pustaka /usr/local/share/indonesiaku/pustaka
+RUN ln -s /usr/local/share/indonesiaku/pustaka ./pustaka
 COPY examples ./examples
 
 # Default command.

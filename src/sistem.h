@@ -8,6 +8,7 @@
 // playground runs every program that way).
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "object.h"
 
@@ -15,6 +16,11 @@
 void sistemAturArgv0(const char* argv0);
 void sistemAturSandbox(bool aktif);
 bool sistemSandbox(void);
+
+// Absolute path of the running interpreter (UTF-8) into `out`. False when it
+// cannot be determined or does not fit. Shared by jalur_indk() and the
+// module search, which looks for pustaka/ next to the interpreter.
+bool sistemJalurInterpreter(char* out, size_t ukuran);
 
 Value nativeFnKeluar(int argCount, Value* args);           // keluar(kode=0)
 Value nativeFnTulisGalat(int argCount, Value* args);       // tulis_galat(teks)

@@ -536,26 +536,29 @@ Value nativeFnInfoJalur(int argCount, Value* args) {
     return OBJ_VAL(hasil);
 }
 
-// jalur_indk() -> absolute path of the running interpreter (sys.executable).
-Value nativeFnJalurIndk(int argCount, Value* args) {
-    (void)args;
-    if (argCount != 0) {
-        nativeRaiseKelas(vm.galatTipe, "jalur_indk() tidak menerima argumen");
-        return KOSONG_VAL;
-    }
+// Copy `src` into `out` when it fits. The interpreter path is only useful
+// whole: a truncated path would point somewhere else.
+static bool salinJalur(char* out, size_t ukuran, const char* src, size_t panjang) {
+    if (panjang == 0 || panjang >= ukuran) return false;
+    memcpy(out, src, panjang);
+    out[panjang] = '\0';
+    return true;
+}
+
+bool sistemJalurInterpreter(char* out, size_t ukuran) {
 #ifdef _WIN32
     DWORD kapasitas = MAX_PATH;
     for (;;) {
         wchar_t* w = malloc(sizeof(wchar_t) * kapasitas);
-        if (w == NULL) return KOSONG_VAL;
+        if (w == NULL) return false;
         DWORD n = GetModuleFileNameW(NULL, w, kapasitas);
         if (n > 0 && n < kapasitas) {
             char* utf8 = keUtf8(w);
             free(w);
-            if (utf8 == NULL) return KOSONG_VAL;
-            Value hasil = teks(utf8, strlen(utf8));
+            if (utf8 == NULL) return false;
+            bool ok = salinJalur(out, ukuran, utf8, strlen(utf8));
             free(utf8);
-            return hasil;
+            return ok;
         }
         free(w);
         if (n == 0 || kapasitas > 32768) break;
@@ -563,26 +566,40 @@ Value nativeFnJalurIndk(int argCount, Value* args) {
     }
 #elif defined(__APPLE__)
     char buf[4096];
-    uint32_t ukuran = sizeof(buf);
-    if (_NSGetExecutablePath(buf, &ukuran) == 0) {
+    uint32_t panjangBuf = sizeof(buf);
+    if (_NSGetExecutablePath(buf, &panjangBuf) == 0) {
         char nyata[PATH_MAX];
         const char* p = realpath(buf, nyata) != NULL ? nyata : buf;
-        return teks(p, strlen(p));
+        return salinJalur(out, ukuran, p, strlen(p));
     }
 #else
     char buf[4096];
     ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-    if (n > 0) return teks(buf, (size_t)n);
+    if (n > 0) return salinJalur(out, ukuran, buf, (size_t)n);
 #endif
     if (programArgv0 != NULL) {
 #ifndef _WIN32
         char nyata[PATH_MAX];
-        if (realpath(programArgv0, nyata) != NULL) return teks(nyata, strlen(nyata));
+        if (realpath(programArgv0, nyata) != NULL) return salinJalur(out, ukuran, nyata, strlen(nyata));
 #endif
-        return teks(programArgv0, strlen(programArgv0));
+        return salinJalur(out, ukuran, programArgv0, strlen(programArgv0));
     }
-    nativeRaiseKelas(vm.galatOS, "jalur_indk(): lokasi interpreter tidak diketahui");
-    return KOSONG_VAL;
+    return false;
+}
+
+// jalur_indk() -> absolute path of the running interpreter (sys.executable).
+Value nativeFnJalurIndk(int argCount, Value* args) {
+    (void)args;
+    if (argCount != 0) {
+        nativeRaiseKelas(vm.galatTipe, "jalur_indk() tidak menerima argumen");
+        return KOSONG_VAL;
+    }
+    char buf[4096];
+    if (!sistemJalurInterpreter(buf, sizeof(buf))) {
+        nativeRaiseKelas(vm.galatOS, "jalur_indk(): lokasi interpreter tidak diketahui");
+        return KOSONG_VAL;
+    }
+    return teks(buf, strlen(buf));
 }
 
 // ---------------------------------------------------------------------------

@@ -5,7 +5,8 @@
 # BENAR-BENAR biner yang sama dengan yang diuji dan dirilis — tidak
 # dikompilasi ulang. Image rilis sudah menyediakan:
 #   /usr/local/bin/indk        → dipakai server.py (INDK_BIN bawaan)
-#   /opt/indonesiaku/pustaka   → dipakai server.py (PUSTAKA_DIR bawaan)
+#   /opt/indonesiaku/pustaka   → dipakai server.py (PUSTAKA_DIR bawaan);
+#                                symlink ke /usr/local/share/indonesiaku/pustaka
 #
 # Satu image, dua peran (lihat docker-compose.yml):
 #   web    → nginx menyajikan website/ dan mem-proxy /api/ ke runner
@@ -24,7 +25,8 @@ LABEL description="Dokumentasi + playground bahasa pemrograman Indonesiaku"
 LABEL version="1.1.0"
 
 # Pustaka standar tidak boleh ditulisi oleh kode pengunjung.
-RUN chmod -R a-w /opt/indonesiaku/pustaka
+# Isinya ada di /usr/local/share/indonesiaku/pustaka (/opt/... hanya symlink).
+RUN chmod -R a-w /usr/local/share/indonesiaku/pustaka
 
 # Situs statis (dokumentasi, panduan, playground).
 COPY website /usr/share/nginx/html
