@@ -1,6 +1,6 @@
 # Rencana Fitur: Iterator malas `_berikutnya_`
 
-- **Status:** selesai
+- **Status:** dikerjakan
 - **Target versi:** 1.3.0
 - **Pemilik:** Tim Indonesiaku
 
@@ -81,6 +81,10 @@ kode pengguna atau memicu GC.
   sekali per konsumsi, serta iterator di bawah `DEBUG_STRESS_GC` + ASan/UBSan.
 - Jalankan `tests/test_all.sh` dan `tests/test_panduan.sh`.
 - Jangan mengubah golden lama tanpa membaca setiap diff.
+
+## Status implementasi sementara
+
+Loop `untuk` sudah dapat memakai `_berikutnya_()` dan menangkap `HentiIterasi`, tetapi dukungan `iter()`/`lanjutkan()` serta desain `ObjIterator` kustom belum selesai. Rencana ini tetap terbuka sampai seluruh jalur iterator terverifikasi di bawah stress GC.
 
 ## 6. Dampak dokumentasi & tooling
 
