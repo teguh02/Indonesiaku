@@ -8,8 +8,9 @@
 # dan macOS. Windows sendiri menerima "/"; jalur bergaya Windows bisa diubah
 # dulu dengan `dari_windows`.
 #
-# Modul ini hanya mengolah TEKS -- tidak ada yang menyentuh sistem berkas.
-# Pemeriksaan seperti `ada`/`adalah_direktori` menyusul bersama native-nya.
+# Sebagian besar fungsi hanya mengolah TEKS. Yang menyentuh sistem berkas
+# (`ada`, `adalah_berkas`, `adalah_direktori`, `ukuran`, `waktu_ubah`,
+# `absolut`) ada di bagian akhir dan memakai native dari src/sistem.c.
 
 pemisah = "/"
 
@@ -185,4 +186,59 @@ fungsi normalisasi(j) {
 # dari_windows(j) -> ganti setiap "\" dengan "/" (C:\data\a.txt -> C:/data/a.txt).
 fungsi dari_windows(j) {
     kembalikan ganti(j, "\\", "/")
+}
+
+
+# --- sistem berkas -----------------------------------------------------------
+
+# Galat jalur adalah GalatOS, seperti OSError Python: `kecuali GalatOS` atau
+# `kecuali GalatJalur` sama-sama menangkapnya.
+kelas GalatJalur < GalatOS {
+    init(pesan) {
+        diri.pesan = pesan
+    }
+}
+
+# ada(j) -> benar bila ada berkas ATAU direktori di j (os.path.exists).
+fungsi ada(j) {
+    kembalikan _info_jalur(j) bukan adalah kosong
+}
+
+fungsi adalah_berkas(j) {
+    variabel info = _info_jalur(j)
+    kembalikan info bukan adalah kosong dan info[0] == "berkas"
+}
+
+fungsi adalah_direktori(j) {
+    variabel info = _info_jalur(j)
+    kembalikan info bukan adalah kosong dan info[0] == "direktori"
+}
+
+fungsi _info_wajib(nama, j) {
+    variabel info = _info_jalur(j)
+    jika info adalah kosong {
+        naikkan GalatJalur(f"{nama}(): '{j}' tidak ada")
+    }
+    kembalikan info
+}
+
+# ukuran(j) -> ukuran berkas dalam byte (os.path.getsize).
+fungsi ukuran(j) {
+    kembalikan _info_wajib("ukuran", j)[1]
+}
+
+# waktu_ubah(j) -> waktu terakhir diubah, detik sejak 1970 (os.path.getmtime).
+fungsi waktu_ubah(j) {
+    kembalikan _info_wajib("waktu_ubah", j)[2]
+}
+
+# absolut(j) -> jalur absolut yang dinormalkan, selalu memakai "/"
+# (os.path.abspath). "C:/..." sudah dianggap absolut di Windows.
+fungsi absolut(j) {
+    j = dari_windows(j)
+    variabel huruf_drive = panjang(j) >= 3 dan j[1] == ":" dan j[2] == "/"
+    jika adalah_absolut(j) atau huruf_drive {
+        kembalikan normalisasi(j)
+    }
+    kembalikan normalisasi(gabung(dari_windows(direktori_kini()), j))
 }

@@ -3039,3 +3039,75 @@ Value nativeFnSha256(int argCount, Value* args) {
 Value nativeFnSha512(int argCount, Value* args) {
     return hashNative(argCount, args, "sha512", sha512Digest, 64);
 }
+
+
+// ============================================================================
+// ATRIBUT DINAMIS (Fase 6): setattr / getattr / hasattr
+// ============================================================================
+
+// Look `nama` up on an instance or class: instance fields, then class
+// attributes up the superclass chain, then methods (bound to an instance).
+// @properti getters are NOT run: these read the stored member itself.
+static bool cariAtribut(Value objek, ObjString* nama, Value* hasil) {
+    ObjClass* klass = NULL;
+    if (IS_INSTANCE(objek)) {
+        if (tableGet(&AS_INSTANCE(objek)->fields, nama, hasil)) return true;
+        klass = AS_INSTANCE(objek)->klass;
+    } else if (IS_CLASS(objek)) {
+        klass = AS_CLASS(objek);
+    } else {
+        return false;
+    }
+    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
+        if (tableGet(&k->fields, nama, hasil)) return true;
+    }
+    Value metode;
+    if (!tableGet(&klass->methods, nama, &metode)) return false;
+    if (IS_INSTANCE(objek) && IS_CLOSURE(metode)) {
+        *hasil = OBJ_VAL(newBoundMethod(objek, AS_CLOSURE(metode)));
+    } else {
+        *hasil = metode;
+    }
+    return true;
+}
+
+// atur_atribut(objek, nama, nilai) -> setattr: an instance field or, for a
+// class, a class attribute.
+Value nativeFnAturAtribut(int argCount, Value* args) {
+    if (argCount != 3 || !IS_STRING(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "atur_atribut(objek, nama, nilai) memerlukan nama berupa teks");
+        return KOSONG_VAL;
+    }
+    ObjString* nama = AS_STRING(args[1]);
+    if (IS_INSTANCE(args[0])) {
+        tableSet(&AS_INSTANCE(args[0])->fields, nama, args[2]);   // args are rooted
+    } else if (IS_CLASS(args[0])) {
+        tableSet(&AS_CLASS(args[0])->fields, nama, args[2]);
+    } else {
+        nativeRaiseKelas(vm.galatAtribut, "atur_atribut(): hanya objek dan kelas yang punya atribut");
+    }
+    return KOSONG_VAL;
+}
+
+// ambil_atribut(objek, nama[, bawaan]) -> getattr.
+Value nativeFnAmbilAtribut(int argCount, Value* args) {
+    if ((argCount != 2 && argCount != 3) || !IS_STRING(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "ambil_atribut(objek, nama[, bawaan]) memerlukan nama berupa teks");
+        return KOSONG_VAL;
+    }
+    Value hasil;
+    if (cariAtribut(args[0], AS_STRING(args[1]), &hasil)) return hasil;
+    if (argCount == 3) return args[2];
+    nativeRaiseKelas(vm.galatAtribut, "Objek tidak punya atribut '%s'.", AS_CSTRING(args[1]));
+    return KOSONG_VAL;
+}
+
+// punya_atribut(objek, nama) -> hasattr.
+Value nativeFnPunyaAtribut(int argCount, Value* args) {
+    if (argCount != 2 || !IS_STRING(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "punya_atribut(objek, nama) memerlukan nama berupa teks");
+        return BOOL_VAL(false);
+    }
+    Value hasil;
+    return BOOL_VAL(cariAtribut(args[0], AS_STRING(args[1]), &hasil));
+}

@@ -1,0 +1,18 @@
+# Program anak untuk examples/pustaka_proses.idk, dijalankan dengan
+# `indk --sandbox`: akses lingkungan, isi direktori, dan proses ditolak.
+impor proses
+untuk coba_ini dalam [
+    fungsi() { kembalikan lingkungan() },
+    fungsi() { kembalikan ambil_lingkungan("PATH") },
+    fungsi() { kembalikan isi_direktori(".") },
+    fungsi() { kembalikan proses.jalankan([jalur_indk(), "-v"]) },
+] {
+    coba {
+        coba_ini()
+        cetak("TIDAK DITOLAK")
+    } kecuali GalatIzin sebagai e {
+        cetak("GalatIzin:", e.pesan)
+    }
+}
+# Yang tetap boleh: membaca direktori kini, menulis ke stderr, keluar.
+cetak("direktori_kini() boleh:", panjang(direktori_kini()) > 0)

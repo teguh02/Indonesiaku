@@ -1,0 +1,8 @@
+PERINGATAN:akar:disk hampir penuh
+GALAT:akar:gagal menyimpan
+DEBUG:app.db:db mewarisi ambang DEBUG dari app
+[KRITIS] app.db - {"kode": 500}
+
+<Pencatat app.db (DEBUG)> benar
+benar benar
+PERINGATAN Level 25

@@ -1,0 +1,50 @@
+# Modul `opsi`: mengurai argumen baris perintah, padanan `argparse`.
+# Daftar argumen diberikan langsung ke urai(); dalam program sungguhan
+# cukup p.urai() (memakai daftar global `argumen`).
+dari opsi impor PenguraiArgumen, GalatOpsi
+
+fungsi pengurai() {
+    p = PenguraiArgumen("hitung", "Menghitung baris berkas.", keluar_saat_galat = salah)
+    p.tambah_argumen("berkas", bantuan = "berkas yang dihitung")
+    p.tambah_argumen("--jumlah", pendek = "-j", bawaan = 1, jenis_nilai = "bulat", bantuan = "berapa kali")
+    p.tambah_argumen("--verbose", pendek = "-v", aksi = "hitung", bantuan = "lebih banyak keterangan")
+    p.tambah_argumen("--mode", pilihan = ["cepat", "teliti"], bawaan = "cepat")
+    p.tambah_argumen("--tag", aksi = "tambahkan", bantuan = "boleh berulang")
+    p.tambah_argumen("--kering", aksi = "benar", bantuan = "jangan menulis apa pun")
+    kembalikan p
+}
+
+fungsi dasar() {
+    cetak("== urai ==")
+    p = pengurai()
+    a = p.urai(["data.txt", "-j", "3", "-vv", "--mode=teliti", "--tag", "x", "--tag", "y", "--kering"])
+    cetak(a)
+    cetak(a.berkas, a.jumlah, a.verbose, a.mode, a.tag, a.kering)
+    cetak(a["jumlah"], a.ke_kamus())
+    b = p.urai(["b.txt"])
+    cetak(b)                                     # nilai bawaan
+    cetak(p.urai(["c.txt", "-j-5"]).jumlah)      # angka negatif sebagai nilai
+    cetak(p.urai(["--", "-x"]).berkas)           # setelah -- semuanya argumen posisi
+}
+
+fungsi galat() {
+    cetak("== galat pemakaian ==")
+    p = pengurai()
+    untuk args dalam [["-j", "x", "f"], [], ["f", "g"], ["f", "--mode", "lambat"],
+                      ["f", "--jumlah"], ["f", "--zz"], ["f", "--kering=1"]] {
+        coba {
+            p.urai(args)
+        } kecuali GalatOpsi sebagai e {
+            cetak("GalatOpsi:", e.pesan)
+        }
+    }
+}
+
+fungsi bantuan() {
+    cetak("== bantuan (yang dicetak -h) ==")
+    cetak(pengurai().bantuan())
+}
+
+dasar()
+galat()
+bantuan()

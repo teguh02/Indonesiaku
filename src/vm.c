@@ -15,6 +15,7 @@
 #include "vm.h"
 #include "native.h"
 #include "pola.h"
+#include "sistem.h"
 
 VM vm;
 
@@ -339,7 +340,8 @@ void initVM() {
     vm.galatNama = defineErrorClass("GalatNama", vm.galat);
     vm.galatAtribut = defineErrorClass("GalatAtribut", vm.galat);
     defineErrorClass("GalatBerkas", vm.galat);
-    defineErrorClass("GalatOS", vm.galat);
+    vm.galatOS = defineErrorClass("GalatOS", vm.galat);
+    vm.galatIzin = defineErrorClass("GalatIzin", vm.galatOS);
     defineErrorClass("GalatImpor", vm.galat);
     vm.galatRekursi = defineErrorClass("GalatRekursi", vm.galat);
     vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
@@ -462,6 +464,25 @@ void initVM() {
     defineNative("_pola_kompilasi", nativeFnPolaKompilasi);
     defineNative("_pola_cari", nativeFnPolaCari);
     defineNative("_pola_semua", nativeFnPolaSemua);
+
+    // Sistem operasi (Fase 6 gelombang C2, src/sistem.c). lingkungan,
+    // isi_direktori, dan _jalankan_proses ditolak di `indk --sandbox`.
+    defineNative("keluar", nativeFnKeluar);
+    defineNative("tulis_galat", nativeFnTulisGalat);
+    defineNative("lingkungan", nativeFnLingkungan);
+    defineNative("ambil_lingkungan", nativeFnAmbilLingkungan);
+    defineNative("direktori_kini", nativeFnDirektoriKini);
+    defineNative("isi_direktori", nativeFnIsiDirektori);
+    defineNative("buat_direktori", nativeFnBuatDirektori);
+    defineNative("hapus_direktori", nativeFnHapusDirektori);
+    defineNative("jalur_indk", nativeFnJalurIndk);
+    defineNative("_info_jalur", nativeFnInfoJalur);
+    defineNative("_jalankan_proses", nativeFnJalankanProses);
+
+    // Atribut dinamis (setattr/getattr/hasattr).
+    defineNative("atur_atribut", nativeFnAturAtribut);
+    defineNative("ambil_atribut", nativeFnAmbilAtribut);
+    defineNative("punya_atribut", nativeFnPunyaAtribut);
 }
 
 void freeVM() {

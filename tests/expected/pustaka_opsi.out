@@ -1,0 +1,32 @@
+== urai ==
+Hasil(berkas="data.txt", jumlah=3, verbose=2, mode="teliti", tag=["x", "y"], kering=benar)
+data.txt 3 2 teliti ["x", "y"] benar
+3 {"berkas": "data.txt", "jumlah": 3, "verbose": 2, "mode": "teliti", "tag": ["x", "y"], "kering": benar}
+Hasil(berkas="b.txt", jumlah=1, verbose=kosong, mode="cepat", tag=kosong, kering=salah)
+-5
+-x
+== galat pemakaian ==
+GalatOpsi: argumen --jumlah: nilai bulat tidak sah: "x"
+GalatOpsi: argumen berikut wajib diisi: berkas
+GalatOpsi: argumen tidak dikenal: g
+GalatOpsi: argumen --mode: pilihan tidak sah: "lambat" (pilih dari "cepat", "teliti")
+GalatOpsi: argumen --jumlah: memerlukan satu nilai
+GalatOpsi: argumen tidak dikenal: --zz
+GalatOpsi: argumen --kering: tidak menerima nilai
+== bantuan (yang dicetak -h) ==
+pemakaian: hitung [-h] [-j JUMLAH] [-v] [--mode {cepat,teliti}] [--tag TAG]
+                  [--kering]
+                  berkas
+
+Menghitung baris berkas.
+
+argumen posisi:
+  berkas                berkas yang dihitung
+
+opsi:
+  -h, --bantuan         tampilkan bantuan ini lalu keluar
+  -j, --jumlah JUMLAH   berapa kali
+  -v, --verbose         lebih banyak keterangan
+  --mode {cepat,teliti}
+  --tag TAG             boleh berulang
+  --kering              jangan menulis apa pun

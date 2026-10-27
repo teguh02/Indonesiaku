@@ -223,4 +223,9 @@ Value nativeFnSha1(int argCount, Value* args);     // sha1(...)
 Value nativeFnSha256(int argCount, Value* args);   // sha256(...)
 Value nativeFnSha512(int argCount, Value* args);   // sha512(...)
 
+// Atribut dinamis (Fase 6): setattr / getattr / hasattr.
+Value nativeFnAturAtribut(int argCount, Value* args);    // atur_atribut(objek, nama, nilai)
+Value nativeFnAmbilAtribut(int argCount, Value* args);   // ambil_atribut(objek, nama[, bawaan])
+Value nativeFnPunyaAtribut(int argCount, Value* args);   // punya_atribut(objek, nama)
+
 #endif

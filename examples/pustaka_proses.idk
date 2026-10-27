@@ -1,0 +1,37 @@
+# Modul `proses`: menjalankan program lain, padanan `subprocess.run`.
+# Program yang dijalankan di sini adalah `indk` sendiri (jalur_indk()),
+# satu-satunya program yang pasti ada di setiap mesin uji.
+impor proses
+dari proses impor GalatProses
+
+indk = jalur_indk()
+anak = "examples/proses_contoh/anak.idk"
+
+cetak("== jalankan ==")
+h = proses.jalankan([indk, anak, "7"], masukan = "Budi\n")
+cetak("kode keluar:", h.kode_keluar)
+cetak("keluaran:", repr(h.keluaran))
+cetak("galat:", repr(h.galat))
+
+cetak("== periksa ==")
+coba {
+    proses.jalankan([indk, anak, "3"], masukan = "Ani\n", periksa = benar)
+} kecuali GalatProses sebagai e {
+    cetak("GalatProses, kode", e.hasil.kode_keluar)
+}
+cetak(proses.keluaran([indk, anak], masukan = "Sari\n"))
+
+cetak("== perintah harus daftar ==")
+coba {
+    proses.jalankan("indk -v")
+} kecuali GalatProses sebagai e {
+    cetak("GalatProses:", e.pesan)
+}
+coba {
+    proses.jalankan(["program-yang-pasti-tidak-ada-123"])
+} kecuali GalatOS sebagai e {
+    cetak("GalatOS:", e.pesan)
+}
+
+cetak("== indk --sandbox ==")
+cetak(proses.keluaran([indk, "--sandbox", "examples/proses_contoh/terkurung.idk"]))
