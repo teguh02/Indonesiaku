@@ -1,0 +1,2 @@
+fungsi uji_a() { pastikan 1 == 1 }
+fungsi uji_b() { pastikan "x" == "x" }

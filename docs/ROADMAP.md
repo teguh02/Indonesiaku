@@ -245,10 +245,22 @@ bersarang.
 (perintah opt-in); tingkat 1 dibatalkan karena menulis ke stderr di setiap
 kali menjalankan program bentrok dengan syarat stderr kosong pada tes golden.
 
-Belum: `indk uji`, `indk rapikan` (formatter), LSP + diagnostics editor,
-debugger, playground via **WebAssembly**, cache `.idkc`, computed goto,
-superinstruksi, inline cache, NaN-boxing, GC generasional, utas/asinkron.
+✅ `indk uji` — jalankan setiap fungsi `uji_*` di sebuah berkas, laporkan
+lulus/gagal, exit 1 bila ada yang gagal. Asersi memakai `pastikan` yang sudah
+ada, jadi tidak ada sintaks tes baru.
+
+Belum: `indk rapikan` (formatter), LSP + diagnostics editor, debugger,
+playground via **WebAssembly**, cache `.idkc`, computed goto, superinstruksi,
+inline cache, NaN-boxing, GC generasional, utas/asinkron.
 Ref: 04 §1, §8–10, §12.
+
+> **Catatan computed goto.** Diukur dulu, belum dikerjakan. `run()` punya 85
+> opcode dengan 93 `case`, dan **19 di antaranya mengandung `for`/`while`** —
+> di sana `break` berarti keluar loop, bukan keluar switch. Transformasi
+> mekanis ke tabel lompat akan salah kompilasi secara diam-diam di 19 titik
+> itu. Build sudah `-O2`. Kerjakan hanya dengan profil yang menunjukkan
+> dispatch benar-benar jadi hambatan, dan konversi satu per satu disertai
+> pemeriksaan tiap `break`.
 
 ### Fase 8 — Ekosistem
 

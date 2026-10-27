@@ -154,6 +154,23 @@ static int lintFile(const char* path) {
     return compilerLintCount() > 0 ? 1 : 0;
 }
 
+// indk uji <skrip>: jalankan skrip lalu panggil setiap fungsi uji_*.
+static int testFile(const char* path) {
+    char* source = readFile(path);
+    setScriptPath(path);
+    InterpretResult result = interpret(source);
+    free(source);
+    if (result == INTERPRET_COMPILE_ERROR) return 65;
+    if (result == INTERPRET_RUNTIME_ERROR) return 70;
+
+    int failed = runUnitTests();
+    if (failed < 0) {
+        fprintf(stderr, "Tidak ada fungsi uji_* di \"%s\".\n", path);
+        return 1;
+    }
+    return failed > 0 ? 1 : 0;
+}
+
 static int runFile(const char* path) {
     char* source = readFile(path);
     // Imports resolve relative to the script's own directory first.
@@ -173,6 +190,17 @@ int main(int argc, const char* argv[]) {
         if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
             printf("%s\n", INDK_VERSION);
             return 0;
+        }
+        if (strcmp(argv[1], "uji") == 0) {
+            if (argc < 3) {
+                fprintf(stderr, "Penggunaan: indk uji <skrip.idk>\n");
+                return 64;
+            }
+            initVM();
+            defineArgs(argc, argv, 3);
+            int code = testFile(argv[2]);
+            freeVM();
+            return code;
         }
         if (strcmp(argv[1], "periksa") == 0) {
             if (argc < 3) {
@@ -203,6 +231,7 @@ int main(int argc, const char* argv[]) {
             printf("  --dis <skrip>   Tampilkan bytecode tanpa menjalankan\n");
             printf("Perintah:\n");
             printf("  periksa <skrip> Laporkan variabel lokal tidak terpakai\n");
+            printf("  uji <skrip>     Jalankan fungsi uji_* dalam skrip\n");
             return 0;
         }
     }

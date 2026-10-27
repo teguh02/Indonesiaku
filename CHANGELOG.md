@@ -11,6 +11,11 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - **`indk --dis <skrip>`**: tampilkan bytecode tanpa menjalankan program,
   rekursif ke fungsi bersarang.
+- **`indk uji <skrip>`**: jalankan setiap fungsi tingkat atas bernama `uji_*`
+  dan laporkan hasilnya. Asersi memakai `pastikan`; sebuah `pastikan` yang
+  gagal menandai tesnya gagal tanpa menghentikan tes lain. Urutan diurutkan
+  berdasarkan nama agar keluarannya stabil. Exit 0 bila semua lulus, 1 bila
+  ada yang gagal atau tidak ada fungsi `uji_*`.
 - **`indk periksa <skrip>`**: linter yang melaporkan variabel lokal yang
   dideklarasikan tapi tidak pernah dibaca. Exit 0 bila bersih, 1 bila ada
   temuan. Nama berawalan `_` dikecualikan. Hanya `variabel x` yang eksplisit
