@@ -105,7 +105,7 @@
       "patterns": [
         {
           "name": "support.function.magic.indonesiaku",
-          "match": "\\b_(?:kurang_sama|kbagi_bulat|kurang_dari|tidak_sama|lebih_dari|lebih_sama|bagi_bulat|kkurangi|kpangkat|panjang|ktambah|kurangi|negatif|pangkat|tambah|logika|kkali|kbagi|ksisa|ambil|atur|bagi|sama|hash|sisa|repr|kali|teks)_\\b"
+          "match": "\\b_(?:kurang_sama|kbagi_bulat|kurang_dari|tidak_sama|lebih_dari|lebih_sama|bagi_bulat|kkurangi|kpangkat|panjang|ktambah|kurangi|negatif|pangkat|tambah|logika|kkali|kbagi|ksisa|ambil|atur|bagi|berikutnya|sama|hash|sisa|repr|kali|teks|iter|panggil|masuk|keluar)_\\b"
         },
         {
           "name": "support.function.builtin.indonesiaku",

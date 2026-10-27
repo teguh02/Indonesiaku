@@ -24,7 +24,7 @@ const BUILTINS = [
 
 // Magic methods (K19): written inside `kelas`, called by the interpreter.
 const MAGIC_METHODS = [
-  "_ambil_", "_atur_", "_bagi_", "_bagi_bulat_", "_hash_", "_iter_",
+  "_ambil_", "_atur_", "_bagi_", "_bagi_bulat_", "_berikutnya_", "_hash_", "_iter_",
   "_kali_", "_kbagi_", "_kbagi_bulat_", "_keluar_", "_kkali_",
   "_kkurangi_", "_kpangkat_", "_ksisa_", "_ktambah_", "_kurang_dari_",
   "_kurang_sama_", "_kurangi_", "_lebih_dari_", "_lebih_sama_",
