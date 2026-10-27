@@ -262,6 +262,38 @@ Ref: 04 §1, §8–10, §12.
 > dispatch benar-benar jadi hambatan, dan konversi satu per satu disertai
 > pemeriksaan tiap `break`.
 
+> **Catatan `indk rapikan`.** Terhalang, bukan sekadar belum dikerjakan.
+> `skipWhitespace()` di `src/scanner.c` **membuang komentar sepenuhnya** —
+> tidak ada `TOKEN_COMMENT`, jadi komentar tidak pernah sampai ke token
+> stream. Dibuktikan: dua berkas yang hanya berbeda komentar menghasilkan
+> bytecode identik. Formatter berbasis token akan **menghapus seluruh
+> komentar** pengguna, dan formatter yang memakan komentar lebih buruk
+> daripada tidak ada formatter. Prasyarat: mode scanner yang menyimpan
+> komentar beserta posisinya (atau CST), baru kemudian penulis ulangnya.
+
+> **Catatan cache `.idkc`.** Diukur, lalu ditunda sebagai YAGNI. Berkas
+> sumber terbesar di repo (`metode_ajaib.idk`, 8 KB) butuh **3,1 ms** total,
+> dan **1,3 ms** di antaranya adalah ongkos start proses — jadi kompilasi
+> sesungguhnya sekitar **1,8 ms**. Cache bytecode berarti menambah format
+> serialisasi, penomoran versi, invalidasi berdasarkan mtime/hash, dan
+> penulisan graf objek GC (`ObjString`, `ObjFunction` bersarang, `Chunk`
+> dengan `lines`/`columns`/`source`) demi menghemat < 2 ms. Kerjakan kalau
+> ada program yang kompilasinya benar-benar terasa, bukan sebelum itu.
+
+> **Catatan playground WebAssembly.** Terhalang perkakas: `emcc` tidak
+> terpasang di mesin ini (`which emcc` kosong, tidak ada
+> `/usr/lib/emscripten`). Playground yang ada sekarang berjalan lewat Docker
+> dan sudah berfungsi, jadi WASM adalah penggantian jalur eksekusi, bukan
+> fitur baru untuk pengguna. Butuh pemasangan Emscripten lebih dulu.
+
+> **Catatan LSP, debugger, inline cache, superinstruksi, NaN-boxing, GC
+> generasional, utas/asinkron.** Belum dikerjakan. Masing-masing berukuran
+> setara satu fase tersendiri — NaN-boxing menyentuh setiap `Value` di
+> seluruh basis kode, GC generasional menulis ulang `memory.c`, dan LSP
+> adalah program kedua di samping interpreter. Jangan dikerjakan sebagai
+> tambahan di sela pekerjaan lain; masing-masing butuh berkas rencana
+> sendiri di `docs/RENCANA_FITUR/` lebih dulu.
+
 ### Fase 8 — Ekosistem
 
 Manajer paket + registri, API embedding C, FFI, MySQL/PostgreSQL (klien
