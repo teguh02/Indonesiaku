@@ -11,12 +11,14 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - **`indk --dis <skrip>`**: tampilkan bytecode tanpa menjalankan program,
   rekursif ke fungsi bersarang.
-- **`indk rapikan <skrip>`** (`--tulis`, `--periksa`): kerangka formatter.
-  Scanner mendapat `TOKEN_KOMENTAR` yang **opt-in** — default mati, sehingga
-  compiler tidak melihat token komentar sama sekali (dibuktikan: bytecode 117
-  berkas identik sebelum/sesudah). Aturan tata letaknya **belum** ditulis;
-  saat ini keluarannya identik dengan masukan. Yang sudah dijamin dan diuji:
-  komentar bertahan utuh, hasilnya idempoten, dan bytecode tidak berubah.
+- **`indk rapikan <skrip>`** (`--tulis`, `--periksa`): formatter kode.
+  Merapikan indentasi (4 spasi) dan spasi operator, membedakan `{` kamus dari
+  `{` blok, serta mempertahankan komentar beserta posisinya. Scanner mendapat
+  `TOKEN_KOMENTAR` yang **opt-in** — default mati, sehingga compiler tidak
+  melihat token komentar sama sekali (dibuktikan: bytecode 117 berkas identik
+  sebelum/sesudah). Dijamin tidak mengubah arti program: bytecode 117 berkas
+  identik sebelum/sesudah format, hasilnya idempoten. Tidak memecah atau
+  menyambung baris — mengikuti baris asli penulis.
 - **`indk uji <skrip>`**: jalankan setiap fungsi tingkat atas bernama `uji_*`
   dan laporkan hasilnya. Asersi memakai `pastikan`; sebuah `pastikan` yang
   gagal menandai tesnya gagal tanpa menghentikan tes lain. Urutan diurutkan

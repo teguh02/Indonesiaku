@@ -1,6 +1,6 @@
 # Rencana Fitur: Scanner penyimpan komentar + `indk rapikan`
 
-- **Status:** dikerjakan (tahap 1 + jaring pengaman selesai; aturan tata letak belum)
+- **Status:** selesai (tahap 1-4; penulisan ulang/wrapping sengaja tidak dikerjakan)
 - **Target versi:** Fase 7 (perkakas)
 - **Pengusul:** Teguh
 - **Keputusan terkait:** K4 (tanpa aturan indentasi), K14 (kompatibilitas)
@@ -212,10 +212,29 @@ pengamannya dipasang lebih dulu, selagi belum ada yang bisa jatuh:
 sebelum/sesudah tahap 1 — identik. Jadi 12 pemanggil `scanToken()` di
 compiler memang tidak terpengaruh.
 
-**Sisa pekerjaan**: langkah 3 (indentasi + spasi) dan 4 (penempatan komentar
-sesuai tabel §3). Begitu aturan tata letak masuk, berkas `.rapi` di
-`tests/format/` tidak lagi sama dengan `.idk`-nya, dan tes bytecode di atas
-menjadi penjaga yang sesungguhnya.
+**Langkah 3 dan 4 selesai.** Berkas `.rapi` di `tests/format/` kini benar-benar
+berbeda dari `.idk`-nya (input sengaja ditulis berantakan), jadi tes bytecode
+sudah menjadi penjaga yang sesungguhnya — dan memang menangkap satu regresi
+nyata saat aturan tata letak pertama kali masuk.
+
+Empat bug yang ditangkap jaring itu, semuanya mengubah arti atau merusak kode:
+
+1. **String `"""multi-baris""" terbelah.** Scanner melaporkan baris token
+   tempat ia **berakhir**, bukan dimulai. Akibatnya token sesudahnya tampak
+   berada di baris lebih awal dan formatter menyisipkan baris baru di tengah
+   penugasan. Diperbaiki dengan menyimpan `line` (awal) dan `endLine` (akhir):
+   `line` dihitung mundur dari jumlah `\n` di dalam token.
+2. **`{` kamus vs `{` blok.** `{"a": 1}` sempat jadi `{ "a": 1}`. Keduanya
+   token yang sama, jadi dibedakan lewat token sebelumnya (`braceIsDict`) dan
+   dipasangkan dengan tumpukan supaya `}` tahu apa yang ia tutup.
+3. **`fungsi(x)` anonim** menjadi `fungsi (x)`.
+4. **Komentar tak boleh diikuti token di baris yang sama** — ini aturan
+   kebenaran, bukan gaya: komentar berjalan sampai akhir baris, jadi token
+   sesudahnya akan tertelan. Dipaksa pindah baris.
+
+**Tidak dikerjakan (sengaja):** formatter tidak memecah atau menyambung baris.
+Ia mengikuti baris asli penulis dan hanya memperbaiki indentasi serta spasi.
+Aturan panjang baris baru ditambahkan kalau memang diminta.
 
 **Catatan CRLF.** Masukan CRLF keluar sebagai LF karena `readFile()`
 menormalkan baris baru sebelum formatter melihatnya. Ini perilaku yang

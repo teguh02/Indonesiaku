@@ -1,0 +1,5 @@
+variabel a=1+2*3
+variabel b=-a
+variabel c=tidak benar
+variabel e=2**3//2%5
+cetak(a,b,c,e)

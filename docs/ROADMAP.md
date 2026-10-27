@@ -249,13 +249,15 @@ kali menjalankan program bentrok dengan syarat stderr kosong pada tes golden.
 lulus/gagal, exit 1 bila ada yang gagal. Asersi memakai `pastikan` yang sudah
 ada, jadi tidak ada sintaks tes baru.
 
-Sebagian: **`indk rapikan`** — scanner kini bisa menyimpan komentar
-(`TOKEN_KOMENTAR`, opt-in) dan `indk rapikan [--tulis|--periksa]` sudah ada,
-tetapi aturan tata letaknya belum ditulis: formatter masih identitas
-(keluaran = masukan). Jaring pengamannya sudah hidup: 117/117 bytecode
-identik sebelum/sesudah format.
+- [x] **`indk rapikan [--tulis|--periksa]`** — formatter berbasis token.
+      Indentasi 4 spasi, spasi operator, `{` kamus vs blok, komentar bertahan
+      utuh. Dijamin tidak mengubah arti program: 117/117 bytecode identik
+      sebelum/sesudah format, dan hasilnya idempoten.
+      Batas sadar: tidak memecah/menyambung baris — mengikuti baris asli
+      penulis. K4 tetap aman: `examples/tanpa_indentasi.idk` dirapikan dan
+      keluarannya tetap cocok golden.
 
-Belum: aturan tata letak `rapikan`, LSP + diagnostics editor, debugger,
+Belum: LSP + diagnostics editor, debugger,
 playground via **WebAssembly**, cache `.idkc`, computed goto, superinstruksi,
 inline cache, NaN-boxing, GC generasional, utas/asinkron.
 Ref: 04 §1, §8–10, §12.

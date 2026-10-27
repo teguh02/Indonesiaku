@@ -21,8 +21,15 @@ for src in tests/format/*.idk; do
     if ! diff -q "$tmp.1" "$tmp.2" >/dev/null; then
         fail=$((fail+1)); echo "GAGAL (tidak idempoten): $src"; continue
     fi
-    if ! ./indk rapikan --periksa "$src" >/dev/null 2>&1; then
-        fail=$((fail+1)); echo "GAGAL (--periksa menolak berkas rapi): $src"; continue
+    # --periksa harus MENERIMA berkas yang sudah rapi (.rapi) dan MENOLAK
+    # berkas yang belum (.idk sengaja ditulis berantakan).
+    if ! ./indk rapikan --periksa "$expected" >/dev/null 2>&1; then
+        fail=$((fail+1)); echo "GAGAL (--periksa menolak berkas rapi): $expected"; continue
+    fi
+    if ! diff -q "$src" "$expected" >/dev/null; then
+        if ./indk rapikan --periksa "$src" >/dev/null 2>&1; then
+            fail=$((fail+1)); echo "GAGAL (--periksa menerima berkas berantakan): $src"; continue
+        fi
     fi
     pass=$((pass+1))
 done

@@ -1275,6 +1275,25 @@ Exit code 0 bila bersih, 1 bila ada temuan. Nama berawalan garis bawah
 (`_sisa`) sengaja diabaikan — itu konvensi "memang tidak dipakai". Parameter
 fungsi dan variabel dari `untuk`/`kecuali ... sebagai` tidak diperiksa.
 
+### `indk rapikan` — merapikan format kode
+
+```bash
+$ indk rapikan berkas.idk            # cetak hasil ke layar
+$ indk rapikan --tulis berkas.idk    # tulis balik ke berkas
+$ indk rapikan --periksa berkas.idk  # exit 1 kalau belum rapi (untuk CI)
+```
+
+Formatter merapikan indentasi (4 spasi per tingkat) dan spasi di sekitar
+operator, lalu mempertahankan komentar beserta posisinya — komentar akhir
+baris tetap di baris yang sama dengan dua spasi sebelum `#`.
+
+Ingat K4: **tidak ada aturan indentasi** di Indonesiaku. `rapikan` hanya
+menata tampilan; kode yang ditulis rata kiri tetap sah dan tetap berjalan
+tanpa dirapikan.
+
+Formatter tidak memecah atau menyambung baris. Ia mengikuti baris yang kamu
+tulis, jadi tata letak daftar multi-baris milikmu tidak diacak.
+
 ### `indk --dis` — melihat bytecode
 
 Menampilkan bytecode hasil kompilasi tanpa menjalankan programnya, berguna
