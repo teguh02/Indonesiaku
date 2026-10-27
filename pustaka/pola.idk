@@ -1,0 +1,433 @@
+# pustaka/pola.idk - Ekspresi reguler (modul `pola`), padanan `re` Python.
+# Pemakaian:
+#     impor pola
+#     m = pola.cari("(\\d+)-(\\d+)", "tel 021-555")
+#     cetak(m.grup(1))          # 021
+#
+# Mesinnya ditulis di C (src/pola.c, gaya Pike VM): waktunya linear terhadap
+# panjang teks, jadi tidak ada pola "jahat" yang membuat program macet. Karena
+# itu backreference (\1) dan lookaround ((?=...)) sengaja tidak didukung.
+# Kelas \d \w \s dan ABAIKAN_KAPITAL berlaku untuk huruf ASCII, seperti
+# bendera re.ASCII di Python. Indeks dihitung per karakter, bukan per byte.
+
+ABAIKAN_KAPITAL = 1
+MULTIBARIS = 2
+TITIK_SEMUA = 4
+
+# Mode pencocokan untuk native _pola_cari.
+_CARI = 0
+_COCOK = 1
+_PENUH = 2
+
+kelas GalatPola < Galat {
+    init(pesan) {
+        diri.pesan = pesan
+    }
+}
+
+# _adalah_bulat(x) -> benar hanya untuk bulat. jenis() memberi "angka" untuk
+# bulat maupun desimal, tetapi `adalah` membedakannya (1 adalah 1.0 salah).
+fungsi _adalah_bulat(x) {
+    jika jenis(x) != "angka" {
+        kembalikan salah
+    }
+    coba {
+        kembalikan ke_bulat(x) adalah x
+    } kecuali e {
+        kembalikan salah   # inf, nan
+    }
+}
+
+fungsi _periksa_teks(nama, teks) {
+    jika jenis(teks) != "teks" {
+        naikkan GalatPola(f"{nama}: teks yang dicari harus teks, bukan {jenis(teks)}")
+    }
+}
+
+# Satu hasil pencocokan (re.Match).
+kelas Cocokan {
+    init(pola, teks, rentang_grup) {
+        diri.pola = pola
+        diri.teks = teks
+        diri._rentang = rentang_grup
+    }
+
+    # _indeks(g) -> nomor grup dari bulat atau nama grup.
+    _indeks(g) {
+        jika jenis(g) == "teks" {
+            jika tidak punya(diri.pola.indeks_grup, g) {
+                naikkan GalatPola(f"Cocokan: tidak ada grup bernama '{g}'")
+            }
+            kembalikan diri.pola.indeks_grup[g]
+        }
+        jika tidak _adalah_bulat(g) atau g < 0 atau g > diri.pola.jumlah_grup {
+            naikkan GalatPola(f"Cocokan: tidak ada grup {g}")
+        }
+        kembalikan g
+    }
+
+    # grup(g = 0) -> teks grup ke-g (atau bernama g); kosong bila grup itu
+    # tidak ikut cocok.
+    grup(g = 0) {
+        variabel i = diri._indeks(g)
+        variabel awal = diri._rentang[2 * i]
+        jika awal < 0 {
+            kembalikan kosong
+        }
+        kembalikan diri.teks[awal:diri._rentang[2 * i + 1]]
+    }
+
+    _ambil_(g) {
+        kembalikan diri.grup(g)
+    }
+
+    # grup_semua(bawaan = kosong) -> tupel semua grup 1..n (re.Match.groups).
+    grup_semua(bawaan = kosong) {
+        variabel hasil = []
+        untuk i dalam rentang(1, diri.pola.jumlah_grup + 1) {
+            variabel nilai = diri.grup(i)
+            hasil.tambah(bawaan jika nilai adalah kosong selain nilai)
+        }
+        kembalikan tupel(hasil)
+    }
+
+    # kamus_grup(bawaan = kosong) -> {nama: teks} untuk grup bernama.
+    kamus_grup(bawaan = kosong) {
+        variabel hasil = kamus()
+        untuk nama dalam diri.pola.indeks_grup {
+            variabel nilai = diri.grup(nama)
+            hasil[nama] = bawaan jika nilai adalah kosong selain nilai
+        }
+        kembalikan hasil
+    }
+
+    awal(g = 0) {
+        kembalikan diri._rentang[2 * diri._indeks(g)]
+    }
+
+    akhir(g = 0) {
+        kembalikan diri._rentang[2 * diri._indeks(g) + 1]
+    }
+
+    rentang(g = 0) {
+        kembalikan diri.awal(g), diri.akhir(g)
+    }
+
+    _teks_() {
+        kembalikan f"<pola.Cocokan rentang={diri.rentang()}, cocok={repr(diri.grup())}>"
+    }
+
+    _repr_() {
+        kembalikan diri._teks_()
+    }
+}
+
+# Pola yang sudah dikompilasi (re.Pattern).
+kelas Pola {
+    init(pola, bendera = 0) {
+        jika jenis(pola) != "teks" {
+            naikkan GalatPola(f"pola harus teks, bukan {jenis(pola)}")
+        }
+        jika tidak _adalah_bulat(bendera) {
+            naikkan GalatPola("bendera harus bulat (mis. pola.ABAIKAN_KAPITAL)")
+        }
+        variabel info = _pola_kompilasi(pola, bendera)
+        jika jenis(info) == "teks" {
+            naikkan GalatPola(f"{info}: {repr(pola)}")
+        }
+        diri.pola = pola
+        diri.bendera = bendera
+        diri.jumlah_grup = info[0]
+        diri.indeks_grup = info[1]
+    }
+
+    _cocokan(rentang_grup, teks) {
+        jika rentang_grup adalah kosong {
+            kembalikan kosong
+        }
+        kembalikan Cocokan(diri, teks, rentang_grup)
+    }
+
+    _jalankan(nama, teks, mulai, mode) {
+        _periksa_teks(nama, teks)
+        jika tidak _adalah_bulat(mulai) {
+            naikkan GalatPola(f"{nama}: posisi mulai harus bulat")
+        }
+        jika mulai < 0 {
+            mulai = 0
+        }
+        kembalikan diri._cocokan(_pola_cari(diri.pola, diri.bendera, teks, mulai, mode, -1), teks)
+    }
+
+    # cari(teks, mulai = 0) -> Cocokan pertama di mana pun, atau kosong.
+    cari(teks, mulai = 0) {
+        kembalikan diri._jalankan("cari", teks, mulai, _CARI)
+    }
+
+    # cocok(teks, mulai = 0) -> Cocokan yang harus dimulai di `mulai`.
+    cocok(teks, mulai = 0) {
+        kembalikan diri._jalankan("cocok", teks, mulai, _COCOK)
+    }
+
+    # cocok_penuh(teks, mulai = 0) -> Cocokan yang harus meliputi seluruh teks.
+    cocok_penuh(teks, mulai = 0) {
+        kembalikan diri._jalankan("cocok_penuh", teks, mulai, _PENUH)
+    }
+
+    # iter_cari(teks) -> daftar semua Cocokan yang tidak bertumpang.
+    iter_cari(teks, batas = 0) {
+        _periksa_teks("iter_cari", teks)
+        variabel hasil = []
+        untuk rentang_grup dalam _pola_semua(diri.pola, diri.bendera, teks, 0, batas) {
+            hasil.tambah(Cocokan(diri, teks, rentang_grup))
+        }
+        kembalikan hasil
+    }
+
+    # cari_semua(teks) -> re.findall: teks cocokan bila tanpa grup, teks grup
+    # bila satu grup, tupel grup bila lebih ("" untuk grup yang tidak ikut).
+    cari_semua(teks) {
+        variabel hasil = []
+        untuk m dalam diri.iter_cari(teks) {
+            jika diri.jumlah_grup == 0 {
+                hasil.tambah(m.grup())
+            } jika_lain diri.jumlah_grup == 1 {
+                variabel g = m.grup(1)
+                hasil.tambah("" jika g adalah kosong selain g)
+            } selain {
+                hasil.tambah(m.grup_semua(""))
+            }
+        }
+        kembalikan hasil
+    }
+
+    # ganti_n(pengganti, teks, jumlah = 0) -> tupel (teks baru, banyak
+    # penggantian). `pengganti` boleh teks (dengan \1, \g<nama>) atau fungsi
+    # yang menerima Cocokan dan mengembalikan teks.
+    ganti_n(pengganti, teks, jumlah = 0) {
+        _periksa_teks("ganti", teks)
+        variabel templat = kosong
+        jika jenis(pengganti) == "teks" {
+            templat = _urai_templat(pengganti, diri)
+        } jika_lain tidak bisa_dipanggil(pengganti) {
+            naikkan GalatPola("ganti: pengganti harus teks atau fungsi")
+        }
+        variabel bagian = []
+        variabel terakhir = 0
+        variabel n = 0
+        untuk m dalam diri.iter_cari(teks, jumlah) {
+            bagian.tambah(teks[terakhir:m.awal()])
+            variabel isi = kosong
+            jika templat adalah kosong {
+                isi = pengganti(m)
+                jika jenis(isi) != "teks" {
+                    naikkan GalatPola(f"ganti: fungsi pengganti harus mengembalikan teks, bukan {jenis(isi)}")
+                }
+            } selain {
+                isi = _isi_templat(templat, m)
+            }
+            bagian.tambah(isi)
+            terakhir = m.akhir()
+            n += 1
+        }
+        bagian.tambah(teks[terakhir:])
+        kembalikan _gabung(bagian), n
+    }
+
+    # ganti(pengganti, teks, jumlah = 0) -> teks baru (re.sub).
+    ganti(pengganti, teks, jumlah = 0) {
+        kembalikan diri.ganti_n(pengganti, teks, jumlah)[0]
+    }
+
+    # pisah(teks, maks = 0) -> re.split: potongan di antara cocokan; isi grup
+    # ikut dimasukkan di antaranya.
+    pisah(teks, maks = 0) {
+        _periksa_teks("pisah", teks)
+        variabel hasil = []
+        variabel terakhir = 0
+        untuk m dalam diri.iter_cari(teks, maks) {
+            hasil.tambah(teks[terakhir:m.awal()])
+            untuk g dalam m.grup_semua() {
+                hasil.tambah(g)
+            }
+            terakhir = m.akhir()
+        }
+        hasil.tambah(teks[terakhir:])
+        kembalikan hasil
+    }
+
+    _teks_() {
+        jika diri.bendera == 0 {
+            kembalikan f"pola.kompilasi({repr(diri.pola)})"
+        }
+        kembalikan f"pola.kompilasi({repr(diri.pola)}, {diri.bendera})"
+    }
+
+    _repr_() {
+        kembalikan diri._teks_()
+    }
+}
+
+fungsi _gabung(bagian) {
+    variabel hasil = ""
+    untuk b dalam bagian {
+        hasil = hasil + b
+    }
+    kembalikan hasil
+}
+
+# \f \v \a lewat chr(): literal teks bahasa ini hanya mengenal \n \t \r \" \\ \'.
+_ESCAPE_TEMPLAT = {"n": "\n", "t": "\t", "r": "\r", "\\": "\\", "f": chr(12), "v": chr(11), "a": chr(7)}
+
+# _urai_templat(t, pola) -> daftar bagian: teks biasa atau bulat (nomor grup).
+# Aturan re.sub: \1..\99, \g<1>, \g<nama>, escape \n \t \\ ...; huruf ASCII
+# lain setelah "\" adalah galat; tanda baca setelah "\" tetap apa adanya.
+fungsi _urai_templat(t, pola) {
+    variabel bagian = []
+    variabel literal = ""
+    variabel i = 0
+    variabel n = panjang(t)
+    selagi i < n {
+        variabel c = t[i]
+        jika c != "\\" {
+            literal = literal + c
+            i += 1
+            lanjut
+        }
+        jika i + 1 >= n {
+            naikkan GalatPola("ganti: templat diakhiri '\\'")
+        }
+        variabel d = t[i + 1]
+        jika d >= "0" dan d <= "9" {
+            variabel j = i + 1
+            variabel angka = ""
+            selagi j < n dan panjang(angka) < 2 dan t[j] >= "0" dan t[j] <= "9" {
+                angka = angka + t[j]
+                j += 1
+            }
+            variabel g = ke_angka(angka)
+            jika g > pola.jumlah_grup {
+                naikkan GalatPola(f"ganti: grup {g} tidak ada")
+            }
+            bagian.tambah(literal)
+            literal = ""
+            bagian.tambah(g)
+            i = j
+        } jika_lain d == "g" {
+            jika i + 2 >= n atau t[i + 2] != "<" {
+                naikkan GalatPola("ganti: \\g harus diikuti <nama> atau <nomor>")
+            }
+            variabel j = i + 3
+            variabel nama = ""
+            selagi j < n dan t[j] != ">" {
+                nama = nama + t[j]
+                j += 1
+            }
+            jika j >= n atau nama == "" {
+                naikkan GalatPola("ganti: \\g<...> tidak ditutup")
+            }
+            variabel g = kosong
+            jika punya(pola.indeks_grup, nama) {
+                g = pola.indeks_grup[nama]
+            } selain {
+                coba {
+                    g = ke_angka(nama)
+                } kecuali e {
+                    naikkan GalatPola(f"ganti: tidak ada grup bernama '{nama}'")
+                }
+                jika tidak _adalah_bulat(g) atau g < 0 atau g > pola.jumlah_grup {
+                    naikkan GalatPola(f"ganti: grup {nama} tidak ada")
+                }
+            }
+            bagian.tambah(literal)
+            literal = ""
+            bagian.tambah(g)
+            i = j + 1
+        } jika_lain punya(_ESCAPE_TEMPLAT, d) {
+            literal = literal + _ESCAPE_TEMPLAT[d]
+            i += 2
+        } jika_lain (d >= "a" dan d <= "z") atau (d >= "A" dan d <= "Z") {
+            naikkan GalatPola(f"ganti: escape tidak dikenal \\{d}")
+        } selain {
+            literal = literal + "\\" + d
+            i += 2
+        }
+    }
+    bagian.tambah(literal)
+    kembalikan bagian
+}
+
+fungsi _isi_templat(templat, m) {
+    variabel hasil = ""
+    untuk b dalam templat {
+        jika jenis(b) == "teks" {
+            hasil = hasil + b
+        } selain {
+            variabel g = m.grup(b)
+            jika g bukan adalah kosong {
+                hasil = hasil + g
+            }
+        }
+    }
+    kembalikan hasil
+}
+
+# --- fungsi tingkat modul, seperti re.search(pola, teks) ----------------------
+
+fungsi _pola(p, bendera) {
+    jika adalah_instansi(p, Pola) {
+        kembalikan p
+    }
+    kembalikan Pola(p, bendera)
+}
+
+# kompilasi(pola, bendera = 0) -> Pola.
+fungsi kompilasi(p, bendera = 0) {
+    kembalikan Pola(p, bendera)
+}
+
+fungsi cari(p, teks, bendera = 0) {
+    kembalikan _pola(p, bendera).cari(teks)
+}
+
+fungsi cocok(p, teks, bendera = 0) {
+    kembalikan _pola(p, bendera).cocok(teks)
+}
+
+fungsi cocok_penuh(p, teks, bendera = 0) {
+    kembalikan _pola(p, bendera).cocok_penuh(teks)
+}
+
+fungsi cari_semua(p, teks, bendera = 0) {
+    kembalikan _pola(p, bendera).cari_semua(teks)
+}
+
+fungsi iter_cari(p, teks, bendera = 0) {
+    kembalikan _pola(p, bendera).iter_cari(teks)
+}
+
+fungsi ganti(p, pengganti, teks, jumlah = 0, bendera = 0) {
+    kembalikan _pola(p, bendera).ganti(pengganti, teks, jumlah)
+}
+
+fungsi ganti_n(p, pengganti, teks, jumlah = 0, bendera = 0) {
+    kembalikan _pola(p, bendera).ganti_n(pengganti, teks, jumlah)
+}
+
+fungsi pisah(p, teks, maks = 0, bendera = 0) {
+    kembalikan _pola(p, bendera).pisah(teks, maks)
+}
+
+# lolos(teks) -> re.escape: setiap karakter yang punya arti khusus di pola
+# diberi "\" di depannya.
+fungsi lolos(teks) {
+    variabel khusus = "()[]{}?*+-|^$\\.&~# \t\n\r" + chr(11) + chr(12)
+    variabel hasil = ""
+    untuk c dalam teks {
+        jika c dalam khusus {
+            hasil = hasil + "\\"
+        }
+        hasil = hasil + c
+    }
+    kembalikan hasil
+}

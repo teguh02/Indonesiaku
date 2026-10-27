@@ -1,0 +1,85 @@
+# Modul `pola`: ekspresi reguler, padanan `re` Python.
+impor pola
+dari pola impor GalatPola
+
+fungsi mencari() {
+    cetak("== mencari ==")
+    m = pola.cari("(\\d{3})-(\\d+)", "telepon: 021-5550123")
+    cetak(m)
+    cetak(m.grup(), m.grup(1), m.grup(2), m[2])
+    cetak(m.rentang(), m.awal(1), m.akhir(1), m.grup_semua())
+    cetak(pola.cari("\\d", "tanpa angka"))
+    cetak(pola.cocok("\\d+", "12 apel"), pola.cocok("\\d+", "apel 12"))
+    cetak(pola.cocok_penuh("[a-z]+", "halo"), pola.cocok_penuh("[a-z]+", "halo!"))
+}
+
+fungsi grup_bernama() {
+    cetak("== grup bernama ==")
+    m = pola.cari("(?P<tahun>\\d{4})-(?P<bulan>\\d{2})-(?P<hari>\\d{2})", "lahir 2026-10-27")
+    cetak(m.grup("tahun"), m["bulan"], m.kamus_grup())
+    cetak(pola.cari("(a)|(b)", "b").grup_semua(), pola.cari("(a)|(b)", "b").grup_semua("-"))
+}
+
+fungsi semua() {
+    cetak("== cari_semua & iter_cari ==")
+    cetak(pola.cari_semua("\\b\\w+an\\b", "makan minum jalan lari tujuan"))
+    cetak(pola.cari_semua("(\\w+)=(\\d+)", "a=1, b=22, c=x"))
+    untuk m dalam pola.iter_cari("\\d+", "3 apel, 12 jeruk") {
+        cetak(m.grup(), m.rentang())
+    }
+}
+
+fungsi mengganti() {
+    cetak("== ganti & pisah ==")
+    cetak(pola.ganti("\\s+", " ", "terlalu    banyak   spasi"))
+    cetak(pola.ganti("(\\w+)@(\\w+)\\.id", "\\2 (\\1)", "budi@rumah.id, ani@kantor.id"))
+    cetak(pola.ganti("(?P<n>\\d+)", "[\\g<n>]", "a1b22", 1))
+    cetak(pola.ganti_n("x*", "-", "abxd"))                 # cocokan kosong, aturan Python 3.7+
+    fungsi kali_dua(m) {
+        kembalikan ke_teks(ke_angka(m.grup()) * 2)
+    }
+    cetak(pola.ganti("\\d+", kali_dua, "3 apel dan 12 jeruk"))
+    cetak(pola.pisah("[,;]\\s*", "a, b;c;  d"))
+    cetak(pola.pisah("(-)", "1-2-3"), pola.pisah("-", "1-2-3", 1))
+}
+
+fungsi bendera_dan_lainnya() {
+    cetak("== bendera ==")
+    cetak(pola.cari_semua("^\\w", "satu\ndua\ntiga", pola.MULTIBARIS))
+    cetak(pola.cari("halo", "HALO dunia", pola.ABAIKAN_KAPITAL).grup())
+    cetak(pola.cari("a.b", "a\nb"), pola.cari("a.b", "a\nb", pola.TITIK_SEMUA).grup() == "a\nb")
+    p = pola.kompilasi("[aiueo]", pola.ABAIKAN_KAPITAL)
+    cetak(p, p.cari_semua("IndONEsia"))
+    cetak(pola.lolos("harga: 5.000 (diskon?)"))
+    cetak(pola.cari(pola.lolos("1+1"), "hasil 1+1=2").rentang())
+    # Teks dihitung per karakter, bukan byte.
+    cetak(pola.cari("é+", "café éé").rentang())
+}
+
+fungsi galat() {
+    cetak("== galat ==")
+    untuk p dalam ["(a", "a)", "*a", "[z-a]", "(a)\\1", "(?=a)", "a{3,1}"] {
+        coba {
+            pola.kompilasi(p)
+        } kecuali GalatPola sebagai e {
+            cetak("GalatPola:", e.pesan)
+        }
+    }
+    coba { pola.cari("a", 5) } kecuali GalatPola sebagai e { cetak("GalatPola:", e.pesan) }
+    coba { pola.cari("(a)", "a").grup(5) } kecuali GalatPola sebagai e { cetak("GalatPola:", e.pesan) }
+}
+
+fungsi tanpa_redos() {
+    # Pola yang membuat mesin backtracking macet: di sini selesai seketika.
+    cetak("== tanpa ReDoS ==")
+    cetak(pola.cocok("(a*)*b", "a" * 5000))
+    cetak(pola.cocok("(x+x+)+y", "x" * 5000))
+}
+
+mencari()
+grup_bernama()
+semua()
+mengganti()
+bendera_dan_lainnya()
+galat()
+tanpa_redos()

@@ -1,0 +1,7 @@
+Backreference (\1) tidak didukung: pola harus bisa dicocokkan tanpa backtracking (posisi 5): "(a)\\1"
+[baris 136, kolom 54] dalam init()
+    …aikkan GalatPola(f"{info}: {repr(pola)}")
+                                             ^
+[baris 381, kolom 31] dalam _pola()
+[baris 390, kolom 32] dalam cari()
+[baris 3, kolom 25] dalam skrip

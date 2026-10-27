@@ -14,6 +14,7 @@
 #include "memory.h"
 #include "vm.h"
 #include "native.h"
+#include "pola.h"
 
 VM vm;
 
@@ -454,6 +455,12 @@ void initVM() {
     defineNative("sha1", nativeFnSha1);
     defineNative("sha256", nativeFnSha256);
     defineNative("sha512", nativeFnSha512);
+
+    // Ekspresi reguler (Fase 6 gelombang C). Internal: dibungkus oleh
+    // pustaka/pola.idk, yang menambah kelas Pola/Cocokan dan GalatPola.
+    defineNative("_pola_kompilasi", nativeFnPolaKompilasi);
+    defineNative("_pola_cari", nativeFnPolaCari);
+    defineNative("_pola_semua", nativeFnPolaSemua);
 }
 
 void freeVM() {
