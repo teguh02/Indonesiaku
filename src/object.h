@@ -210,6 +210,14 @@ typedef enum {
     MAGIC_AMBIL,         // _ambil_        objek[kunci]
     MAGIC_ATUR,          // _atur_         objek[kunci] = nilai
     MAGIC_HASH,          // _hash_         kunci kamus / anggota himpunan
+    // Cerminan aritmetika: dipakai saat objek ada di KANAN operator.
+    MAGIC_KTAMBAH,       // _ktambah_      nilai + objek
+    MAGIC_KKURANGI,      // _kkurangi_     nilai - objek
+    MAGIC_KKALI,         // _kkali_        nilai * objek
+    MAGIC_KBAGI,         // _kbagi_        nilai / objek
+    MAGIC_KBAGI_BULAT,   // _kbagi_bulat_  nilai // objek
+    MAGIC_KSISA,         // _ksisa_        nilai % objek
+    MAGIC_KPANGKAT,      // _kpangkat_     nilai ** objek
     MAGIC_COUNT,
     MAGIC_NONE = MAGIC_COUNT
 } MagicKind;

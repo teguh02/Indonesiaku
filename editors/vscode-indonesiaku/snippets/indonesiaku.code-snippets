@@ -318,5 +318,23 @@
       "}"
     ],
     "description": "Hash objek agar bisa jadi kunci kamus; pasangkan dengan _sama_ (K19)"
+  },
+  "Metode ajaib _ktambah_": {
+    "prefix": "_ktambah_",
+    "body": [
+      "_ktambah_(lain) {",
+      "    kembalikan ${0:${1:NamaKelas}(lain + diri.nilai)}",
+      "}"
+    ],
+    "description": "Cerminan +: dipanggil saat objek ada di kanan, nilai + objek (K19)"
+  },
+  "Metode ajaib _kkali_": {
+    "prefix": "_kkali_",
+    "body": [
+      "_kkali_(lain) {",
+      "    kembalikan ${0:${1:NamaKelas}(lain * diri.nilai)}",
+      "}"
+    ],
+    "description": "Cerminan *: dipanggil saat objek ada di kanan, nilai * objek (K19)"
   }
 }

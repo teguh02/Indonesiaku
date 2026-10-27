@@ -72,18 +72,34 @@ static char* readFile(const char* path) {
         exit(74);
     }
 
-    fseek(file, 0L, SEEK_END);
-    size_t fileSize = ftell(file);
-    rewind(file);
-
-    char* buffer = (char*)malloc(fileSize + 1);
+    // Read in chunks instead of trusting ftell(): on a pipe or character
+    // device (indk /dev/stdin) seeking fails, ftell() returns -1, and -1 in a
+    // size_t made the old malloc(fileSize + 1) allocate zero bytes -- fread
+    // then wrote past it. Growing as we go is correct for both files and pipes.
+    size_t capacity = 8192;
+    size_t bytesRead = 0;
+    char* buffer = (char*)malloc(capacity);
     if (buffer == NULL) {
         fprintf(stderr, "Tidak cukup memori untuk membaca \"%s\".\n", path);
         exit(74);
     }
-
-    size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
-    if (bytesRead < fileSize) {
+    for (;;) {
+        if (bytesRead + 1 == capacity) {
+            capacity *= 2;
+            char* grown = (char*)realloc(buffer, capacity);
+            if (grown == NULL) {
+                free(buffer);
+                fprintf(stderr, "Tidak cukup memori untuk membaca \"%s\".\n", path);
+                exit(74);
+            }
+            buffer = grown;
+        }
+        size_t n = fread(buffer + bytesRead, 1, capacity - bytesRead - 1, file);
+        bytesRead += n;
+        if (n == 0) break;
+    }
+    if (ferror(file)) {
+        free(buffer);
         fprintf(stderr, "Tidak dapat membaca file \"%s\".\n", path);
         exit(74);
     }

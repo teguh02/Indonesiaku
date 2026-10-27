@@ -1,0 +1,4 @@
+Operator '+' tidak didukung antara 'bulat' dan 'Bisu'.
+[baris 9, kolom 17] dalam skrip
+    cetak(10 + Bisu())
+                    ^

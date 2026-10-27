@@ -1,0 +1,9 @@
+# Objek di kanan TANPA metode cerminan tetap GalatTipe, dengan pesan yang
+# menyebut kedua tipe. Cerminan menambah yang diterima, bukan membuat semua
+# operator diam-diam berhasil.
+
+kelas Bisu {
+    _tambah_(lain) { kembalikan "hanya arah kiri" }
+}
+
+cetak(10 + Bisu())

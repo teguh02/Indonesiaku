@@ -1391,6 +1391,7 @@ cetak(a)                  # (4, 6)
 | `_logika_()` | `jika x`, `selagi x`, `tidak x`, `dan`/`atau`, `semua()`, `ada_yang()` |
 | `_ambil_(kunci)` / `_atur_(kunci, nilai)` | `x[kunci]` / `x[kunci] = nilai` |
 | `_hash_()` | `x` dipakai sebagai kunci kamus atau anggota himpunan |
+| `_ktambah_` `_kkurangi_` `_kkali_` `_kbagi_` `_kbagi_bulat_` `_ksisa_` `_kpangkat_` | operator yang sama, tapi saat objek ada di **kanan**: `nilai + x` |
 
 Yang perlu diingat:
 
@@ -1400,6 +1401,8 @@ Yang perlu diingat:
 - Perbandingan boleh dibalik: kalau hanya `_kurang_dari_` yang ada, `b > a`
   tetap jalan karena dijawab `a._kurang_dari_(b)`. `!=` tanpa `_tidak_sama_`
   memakai kebalikan `_sama_`.
+- Aritmetika dibalik lewat metode berawalan `k`: `10 + objek` memanggil
+  `objek._ktambah_(10)`. Lihat bagian *Cerminan aritmetika* di bawah.
 - `adalah` **tidak pernah** memanggil `_sama_`; ia selalu menguji apakah dua
   nilai adalah objek yang sama.
 - Objek yang punya `_sama_` **tanpa** `_hash_` tidak bisa menjadi kunci kamus
@@ -1481,6 +1484,62 @@ Yang perlu diingat:
   kuncinya tidak ditemukan lagi — sama seperti Python, dan tidak dicegah.
 
 > Contoh lengkap: [`examples/oop/protokol_objek.idk`](../examples/oop/protokol_objek.idk)
+
+### Cerminan aritmetika: objek di sebelah kanan
+
+`_tambah_` hanya dicari pada operand **kiri**. Supaya `10 + objek` juga jalan,
+tambahkan metode berawalan `k` (kanan):
+
+```indonesiaku
+kelas Rupiah {
+    init(jumlah) { diri.jumlah = jumlah }
+
+    _tambah_(lain)  { kembalikan Rupiah(diri.jumlah + lain) }
+    _ktambah_(lain) { kembalikan Rupiah(lain + diri.jumlah) }
+
+    _kurangi_(lain)  { kembalikan Rupiah(diri.jumlah - lain) }
+    _kkurangi_(lain) { kembalikan Rupiah(lain - diri.jumlah) }
+
+    _teks_() { kembalikan f"Rp{diri.jumlah}" }
+}
+
+cetak(Rupiah(5000) + 2500)   # Rp7500
+cetak(2500 + Rupiah(5000))   # Rp7500 — lewat _ktambah_
+```
+
+**Arah operand itu penting.** Metode cerminan menerima operand kiri sebagai
+argumen, sedangkan `diri` tetap objek di kanan. Untuk operator yang tidak
+komutatif, tubuh metodenya harus menulis `lain` lebih dulu:
+
+```indonesiaku
+kelas Rupiah {
+    init(jumlah) { diri.jumlah = jumlah }
+    _kurangi_(lain)  { kembalikan Rupiah(diri.jumlah - lain) }
+    _kkurangi_(lain) { kembalikan Rupiah(lain - diri.jumlah) }
+    _teks_() { kembalikan f"Rp{diri.jumlah}" }
+}
+
+cetak(Rupiah(3) - 10)   # Rp-7  → Rupiah(3)._kurangi_(10)
+cetak(10 - Rupiah(3))   # Rp7   → Rupiah(3)._kkurangi_(10)
+```
+
+Urutan pencariannya: metode langsung di operand kiri dulu, baru cerminan di
+operand kanan. Kalau kedua operand objek dan yang kiri punya metodenya, yang
+kiri yang dipakai. Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
+
+| Metode | Dipanggil oleh |
+|---|---|
+| `_ktambah_` | `nilai + objek` |
+| `_kkurangi_` | `nilai - objek` |
+| `_kkali_` | `nilai * objek` |
+| `_kbagi_` | `nilai / objek` |
+| `_kbagi_bulat_` | `nilai // objek` |
+| `_ksisa_` | `nilai % objek` |
+| `_kpangkat_` | `nilai ** objek` |
+
+Objek di kanan tanpa metode cerminan tetap `GalatTipe` seperti sebelumnya.
+
+> Contoh lengkap: [`examples/oop/cerminan_aritmetika.idk`](../examples/oop/cerminan_aritmetika.idk)
 
 ---
 

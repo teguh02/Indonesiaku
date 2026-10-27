@@ -174,8 +174,11 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 `_ambil_`/`_atur_`, `_hash_` + builtin `hash()`
 ([rencana](RENCANA_FITUR/selesai/protokol_objek.md), K19).
 
-> Fase 4 **sedang dikerjakan** — yang tersisa: cerminan aritmetika
-> (`_ktambah_` + `TidakDiterapkan`), `_iter_`, `_panggil_`,
+✅ metode ajaib tahap 2b — cerminan aritmetika `_ktambah_` dkk
+([rencana](RENCANA_FITUR/selesai/cerminan_aritmetika.md), K19). Sentinel
+`TidakDiterapkan` sengaja ditunda; alasannya ada di rencana itu.
+
+> Fase 4 **sedang dikerjakan** — yang tersisa: `_iter_`, `_panggil_`,
 > `terurut`/`min`/`max` atas objek, atribut kelas, dekorator,
 > `dengan ... sebagai`, pewarisan berganda, kelas abstrak.
 

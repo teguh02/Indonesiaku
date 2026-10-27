@@ -28,6 +28,8 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
     "_tambah_", "_kurangi_", "_kali_", "_bagi_", "_bagi_bulat_", "_sisa_",
     "_pangkat_", "_negatif_",
     "_panjang_", "_logika_", "_ambil_", "_atur_", "_hash_",
+    "_ktambah_", "_kkurangi_", "_kkali_", "_kbagi_", "_kbagi_bulat_",
+    "_ksisa_", "_kpangkat_",
 };
 
 static int formatInstanceMagic(TextBuf* out, Value instance, bool repr);
@@ -2099,7 +2101,7 @@ static InterpretResult run() {
                     double a = AS_NUMBER(pop());
                     push(NUMBER_VAL(a + b));
                 } else {
-                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_TAMBAH, MAGIC_NONE, "+"));
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_TAMBAH, MAGIC_KTAMBAH, "+"));
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand '+' harus dua angka, dua teks, dua daftar, atau dua tupel.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -2108,7 +2110,7 @@ static InterpretResult run() {
             }
             case OP_SUBTRACT: {
                 // Before the himpunan branch: Vektor - himpunan is Vektor's call.
-                DISPATCH_MAGIC(binaryMagicOrError(MAGIC_KURANGI, MAGIC_NONE, "-"));
+                DISPATCH_MAGIC(binaryMagicOrError(MAGIC_KURANGI, MAGIC_KKURANGI, "-"));
                 if (IS_SET(peek(0)) || IS_SET(peek(1))) {   // himpunan - himpunan
                     if (!setBinary(OP_SUBTRACT, "-")) return INTERPRET_RUNTIME_ERROR;
                     break;
@@ -2156,7 +2158,7 @@ static InterpretResult run() {
                     break;
                 }
                 // Before the sequence branch: Vektor * [1] is Vektor's call.
-                DISPATCH_MAGIC(binaryMagicOrError(MAGIC_KALI, MAGIC_NONE, "*"));
+                DISPATCH_MAGIC(binaryMagicOrError(MAGIC_KALI, MAGIC_KKALI, "*"));
 
                 Value seq = IS_NUMBER(b) ? a : b;    // the repeated operand
                 Value times = IS_NUMBER(b) ? b : a;
@@ -2208,7 +2210,7 @@ static InterpretResult run() {
             }
             case OP_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
-                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_BAGI, MAGIC_NONE, "/"));
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_BAGI, MAGIC_KBAGI, "/"));
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -2225,7 +2227,7 @@ static InterpretResult run() {
             }
             case OP_MODULO: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
-                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_SISA, MAGIC_NONE, "%"));
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_SISA, MAGIC_KSISA, "%"));
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -2314,7 +2316,7 @@ static InterpretResult run() {
             }
             case OP_FLOOR_DIVIDE: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
-                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_BAGI_BULAT, MAGIC_NONE, "//"));
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_BAGI_BULAT, MAGIC_KBAGI_BULAT, "//"));
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -2343,7 +2345,7 @@ static InterpretResult run() {
             }
             case OP_POWER: {
                 if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {
-                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_PANGKAT, MAGIC_NONE, "**"));
+                    DISPATCH_MAGIC(binaryMagicOrError(MAGIC_PANGKAT, MAGIC_KPANGKAT, "**"));
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("Operand harus berupa angka.");
                     return INTERPRET_RUNTIME_ERROR;

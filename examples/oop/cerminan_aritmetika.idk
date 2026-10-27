@@ -1,0 +1,71 @@
+# Cerminan aritmetika (K19 tahap 2b): operator saat objek ada di KANAN.
+# Metode berawalan k- menerima operand kiri sebagai argumen; `diri` tetap
+# objek di kanan.
+
+kelas Rupiah {
+    init(jumlah) { diri.jumlah = jumlah }
+
+    _tambah_(lain)  { kembalikan Rupiah(diri.jumlah + lain) }
+    _ktambah_(lain) { kembalikan Rupiah(lain + diri.jumlah) }
+
+    _kurangi_(lain)  { kembalikan Rupiah(diri.jumlah - lain) }
+    _kkurangi_(lain) { kembalikan Rupiah(lain - diri.jumlah) }
+
+    _kkali_(lain)       { kembalikan Rupiah(lain * diri.jumlah) }
+    _kbagi_(lain)       { kembalikan Rupiah(lain / diri.jumlah) }
+    _kbagi_bulat_(lain) { kembalikan Rupiah(lain // diri.jumlah) }
+    _ksisa_(lain)       { kembalikan Rupiah(lain % diri.jumlah) }
+    _kpangkat_(lain)    { kembalikan Rupiah(lain ** diri.jumlah) }
+
+    _teks_() { kembalikan f"Rp{diri.jumlah}" }
+}
+
+cetak("=== objek di kiri dan di kanan ===")
+cetak(Rupiah(5000) + 2500)
+cetak(2500 + Rupiah(5000))
+
+cetak("=== operator tidak komutatif: arah operand penting ===")
+# Angka sengaja dipilih supaya hasilnya berbeda kalau arahnya tertukar.
+cetak(Rupiah(3) - 10)     # 3 - 10
+cetak(10 - Rupiah(3))     # 10 - 3
+cetak(100 / Rupiah(8))
+cetak(100 // Rupiah(8))
+cetak(100 % Rupiah(8))
+cetak(2 ** Rupiah(10))
+cetak(3 * Rupiah(7))
+
+cetak("=== metode langsung menang atas cerminan ===")
+
+kelas Dua {
+    init(nama) { diri.nama = nama }
+    _tambah_(lain)  { kembalikan f"{diri.nama}._tambah_" }
+    _ktambah_(lain) { kembalikan f"{diri.nama}._ktambah_" }
+    _teks_() { kembalikan diri.nama }
+}
+
+# Keduanya instance: yang kiri dipanggil lebih dulu, cerminan tidak dipakai.
+cetak(Dua("kiri") + Dua("kanan"))
+
+cetak("=== operator gabungan ikut otomatis ===")
+saldo = 1000
+saldo += Rupiah(250)
+cetak(saldo)
+
+harga = 50
+harga *= Rupiah(3)
+cetak(harga)
+
+cetak("=== cerminan yang melempar galat merambat ===")
+
+kelas Galak {
+    _ktambah_(lain) {
+        daftar = [1]
+        kembalikan daftar[99]
+    }
+}
+
+coba {
+    cetak(1 + Galak())
+} kecuali GalatIndeks sebagai e {
+    cetak("tertangkap:", e)
+}

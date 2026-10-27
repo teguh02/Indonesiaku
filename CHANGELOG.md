@@ -22,7 +22,21 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   kini mengembalikannya.
 - Contoh: [`examples/oop/protokol_objek.idk`](examples/oop/protokol_objek.idk).
 
+### Added — Fase 4 tahap 2b (K19): cerminan aritmetika
+- ✨ **`_ktambah_`, `_kkurangi_`, `_kkali_`, `_kbagi_`, `_kbagi_bulat_`,
+  `_ksisa_`, `_kpangkat_`** — operator aritmetika kini juga bekerja saat objek
+  ada di **kanan**: `2500 + Rupiah(5000)`. Metode cerminan menerima operand
+  kiri sebagai argumen; metode langsung di operand kiri tetap menang bila ada.
+  Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
+- Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
+
 ### Fixed
+- 🐛 **Buffer overflow saat sumber dibaca dari pipe** (`indk /dev/stdin`, atau
+  `cat program.idk | indk /dev/stdin`). `readFile()` mempercayai `ftell()`;
+  pada pipe seek gagal, `ftell()` mengembalikan `-1`, dan `-1` di dalam
+  `size_t` membuat `malloc(fileSize + 1)` mengalokasikan nol bita. Kini dibaca
+  bertahap. Bug lama sejak Fase 3, lolos karena semua tes memakai berkas biasa;
+  regresi permanennya ada di `tests/test_baca_sumber.sh`.
 - 🐛 **Use-after-free pada `kamus[kunci]`** saat kunci berupa objek dengan
   `_sama_`: operand dibuang dari stack sebelum pencarian tabel, sehingga GC
   yang terpicu oleh pemanggilan `_sama_` bisa membebaskan kamus dan kuncinya.

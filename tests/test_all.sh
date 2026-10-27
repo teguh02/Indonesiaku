@@ -108,6 +108,17 @@ if [ -f tests/test_panduan.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# readFile() pernah overflow pada pipe: regresi permanen.
+if [ -f tests/test_baca_sumber.sh ]; then
+    echo ""
+    if bash tests/test_baca_sumber.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES baca-sumber"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Template playground juga dipamerkan ke pengunjung — ikut diuji berjalan.
 if [ -f tests/test_templat_playground.sh ]; then
     echo ""
