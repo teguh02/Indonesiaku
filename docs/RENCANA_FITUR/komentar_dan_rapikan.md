@@ -1,6 +1,6 @@
 # Rencana Fitur: Scanner penyimpan komentar + `indk rapikan`
 
-- **Status:** usulan
+- **Status:** dikerjakan (tahap 1 + jaring pengaman selesai; aturan tata letak belum)
 - **Target versi:** Fase 7 (perkakas)
 - **Pengusul:** Teguh
 - **Keputusan terkait:** K4 (tanpa aturan indentasi), K14 (kompatibilitas)
@@ -193,6 +193,38 @@ hasil yang sama.
 **Alternatif ditolak — `TOKEN_KOMENTAR` selalu aktif.** Memaksa 13 pemanggil
 `scanToken()` menyaring token yang tidak mereka pedulikan, dan satu yang
 terlewat jadi bug parser yang halus. Opt-in jauh lebih murah.
+
+## 8b. Catatan pelaksanaan
+
+**Langkah 1 dan 2 selesai.** `TOKEN_KOMENTAR` + `scannerKeepComments()`
+terpasang, dan `formatSource()` saat ini adalah **formatter identitas**:
+keluarannya byte-identik dengan masukan.
+
+Itu bukan setengah jadi, melainkan urutan yang disengaja di §8 — jaring
+pengamannya dipasang lebih dulu, selagi belum ada yang bisa jatuh:
+
+- 117/117 berkas `examples/` + `pustaka/` keluar **byte-identik**, komentar
+  utuh. Ini membuktikan token stream sanggup merekonstruksi sumber.
+- 117/117 **bytecode identik** sebelum/sesudah format.
+- Idempoten dan `--periksa` diuji di `tests/test_format.sh`.
+
+**Flag mati terbukti tidak mengubah apa pun:** bytecode 117 berkas dibanding
+sebelum/sesudah tahap 1 — identik. Jadi 12 pemanggil `scanToken()` di
+compiler memang tidak terpengaruh.
+
+**Sisa pekerjaan**: langkah 3 (indentasi + spasi) dan 4 (penempatan komentar
+sesuai tabel §3). Begitu aturan tata letak masuk, berkas `.rapi` di
+`tests/format/` tidak lagi sama dengan `.idk`-nya, dan tes bytecode di atas
+menjadi penjaga yang sesungguhnya.
+
+**Catatan CRLF.** Masukan CRLF keluar sebagai LF karena `readFile()`
+menormalkan baris baru sebelum formatter melihatnya. Ini perilaku yang
+diinginkan, dan sudah dicatat sebagai komentar di `src/format.c`.
+
+**Jejak di CI.** Menambah `src/format.c` berarti menyentuh `Makefile` **dan
+4 daftar sumber mentah** di `.github/workflows/test.yml` (ASan, debug,
+coverage, fuzz). Dua Dockerfile aman: satu memakai `make`, satu memakai image
+rilis.
 
 ## 8. Urutan pengerjaan
 

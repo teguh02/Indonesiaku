@@ -26,6 +26,7 @@ SOURCES = src/main.c \
           src/chunk.c \
           src/compiler.c \
           src/debug.c \
+          src/format.c \
           src/memory.c \
           src/native.c \
           src/db.c \

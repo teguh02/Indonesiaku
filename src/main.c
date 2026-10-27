@@ -6,6 +6,7 @@
 #include "chunk.h"
 #include "compiler.h"
 #include "debug.h"
+#include "format.h"
 #include "object.h"
 #include "vm.h"
 
@@ -154,6 +155,42 @@ static int lintFile(const char* path) {
     return compilerLintCount() > 0 ? 1 : 0;
 }
 
+// indk rapikan [--tulis|--periksa] <skrip>
+static int formatFile(const char* path, bool write, bool checkOnly) {
+    char* source = readFile(path);
+    char* formatted = formatSource(source);
+    if (formatted == NULL) {
+        free(source);
+        fprintf(stderr, "Tidak dapat memindai \"%s\".\n", path);
+        return 65;
+    }
+
+    int code = 0;
+    if (checkOnly) {
+        if (strcmp(source, formatted) != 0) {
+            fprintf(stderr, "%s belum rapi\n", path);
+            code = 1;
+        }
+    } else if (write) {
+        if (strcmp(source, formatted) != 0) {
+            FILE* f = fopen(path, "wb");
+            if (f == NULL) {
+                fprintf(stderr, "Tidak dapat menulis \"%s\".\n", path);
+                code = 74;
+            } else {
+                fwrite(formatted, 1, strlen(formatted), f);
+                fclose(f);
+            }
+        }
+    } else {
+        fputs(formatted, stdout);
+    }
+
+    free(formatted);
+    free(source);
+    return code;
+}
+
 // indk uji <skrip>: jalankan skrip lalu panggil setiap fungsi uji_*.
 static int testFile(const char* path) {
     char* source = readFile(path);
@@ -190,6 +227,24 @@ int main(int argc, const char* argv[]) {
         if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
             printf("%s\n", INDK_VERSION);
             return 0;
+        }
+        if (strcmp(argv[1], "rapikan") == 0) {
+            bool write = false, checkOnly = false;
+            int argIndex = 2;
+            while (argIndex < argc && argv[argIndex][0] == '-') {
+                if (strcmp(argv[argIndex], "--tulis") == 0) write = true;
+                else if (strcmp(argv[argIndex], "--periksa") == 0) checkOnly = true;
+                else {
+                    fprintf(stderr, "Opsi tidak dikenal: %s\n", argv[argIndex]);
+                    return 64;
+                }
+                argIndex++;
+            }
+            if (argIndex >= argc) {
+                fprintf(stderr, "Penggunaan: indk rapikan [--tulis|--periksa] <skrip.idk>\n");
+                return 64;
+            }
+            return formatFile(argv[argIndex], write, checkOnly);
         }
         if (strcmp(argv[1], "uji") == 0) {
             if (argc < 3) {
@@ -232,6 +287,7 @@ int main(int argc, const char* argv[]) {
             printf("Perintah:\n");
             printf("  periksa <skrip> Laporkan variabel lokal tidak terpakai\n");
             printf("  uji <skrip>     Jalankan fungsi uji_* dalam skrip\n");
+            printf("  rapikan <skrip> Rapikan format kode (--tulis, --periksa)\n");
             return 0;
         }
     }

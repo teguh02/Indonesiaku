@@ -249,7 +249,13 @@ kali menjalankan program bentrok dengan syarat stderr kosong pada tes golden.
 lulus/gagal, exit 1 bila ada yang gagal. Asersi memakai `pastikan` yang sudah
 ada, jadi tidak ada sintaks tes baru.
 
-Belum: `indk rapikan` (formatter), LSP + diagnostics editor, debugger,
+Sebagian: **`indk rapikan`** — scanner kini bisa menyimpan komentar
+(`TOKEN_KOMENTAR`, opt-in) dan `indk rapikan [--tulis|--periksa]` sudah ada,
+tetapi aturan tata letaknya belum ditulis: formatter masih identitas
+(keluaran = masukan). Jaring pengamannya sudah hidup: 117/117 bytecode
+identik sebelum/sesudah format.
+
+Belum: aturan tata letak `rapikan`, LSP + diagnostics editor, debugger,
 playground via **WebAssembly**, cache `.idkc`, computed goto, superinstruksi,
 inline cache, NaN-boxing, GC generasional, utas/asinkron.
 Ref: 04 §1, §8–10, §12.
