@@ -1347,6 +1347,15 @@ static int instanceHashMagic(Value value, uint32_t* out) {
     return hashValue(result, out) ? 1 : 0;
 }
 
+// a < b through _kurang_dari_ (or b._lebih_dari_(a) as the mirror), run now.
+// For terurut/min/max in native.c, which must not reimplement the lookup.
+// Returns -1 when neither class defines an ordering, 0 when the method raised
+// (error pending), 1 with *less set.
+int instanceLessFor(Value a, Value b, bool* less) {
+    if (vm.nativeErrorPending) return 0;
+    return compareMagicNow(MAGIC_KURANG_DARI, MAGIC_LEBIH_DARI, a, b, less);
+}
+
 // instanceEqualHook: _sama_ for == inside collections, dalam, indeks, ...
 static int instanceEqualMagic(Value a, Value b) {
     // An earlier comparison in the same C loop already raised: stop running

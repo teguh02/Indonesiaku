@@ -1,0 +1,4 @@
+terurut() tidak dapat membandingkan objek tanpa metode _kurang_dari_
+[baris 8, kolom 47] dalam skrip
+    …terurut([TanpaUrutan(2), TanpaUrutan(1)]))
+                                             ^

@@ -211,6 +211,17 @@ static bool valueLess(Value a, Value b, const char* nama, bool* less) {
         *less = strcmp(AS_CSTRING(a), AS_CSTRING(b)) < 0;
         return true;
     }
+    if (IS_INSTANCE(a) || IS_INSTANCE(b)) {
+        // K19: let the class order itself with _kurang_dari_ (or the mirror
+        // _lebih_dari_). 0 means the method raised and already holds the error.
+        int found = instanceLessFor(a, b, less);
+        if (found == 1) return true;
+        if (found == 0) return false;
+        nativeRaiseKelas(vm.galatTipe,
+                         "%s() tidak dapat membandingkan objek tanpa metode "
+                         "_kurang_dari_", nama);
+        return false;
+    }
     nativeRaiseKelas(vm.galatTipe, "%s() tidak dapat membandingkan tipe yang berbeda", nama);
     return false;
 }
@@ -2004,6 +2015,44 @@ static int bandingNilai(const void* a, const void* b) {
     return terurutMenurun ? -cmp : cmp;
 }
 
+// Stable insertion sort driven by _kurang_dari_. Returns false when a
+// comparison raised (its error is already pending). `hasil` stays on the VM
+// stack so a GC triggered by the comparison cannot free it; values[] is re-read
+// every step because that comparison may have grown the list.
+static bool sortInstances(ObjList* hasil, int count, bool menurun) {
+    for (int i = 1; i < count; i++) {
+        // Hold the element being placed on the stack: it is briefly the only
+        // reference to it while the slots below shift up.
+        push(hasil->items.values[i]);
+        int j = i - 1;
+        while (j >= 0) {
+            bool less;
+            // Ascending: move values[j] up while the held element is smaller.
+            // Descending: the same test with the operands swapped, so equal
+            // elements never move -- that is what keeps the sort stable.
+            Value a = menurun ? hasil->items.values[j] : vm.stackTop[-1];
+            Value b = menurun ? vm.stackTop[-1] : hasil->items.values[j];
+            int found = instanceLessFor(a, b, &less);
+            if (found == 0) { pop(); return false; }           // raised
+            if (found < 0) {
+                pop();
+                nativeRaiseKelas(vm.galatTipe,
+                                 "terurut() tidak dapat membandingkan objek tanpa "
+                                 "metode _kurang_dari_");
+                return false;
+            }
+            if (!less) break;
+            if (j + 1 < hasil->items.count) {
+                hasil->items.values[j + 1] = hasil->items.values[j];
+            }
+            j--;
+        }
+        Value item = pop();
+        if (j + 1 < hasil->items.count) hasil->items.values[j + 1] = item;
+    }
+    return true;
+}
+
 // terurut(d[, menurun]) - seperti sorted(); selalu daftar BARU.
 Value nativeFnTerurut(int argCount, Value* args) {
     if (argCount < 1 || argCount > 2) {
@@ -2019,27 +2068,55 @@ Value nativeFnTerurut(int argCount, Value* args) {
     ObjList* hasil = newList();
     push(OBJ_VAL(hasil));   // GC: tetap reachable selama diisi
     bool pakaiAngka = false;
+    bool pakaiObjek = false;
     for (int i = 0; i < count; i++) {
         Value item = iterAt(args[0], i);
         if (i == 0) {
+            pakaiObjek = IS_INSTANCE(item);
             pakaiAngka = IS_NUMBER(item);
-            if (!pakaiAngka && !IS_STRING(item)) {
+            if (!pakaiObjek && !pakaiAngka && !IS_STRING(item)) {
                 pop();
-                nativeRaiseKelas(vm.galatTipe, "terurut() hanya menerima angka atau teks");
+                nativeRaiseKelas(vm.galatTipe,
+                                 "terurut() hanya menerima angka, teks, atau objek "
+                                 "dengan _kurang_dari_");
                 return KOSONG_VAL;
             }
-        } else if (IS_NUMBER(item) != pakaiAngka || (!pakaiAngka && !IS_STRING(item))) {
+        } else if (IS_INSTANCE(item) != pakaiObjek) {
             pop();
-            nativeRaiseKelas(vm.galatTipe, "terurut() tidak dapat membandingkan angka dengan teks");
+            nativeRaiseKelas(vm.galatTipe,
+                             "terurut() tidak dapat membandingkan objek dengan "
+                             "angka atau teks");
+            return KOSONG_VAL;
+        } else if (!pakaiObjek && (IS_NUMBER(item) != pakaiAngka ||
+                                   (!pakaiAngka && !IS_STRING(item)))) {
+            pop();
+            // Pesan lama dipertahankan: golden galat/terurut_campur menegaskannya.
+            nativeRaiseKelas(vm.galatTipe,
+                             "terurut() tidak dapat membandingkan angka dengan teks");
             return KOSONG_VAL;
         }
         push(item);                                   // GC: item teks baru
         writeValueArray(&hasil->items, item);
         pop();
     }
-    terurutMenurun = argCount == 2 && !isFalsey(args[1]);
-    if (count > 1) {
-        qsort(hasil->items.values, (size_t)count, sizeof(Value), bandingNilai);
+    bool menurun = argCount == 2 && !isFalsey(args[1]);
+    if (pakaiObjek) {
+        // _kurang_dari_ runs Indonesiaku code, so qsort is unusable here: it
+        // cannot stop at the first raised error, and a comparison that appends
+        // to the list would realloc the array under qsort's feet. Insertion
+        // sort stops on error, re-reads values[] every step, and is stable.
+        // ponytail: O(n^2) on purpose -- correct in the face of re-entrant user
+        // code beats fast. For tens of thousands of objects, move to a merge
+        // sort over a copy (still stable, still realloc-safe), not back to qsort.
+        if (!sortInstances(hasil, count, menurun)) {
+            pop();
+            return KOSONG_VAL;     // the comparison raised; error already pending
+        }
+    } else {
+        terurutMenurun = menurun;
+        if (count > 1) {
+            qsort(hasil->items.values, (size_t)count, sizeof(Value), bandingNilai);
+        }
     }
     pop();
     return OBJ_VAL(hasil);

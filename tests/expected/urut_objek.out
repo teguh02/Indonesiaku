@@ -1,0 +1,22 @@
+=== terurut ===
+Citra(75) Budi(80) Ani(92) 
+Ani(92) Budi(80) Citra(75) 
+Budi(80) Ani(92) Citra(75) 
+=== min dan max ===
+Citra(75)
+Ani(92)
+Dedi(60)
+=== urutan stabil ===
+d(1) a(5) b(5) c(5) 
+a(5) b(5) c(5) d(1) 
+=== cukup _lebih_dari_ (cerminan) ===
+18C 25C 30C 
+18C
+=== tepi ===
+tunggal(1) 
+
+f(1) h(1) e(3) g(4) i(5) j(9) 
+=== galat dari pembanding merambat ===
+tertangkap: Indeks list di luar jangkauan (indeks 99, panjang 1).
+=== tipe campuran tetap ditolak ===
+tertangkap: terurut() tidak dapat membandingkan objek dengan angka atau teks

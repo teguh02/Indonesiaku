@@ -178,9 +178,12 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ([rencana](RENCANA_FITUR/selesai/cerminan_aritmetika.md), K19). Sentinel
 `TidakDiterapkan` sengaja ditunda; alasannya ada di rencana itu.
 
+✅ metode ajaib tahap 2c — `terurut`/`min`/`max` atas objek
+([rencana](RENCANA_FITUR/selesai/urut_objek.md), K19).
+
 > Fase 4 **sedang dikerjakan** — yang tersisa: `_iter_`, `_panggil_`,
-> `terurut`/`min`/`max` atas objek, atribut kelas, dekorator,
-> `dengan ... sebagai`, pewarisan berganda, kelas abstrak.
+> atribut kelas, dekorator, `dengan ... sebagai`, pewarisan berganda,
+> kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
 

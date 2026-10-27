@@ -1,0 +1,8 @@
+# Objek tanpa _kurang_dari_ (dan tanpa _lebih_dari_) tidak bisa diurutkan.
+# Pesannya menyebut metode yang perlu ditambahkan, bukan "tipe berbeda".
+
+kelas TanpaUrutan {
+    init(n) { diri.n = n }
+}
+
+cetak(terurut([TanpaUrutan(2), TanpaUrutan(1)]))

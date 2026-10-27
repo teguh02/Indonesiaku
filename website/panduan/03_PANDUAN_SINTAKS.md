@@ -1541,6 +1541,44 @@ Objek di kanan tanpa metode cerminan tetap `GalatTipe` seperti sebelumnya.
 
 > Contoh lengkap: [`examples/oop/cerminan_aritmetika.idk`](../examples/oop/cerminan_aritmetika.idk)
 
+### Mengurutkan objek: `terurut`, `min`, `max`
+
+Begitu kelas punya `_kurang_dari_`, ketiga builtin ini langsung menerimanya —
+tidak perlu metode tambahan:
+
+```indonesiaku
+kelas Siswa {
+    init(nama, nilai) {
+        diri.nama = nama
+        diri.nilai = nilai
+    }
+    _kurang_dari_(lain) { kembalikan diri.nilai < lain.nilai }
+    _teks_() { kembalikan f"{diri.nama}({diri.nilai})" }
+}
+
+siswa = [Siswa("Budi", 80), Siswa("Ani", 92), Siswa("Citra", 75)]
+
+untuk s dalam terurut(siswa) {
+    cetak(s)                  # Citra(75), Budi(80), Ani(92)
+}
+cetak(min(siswa))             # Citra(75)
+cetak(max(siswa))             # Ani(92)
+cetak(terurut(siswa, benar)[0])   # Ani(92) — argumen menurun tetap berlaku
+```
+
+Yang perlu diingat:
+
+- Cukup `_kurang_dari_`. Kalau kelasnya hanya punya `_lebih_dari_`, itu juga
+  dipakai lewat cerminan.
+- Pengurutan objek **stabil**: elemen yang nilainya sama mempertahankan urutan
+  masukan, baik naik maupun menurun.
+- `terurut()` selalu mengembalikan daftar baru; daftar asli tidak berubah.
+- Mencampur objek dengan angka atau teks dalam satu daftar tetap `GalatTipe`.
+- Galat yang dilempar dari dalam `_kurang_dari_` merambat keluar — hasil
+  separuh-urut tidak pernah dikembalikan.
+
+> Contoh lengkap: [`examples/oop/urut_objek.idk`](../examples/oop/urut_objek.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

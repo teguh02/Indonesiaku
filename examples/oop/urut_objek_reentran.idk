@@ -1,0 +1,29 @@
+# Regresi: _kurang_dari_ yang MENUMBUHKAN daftar yang sedang diurutkan.
+# Inilah alasan jalur objek tidak memakai qsort — pembanding yang mengubah
+# array membuat qsort memegang pointer basi setelah realloc.
+
+variabel korban = []
+
+kelas Jahat {
+    init(v) { diri.v = v }
+    _kurang_dari_(lain) {
+        tambah(korban, Jahat(99))     # realloc di tengah pengurutan
+        kembalikan diri.v < lain.v
+    }
+    _teks_() { kembalikan f"J{diri.v}" }
+}
+
+untuk i dalam rentang(0, 12) {
+    tambah(korban, Jahat(12 - i))
+}
+
+hasil = terurut(korban)
+
+cetak("panjang hasil:", panjang(hasil))
+cetak("korban ikut tumbuh:", panjang(korban) > 12)
+
+teks = ""
+untuk x dalam hasil {
+    teks = teks + ke_teks(x) + " "
+}
+cetak(teks)

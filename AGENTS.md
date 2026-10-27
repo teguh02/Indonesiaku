@@ -206,6 +206,12 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   triggered by `_sama_` freed them — a use-after-free that the normal suite
   passed and only the sanitizer build caught. Keep values on the stack
   (`peek`), pop after.
+- **Never hand `qsort` a comparator that runs user code.** `terurut()` over
+  objects calls `_kurang_dari_`, which can raise (qsort cannot stop early) and
+  can append to the very list being sorted (realloc leaves qsort holding a
+  stale pointer). The object path uses a stable insertion sort that stops on
+  the first error and re-reads `values[]` each step; numbers and strings still
+  use qsort. Regression: `examples/oop/urut_objek_reentran.idk`.
 - **A pending native error outranks the caller's generic message.** When
   `hashValue` returns false because `_hash_` raised, reporting "kunci kamus
   harus dapat di-hash" hides the real cause. `runtimeError()` now refuses to

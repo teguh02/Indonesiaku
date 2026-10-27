@@ -1,0 +1,80 @@
+# terurut/min/max atas objek (K19 tahap 2c).
+# Cukup satu metode: _kurang_dari_. Sama seperti operator `<`, dan sama
+# seperti Python yang hanya menuntut __lt__ untuk sorted/min/max.
+
+kelas Siswa {
+    init(nama, nilai) {
+        diri.nama = nama
+        diri.nilai = nilai
+    }
+    _kurang_dari_(lain) { kembalikan diri.nilai < lain.nilai }
+    _teks_() { kembalikan f"{diri.nama}({diri.nilai})" }
+}
+
+fungsi tampil(urutan) {
+    hasil = ""
+    untuk x dalam urutan {
+        hasil = hasil + ke_teks(x) + " "
+    }
+    kembalikan hasil
+}
+
+siswa = [Siswa("Budi", 80), Siswa("Ani", 92), Siswa("Citra", 75)]
+
+cetak("=== terurut ===")
+cetak(tampil(terurut(siswa)))
+cetak(tampil(terurut(siswa, benar)))
+
+# Daftar asli tidak diubah — terurut() selalu membuat daftar baru.
+cetak(tampil(siswa))
+
+cetak("=== min dan max ===")
+cetak(min(siswa))
+cetak(max(siswa))
+cetak(min(Siswa("Dedi", 60), Siswa("Eka", 70)))
+
+cetak("=== urutan stabil ===")
+# Nilai sama mempertahankan urutan masukan: a, b, c tidak tertukar.
+sama = [Siswa("a", 5), Siswa("b", 5), Siswa("c", 5), Siswa("d", 1)]
+cetak(tampil(terurut(sama)))
+cetak(tampil(terurut(sama, benar)))
+
+cetak("=== cukup _lebih_dari_ (cerminan) ===")
+
+kelas Suhu {
+    init(derajat) { diri.derajat = derajat }
+    _lebih_dari_(lain) { kembalikan diri.derajat > lain.derajat }
+    _teks_() { kembalikan f"{diri.derajat}C" }
+}
+
+cetak(tampil(terurut([Suhu(30), Suhu(18), Suhu(25)])))
+cetak(min([Suhu(30), Suhu(18), Suhu(25)]))
+
+cetak("=== tepi ===")
+cetak(tampil(terurut([Siswa("tunggal", 1)])))
+cetak(tampil(terurut([])))
+cetak(tampil(terurut([Siswa("e", 3), Siswa("f", 1), Siswa("g", 4),
+                      Siswa("h", 1), Siswa("i", 5), Siswa("j", 9)])))
+
+cetak("=== galat dari pembanding merambat ===")
+
+kelas Galak {
+    init(v) { diri.v = v }
+    _kurang_dari_(lain) {
+        kosong_daftar = [1]
+        kembalikan kosong_daftar[99]
+    }
+}
+
+coba {
+    terurut([Galak(1), Galak(2)])
+} kecuali GalatIndeks sebagai e {
+    cetak("tertangkap:", e)
+}
+
+cetak("=== tipe campuran tetap ditolak ===")
+coba {
+    terurut([Siswa("x", 1), 5])
+} kecuali GalatTipe sebagai e {
+    cetak("tertangkap:", e)
+}

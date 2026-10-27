@@ -30,6 +30,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4 tahap 2c (K19): terurut/min/max atas objek
+- ✨ **`terurut()`, `min()`, `max()` menerima objek** yang punya
+  `_kurang_dari_` (atau hanya `_lebih_dari_`, lewat cerminan). Pengurutan
+  objek **stabil**; daftar asli tidak diubah; argumen `menurun` tetap berlaku.
+  Mencampur objek dengan angka/teks tetap `GalatTipe`.
+- Contoh: [`examples/oop/urut_objek.idk`](examples/oop/urut_objek.idk).
+
 ### Fixed
 - 🐛 **Buffer overflow saat sumber dibaca dari pipe** (`indk /dev/stdin`, atau
   `cat program.idk | indk /dev/stdin`). `readFile()` mempercayai `ftell()`;

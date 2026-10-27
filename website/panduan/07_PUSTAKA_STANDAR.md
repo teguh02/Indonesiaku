@@ -159,7 +159,7 @@ Pengindeksan string juga tersedia: `teks[i]` mengembalikan karakter ke-`i`
 | `jumlah(d, awal=0)` | Total semua elemen angka, dimulai dari `awal`. Semua `bulat` → hasil `bulat`; satu `desimal` → hasil `desimal` |
 | `semua(d)` | `benar` jika **semua** elemen bernilai benar |
 | `ada_yang(d)` | `benar` jika **ada minimal satu** elemen bernilai benar |
-| `terurut(d, menurun=salah)` | **Daftar baru** yang terurut; argumen aslinya tidak berubah |
+| `terurut(d, menurun=salah)` | **Daftar baru** yang terurut; argumen aslinya tidak berubah. Objek dengan `_kurang_dari_` ikut diterima |
 | `terbalik(d)` | **Daftar baru** dengan urutan dibalik |
 | `pasangkan(a, b, ...)` | Gabungkan beberapa urutan jadi daftar pasangan (zip) |
 | `peta(f, d)` | Daftar hasil penerapan fungsi `f` ke tiap elemen (map) |
@@ -221,6 +221,25 @@ coba {
 } kecuali e {
     cetak(e.pesan)              # terurut() tidak dapat membandingkan angka dengan teks
 }
+```
+
+`terurut`, `min`, dan `max` juga menerima **objek** yang punya metode
+`_kurang_dari_` — pengurutannya stabil:
+
+```indonesiaku
+kelas Siswa {
+    init(nama, nilai) {
+        diri.nama = nama
+        diri.nilai = nilai
+    }
+    _kurang_dari_(lain) { kembalikan diri.nilai < lain.nilai }
+    _teks_() { kembalikan f"{diri.nama}({diri.nilai})" }
+}
+
+siswa = [Siswa("Budi", 80), Siswa("Ani", 92)]
+cetak(min(siswa))            # Budi(80)
+cetak(max(siswa))            # Ani(92)
+cetak(terurut(siswa)[0])     # Budi(80)
 ```
 
 Argumen kedua `terurut` adalah `menurun`: isi `benar` untuk urutan dari besar

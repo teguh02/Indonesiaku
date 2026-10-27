@@ -149,5 +149,8 @@ bool isFalsey(Value value);
 // _panjang_ of an instance, run now: 1 with *out set, 0 when it raised or
 // returned an invalid length (error pending), -1 when undefined.
 int instanceLengthFor(Value value, int64_t* out);
+// a < b for instances, run now: 1 with *less set, 0 when _kurang_dari_ raised
+// (error pending), -1 when neither operand defines an ordering.
+int instanceLessFor(Value a, Value b, bool* less);
 
 #endif
