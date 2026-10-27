@@ -1,0 +1,55 @@
+# Modul `salin` (Fase 6): penyalinan dangkal dan rekursif.
+
+impor salin
+dari salin impor salin sebagai kopi
+
+cetak("== salin dangkal ==")
+asal = [1, 2, 3]
+d = kopi(asal)
+tambah(d, 4)
+cetak(asal, d)
+
+cetak("== elemen bersarang masih dibagi (memang dangkal) ==")
+bersarang = [[1], [2]]
+d2 = kopi(bersarang)
+tambah(d2[0], 99)
+cetak(bersarang)
+
+cetak("== kamus & himpunan ==")
+k = {"a": 1, "b": 2}
+k2 = kopi(k)
+k2["c"] = 3
+cetak(kunci(k), kunci(k2))
+
+s = himpunan([1, 2])
+s2 = kopi(s)
+tambah(s2, 3)
+cetak(terurut(s), terurut(s2))
+
+cetak("== nilai tak dapat diubah dikembalikan apa adanya ==")
+cetak(kopi(5), kopi("halo"), kopi(benar), kopi(kosong))
+cetak(jenis(kopi((1, 2))))
+
+cetak("== salin_dalam: bersarang ikut disalin ==")
+sumber = [[1], [2]]
+dd = salin.salin_dalam(sumber)
+tambah(dd[0], 99)
+cetak(sumber, dd)
+
+cetak("== salin_dalam kamus bersarang ==")
+kk = {"x": {"y": [1]}}
+kk2 = salin.salin_dalam(kk)
+tambah(kk2["x"]["y"], 2)
+cetak(kk["x"]["y"], kk2["x"]["y"])
+
+cetak("== salin_dalam tupel ==")
+t = ([1], [2])
+tt = salin.salin_dalam(t)
+tambah(tt[0], 9)
+cetak(t[0], tt[0])
+
+cetak("== struktur bersiklus tidak menggantung ==")
+lingkar = [1]
+tambah(lingkar, lingkar)
+ll = salin.salin_dalam(lingkar)
+cetak(panjang(ll), ll[0], ll[1] adalah ll)

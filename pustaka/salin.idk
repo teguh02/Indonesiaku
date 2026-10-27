@@ -1,0 +1,76 @@
+# pustaka/salin.idk - Penyalinan nilai (modul `salin`).
+# Pemakaian:
+#     impor salin
+#     dari salin impor salin, salin_dalam
+#
+# Mirip `copy` di Python: `salin` menyalin satu lapis, `salin_dalam` menyalin
+# rekursif. Nilai yang tidak dapat diubah (angka, teks, tupel, rentang, fungsi)
+# dikembalikan apa adanya, sama seperti Python.
+
+# salin(x) -> salinan DANGKAL untuk daftar/kamus/himpunan, x sendiri untuk
+# tipe lain. Elemen di dalamnya masih objek yang sama.
+fungsi salin(x) {
+    variabel tipe = jenis(x)
+    jika tipe == "daftar" {
+        kembalikan daftar(x)
+    }
+    jika tipe == "kamus" {
+        variabel hasil = kamus()
+        untuk k dalam x {
+            hasil[k] = x[k]
+        }
+        kembalikan hasil
+    }
+    jika tipe == "himpunan" {
+        kembalikan himpunan(x)
+    }
+    kembalikan x
+}
+
+# _salin_dalam(x, memo) -> inti rekursif; `memo` memetakan id(objek) ke
+# salinannya sehingga struktur bersiklus tidak berputar tanpa henti.
+fungsi _salin_dalam(x, memo) {
+    variabel tipe = jenis(x)
+    jika tipe != "daftar" dan tipe != "kamus" dan tipe != "himpunan" dan tipe != "tupel" {
+        kembalikan x
+    }
+    variabel kunci = id(x)
+    jika punya(memo, kunci) {
+        kembalikan memo[kunci]
+    }
+    jika tipe == "daftar" {
+        variabel baru = []
+        memo[kunci] = baru
+        untuk v dalam x {
+            tambah(baru, _salin_dalam(v, memo))
+        }
+        kembalikan baru
+    }
+    jika tipe == "himpunan" {
+        variabel baru = himpunan()
+        memo[kunci] = baru
+        untuk v dalam x {
+            tambah(baru, _salin_dalam(v, memo))
+        }
+        kembalikan baru
+    }
+    jika tipe == "tupel" {
+        variabel bagian = []
+        untuk v dalam x {
+            tambah(bagian, _salin_dalam(v, memo))
+        }
+        kembalikan tupel(bagian)
+    }
+    variabel baru = kamus()
+    memo[kunci] = baru
+    untuk k dalam x {
+        baru[_salin_dalam(k, memo)] = _salin_dalam(x[k], memo)
+    }
+    kembalikan baru
+}
+
+# salin_dalam(x) -> salinan REKURSIF. Daftar/kamus/himpunan/tupel yang
+# bersarang ikut disalin; struktur bersiklus aman.
+fungsi salin_dalam(x) {
+    kembalikan _salin_dalam(x, kamus())
+}
