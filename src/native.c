@@ -1835,8 +1835,10 @@ static int iterCount(Value v) {
 // Returns true when *v was replaced by a materialized list (or left alone),
 // false when draining raised -- the error is already pending.
 //
-// GC-SAFETY: the list being filled is kept on the VM stack, because resuming
-// the generator runs arbitrary user code that can allocate.
+// GC-SAFETY: callers MUST pass a rooted slot (&args[n] lives on the VM stack
+// and is marked). Writing the new list anywhere else leaves it collectable the
+// moment the caller allocates again. The list being filled is also kept on the
+// VM stack, because resuming the generator runs arbitrary user code.
 static bool materializeLazy(Value* v) {
     bool isGen = IS_GENERATOR(*v);
     bool isLazyInstance = IS_INSTANCE(*v) && instanceHasMagic(*v, MAGIC_BERIKUTNYA);
@@ -1901,8 +1903,9 @@ Value nativeFnTupel(int argCount, Value* args) {
     Value src = args[0];
     if (IS_TUPLE(src)) return src;   // immutable, so sharing it is safe (Python does too)
 
-    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
-    if (!materializeLazy(&src)) return KOSONG_VAL;
+    // Fase 5: cairkan dulu (slot argumen tetap di-root oleh stack VM).
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
+    src = args[0];
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -1930,12 +1933,12 @@ Value nativeFnHimpunan(int argCount, Value* args) {
         nativeRaise("himpunan() memerlukan 0 atau 1 argumen, bukan %d", argCount);
         return KOSONG_VAL;
     }
-    ObjSet* set = newSet();
-    if (argCount == 0) return OBJ_VAL(set);
+    if (argCount == 0) return OBJ_VAL(newSet());
 
+    // Fase 5: cairkan dulu (slot argumen tetap di-root oleh stack VM).
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     Value src = args[0];
-    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
-    if (!materializeLazy(&src)) return KOSONG_VAL;
+    ObjSet* set = newSet();
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -2438,12 +2441,13 @@ Value nativeFnDaftar(int argCount, Value* args) {
         nativeRaise("daftar() memerlukan 0 atau 1 argumen, bukan %d", argCount);
         return KOSONG_VAL;
     }
-    ObjList* list = newList();
-    if (argCount == 0) return OBJ_VAL(list);
+    if (argCount == 0) return OBJ_VAL(newList());
 
+    // Fase 5: cairkan generator/iterator kustom SEBELUM mengalokasi hasil,
+    // dan simpan hasilnya di slot argumen yang sudah di-root oleh stack VM.
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     Value src = args[0];
-    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
-    if (!materializeLazy(&src)) return KOSONG_VAL;
+    ObjList* list = newList();
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -2469,15 +2473,16 @@ Value nativeFnHimpunanBeku(int argCount, Value* args) {
         nativeRaise("himpunan_beku() memerlukan 0 atau 1 argumen, bukan %d", argCount);
         return KOSONG_VAL;
     }
-    ObjSet* set = newSet();
     if (argCount == 0) {
-        set->frozen = true;
-        return OBJ_VAL(set);
+        ObjSet* kosong = newSet();
+        kosong->frozen = true;
+        return OBJ_VAL(kosong);
     }
 
+    // Fase 5: cairkan dulu (slot argumen tetap di-root oleh stack VM).
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     Value src = args[0];
-    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
-    if (!materializeLazy(&src)) return KOSONG_VAL;
+    ObjSet* set = newSet();
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,

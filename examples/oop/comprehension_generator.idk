@@ -1,0 +1,49 @@
+# Generator expression dan comprehension kamus/himpunan.
+# Semua memakai kurung kurawal { } seperti biasa, tanpa aturan indentasi.
+
+# Generator expression: dihitung saat diminta, bukan di muka.
+variabel kuadrat = (x * x untuk x dalam rentang(1, 6))
+cetak(jenis(kuadrat))
+cetak(daftar(kuadrat))
+
+# Dengan penyaring 'jika'.
+cetak(daftar((x untuk x dalam rentang(0, 10) jika x % 3 == 0)))
+
+# Langsung sebagai argumen fungsi.
+cetak(jumlah(x * 2 untuk x dalam rentang(1, 5)))
+
+# Comprehension kamus: {kunci: nilai untuk ...}
+cetak({n: n * n untuk n dalam rentang(1, 5)})
+cetak({n: "genap" untuk n dalam rentang(0, 6) jika n % 2 == 0})
+
+# Comprehension himpunan: {nilai untuk ...}
+variabel sisa = {x % 4 untuk x dalam rentang(0, 20)}
+cetak(jenis(sisa))
+cetak(panjang(sisa))
+
+# Semuanya bisa membaca generator maupun iterator kustom.
+fungsi huruf() {
+    hasilkan "a"
+    hasilkan "b"
+    hasilkan "c"
+}
+
+cetak([h + "!" untuk h dalam huruf()])
+cetak({h: h + h untuk h dalam huruf()})
+
+# Generator expression tetap malas walau sumbernya tak terbatas.
+fungsi cacah() {
+    variabel i = 0
+    selagi benar {
+        hasilkan i
+        i = i + 1
+    }
+}
+
+variabel kelipatan = (n * 3 untuk n dalam cacah())
+untuk nilai dalam kelipatan {
+    jika nilai > 12 {
+        hentikan
+    }
+    cetak(nilai)
+}

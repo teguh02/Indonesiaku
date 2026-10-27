@@ -56,6 +56,9 @@ typedef enum {
     OP_BUILD_TUPLE,  // byte = jumlah elemen; (a, b) / (a,) / ()
     OP_BUILD_DICT,
     OP_APPEND,       // [daftar, nilai] -> daftar (list comprehension)
+    OP_DICT_PUT,     // [kamus, kunci, nilai] -> kamus (dict comprehension)
+    OP_SET_PUT,      // [himpunan, nilai] -> himpunan (set comprehension)
+    OP_BUILD_SET,    // himpunan kosong baru (akumulator set comprehension)
     OP_DELETE_GLOBAL,   // buang nama; byte = nama
     OP_DELETE_LOCAL,    // buang nama; byte = slot lokal (diisi VAL_TAKTERISI)
     OP_DELETE_UPVALUE,  // buang nama; byte = upvalue

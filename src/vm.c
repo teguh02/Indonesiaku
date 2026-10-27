@@ -2892,6 +2892,44 @@ static InterpretResult run() {
                 vm.stackTop -= 2;
                 break;
             }
+            case OP_DICT_PUT: {
+                // Dict comprehension: stack is [kamus, kunci, nilai]. The dict
+                // stays rooted while dictSet grows the table (it may GC).
+                Value key = peek(1);
+                uint32_t hash;
+                if (!hashValue(key, &hash)) {
+                    if (vm.nativeErrorPending) {
+                        if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Kunci kamus harus nilai yang dapat di-hash "
+                                 "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                dictSet(AS_DICT(peek(2)), key, peek(0));
+                vm.stackTop -= 2;        // leave the kamus
+                break;
+            }
+            case OP_BUILD_SET:
+                push(OBJ_VAL(newSet()));
+                break;
+            case OP_SET_PUT: {
+                // Set comprehension: stack is [himpunan, nilai].
+                if (!setAdd(AS_SET(peek(1)), peek(0))) {
+                    if (vm.nativeErrorPending) {
+                        if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Anggota himpunan harus nilai yang dapat di-hash.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                vm.stackTop -= 1;        // leave the himpunan
+                break;
+            }
             case OP_BUILD_DICT: {
                 int count = READ_BYTE();
                 // Stack: key1, val1, ... keyN, valN

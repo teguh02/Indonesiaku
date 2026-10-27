@@ -517,6 +517,23 @@ static void parsePrecedence(Precedence precedence);
 static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
 static Token syntheticToken(const char* text);
+static void namedVariable(Token name, bool canAssign);
+// Which collection a comprehension builds. The loop machinery is identical;
+// only the accumulator and the per-element append differ.
+typedef enum {
+    COMP_DAFTAR,      // [x untuk x dalam s]
+    COMP_KAMUS,       // {k: v untuk k dalam s}
+    COMP_HIMPUNAN,    // {x untuk x dalam s}
+    COMP_GENERATOR    // (x untuk x dalam s)
+} ComprehensionKind;
+
+// Comprehension support, defined below; argumentList() needs them for the
+// bare `f(x untuk x dalam s)` form.
+static bool scanComprehensionUntil(TokenType closer, ScannerState* state,
+                                   Token* current, Token* previous);
+static void comprehensionBody(ComprehensionKind kind, TokenType closer,
+                              ScannerState elemState, Token elemCurrent, Token elemPrevious,
+                              ScannerState untukState, Token untukCurrent, Token untukPrevious);
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
@@ -667,6 +684,25 @@ static uint8_t argumentList(int* nameList) {
     // allocate, and a GC would free them mid-parse.
     ObjList* names = NULL;
     const char* enclosingArgStart = callArgStart;
+    // f(x untuk x dalam s) -- a bare generator expression as the ONLY argument,
+    // without its own parentheses (Python allows exactly this). Detected by a
+    // 'untuk' at paren depth 0 before the call's ')'.
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehensionUntil(TOKEN_RIGHT_PAREN, &untukState, &untukCurrent, &untukPrevious)) {
+            callArgStart = NULL;
+            comprehensionBody(COMP_GENERATOR, TOKEN_RIGHT_PAREN,
+                              elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            callArgStart = enclosingArgStart;
+            *nameList = -1;
+            return 1;   // comprehensionBody already consumed the ')'
+        }
+    }
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             // A keyword argument is exactly `identifier = expr`; two tokens of
@@ -828,7 +864,8 @@ static void skipNewlines() {
 // Peeks ahead from the current token to decide whether a '[' opens a list
 // comprehension: a 'untuk' at bracket depth 0 before the closing ']'. The
 // scanner and parser tokens are restored, like scanTryClauses.
-static bool scanComprehension(ScannerState* state, Token* current, Token* previous) {
+static bool scanComprehensionUntil(TokenType closer, ScannerState* state,
+                                   Token* current, Token* previous) {
     ScannerState saved = saveScanner();
     Token savedCurrent = parser.current;
     Token savedPrevious = parser.previous;
@@ -837,7 +874,7 @@ static bool scanComprehension(ScannerState* state, Token* current, Token* previo
     for (;;) {
         TokenType type = parser.current.type;
         if (type == TOKEN_EOF) break;
-        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) break;
+        if (depth == 0 && type == closer) break;
         if (depth == 0 && type == TOKEN_UNTUK) {
             *state = saveScanner();
             *current = parser.current;
@@ -859,6 +896,39 @@ static bool scanComprehension(ScannerState* state, Token* current, Token* previo
     return found;
 }
 
+static bool scanComprehension(ScannerState* state, Token* current, Token* previous) {
+    return scanComprehensionUntil(TOKEN_RIGHT_BRACKET, state, current, previous);
+}
+
+// Inside '{ ... }', is there a ':' at depth 0 before the comprehension's
+// 'untuk'? That distinguishes {k: v untuk ...} (kamus) from {x untuk ...}
+// (himpunan). Scanner and parser tokens are restored.
+static bool colonBeforeComprehensionFor() {
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    bool colon = false;
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_BRACE) break;
+        if (depth == 0 && type == TOKEN_UNTUK) break;
+        if (depth == 0 && type == TOKEN_COLON) { colon = true; break; }
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET ||
+                   type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return colon;
+}
+
 // [ekspresi untuk x dalam urutan jika syarat]
 //
 // Token order fights a single-pass compiler: the element expression comes
@@ -867,7 +937,8 @@ static bool scanComprehension(ScannerState* state, Token* current, Token* previo
 // re-read from a saved scanner position AFTER the header has declared 'x' —
 // see the layout in the body. (Only one 'untuk' and one optional 'jika' are
 // supported; chain conditions with 'dan'/'atau'.)
-static void listComprehension(ScannerState elemState, Token elemCurrent, Token elemPrevious,
+static void comprehensionBody(ComprehensionKind kind, TokenType closer,
+                              ScannerState elemState, Token elemCurrent, Token elemPrevious,
                               ScannerState untukState, Token untukCurrent, Token untukPrevious) {
     // Locate the tokens after the header and after the whole comprehension, so
     // the iterable, the condition and the element can each be re-read later.
@@ -896,8 +967,8 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     for (;;) {
         TokenType type = parser.current.type;
         if (type == TOKEN_EOF) break;
-        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) {
-            advance();  // consume ']'
+        if (depth == 0 && type == closer) {
+            advance();  // consume the closing bracket/brace/paren
             break;
         }
         if (depth == 0 && type == TOKEN_JIKA && !hasCond) {
@@ -925,7 +996,12 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     // still visible through the normal upvalue machinery.
     Compiler compFn;
     initCompiler(&compFn, TYPE_FUNCTION);
-    current->function->name = copyString("listcomp", 8);
+    const char* compName =
+        kind == COMP_KAMUS ? "kamuscomp" :
+        kind == COMP_HIMPUNAN ? "himpunancomp" :
+        kind == COMP_GENERATOR ? "gencomp" : "listcomp";
+    current->function->name = copyString(compName, (int)strlen(compName));
+    if (kind == COMP_GENERATOR) current->isGenerator = true;
     current->function->arity = 1;
     current->function->requiredArity = 1;
     beginScope();
@@ -939,8 +1015,18 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     markInitialized();
     int varSlot = current->localCount - 1;
 
-    emitBytes(OP_BUILD_LIST, 0);
-    int resSlot = addSyntheticLocal("  comp hasil");
+    int resSlot = -1;
+    if (kind == COMP_DAFTAR) {
+        emitBytes(OP_BUILD_LIST, 0);
+        resSlot = addSyntheticLocal("  comp hasil");
+    } else if (kind == COMP_KAMUS) {
+        emitBytes(OP_BUILD_DICT, 0);
+        resSlot = addSyntheticLocal("  comp hasil");
+    } else if (kind == COMP_HIMPUNAN) {
+        emitByte(OP_BUILD_SET);
+        resSlot = addSyntheticLocal("  comp hasil");
+    }
+    // COMP_GENERATOR accumulates nothing: each element is yielded.
 
     emitBytes(OP_GET_LOCAL, 1);
     emitByte(OP_LIST_LEN);
@@ -965,12 +1051,33 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
 
-    // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
+    // x = seq[idx]  (ITER_NEXT: generator/custom iterator first, otherwise the
+    // same positional read as before -- a kamus yields keys by position).
+    // A lazy source has no length, so it ends by raising HentiIterasi; catch
+    // exactly that here and let every other error propagate, as forInStatement
+    // does.
+    int compHandler = emitJump(OP_TRY_BEGIN);
+    current->tryDepth++;
     emitBytes(OP_GET_LOCAL, 1);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_SEQ_GET);
+    emitByte(OP_ITER_NEXT);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
+    emitByte(OP_TRY_END);
+    current->tryDepth--;
+    int compNormal = emitJump(OP_JUMP);
+
+    patchJump(compHandler);
+    namedVariable(syntheticToken("HentiIterasi"), false);
+    emitByte(OP_IS_INSTANCE);
+    int compNotExhausted = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);             // matching boolean
+    emitByte(OP_POP);             // HentiIterasi instance
+    int compExit = emitJump(OP_JUMP);
+    patchJump(compNotExhausted);
+    emitByte(OP_POP);             // non-matching boolean
+    emitByte(OP_THROW);           // rethrow the original error
+    patchJump(compNormal);
 
     // Optional 'jika syarat', evaluated inside the loop.
     int skipJump = -1;
@@ -990,11 +1097,27 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     restoreScanner(elemState);
     parser.current = elemCurrent;
     parser.previous = elemPrevious;
-    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
-    expression();
-    emitByte(OP_APPEND);
+    if (kind == COMP_GENERATOR) {
+        // Each element is yielded straight to the consumer; nothing accumulates.
+        expression();
+        emitByte(OP_YIELD);        // pops the value; resumes pushing nothing
+    } else if (kind == COMP_KAMUS) {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        expression();                                   // kunci
+        consume(TOKEN_COLON, "Harapkan ':' antara kunci dan nilai pada kamus comprehension.");
+        expression();                                   // nilai
+        emitByte(OP_DICT_PUT);
+    } else if (kind == COMP_HIMPUNAN) {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        expression();
+        emitByte(OP_SET_PUT);
+    } else {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        expression();
+        emitByte(OP_APPEND);
+    }
     if (!check(TOKEN_UNTUK)) {
-        error("Harapkan 'untuk' setelah ekspresi pada list comprehension.");
+        error("Harapkan 'untuk' setelah ekspresi pada comprehension.");
     }
 
     if (skipJump != -1) {
@@ -1008,10 +1131,14 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     emitLoop(incrementStart);
     patchJump(exitJump);
     emitByte(OP_POP);
+    patchJump(compExit);
 
-    // Return the result list. endCompiler() appends a dead 'return kosong'.
-    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
-    emitByte(OP_RETURN);
+    // Return the accumulator. endCompiler() appends a dead 'return kosong'.
+    // A generator returns nothing: falling off the end ends the iteration.
+    if (kind != COMP_GENERATOR) {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        emitByte(OP_RETURN);
+    }
 
     currentLoop = savedLoop;
     ObjFunction* comprehensionFn = endCompiler();
@@ -1047,7 +1174,8 @@ static void listLiteral(bool canAssign) {
         ScannerState untukState;
         Token untukCurrent, untukPrevious;
         if (scanComprehension(&untukState, &untukCurrent, &untukPrevious)) {
-            listComprehension(elemState, elemCurrent, elemPrevious,
+            comprehensionBody(COMP_DAFTAR, TOKEN_RIGHT_BRACKET,
+                              elemState, elemCurrent, elemPrevious,
                               untukState, untukCurrent, untukPrevious);
             return;
         }
@@ -1078,6 +1206,24 @@ static void dictLiteral(bool canAssign) {
     (void)canAssign;
     int count = 0;
     skipNewlines();
+    // {kunci: nilai untuk ...} = kamus comprehension
+    // {nilai untuk ...}        = himpunan comprehension
+    // A 'untuk' at brace depth 0 before '}' selects a comprehension; a ':' at
+    // depth 0 before that 'untuk' selects the kamus form.
+    if (!check(TOKEN_RIGHT_BRACE)) {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehensionUntil(TOKEN_RIGHT_BRACE, &untukState, &untukCurrent, &untukPrevious)) {
+            bool isKamus = colonBeforeComprehensionFor();
+            comprehensionBody(isKamus ? COMP_KAMUS : COMP_HIMPUNAN, TOKEN_RIGHT_BRACE,
+                              elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            return;
+        }
+    }
     if (!check(TOKEN_RIGHT_BRACE)) {
         do {
             skipNewlines();
@@ -1167,6 +1313,22 @@ static void grouping(bool canAssign) {
     if (match(TOKEN_RIGHT_PAREN)) {
         emitBytes(OP_BUILD_TUPLE, 0);
         return;
+    }
+    // (ekspresi untuk x dalam urutan jika syarat) -- generator expression.
+    // Only a 'untuk' at paren depth 0 before the ')' makes it one, so plain
+    // grouping and tupel literals keep their exact previous behavior.
+    {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehensionUntil(TOKEN_RIGHT_PAREN, &untukState, &untukCurrent, &untukPrevious)) {
+            comprehensionBody(COMP_GENERATOR, TOKEN_RIGHT_PAREN,
+                              elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            return;
+        }
     }
     expression();
     if (!match(TOKEN_COMMA)) {
