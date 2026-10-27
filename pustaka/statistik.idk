@@ -1,0 +1,130 @@
+# pustaka/statistik.idk - Statistik dasar (modul `statistik`).
+# Pemakaian:
+#     impor statistik
+#     dari statistik impor rata_rata, median, simpangan_baku
+#
+# Selaras dengan modul `statistics` Python 3: `rata_rata` = mean,
+# `varians`/`simpangan_baku` memakai rumus SAMPEL (bagi n-1), ada varian
+# `_populasi` yang membagi n. Galat bertipe membawa `.pesan`.
+
+# Python menaikkan StatisticsError; di sini subkelas Galat agar bisa
+# ditangkap `kecuali GalatStatistik sebagai e` dan membawa `.pesan`.
+kelas GalatStatistik < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+# _data(urutan, nama) -> salinan daftar; galat bila kosong.
+fungsi _data(urutan, nama) {
+    variabel data = daftar(urutan)
+    jika panjang(data) == 0 {
+        naikkan GalatStatistik(nama + ": urutan kosong")
+    }
+    kembalikan data
+}
+
+# rata_rata(urutan) -> mean.
+fungsi rata_rata(urutan) {
+    variabel data = _data(urutan, "rata_rata")
+    kembalikan jumlah(data) / panjang(data)
+}
+
+# median(urutan) -> nilai tengah; rata-rata dua tengah bila genap.
+fungsi median(urutan) {
+    variabel data = terurut(_data(urutan, "median"))
+    variabel n = panjang(data)
+    variabel tengah = n // 2
+    jika n % 2 == 1 {
+        kembalikan data[tengah]
+    }
+    kembalikan (data[tengah - 1] + data[tengah]) / 2
+}
+
+# modus(urutan) -> nilai yang paling sering muncul. Bila seri, yang muncul
+# lebih dulu menang (sama seperti statistics.mode Python).
+fungsi modus(urutan) {
+    variabel data = _data(urutan, "modus")
+    variabel hitung = kamus()
+    untuk v dalam data {
+        jika punya(hitung, v) {
+            hitung[v] = hitung[v] + 1
+        } selain {
+            hitung[v] = 1
+        }
+    }
+    variabel terbaik = data[0]
+    variabel terbanyak = 0
+    untuk v dalam data {
+        variabel c = hitung[v]
+        jika c > terbanyak {
+            terbanyak = c
+            terbaik = v
+        }
+    }
+    kembalikan terbaik
+}
+
+# _jumlah_kuadrat_simpangan(data, rata) -> sum((x - mean)^2).
+fungsi _jumlah_kuadrat_simpangan(data, rata) {
+    variabel total = 0.0
+    untuk v dalam data {
+        variabel d = v - rata
+        total = total + d * d
+    }
+    kembalikan total
+}
+
+# varians(urutan) -> varians SAMPEL (bagi n-1).
+fungsi varians(urutan) {
+    variabel data = _data(urutan, "varians")
+    variabel n = panjang(data)
+    jika n < 2 {
+        naikkan GalatStatistik("varians: butuh minimal dua data")
+    }
+    kembalikan _jumlah_kuadrat_simpangan(data, rata_rata(data)) / (n - 1)
+}
+
+# varians_populasi(urutan) -> varians populasi (bagi n).
+fungsi varians_populasi(urutan) {
+    variabel data = _data(urutan, "varians_populasi")
+    kembalikan _jumlah_kuadrat_simpangan(data, rata_rata(data)) / panjang(data)
+}
+
+# simpangan_baku(urutan) -> akar varians sampel.
+fungsi simpangan_baku(urutan) {
+    kembalikan akar(varians(urutan))
+}
+
+# simpangan_baku_populasi(urutan) -> akar varians populasi.
+fungsi simpangan_baku_populasi(urutan) {
+    kembalikan akar(varians_populasi(urutan))
+}
+
+# kuantil(urutan, n = 4) -> n-1 titik potong (default kuartil).
+# Memakai metode "exclusive" yang sama dengan statistics.quantiles Python,
+# sehingga butuh minimal dua data.
+fungsi kuantil(urutan, n = 4) {
+    variabel data = terurut(_data(urutan, "kuantil"))
+    variabel ld = panjang(data)
+    jika n < 1 {
+        naikkan GalatStatistik("kuantil: n harus >= 1")
+    }
+    jika ld < 2 {
+        naikkan GalatStatistik("kuantil: butuh minimal dua data")
+    }
+    variabel hasil = []
+    variabel m = ld + 1
+    variabel i = 1
+    selagi i < n {
+        variabel j = (i * m) // n
+        variabel delta = i * m - j * n
+        jika j <= 0 {
+            tambah(hasil, data[0])
+        } jika_lain j >= ld {
+            tambah(hasil, data[ld - 1])
+        } selain {
+            tambah(hasil, (data[j - 1] * (n - delta) + data[j] * delta) / n)
+        }
+        i = i + 1
+    }
+    kembalikan hasil
+}

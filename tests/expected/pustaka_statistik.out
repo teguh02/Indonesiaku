@@ -1,0 +1,26 @@
+== rata_rata ==
+2.5
+2.0
+2.5
+== median ==
+2
+2.5
+2.0
+== modus ==
+2
+a
+5
+2
+== varians & simpangan baku (sampel) ==
+1.0
+4.571428571428571
+2.138089935299395
+== populasi ==
+4.0
+2.0
+== kuantil ==
+[1.25, 2.5, 3.75]
+[4.5]
+== galat bertipe dapat ditangkap ==
+rata_rata: urutan kosong
+varians: butuh minimal dua data
