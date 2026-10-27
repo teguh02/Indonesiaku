@@ -270,6 +270,8 @@ Ref: 04 §1, §8–10, §12.
 > komentar** pengguna, dan formatter yang memakan komentar lebih buruk
 > daripada tidak ada formatter. Prasyarat: mode scanner yang menyimpan
 > komentar beserta posisinya (atau CST), baru kemudian penulis ulangnya.
+> Rencananya sudah ada:
+> [`RENCANA_FITUR/komentar_dan_rapikan.md`](RENCANA_FITUR/komentar_dan_rapikan.md).
 
 > **Catatan cache `.idkc`.** Diukur, lalu ditunda sebagai YAGNI. Berkas
 > sumber terbesar di repo (`metode_ajaib.idk`, 8 KB) butuh **3,1 ms** total,
