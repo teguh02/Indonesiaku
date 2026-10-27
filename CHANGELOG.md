@@ -30,6 +30,16 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4: `@properti`, `@metode_statis`, `@metode_kelas`
+- ✨ Tiga dekorator bawaan untuk metode. Disimpan sebagai penanda pada kelas
+  (satu tabel `special`, bukan tiga) dan diputuskan saat metode didaftarkan,
+  karena ketiganya mengubah cara metode **dipanggil**.
+- `@properti` dibaca tanpa kurung, hanya lewat objek; `@metode_statis` tanpa
+  penerima; `@metode_kelas` menerima kelasnya sebagai `kelas_ini` — dari
+  subkelas yang diterima adalah subkelasnya.
+- Ketiganya diwariskan dan boleh ditimpa, termasuk dijadikan metode biasa.
+- Contoh: [`examples/oop/properti_statis.idk`](examples/oop/properti_statis.idk).
+
 ### Added — Fase 4: dekorator
 - ✨ **`@dekorator`** sebelum definisi `fungsi` — bertumpuk (diterapkan dari
   yang terdekat), boleh berargumen (`@ulangi(3)`), dijalankan sekali saat

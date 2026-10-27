@@ -1,0 +1,10 @@
+# @properti perlu objek: lewat kelas tidak ada yang bisa dihitung.
+
+kelas Lingkaran {
+    init(jari) { diri.jari = jari }
+
+    @properti
+    luas() { kembalikan 3.14 * diri.jari * diri.jari }
+}
+
+cetak(Lingkaran.luas)

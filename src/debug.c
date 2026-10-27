@@ -215,6 +215,14 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_INHERIT", offset);
         case OP_METHOD:
             return constantInstruction("OP_METHOD", chunk, offset);
+        case OP_SPECIAL_METHOD: {
+            uint8_t constant = chunk->code[offset + 1];
+            uint8_t kind = chunk->code[offset + 2];
+            printf("%-16s %4d '", "OP_SPECIAL_METHOD", constant);
+            printValue(chunk->constants.values[constant]);
+            printf("' jenis=%d\n", kind);
+            return offset + 3;
+        }
         case OP_GET_PROPERTY:
             return constantInstruction("OP_GET_PROPERTY", chunk, offset);
         case OP_SET_PROPERTY:

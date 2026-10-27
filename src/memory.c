@@ -140,6 +140,7 @@ static void blackenObject(Obj* object) {
             markObject((Obj*)klass->superclass);
             markTable(&klass->methods);
             markTable(&klass->fields);   // atribut kelas juga akar GC
+            markTable(&klass->special);  // kuncinya ObjString -- wajib ditandai
             break;
         }
         case OBJ_INSTANCE: {
@@ -238,6 +239,7 @@ static void freeObject(Obj* object) {
             ObjClass* klass = (ObjClass*)object;
             freeTable(&klass->methods);
             freeTable(&klass->fields);
+            freeTable(&klass->special);
             FREE(ObjClass, object);
             break;
         }

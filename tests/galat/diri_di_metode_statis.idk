@@ -1,0 +1,6 @@
+# @metode_statis tidak menerima objek, jadi 'diri' tidak ada.
+
+kelas K {
+    @metode_statis
+    s() { kembalikan diri }
+}

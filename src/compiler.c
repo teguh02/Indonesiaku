@@ -70,6 +70,8 @@ typedef enum {
     TYPE_FUNCTION,
     TYPE_INITIALIZER,
     TYPE_METHOD,
+    TYPE_STATIC,        // @metode_statis: tanpa penerima sama sekali
+    TYPE_CLASSMETHOD,   // @metode_kelas: slot 0 berisi kelasnya
     TYPE_SCRIPT
 } FunctionType;
 
@@ -438,7 +440,19 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     Local* local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
-    if (type != TYPE_FUNCTION && type != TYPE_SCRIPT) {
+    if (type == TYPE_CLASSMETHOD) {
+        // @metode_kelas gets the class in the receiver slot. Naming it
+        // 'kelas_ini' rather than 'diri' keeps the two readable side by side,
+        // and matches how `diri` is implicit everywhere else (K3) -- no
+        // explicit first parameter like Python's `cls`.
+        local->name.start = "kelas_ini";
+        local->name.length = 9;
+    } else if (type == TYPE_STATIC) {
+        // No receiver is pushed, so slot 0 is the callee itself, exactly as
+        // for a plain function.
+        local->name.start = "";
+        local->name.length = 0;
+    } else if (type != TYPE_FUNCTION && type != TYPE_SCRIPT) {
         // Methods reserve slot 0 for 'diri' (the receiver / this).
         local->name.start = "diri";
         local->name.length = 4;
@@ -503,6 +517,11 @@ static Token syntheticToken(const char* text);
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
+}
+
+static bool identifiersEqualCString(Token* a, const char* name) {
+    size_t len = strlen(name);
+    return a->length == (int)len && memcmp(a->start, name, len) == 0;
 }
 
 static bool identifiersEqual(Token* a, Token* b) {
@@ -1552,6 +1571,19 @@ static void diri_(bool canAssign) {
         error("Tidak dapat menggunakan 'diri' di luar kelas.");
         return;
     }
+    // Slot 0 holds the class (@metode_kelas) or the callee (@metode_statis)
+    // in these two, so resolving 'diri' here would silently hand back the
+    // wrong object instead of a receiver.
+    if (current->type == TYPE_STATIC) {
+        error("'diri' tidak tersedia di @metode_statis: metode statis tidak "
+              "menerima objek.");
+        return;
+    }
+    if (current->type == TYPE_CLASSMETHOD) {
+        error("'diri' tidak tersedia di @metode_kelas: pakai 'kelas_ini' "
+              "untuk kelasnya.");
+        return;
+    }
     variable(false);
 }
 
@@ -2126,28 +2158,53 @@ static void method() {
     // with this because `self` is an explicit parameter it can forward.
     // The three builtin decorators are handled at method-definition time
     // instead; see RENCANA_FITUR/selesai/dekorator.md.
-    if (check(TOKEN_AT)) {
-        error("Dekorator pada metode belum didukung: 'diri' tidak terbawa ke "
-              "fungsi pembungkus.");
-        // Must consume something: classDeclaration()'s loop calls method()
-        // until '}' or EOF, so returning with '@' still current would spin
-        // forever instead of reporting the error.
-        while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF) &&
-               !check(TOKEN_NEWLINE)) {
-            advance();
+    // The three builtin decorators change how a method is CALLED, so they are
+    // resolved here, at definition time, not as runtime wrappers.
+    uint8_t special = 0;
+    while (match(TOKEN_AT)) {
+        if (!check(TOKEN_IDENTIFIER)) {
+            error("Harapkan nama dekorator setelah '@'.");
+            return;
         }
-        return;
+        advance();
+        if (identifiersEqualCString(&parser.previous, "properti")) {
+            special = SPECIAL_PROPERTI;
+        } else if (identifiersEqualCString(&parser.previous, "metode_statis")) {
+            special = SPECIAL_STATIS;
+        } else if (identifiersEqualCString(&parser.previous, "metode_kelas")) {
+            special = SPECIAL_KELAS;
+        } else {
+            error("Dekorator kustom pada metode belum didukung: 'diri' tidak "
+                  "terbawa ke fungsi pembungkus. Yang tersedia: @properti, "
+                  "@metode_statis, @metode_kelas.");
+            // Must consume something: classDeclaration()'s loop calls
+            // method() until '}' or EOF, so returning here with the rest of
+            // the line unread would spin forever instead of reporting it.
+            while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF) &&
+                   !check(TOKEN_NEWLINE)) {
+                advance();
+            }
+            return;
+        }
+        while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
     }
     consume(TOKEN_IDENTIFIER, "Harapkan nama metode.");
     uint8_t constant = identifierConstant(&parser.previous);
 
     FunctionType type = TYPE_METHOD;
+    if (special == SPECIAL_STATIS) type = TYPE_STATIC;
+    else if (special == SPECIAL_KELAS) type = TYPE_CLASSMETHOD;
     if (parser.previous.length == 4 &&
         memcmp(parser.previous.start, "init", 4) == 0) {
         type = TYPE_INITIALIZER;
     }
     function(type);
-    emitBytes(OP_METHOD, constant);
+    if (special != 0) {
+        emitBytes(OP_SPECIAL_METHOD, constant);
+        emitByte(special);
+    } else {
+        emitBytes(OP_METHOD, constant);
+    }
 }
 
 static void classDeclaration() {

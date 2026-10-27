@@ -206,6 +206,19 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   triggered by `_sama_` freed them — a use-after-free that the normal suite
   passed and only the sanitizer build caught. Keep values on the stack
   (`peek`), pop after.
+- **A per-class side table is NOT inherited by `OP_INHERIT`.** `OP_INHERIT`
+  copies the parent's `methods` into the subclass, but nothing else. So an
+  inherited `@properti` sits in the subclass's `methods` while its tag still
+  lives on the parent: a lookup that stops at the first class whose `methods`
+  has the name will silently treat it as a plain method. Walk the whole
+  superclass chain, and when a subclass redefines the name as an ordinary
+  method, write an explicit 0 tag -- deleting the subclass entry is not
+  enough, because the ancestor's tag is still up the chain.
+- **`grep -iE " error"` (leading space) misses `error:` and will tell you a
+  broken build is fine.** Compiler diagnostics are `file.c:12:3: error: ...`
+  with no space before `error`. Grep for `error:|Error` instead, or the stale
+  binary from the last good build will answer your tests and you will debug a
+  feature that was never compiled.
 - **Anything that must run before every jump out of a block belongs in
   `FinallyRegion`, not in new code.** `dengan` (context managers) reuses the
   `akhirnya` machinery with a `kind` tag: `FINALLY_EXIT_CALL` emits three

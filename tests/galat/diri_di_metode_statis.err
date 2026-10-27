@@ -1,0 +1,6 @@
+[baris 5, kolom 22] Kesalahan di 'diri': 'diri' tidak tersedia di @metode_statis: metode statis tidak menerima objek.
+        s() { kembalikan diri }
+                         ^^^^
+[baris 7, kolom 1] Kesalahan di akhir: Harapkan '}' setelah blok.
+    
+    ^

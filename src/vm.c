@@ -39,6 +39,8 @@ static int instanceEqualMagic(Value a, Value b);
 static int instanceHashMagic(Value value, uint32_t* out);
 static bool instanceMagic(Value value, MagicKind kind, Value* method);
 static const char* valueTypeName(Value value);
+static uint8_t specialKind(ObjClass* klass, ObjString* name);
+static bool classMethodGet(ObjClass* klass, ObjString* name, Value* out);
 
 static Value clockNative(int argCount, Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -711,6 +713,18 @@ static const char* contextManagerHint(ObjString* name) {
     return NULL;
 }
 
+// Replaces the receiver slot for @metode_statis / @metode_kelas. The slot is
+// already there (the call pushed it), so nothing is allocated or shifted:
+// statics get the closure itself, class methods get the class.
+static void fixReceiverSlot(ObjClass* klass, uint8_t kind, Value method,
+                            int argCount) {
+    if (kind == SPECIAL_STATIS) {
+        vm.stackTop[-argCount - 1] = method;
+    } else if (kind == SPECIAL_KELAS) {
+        vm.stackTop[-argCount - 1] = OBJ_VAL(klass);
+    }
+}
+
 static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
@@ -725,6 +739,7 @@ static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
         }
         return false;
     }
+    fixReceiverSlot(klass, specialKind(klass, name), method, argCount);
     return call(AS_CLOSURE(method), argCount, NULL);
 }
 
@@ -845,14 +860,26 @@ static bool invoke(ObjString* name, int argCount) {
         ObjClass* klass = AS_CLASS(receiver);
         Value member;
         if (!classFieldGet(klass, name, &member) &&
-            !tableGet(&klass->methods, name, &member)) {
+            !classMethodGet(klass, name, &member)) {
             vm.runtimeErrorClass = vm.galatAtribut;
             runtimeError("Kelas '%s' tidak punya atribut '%s'.",
                          klass->name->chars, name->chars);
             return false;
         }
-        vm.stackTop[-argCount - 1] = member;
-        return callValue(member, argCount, NULL);
+        uint8_t kind = specialKind(klass, name);
+        if (kind == SPECIAL_PROPERTI) {
+            vm.runtimeErrorClass = vm.galatAtribut;
+            runtimeError("'%s' adalah @properti: baca lewat objek, bukan "
+                         "lewat kelas '%s'.", name->chars, klass->name->chars);
+            return false;
+        }
+        // @metode_kelas called through the class still needs the class in the
+        // receiver slot; everything else sees only its own arguments.
+        vm.stackTop[-argCount - 1] =
+            (kind == SPECIAL_KELAS) ? OBJ_VAL(klass) : member;
+        return (kind == SPECIAL_KELAS)
+                   ? call(AS_CLOSURE(member), argCount, NULL)
+                   : callValue(member, argCount, NULL);
     }
 
     if (!IS_INSTANCE(receiver)) {
@@ -897,10 +924,41 @@ static bool invoke(ObjString* name, int argCount) {
     return invokeFromClass(instance->klass, name, argCount);
 }
 
+// Returns SPECIAL_* for a method reached through `klass` or any ancestor,
+// or 0. Walks the chain because `special` is not copied by OP_INHERIT.
+static bool classMethodGet(ObjClass* klass, ObjString* name, Value* out) {
+    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
+        if (tableGet(&k->methods, name, out)) return true;
+    }
+    return false;
+}
+
+static uint8_t specialKind(ObjClass* klass, ObjString* name) {
+    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
+        Value tag;
+        if (tableGet(&k->special, name, &tag)) return (uint8_t)AS_NUMBER(tag);  // 0 = sengaja ditimpa metode biasa
+        // Cannot stop at the first class whose `methods` has the name:
+        // OP_INHERIT copies the parent's methods into the subclass, so an
+        // inherited @properti is present in the subclass's `methods` while
+        // its tag still lives on the parent. Only a method defined directly
+        // in this class body overrides the tag, and defineMethod() removes
+        // the tag in that case -- so keep walking.
+    }
+    return 0;
+}
+
 static void defineMethod(ObjString* name) {
     Value method = peek(0);
     ObjClass* klass = AS_CLASS(peek(1));
     tableSet(&klass->methods, name, method);
+    // A plain method here must shadow an inherited @properti/@metode_statis
+    // tag. Deleting is not enough: the tag lives on the ancestor, and
+    // specialKind() walks the whole chain. Record an explicit 0 to stop it.
+    if (specialKind(klass, name) != 0) {
+        tableSet(&klass->special, name, NUMBER_VAL(0));
+    } else {
+        tableDelete(&klass->special, name);
+    }
     tableDelete(&klass->fields, name);   // ruang nama bersama: yang belakangan menang
     for (int i = 0; i < MAGIC_COUNT; i++) {
         if (vm.magicNames[i] == name) klass->magic |= MAGIC_BIT(i);   // interned
@@ -2973,6 +3031,14 @@ static InterpretResult run() {
             case OP_METHOD:
                 defineMethod(READ_STRING());
                 break;
+            case OP_SPECIAL_METHOD: {
+                ObjString* name = READ_STRING();
+                uint8_t kind = READ_BYTE();
+                ObjClass* klass = AS_CLASS(peek(1));
+                defineMethod(name);   // pops the closure
+                tableSet(&klass->special, name, NUMBER_VAL((double)kind));
+                break;
+            }
             case OP_GET_PROPERTY: {
                 if (IS_MODULE(peek(0))) {
                     // matematika.mat_fpb -- a module's globals are its members.
@@ -2996,7 +3062,16 @@ static InterpretResult run() {
                     ObjString* name = READ_STRING();
                     Value value;
                     if (classFieldGet(klass, name, &value) ||
-                        tableGet(&klass->methods, name, &value)) {
+                        classMethodGet(klass, name, &value)) {
+                        if (specialKind(klass, name) == SPECIAL_PROPERTI) {
+                            // Kelas.luas has no instance to compute against.
+                            vm.runtimeErrorClass = vm.galatAtribut;
+                            runtimeError(
+                                "'%s' adalah @properti: baca lewat objek, "
+                                "bukan lewat kelas '%s'.",
+                                name->chars, klass->name->chars);
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
                         pop();              // kelas
                         push(value);
                         break;
@@ -3048,6 +3123,28 @@ static InterpretResult run() {
                     pop();  // instance
                     push(value);
                     break;
+                }
+
+                uint8_t kind = specialKind(instance->klass, name);
+                if (kind != 0) {
+                    Value method;
+                    if (classMethodGet(instance->klass, name, &method)) {
+                        if (kind == SPECIAL_PROPERTI) {
+                            // obj.luas runs luas() now: the receiver is
+                            // already in the slot, so this is a plain call
+                            // with zero arguments.
+                            if (!call(AS_CLOSURE(method), 0, NULL)) {
+                                return INTERPRET_RUNTIME_ERROR;
+                            }
+                            frame = &vm.frames[vm.frameCount - 1];
+                            break;
+                        }
+                        // Statics and class methods are not bound to the
+                        // instance; as a value both are just the function.
+                        pop();   // instance
+                        push(method);
+                        break;
+                    }
                 }
 
                 if (!bindMethod(instance->klass, name)) {

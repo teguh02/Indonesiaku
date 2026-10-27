@@ -72,6 +72,7 @@ typedef enum {
     OP_CLASS,
     OP_INHERIT,
     OP_METHOD,
+    OP_SPECIAL_METHOD,   // operand: nama, lalu SPECIAL_* (properti/statis/kelas)
     OP_GET_PROPERTY,
     OP_SET_PROPERTY,
     OP_INVOKE,

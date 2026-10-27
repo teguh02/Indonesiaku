@@ -186,6 +186,7 @@ ObjClass* newClass(ObjString* name) {
     klass->superclass = NULL;
     initTable(&klass->methods);
     initTable(&klass->fields);
+    initTable(&klass->special);
     klass->magic = 0;
     return klass;
 }

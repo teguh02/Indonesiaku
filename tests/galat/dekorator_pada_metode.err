@@ -1,6 +1,6 @@
-[baris 7, kolom 10] Kesalahan di akhir baris: Dekorator pada metode belum didukung: 'diri' tidak terbawa ke fungsi pembungkus.
-    kelas K {
-             ^
+[baris 7, kolom 6] Kesalahan di 'hias': Dekorator kustom pada metode belum didukung: 'diri' tidak terbawa ke fungsi pembungkus. Yang tersedia: @properti, @metode_statis, @metode_kelas.
+        @hias
+         ^^^^
 [baris 10, kolom 1] Kesalahan di akhir: Harapkan '}' setelah blok.
     
     ^

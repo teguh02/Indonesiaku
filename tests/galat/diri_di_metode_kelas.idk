@@ -1,0 +1,6 @@
+# @metode_kelas menerima kelasnya sebagai 'kelas_ini', bukan 'diri'.
+
+kelas K {
+    @metode_kelas
+    m() { kembalikan diri }
+}

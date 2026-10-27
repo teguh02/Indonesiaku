@@ -396,5 +396,35 @@
       "}"
     ],
     "description": "Kerangka fungsi dekorator"
+  },
+  "@properti": {
+    "prefix": "properti",
+    "body": [
+      "@properti",
+      "${1:nama}() {",
+      "\tkembalikan $0",
+      "}"
+    ],
+    "description": "Metode yang dibaca tanpa tanda kurung"
+  },
+  "@metode_statis": {
+    "prefix": "metode_statis",
+    "body": [
+      "@metode_statis",
+      "${1:nama}() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Metode tanpa penerima"
+  },
+  "@metode_kelas": {
+    "prefix": "metode_kelas",
+    "body": [
+      "@metode_kelas",
+      "${1:nama}() {",
+      "\tkembalikan kelas_ini($0)",
+      "}"
+    ],
+    "description": "Metode yang menerima kelasnya sebagai kelas_ini"
   }
 }

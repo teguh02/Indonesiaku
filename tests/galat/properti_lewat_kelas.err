@@ -1,0 +1,4 @@
+'luas' adalah @properti: baca lewat objek, bukan lewat kelas 'Lingkaran'.
+[baris 10, kolom 17] dalam skrip
+    cetak(Lingkaran.luas)
+                    ^

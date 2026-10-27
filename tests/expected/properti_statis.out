@@ -1,0 +1,24 @@
+=== @properti dibaca tanpa kurung ===
+12.56636
+12.56636
+=== dipakai dari dalam metode biasa ===
+luas 12.56636 cm
+=== @metode_statis lewat kelas maupun objek ===
+cm
+cm
+=== @metode_kelas menerima kelasnya ===
+1
+=== diwariskan ke subkelas ===
+induk-5
+statis induk
+statis induk
+=== @metode_kelas dari subkelas membuat subkelasnya ===
+induk-99
+=== subkelas boleh menimpa @properti ===
+ditimpa
+=== subkelas boleh menjadikannya metode biasa ===
+metode biasa
+=== field instance menimpa @properti ===
+ditimpa tangan
+=== galat dari dalam @properti tetap merambat ===
+tertangkap: Indeks list di luar jangkauan (indeks 99, panjang 1).

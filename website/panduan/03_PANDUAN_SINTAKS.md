@@ -1759,6 +1759,59 @@ Dekorator dijalankan **sekali**, saat definisinya dibuat.
 
 > Contoh lengkap: [`examples/dekorator.idk`](../examples/dekorator.idk)
 
+### `@properti`, `@metode_statis`, `@metode_kelas`
+
+Tiga dekorator bawaan untuk metode di dalam kelas. Ketiganya mengubah cara
+metode **dipanggil**, jadi dikenali saat metode didefinisikan — bukan
+pembungkus biasa.
+
+```indonesiaku
+kelas Lingkaran {
+    PHI = 3.14159
+
+    init(jari) { diri.jari = jari }
+
+    @properti
+    luas() { kembalikan Lingkaran.PHI * diri.jari * diri.jari }
+
+    @metode_statis
+    satuan() { kembalikan "cm" }
+
+    @metode_kelas
+    baku() { kembalikan kelas_ini(1) }
+}
+
+l = Lingkaran(2)
+cetak(l.luas)              # 12.56636 — tanpa tanda kurung
+cetak(Lingkaran.satuan())  # cm
+cetak(l.satuan())          # cm — lewat objek juga boleh
+cetak(Lingkaran.baku().jari)   # 1
+```
+
+**`@properti`** — metode tanpa argumen yang dibaca tanpa tanda kurung.
+Dijalankan setiap kali dibaca.
+
+- Harus dibaca lewat objek; `Lingkaran.luas` ditolak karena tidak ada objek
+  untuk dihitung.
+- Hanya untuk baca. `l.luas = 5` membuat field instance biasa yang menimpanya
+  — tidak ada penyetel seperti `@luas.setter` di Python.
+- Galat dari dalamnya merambat seperti biasa.
+
+**`@metode_statis`** — tidak menerima objek sama sekali, jadi `diri` tidak
+tersedia di dalamnya. Boleh dipanggil lewat kelas maupun objek.
+
+**`@metode_kelas`** — menerima kelasnya, bernama **`kelas_ini`** (bukan
+`diri`). Dipanggil dari subkelas, yang diterima adalah subkelasnya — jadi
+`kelas_ini(...)` membuat objek dari kelas yang tepat.
+
+Ketiganya diwariskan. Subkelas boleh menimpanya dengan `@properti` lagi atau
+menjadikannya metode biasa.
+
+> Dekorator **kustom** pada metode belum didukung — lihat catatan di bagian
+> sebelumnya.
+
+> Contoh lengkap: [`examples/oop/properti_statis.idk`](../examples/oop/properti_statis.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

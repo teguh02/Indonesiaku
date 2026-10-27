@@ -1,0 +1,102 @@
+# @properti, @metode_statis, @metode_kelas — tiga dekorator bawaan untuk kelas.
+
+kelas Lingkaran {
+    PHI = 3.14159
+
+    init(jari) { diri.jari = jari }
+
+    # Dibaca tanpa tanda kurung.
+    @properti
+    luas() { kembalikan Lingkaran.PHI * diri.jari * diri.jari }
+
+    @properti
+    keliling() { kembalikan 2 * Lingkaran.PHI * diri.jari }
+
+    # Tidak menerima objek sama sekali.
+    @metode_statis
+    satuan() { kembalikan "cm" }
+
+    # Menerima kelasnya sebagai 'kelas_ini'.
+    @metode_kelas
+    baku() { kembalikan kelas_ini(1) }
+
+    laporan() { kembalikan f"luas {diri.luas} {Lingkaran.satuan()}" }
+}
+
+cetak("=== @properti dibaca tanpa kurung ===")
+l = Lingkaran(2)
+cetak(l.luas)
+cetak(l.keliling)
+
+cetak("=== dipakai dari dalam metode biasa ===")
+cetak(l.laporan())
+
+cetak("=== @metode_statis lewat kelas maupun objek ===")
+cetak(Lingkaran.satuan())
+cetak(l.satuan())
+
+cetak("=== @metode_kelas menerima kelasnya ===")
+cetak(Lingkaran.baku().jari)
+
+cetak("=== diwariskan ke subkelas ===")
+
+kelas Induk {
+    init(n) { diri.n = n }
+
+    @properti
+    label() { kembalikan "induk-" + ke_teks(diri.n) }
+
+    @metode_statis
+    info() { kembalikan "statis induk" }
+
+    @metode_kelas
+    buat() { kembalikan kelas_ini(99) }
+}
+
+kelas Anak < Induk { }
+
+a = Anak(5)
+cetak(a.label)
+cetak(Anak.info())
+cetak(a.info())
+
+cetak("=== @metode_kelas dari subkelas membuat subkelasnya ===")
+cetak(Anak.buat().label)
+
+cetak("=== subkelas boleh menimpa @properti ===")
+
+kelas Timpa < Induk {
+    @properti
+    label() { kembalikan "ditimpa" }
+}
+
+cetak(Timpa(1).label)
+
+cetak("=== subkelas boleh menjadikannya metode biasa ===")
+
+kelas Biasa < Induk {
+    label() { kembalikan "metode biasa" }
+}
+
+cetak(Biasa(1).label())
+
+cetak("=== field instance menimpa @properti ===")
+k = Lingkaran(3)
+k.luas = "ditimpa tangan"
+cetak(k.luas)
+
+cetak("=== galat dari dalam @properti tetap merambat ===")
+
+kelas Rusak {
+    @properti
+    nilai() {
+        daftar = [1]
+        kembalikan daftar[99]
+    }
+}
+
+coba {
+    cetak(Rusak().nilai)
+} kecuali GalatIndeks sebagai e {
+    cetak("tertangkap:", e)
+}

@@ -77,7 +77,7 @@ Prinsip penamaan:
 | Argumen bawaan `def f(a, b=2)` | | ✅ dievaluasi tiap panggilan (K15) | — |
 | Argumen bernama `f(b=1)` | | ✅ (K16) | — |
 | `*args`, `**kwargs` | | ❌ | 2 |
-| Dekorator `@` | | ❌ | 4 |
+| Dekorator `@` | | 🟡 pada fungsi; pada metode hanya tiga bawaan | 4 |
 | Walrus `:=` | | 🟡 (assignment sudah ekspresi) | — |
 | Anotasi tipe `x: int` | | ❌ | 8 (opsional) |
 
@@ -187,7 +187,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | 🟡 representasi, perbandingan, aritmetika + cerminannya (`__radd__` dst), panjang, kebenaran, indeks, hash (K19); `NotImplemented` dan iterator malas `_berikutnya_` belum; `_iter_`/`_panggil_` dan manajer konteks `_masuk_`/`_keluar_` sudah ada; `terurut`/`min`/`max` memakai `_kurang_dari_` | 4 |
 | Usulan nama: `_teks_`, `_sama_`, `_kurang_`, `_tambah_`, `_panjang_`, `_ambil_`, `_iter_`, `_panggil_` | | |
 | Atribut kelas (bukan per instansi) | ✅ | 4 |
-| `@property`, `@staticmethod`, `@classmethod` | ❌ | 4 |
+| `@property`, `@staticmethod`, `@classmethod` | ✅ `@properti`, `@metode_statis`, `@metode_kelas` (tanpa penyetel) | 4 |
 | Kelas abstrak, `dataclass`, `enum` | ❌ | 6 |
 | Hierarki pengecualian berbasis kelas (`class GalatSaya(Galat)`) | 🟡 `Galat*` bawaan dan `kecuali Tipe sebagai e`; kelas galat pengguna menyusul | 1 |
 

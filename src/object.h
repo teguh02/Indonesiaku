@@ -228,12 +228,20 @@ typedef enum {
 
 #define MAGIC_BIT(kind) (1u << (kind))
 
+#define SPECIAL_PROPERTI   1
+#define SPECIAL_STATIS     2
+#define SPECIAL_KELAS      3
+
 typedef struct ObjClass {
     Obj obj;
     ObjString* name;
     struct ObjClass* superclass;
     Table methods;
     Table fields;        // atribut kelas: nilai bersama, bukan ObjClosure
+    // @properti/@metode_statis/@metode_kelas: nama -> SPECIAL_* di atas.
+    // Satu tabel, bukan tiga: tiap Table pada objek heap menuntut tiga edit
+    // GC (initTable, freeTable, markTable), jadi tiga tabel = sembilan.
+    Table special;
     uint32_t magic;      // MAGIC_BIT of every magic method in `methods`
 } ObjClass;
 

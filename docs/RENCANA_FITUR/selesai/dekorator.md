@@ -1,6 +1,6 @@
 # Rencana Fitur: dekorator
 
-- **Status:** dikerjakan
+- **Status:** selesai
 - **Target versi:** 1.1.0
 - **Pemilik:** Teguh Rijanandi
 
@@ -134,7 +134,15 @@ disimpan sebagai jenis metode, bukan sebagai pembungkus runtime:
    - `invoke()`/`callValue` untuk `statics`: jangan sisipkan penerima;
      untuk `metode_kelas`, sisipkan kelasnya.
 3. `src/compiler.c` — `method()` mengenali ketiga nama dan memancarkan
-   `OP_METHOD` varian (`OP_PROPERTY`, `OP_STATIC`, `OP_CLASSMETHOD`).
+   `OP_SPECIAL_METHOD` (satu opcode + operand jenis, bukan tiga opcode).
+
+**Catatan hasil:** rencana menyebut dua tabel (`properties`, `statics`).
+Yang dipakai satu tabel `special` berisi nama → `SPECIAL_*`, karena tiap
+`Table` baru pada objek heap menuntut tiga edit GC — dua tabel berarti enam.
+
+**Catatan hasil:** `@metode_kelas` tidak memakai parameter pertama eksplisit
+seperti `cls` di Python. `diri` di Indonesiaku implisit (K3), jadi kelasnya
+diberikan lewat slot penerima dengan nama `kelas_ini`.
 
 ## 5. Rencana uji
 
@@ -161,13 +169,13 @@ commit 2 menambah tabel pada objek heap.
 
 ## 6. Dampak dokumentasi & tooling
 
-- [ ] `website/panduan/03_PANDUAN_SINTAKS.md`
-- [ ] `editors/vscode-indonesiaku/` — `@` dalam grammar, tiga nama bawaan,
+- [x] `website/panduan/03_PANDUAN_SINTAKS.md`
+- [x] `editors/vscode-indonesiaku/` — `@` dalam grammar, tiga nama bawaan,
       snippet
-- [ ] `README.md`, `CHANGELOG.md`, `docs/ROADMAP.md`,
+- [x] `README.md`, `CHANGELOG.md`, `docs/ROADMAP.md`,
       `docs/ANALISIS/02_PETA_FITUR_PYTHON.md`
-- [ ] `AGENTS.md` bila ada jebakan baru
-- [ ] Rencana ini → `selesai/`
+- [x] `AGENTS.md` bila ada jebakan baru
+- [x] Rencana ini → `selesai/`
 
 ## 7. Risiko & alternatif
 

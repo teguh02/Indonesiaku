@@ -192,8 +192,10 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ✅ `dengan ... sebagai` — manajer konteks lewat `_masuk_`/`_keluar_`
 ([rencana](RENCANA_FITUR/selesai/dengan_sebagai.md)).
 
-> Fase 4 **sedang dikerjakan** — yang tersisa: dekorator
-> (`@properti`/`@metode_statis`/`@metode_kelas`), pewarisan berganda + MRO C3,
+✅ Dekorator `@nama` pada fungsi, plus `@properti`, `@metode_statis`, dan
+`@metode_kelas` ([rencana](RENCANA_FITUR/selesai/dekorator.md)).
+
+> Fase 4 **sedang dikerjakan** — yang tersisa: pewarisan berganda + MRO C3,
 > kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
