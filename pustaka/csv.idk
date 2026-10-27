@@ -1,0 +1,159 @@
+# pustaka/csv.idk - CSV (modul `csv`).
+# Pemakaian:
+#     impor csv
+#     dari csv impor urai, bentuk
+#
+# Berbasis teks (bukan berkas), mengikuti RFC 4180: pemisah koma, kutip ganda
+# `"` melindungi pemisah/baris baru, dan `""` berarti satu kutip literal.
+# Semantik diuji terhadap modul `csv` Python.
+
+# urai(teks, pemisah = ",", kutip = "\"") -> daftar baris; tiap baris adalah
+# daftar kolom. Baris kosong menghasilkan daftar kosong, seperti csv.reader.
+fungsi urai(teks, pemisah = ",", kutip = "\"") {
+    variabel baris = []
+    variabel kolom = []
+    variabel medan = ""
+    variabel dalam_kutip = salah
+    variabel i = 0
+    variabel n = panjang(teks)
+    selagi i < n {
+        variabel c = teks[i]
+        jika dalam_kutip {
+            jika c == kutip {
+                jika i + 1 < n dan teks[i + 1] == kutip {
+                    medan = medan + kutip
+                    i = i + 2
+                } selain {
+                    dalam_kutip = salah
+                    i = i + 1
+                }
+            } selain {
+                medan = medan + c
+                i = i + 1
+            }
+        } selain {
+            jika c == kutip dan medan == "" {
+                dalam_kutip = benar
+                i = i + 1
+            } jika_lain c == pemisah {
+                tambah(kolom, medan)
+                medan = ""
+                i = i + 1
+            } jika_lain c == "\n" {
+                jika panjang(kolom) == 0 dan medan == "" {
+                    tambah(baris, [])
+                } selain {
+                    tambah(kolom, medan)
+                    tambah(baris, kolom)
+                    kolom = []
+                    medan = ""
+                }
+                i = i + 1
+            } jika_lain c == "\r" {
+                i = i + 1
+            } selain {
+                medan = medan + c
+                i = i + 1
+            }
+        }
+    }
+    jika panjang(kolom) > 0 atau medan != "" {
+        tambah(kolom, medan)
+        tambah(baris, kolom)
+    }
+    kembalikan baris
+}
+
+fungsi _perlu_kutip(medan, pemisah, kutip) {
+    jika pemisah dalam medan atau kutip dalam medan atau "\n" dalam medan atau "\r" dalam medan {
+        kembalikan benar
+    }
+    kembalikan salah
+}
+
+fungsi _satu_baris(baris, pemisah, kutip) {
+    variabel hasil = ""
+    variabel i = 0
+    selagi i < panjang(baris) {
+        jika i > 0 {
+            hasil = hasil + pemisah
+        }
+        variabel medan = ke_teks(baris[i])
+        jika _perlu_kutip(medan, pemisah, kutip) {
+            variabel dibungkus = kutip
+            untuk c dalam medan {
+                jika c == kutip {
+                    dibungkus = dibungkus + kutip
+                }
+                dibungkus = dibungkus + c
+            }
+            medan = dibungkus + kutip
+        }
+        hasil = hasil + medan
+        i = i + 1
+    }
+    kembalikan hasil + "\n"
+}
+
+# bentuk(baris, pemisah = ",", kutip = "\"") -> teks CSV (selalu berakhir
+# dengan baris baru).
+fungsi bentuk(baris, pemisah = ",", kutip = "\"") {
+    variabel hasil = ""
+    untuk satu dalam baris {
+        hasil = hasil + _satu_baris(satu, pemisah, kutip)
+    }
+    kembalikan hasil
+}
+
+# urai_kamus(teks, ...) -> daftar kamus; baris pertama dipakai sebagai header.
+fungsi urai_kamus(teks, pemisah = ",", kutip = "\"") {
+    variabel baris = urai(teks, pemisah, kutip)
+    variabel hasil = []
+    jika panjang(baris) == 0 {
+        kembalikan hasil
+    }
+    variabel header = baris[0]
+    variabel i = 1
+    selagi i < panjang(baris) {
+        variabel satu = kamus()
+        variabel j = 0
+        selagi j < panjang(header) {
+            variabel nilai = ""
+            jika j < panjang(baris[i]) {
+                nilai = baris[i][j]
+            }
+            satu[header[j]] = nilai
+            j = j + 1
+        }
+        tambah(hasil, satu)
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# bentuk_kamus(daftar, kolom = kosong, ...) -> CSV dengan header. Bila `kolom`
+# tidak diberikan, kunci kamus pertama dipakai berurutan.
+fungsi bentuk_kamus(daftar, kolom = kosong, pemisah = ",", kutip = "\"") {
+    variabel header = kolom
+    jika header == kosong {
+        header = []
+        jika panjang(daftar) > 0 {
+            untuk k dalam kunci(daftar[0]) {
+                tambah(header, k)
+            }
+        }
+    }
+    variabel semua = [header]
+    untuk d dalam daftar {
+        variabel satu = []
+        untuk k dalam header {
+            jika punya(d, k) {
+                tambah(satu, d[k])
+            } selain {
+                tambah(satu, "")
+            }
+        }
+        tambah(semua, satu)
+    }
+    kembalikan bentuk(semua, pemisah, kutip)
+}

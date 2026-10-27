@@ -1,0 +1,27 @@
+== urai dasar ==
+[["a", "b", "c"], ["1", "2", "3"]]
+[["a", "b,c", "d"]]
+[["kata \"kutip\"", "x"]]
+== baris kosong (seperti csv.reader) ==
+[["a"], []]
+[]
+== kolom berisi baris baru ==
+[["a", "baris\nbaru"]]
+== bentuk ==
+a,"b,c"
+"x""y",z
+
+1,2,3
+
+== round-trip ==
+benar
+== kamus ==
+[{"nama": "Budi", "umur": "20"}, {"nama": "Ani", "umur": "21"}]
+nama,umur
+Budi,20
+Ani,21
+
+umur,nama
+20,Budi
+21,Ani
+
