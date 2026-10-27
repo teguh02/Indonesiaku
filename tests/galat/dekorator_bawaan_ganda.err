@@ -1,0 +1,3 @@
+[baris 5, kolom 6] Kesalahan di 'properti': Hanya satu dekorator bawaan per metode.
+        @properti
+         ^^^^^^^^

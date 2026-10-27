@@ -100,7 +100,7 @@ merusak kompatibilitas sampai 2.0.
 - **OOP** — `kelas`, `init`, `diri`, pewarisan (`<`), `super`, dan metode
   ajaib (`_teks_`, `_sama_`, `_tambah_`, `_panjang_`, `_logika_`,
   `_ambil_`/`_atur_`, `_hash_`, cerminan `_ktambah_` dkk, `_iter_`, `_panggil_`);
-  `terurut`/`min`/`max` bekerja atas objek; atribut kelas; `dengan ... sebagai`; dekorator (`@properti`, `@metode_statis`, `@metode_kelas`); pewarisan berganda (MRO C3)
+  `terurut`/`min`/`max` bekerja atas objek; atribut kelas; `dengan ... sebagai`; dekorator (`@properti`, `@metode_statis`, `@metode_kelas`); pewarisan berganda (MRO C3); kelas abstrak (`@abstrak`)
 - **Penanganan galat** — `naikkan` + `coba`/`kecuali`/`akhirnya`; semua galat
   runtime dapat ditangkap
 - **Modul** — `impor matematika`, `impor x sebagai y`, `dari x impor y`, paket,

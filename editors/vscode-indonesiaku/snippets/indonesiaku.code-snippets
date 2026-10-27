@@ -426,5 +426,13 @@
       "}"
     ],
     "description": "Metode yang menerima kelasnya sebagai kelas_ini"
+  },
+  "@abstrak": {
+    "prefix": "abstrak",
+    "body": [
+      "@abstrak",
+      "${1:nama}() { }"
+    ],
+    "description": "Metode yang wajib diisi subkelas"
   }
 }

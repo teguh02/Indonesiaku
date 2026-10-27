@@ -30,6 +30,17 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4: kelas abstrak
+- ✨ **`@abstrak`** pada metode — kelas yang masih punya metode abstrak belum
+  terisi tidak bisa dibuat objeknya; galatnya menyebut metode yang kurang.
+- Bukan mekanisme baru: `SPECIAL_*` keempat, menumpang jalur
+  `@properti`/`@metode_statis`/`@metode_kelas`.
+- Bekerja dengan pewarisan berganda: satu induk menuntut, induk lain mengisi.
+  Metode abstrak tidak ikut diratakan, supaya badan kosongnya tidak menang
+  atas implementasi nyata dari induk lain.
+- Satu metode hanya boleh punya satu dekorator bawaan.
+- Contoh: [`examples/oop/kelas_abstrak.idk`](examples/oop/kelas_abstrak.idk).
+
 ### Added — Fase 4: pewarisan berganda + MRO C3
 - ✨ **`kelas D < B, C { }`** — induk dipisah koma, prioritas kiri. Urutan
   pencarian dihitung dengan linearisasi C3 seperti Python; MRO yang mustahil

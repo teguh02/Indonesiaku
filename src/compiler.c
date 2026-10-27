@@ -2161,6 +2161,7 @@ static void method() {
     // The three builtin decorators change how a method is CALLED, so they are
     // resolved here, at definition time, not as runtime wrappers.
     uint8_t special = 0;
+    bool specialSeen = false;
     while (match(TOKEN_AT)) {
         if (!check(TOKEN_IDENTIFIER)) {
             error("Harapkan nama dekorator setelah '@'.");
@@ -2173,6 +2174,8 @@ static void method() {
             special = SPECIAL_STATIS;
         } else if (identifiersEqualCString(&parser.previous, "metode_kelas")) {
             special = SPECIAL_KELAS;
+        } else if (identifiersEqualCString(&parser.previous, "abstrak")) {
+            special = SPECIAL_ABSTRAK;
         } else {
             error("Dekorator kustom pada metode belum didukung: 'diri' tidak "
                   "terbawa ke fungsi pembungkus. Yang tersedia: @properti, "
@@ -2186,6 +2189,13 @@ static void method() {
             }
             return;
         }
+        if (specialSeen) {
+            // One tag per method: ObjClass->special stores a single value per
+            // name, so a second one would silently overwrite the first.
+            error("Hanya satu dekorator bawaan per metode.");
+            return;
+        }
+        specialSeen = true;
         while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
     }
     consume(TOKEN_IDENTIFIER, "Harapkan nama metode.");

@@ -1,0 +1,18 @@
+=== subkelas lengkap bisa dibuat ===
+9
+12
+luas 9
+=== kelas abstraknya sendiri tidak bisa ===
+Kelas 'Bentuk' abstrak: metode 'keliling' belum diisi subkelas.
+=== mengisi sebagian: tetap abstrak ===
+Kelas 'Separuh' abstrak: metode 'b' belum diisi subkelas.
+=== diisi lengkap oleh cucunya ===
+a b
+=== satu induk menuntut, induk lain mengisi ===
+dikerjakan
+=== subkelas boleh menambah metode abstrak baru ===
+Kelas 'Tambah' abstrak: metode 'c' belum diisi subkelas.
+a b c
+=== adalah_instansi tetap benar ===
+benar
+benar

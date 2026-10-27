@@ -67,6 +67,7 @@ bool ancestorNext(AncestorIter* it) {
 static bool instanceMagic(Value value, MagicKind kind, Value* method);
 static const char* valueTypeName(Value value);
 static uint8_t specialKind(ObjClass* klass, ObjString* name);
+static ObjString* unimplementedAbstract(ObjClass* klass);
 static bool c3Linearize(ObjClass* klass, ObjClass** bases, int baseCount);
 static bool classMethodGet(ObjClass* klass, ObjString* name, Value* out);
 
@@ -646,6 +647,14 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
             }
             case OBJ_CLASS: {
                 ObjClass* klass = AS_CLASS(callee);
+                ObjString* missing = unimplementedAbstract(klass);
+                if (missing != NULL) {
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError(
+                        "Kelas '%s' abstrak: metode '%s' belum diisi subkelas.",
+                        klass->name->chars, missing->chars);
+                    return false;
+                }
                 vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
                 Value initializer;
                 if (tableGet(&klass->methods, vm.initString, &initializer)) {
@@ -1044,6 +1053,41 @@ static bool c3Linearize(ObjClass* klass, ObjClass** bases, int baseCount) {
     for (int i = 0; i < resultCount; i++) klass->mro[i] = result[i];
     klass->mroCount = resultCount;
     return true;
+}
+
+// Returns the first still-unimplemented @abstrak method of `klass`, or NULL.
+//
+// A name is "implemented" when some class earlier in the MRO defines it as an
+// ordinary method. defineMethod() already writes an explicit 0 tag when a
+// subclass redefines a tagged name, so specialKind() answers exactly that --
+// no separate bookkeeping, and overriding from any base works for free.
+static ObjString* unimplementedAbstract(ObjClass* klass) {
+    for (AncestorIter it = ancestors(klass); ancestorNext(&it); ) {
+        Table* tags = &it.klass->special;
+        for (int i = 0; i < tags->capacity; i++) {
+            Entry* entry = &tags->entries[i];
+            if (entry->key == NULL) continue;
+            if ((uint8_t)AS_NUMBER(entry->value) != SPECIAL_ABSTRAK) continue;
+            // Not specialKind(): that returns the FIRST tag along the MRO,
+            // which is this abstract one itself. What matters is whether any
+            // class in the MRO supplies a real body -- a sibling base can
+            // implement what another base declares (mixin pattern), and it
+            // may well sit later in the MRO.
+            bool filled = false;
+            for (AncestorIter f = ancestors(klass); ancestorNext(&f); ) {
+                Value ignored;
+                if (!tableGet(&f.klass->own, entry->key, &ignored)) continue;
+                Value tag;
+                bool tagged = tableGet(&f.klass->special, entry->key, &tag);
+                if (!tagged || (uint8_t)AS_NUMBER(tag) != SPECIAL_ABSTRAK) {
+                    filled = true;
+                    break;
+                }
+            }
+            if (!filled) return entry->key;
+        }
+    }
+    return NULL;
 }
 
 static bool classMethodGet(ObjClass* klass, ObjString* name, Value* out) {
@@ -3173,8 +3217,23 @@ static InterpretResult run() {
                 // Disalin dari belakang MRO ke depan: yang lebih awal di MRO
                 // menimpa yang belakangan, persis prioritas C3.
                 for (int i = subclass->mroCount - 1; i >= 1; i--) {
-                    tableAddAll(&subclass->mro[i]->own, &subclass->methods);
-                    subclass->magic |= subclass->mro[i]->magic;
+                    ObjClass* base = subclass->mro[i];
+                    // @abstrak declares a contract, it does not provide an
+                    // implementation. Copying its empty body would let it beat
+                    // a real method from a base later in the MRO -- the mixin
+                    // pattern, where one base declares and another supplies.
+                    Table* src = &base->own;
+                    for (int j = 0; j < src->capacity; j++) {
+                        Entry* entry = &src->entries[j];
+                        if (entry->key == NULL) continue;
+                        Value tag;
+                        if (tableGet(&base->special, entry->key, &tag) &&
+                            (uint8_t)AS_NUMBER(tag) == SPECIAL_ABSTRAK) {
+                            continue;
+                        }
+                        tableSet(&subclass->methods, entry->key, entry->value);
+                    }
+                    subclass->magic |= base->magic;
                 }
                 pop();  // subclass
                 break;

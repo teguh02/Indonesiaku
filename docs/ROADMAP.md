@@ -198,7 +198,13 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ✅ Pewarisan berganda + MRO C3
 ([rencana](RENCANA_FITUR/selesai/pewarisan_berganda.md)).
 
-> Fase 4 **sedang dikerjakan** — yang tersisa: kelas abstrak.
+✅ Kelas abstrak `@abstrak`
+([rencana](RENCANA_FITUR/selesai/kelas_abstrak.md)).
+
+> **Fase 4 SELESAI.** Seluruh item OOP lengkap sudah diterapkan: metode ajaib
+> (30), `adalah_instansi`, atribut kelas, `dengan ... sebagai`, dekorator
+> (`@properti`, `@metode_statis`, `@metode_kelas`, `@abstrak`), pewarisan
+> berganda + MRO C3, dan kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
 

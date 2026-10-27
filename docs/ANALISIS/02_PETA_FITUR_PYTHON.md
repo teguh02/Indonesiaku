@@ -188,7 +188,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | Usulan nama: `_teks_`, `_sama_`, `_kurang_`, `_tambah_`, `_panjang_`, `_ambil_`, `_iter_`, `_panggil_` | | |
 | Atribut kelas (bukan per instansi) | ✅ | 4 |
 | `@property`, `@staticmethod`, `@classmethod` | ✅ `@properti`, `@metode_statis`, `@metode_kelas` (tanpa penyetel) | 4 |
-| Kelas abstrak, `dataclass`, `enum` | ❌ | 6 |
+| Kelas abstrak, `dataclass`, `enum` | 🟡 kelas abstrak `@abstrak` ✅; `dataclass`/`enum` belum | 6 |
 | Hierarki pengecualian berbasis kelas (`class GalatSaya(Galat)`) | 🟡 `Galat*` bawaan dan `kecuali Tipe sebagai e`; kelas galat pengguna menyusul | 1 |
 
 ## F. Pengecualian bawaan (usulan hierarki Indonesia)

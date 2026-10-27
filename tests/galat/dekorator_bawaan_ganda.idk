@@ -1,0 +1,7 @@
+# Satu metode hanya boleh punya satu dekorator bawaan.
+
+kelas K {
+    @abstrak
+    @properti
+    x() { }
+}

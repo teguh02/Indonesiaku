@@ -1,0 +1,8 @@
+# Kelas dengan metode @abstrak yang belum diisi tidak bisa dibuat objeknya.
+
+kelas Bentuk {
+    @abstrak
+    luas() { }
+}
+
+Bentuk()

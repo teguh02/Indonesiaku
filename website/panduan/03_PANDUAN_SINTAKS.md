@@ -1864,6 +1864,68 @@ ajaib ikut ditelusuri lewat MRO, jadi semuanya diwariskan dari induk mana pun.
 
 > Contoh lengkap: [`examples/oop/pewarisan_berganda.idk`](../examples/oop/pewarisan_berganda.idk)
 
+### Kelas abstrak
+
+`@abstrak` menandai metode yang **wajib diisi subkelas**. Kelas yang masih
+punya metode abstrak belum terisi tidak bisa dibuat objeknya:
+
+```indonesiaku
+kelas Bentuk {
+    @abstrak
+    luas() { }
+
+    @abstrak
+    keliling() { }
+
+    # metode biasa boleh memakai yang abstrak
+    ringkas() { kembalikan "luas " + ke_teks(diri.luas()) }
+}
+
+kelas Persegi < Bentuk {
+    init(sisi) { diri.sisi = sisi }
+    luas() { kembalikan diri.sisi * diri.sisi }
+    keliling() { kembalikan 4 * diri.sisi }
+}
+
+cetak(Persegi(3).ringkas())   # luas 9
+```
+
+Membuat objek dari kelas yang belum lengkap ditolak, dengan menyebut metode
+mana yang kurang:
+
+```indonesiaku-takjalan
+Bentuk()
+# GalatTipe: Kelas 'Bentuk' abstrak: metode 'luas' belum diisi subkelas.
+```
+
+- Salahnya ketahuan **saat objeknya dibuat**, bukan nanti saat metodenya
+  dipanggil.
+- Subkelas yang mengisi sebagian **tetap abstrak** — sah ditulis, asal tidak
+  dibuat objeknya; cucunya boleh melengkapi sisanya.
+- Subkelas boleh menambah metode abstrak baru.
+- Badan metode abstrak diabaikan; tulis saja `{ }`.
+
+Dengan pewarisan berganda, satu induk boleh menuntut dan induk lain
+mengisinya:
+
+```indonesiaku
+kelas Kontrak {
+    @abstrak
+    kerja() { }
+}
+
+kelas Pekerja { kerja() { kembalikan "dikerjakan" } }
+
+kelas Gabung < Kontrak, Pekerja { }
+
+cetak(Gabung().kerja())   # dikerjakan
+```
+
+> Satu metode hanya boleh punya **satu** dekorator bawaan — `@abstrak`
+> bersama `@properti` ditolak compiler.
+
+> Contoh lengkap: [`examples/oop/kelas_abstrak.idk`](../examples/oop/kelas_abstrak.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

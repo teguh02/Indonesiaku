@@ -231,6 +231,7 @@ typedef enum {
 #define SPECIAL_PROPERTI   1
 #define SPECIAL_STATIS     2
 #define SPECIAL_KELAS      3
+#define SPECIAL_ABSTRAK    4   // wajib diisi subkelas sebelum objek dibuat
 
 typedef struct ObjClass {
     Obj obj;

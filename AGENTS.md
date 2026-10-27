@@ -206,6 +206,13 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   triggered by `_sama_` freed them — a use-after-free that the normal suite
   passed and only the sanitizer build caught. Keep values on the stack
   (`peek`), pop after.
+- **A method that only declares a contract must NOT be flattened.** Copying
+  an `@abstrak` method's empty body into a subclass lets it beat a real
+  implementation inherited from a later base -- the mixin case
+  (`Gabung < Kontrak, Pekerja`) silently returns `kosong` instead of calling
+  `Pekerja.kerja()`. Skip tagged-abstract names while flattening, and decide
+  "is it implemented?" by scanning every MRO class's `own` for an untagged
+  entry, not with the first-tag-wins lookup.
 - **Flattened inheritance is not composable: keep an `own` table.** Methods
   are copied into the subclass so a call stays one `tableGet`, but that makes
   `methods` useless as a source for flattening into a *grandchild*: `B.methods`

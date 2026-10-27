@@ -1,0 +1,102 @@
+# Kelas abstrak: @abstrak menuntut subkelas mengisi metodenya.
+#
+# Kesalahan ketahuan saat objeknya dibuat, bukan nanti saat metodenya
+# dipanggil.
+
+kelas Bentuk {
+    @abstrak
+    luas() { }
+
+    @abstrak
+    keliling() { }
+
+    # Metode biasa boleh memakai yang abstrak.
+    ringkas() { kembalikan "luas " + ke_teks(diri.luas()) }
+}
+
+kelas Persegi < Bentuk {
+    init(sisi) { diri.sisi = sisi }
+    luas() { kembalikan diri.sisi * diri.sisi }
+    keliling() { kembalikan 4 * diri.sisi }
+}
+
+cetak("=== subkelas lengkap bisa dibuat ===")
+p = Persegi(3)
+cetak(p.luas())
+cetak(p.keliling())
+cetak(p.ringkas())
+
+cetak("=== kelas abstraknya sendiri tidak bisa ===")
+coba {
+    Bentuk()
+} kecuali GalatTipe sebagai e {
+    cetak(e)
+}
+
+cetak("=== mengisi sebagian: tetap abstrak ===")
+
+kelas Dasar {
+    @abstrak
+    a() { }
+
+    @abstrak
+    b() { }
+}
+
+kelas Separuh < Dasar {
+    a() { kembalikan "a" }
+}
+
+coba {
+    Separuh()
+} kecuali GalatTipe sebagai e {
+    cetak(e)
+}
+
+cetak("=== diisi lengkap oleh cucunya ===")
+
+kelas Penuh < Separuh {
+    b() { kembalikan "b" }
+}
+
+penuh = Penuh()
+cetak(penuh.a(), penuh.b())
+
+cetak("=== satu induk menuntut, induk lain mengisi ===")
+
+kelas Kontrak {
+    @abstrak
+    kerja() { }
+}
+
+kelas Pekerja {
+    kerja() { kembalikan "dikerjakan" }
+}
+
+kelas Gabung < Kontrak, Pekerja { }
+
+cetak(Gabung().kerja())
+
+cetak("=== subkelas boleh menambah metode abstrak baru ===")
+
+kelas Tambah < Penuh {
+    @abstrak
+    c() { }
+}
+
+coba {
+    Tambah()
+} kecuali GalatTipe sebagai e {
+    cetak(e)
+}
+
+kelas TambahPenuh < Tambah {
+    c() { kembalikan "c" }
+}
+
+tp = TambahPenuh()
+cetak(tp.a(), tp.b(), tp.c())
+
+cetak("=== adalah_instansi tetap benar ===")
+cetak(adalah_instansi(penuh, Dasar))
+cetak(adalah_instansi(tp, Dasar))
