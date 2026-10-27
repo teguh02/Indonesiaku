@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script defer src="../assets/indonesiaku-hljs.js"></script>
 </head>
 
 <body x-data="shell" class="min-h-full bg-paper font-sans text-ink antialiased dark:bg-night dark:text-paper">
@@ -108,9 +109,17 @@
           <span class="ml-auto hidden font-mono text-[10px] text-ink-3 dark:text-paper/35 sm:block" x-text="t('pg_hint')">Ctrl+Enter</span>
         </div>
         <label for="kode" class="sr-only">Kode Indonesiaku</label>
-        <textarea id="kode" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"
-                  class="pg-editor pg-scroll block h-[420px] w-full resize-y border-0 p-5 outline-none focus:ring-0"
-                  aria-label="Kode Indonesiaku"># Selamat datang di Playground Indonesiaku
+        <!-- Editor: textarea transparan ditumpuk di atas lapisan <pre> yang
+             diwarnai highlight.js, plus selokan nomor baris. Ketiganya WAJIB
+             memakai metrik font yang sama (lihat .pg-* di site.css), kalau
+             tidak kursor akan melenceng dari teks. -->
+        <div id="editor-bungkus" class="pg-wrap pg-scroll">
+          <div id="gutter" class="pg-gutter" aria-hidden="true">1</div>
+          <div class="pg-area">
+            <pre class="pg-highlight" aria-hidden="true"><code id="kode-sorot" class="language-indonesiaku"></code></pre>
+            <textarea id="kode" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off"
+                      class="pg-input"
+                      aria-label="Kode Indonesiaku"># Selamat datang di Playground Indonesiaku
 fungsi sapa(nama) {
     kembalikan "Halo, " + nama + "!"
 }
@@ -123,6 +132,8 @@ angka = [3, 1, 4, 1, 5]
 cetak("Jumlah:", panjang(angka))
 cetak("Rata-rata:", (1 + 2 + 3) / 3)
 </textarea>
+          </div>
+        </div>
       </section>
 
       <!-- KELUARAN -->
@@ -171,11 +182,80 @@ cetak("Rata-rata:", (1 + 2 + 3) / 3)
     const BATAS_WAKTU_MS = 10000;
 
     const kodeEl = document.getElementById("kode");
+    const sorotEl = document.getElementById("kode-sorot");
+    const gutterEl = document.getElementById("gutter");
+    const wrapEl = document.getElementById("editor-bungkus");
     const stdinEl = document.getElementById("stdin");
     const outputEl = document.getElementById("output");
     const statusEl = document.getElementById("status");
     const runBtn = document.getElementById("jalankan");
     const clearBtn = document.getElementById("bersihkan");
+
+    // -------------------------------------------------------------
+    // Sorot sintaks + nomor baris.
+    // Lapisan <pre> hanya cermin dari textarea; textarea tetap sumber
+    // kebenaran, jadi copy-paste, undo, dan pembaca layar tetap normal.
+    // -------------------------------------------------------------
+    let jumlahBarisTerakhir = -1;
+
+    function perbaruiGutter(teks) {
+      // Baris terakhir yang diakhiri "\n" tidak menambah baris tampak.
+      const n = teks.split("\n").length;
+      if (n === jumlahBarisTerakhir) return;
+      jumlahBarisTerakhir = n;
+      let s = "";
+      for (let i = 1; i <= n; i++) s += i + "\n";
+      gutterEl.textContent = s;
+    }
+
+    function perbaruiSorot() {
+      const teks = kodeEl.value;
+      perbaruiGutter(teks);
+
+      if (!window.hljs || !window.hljs.getLanguage("indonesiaku")) {
+        wrapEl.classList.add("tanpa-sorot");
+        return;
+      }
+      wrapEl.classList.remove("tanpa-sorot");
+
+      // Spasi akhir diamankan agar baris kosong terakhir tetap punya tinggi.
+      const aman = teks.endsWith("\n") ? teks + " " : teks;
+      sorotEl.innerHTML = window.hljs.highlight(aman, {
+        language: "indonesiaku",
+        ignoreIllegals: true,
+      }).value;
+    }
+
+    kodeEl.addEventListener("input", perbaruiSorot);
+    kodeEl.addEventListener("scroll", () => {
+      // textarea tidak menggulir sendiri (overflow:hidden), tapi browser
+      // tetap menggesernya saat kursor keluar area — kembalikan ke 0 dan
+      // biarkan .pg-wrap yang menggulir.
+      if (kodeEl.scrollTop || kodeEl.scrollLeft) {
+        wrapEl.scrollTop += kodeEl.scrollTop;
+        wrapEl.scrollLeft += kodeEl.scrollLeft;
+        kodeEl.scrollTop = 0;
+        kodeEl.scrollLeft = 0;
+      }
+    });
+
+    // hljs dimuat dengan `defer`, dan pada navigasi SPA (Senna) skrip ini
+    // dijalankan ulang TANPA event `load` baru — jadi jangan hanya
+    // mengandalkan window.onload. Coba sekarang, lalu ulangi sampai hljs
+    // benar-benar siap.
+    perbaruiSorot();                         // nomor baris tampil duluan
+    if (!(window.hljs && window.hljs.getLanguage("indonesiaku"))) {
+      let sisa = 40;                         // ~6 detik, lalu menyerah
+      const tunggu = setInterval(() => {
+        if (window.indkDaftarkanBahasa) window.indkDaftarkanBahasa();
+        if (window.hljs && window.hljs.getLanguage("indonesiaku")) {
+          clearInterval(tunggu);
+          perbaruiSorot();
+        } else if (--sisa <= 0) {
+          clearInterval(tunggu);             // tetap jalan tanpa warna
+        }
+      }, 150);
+    }
 
     const t = (k) => window.t18n(k);
 
@@ -285,6 +365,7 @@ cetak("Rata-rata:", (1 + 2 + 3) / 3)
         const { selectionStart: a, selectionEnd: b, value } = kodeEl;
         kodeEl.value = value.slice(0, a) + "    " + value.slice(b);
         kodeEl.selectionStart = kodeEl.selectionEnd = a + 4;
+        perbaruiSorot();        // menulis .value lewat skrip tidak memicu "input"
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();

@@ -187,6 +187,102 @@ body {
 }
 .pg-editor::placeholder { color: #5d6480; }
 
+/* ---------------------------------------------------------------
+   Editor playground: textarea transparan di atas <pre> berwarna.
+   Metrik font (family/size/line-height/tab-size/letter-spacing) dan
+   padding WAJIB sama persis di .pg-input dan .pg-highlight — beda
+   sedikit saja membuat kursor melenceng dari teks yang terlihat.
+   --------------------------------------------------------------- */
+.pg-wrap {
+  position: relative;
+  display: flex;
+  height: 420px;
+  overflow: auto;
+  background: #0d0f16;
+  resize: vertical;
+}
+
+.pg-gutter {
+  flex: 0 0 auto;
+  min-width: 3.25rem;
+  padding: 1.25rem 0.75rem 1.25rem 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  background: #0d0f16;
+  color: #5d6480;
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  text-align: right;
+  white-space: pre;
+  user-select: none;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+/* Lebar area = selebar baris terpanjang, agar scroll horizontal
+   menggeser teks berwarna dan textarea bersamaan. */
+.pg-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: max-content;
+}
+
+.pg-highlight,
+.pg-input {
+  margin: 0;
+  padding: 1.25rem;
+  border: 0;
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  letter-spacing: normal;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.pg-highlight {
+  display: block;
+  min-height: 100%;
+  min-width: 100%;
+  pointer-events: none;
+  background: transparent;
+  /* Warna dasar WAJIB diset di sini. Elemen <code> tidak diberi kelas
+     .hljs (kita memakai hljs.highlight(), bukan highlightElement), jadi
+     tema atom-one-dark tidak menyetel warna apa pun — tanpa baris ini
+     teks non-token mewarisi warna teks halaman yang gelap dan lenyap di
+     atas latar gelap. */
+  color: #e7e7f2;
+}
+.pg-highlight code {
+  background: transparent !important;
+  padding: 0 !important;
+  font: inherit;
+  color: inherit;
+  white-space: pre;
+}
+
+.pg-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  overflow: hidden;          /* .pg-wrap yang menggulir */
+  background: transparent;
+  color: transparent;        /* teks asli dari lapisan highlight */
+  caret-color: #ff8a95;
+  outline: none;
+}
+.pg-input::selection { background: rgba(255, 138, 149, 0.28); }
+.pg-input:focus { outline: none; box-shadow: none; }
+
+/* Pengguna yang menolak highlight (hljs gagal dimuat): tampilkan teks asli. */
+.pg-wrap.tanpa-sorot .pg-input { color: #e7e7f2; }
+.pg-wrap.tanpa-sorot .pg-highlight { display: none; }
+
 .pg-output {
   background: #0d0f16;
   color: #e7e7f2;
