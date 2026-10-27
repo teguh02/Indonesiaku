@@ -510,25 +510,17 @@ Value nativeFnBisaDipanggil(int argCount, Value* args) {
                     IS_CLASS(v) || IS_BOUND_METHOD(v));
 }
 
-// repr(x) - repr(): teks diberi tanda kutip, sisanya seperti ke_teks().
-// Defined further down, next to the other text-building helpers.
-static void appendStringRepr(ObjString* str, char* buf, size_t size, size_t* pos);
+// repr(x) - repr(): teks dikutip, instansi memakai _repr_ (K19).
+static bool valueText(Value v, bool repr, Value* out);
 
 Value nativeFnRepr(int argCount, Value* args) {
     if (argCount != 1) {
         nativeRaiseKelas(vm.galatTipe, "repr() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
-    if (IS_STRING(args[0])) {
-        // Quote and escape via the shared rule, so repr() agrees with the
-        // way collections print their elements.
-        char buf[512];
-        size_t pos = 0;
-        buf[0] = '\0';
-        appendStringRepr(AS_STRING(args[0]), buf, sizeof(buf), &pos);
-        return OBJ_VAL(copyString(buf, (int)pos));
-    }
-    return nativeFnKeTeks(argCount, args);
+    Value text;
+    if (!valueText(args[0], true, &text)) return KOSONG_VAL;
+    return text;
 }
 
 // id(x) - identitas objek, konsisten dengan operator `adalah`
@@ -967,146 +959,20 @@ Value nativeFnHenti(int argCount, Value* args) {
 // FUNGSI KONVERSI & FORMAT - IMPLEMENTASI
 // ============================================================================
 
-static void appendValueText(Value v, char* buf, size_t size, size_t* pos);
-// `repr`: quote and escape strings, for values printed inside a collection.
-static void appendValueRepr(Value v, char* buf, size_t size, size_t* pos);
-
-// Append a literal string, respecting the buffer bound.
-static void appendRaw(const char* s, char* buf, size_t size, size_t* pos) {
-    for (int i = 0; s[i] != '\0' && *pos + 1 < size; i++) {
-        buf[(*pos)++] = s[i];
+// Teks sebuah nilai lewat formatter tunggal (object.c), jadi cetak, ke_teks,
+// repr, format, dan f-string selalu sepakat dan tidak pernah terpotong.
+// Instansi memakai _teks_/_repr_ (K19). false: metode ajaib bergalat dan
+// galatnya sudah tertunda.
+static bool valueText(Value v, bool repr, Value* out) {
+    TextBuf buf;
+    initTextBuf(&buf);
+    if (!formatValue(&buf, v, repr, true)) {
+        freeTextBuf(&buf);
+        return false;
     }
-    buf[*pos] = '\0';
-}
-
-// Append a value's text representation into buf at *pos (bounded by size).
-// Lists, dicts and ranges recurse so ke_teks()/format()/repr() agree with
-// cetak() instead of printing "<objek>". Kept self-contained (no
-// open_memstream / stdout redirection) because this must build on Windows.
-// Append a string in quoted/escaped form. Uses the shared stringEscape() so
-// this matches printObject() and repr() exactly.
-static void appendStringRepr(ObjString* str, char* buf, size_t size, size_t* pos) {
-    appendRaw("\"", buf, size, pos);
-    for (int i = 0; i < str->length; i++) {
-        const char* esc = stringEscape(str->chars[i]);
-        if (esc != NULL) {
-            appendRaw(esc, buf, size, pos);
-        } else if (*pos + 1 < size) {
-            buf[(*pos)++] = str->chars[i];
-            buf[*pos] = '\0';
-        }
-    }
-    appendRaw("\"", buf, size, pos);
-}
-
-static void appendValueRepr(Value v, char* buf, size_t size, size_t* pos) {
-    if (IS_STRING(v)) {
-        appendStringRepr(AS_STRING(v), buf, size, pos);
-    } else {
-        appendValueText(v, buf, size, pos);
-    }
-}
-
-static void appendValueText(Value v, char* buf, size_t size, size_t* pos) {
-    char tmp[64];
-    const char* s = NULL;
-    int len = 0;
-
-    if (IS_BOOL(v)) {
-        s = AS_BOOL(v) ? "benar" : "salah";
-    } else if (IS_KOSONG(v)) {
-        s = "kosong";
-    } else if (IS_INT(v)) {
-        snprintf(tmp, sizeof(tmp), "%lld", (long long)AS_INT(v));
-        s = tmp;
-    } else if (IS_NUMBER(v)) {
-        numberToString(AS_NUMBER(v), tmp, sizeof(tmp));
-        s = tmp;
-    } else if (IS_STRING(v)) {
-        ObjString* str = AS_STRING(v);
-        s = str->chars;
-        len = str->length;
-    } else if (IS_LIST(v)) {
-        ObjList* list = AS_LIST(v);
-        appendRaw("[", buf, size, pos);
-        for (int i = 0; i < list->items.count; i++) {
-            if (i > 0) appendRaw(", ", buf, size, pos);
-            appendValueRepr(list->items.values[i], buf, size, pos);
-        }
-        appendRaw("]", buf, size, pos);
-        return;
-    } else if (IS_SET(v)) {
-        // himpunan([1, 2]) / himpunan() -- same as printObject (K17: no literal).
-        ObjSet* set = AS_SET(v);
-        const char* nama = set->frozen ? "himpunan_beku" : "himpunan";
-        if (set->keys.count == 0) {
-            appendRaw(nama, buf, size, pos);
-            appendRaw("()", buf, size, pos);
-            return;
-        }
-        appendRaw(nama, buf, size, pos);
-        appendRaw("([", buf, size, pos);
-        for (int i = 0; i < set->keys.count; i++) {
-            if (i > 0) appendRaw(", ", buf, size, pos);
-            appendValueRepr(set->keys.values[i], buf, size, pos);
-        }
-        appendRaw("])", buf, size, pos);
-        return;
-    } else if (IS_TUPLE(v)) {
-        // (1, 2), (1,), () -- same as printObject and Python.
-        ObjTuple* tuple = AS_TUPLE(v);
-        appendRaw("(", buf, size, pos);
-        for (int i = 0; i < tuple->items.count; i++) {
-            if (i > 0) appendRaw(", ", buf, size, pos);
-            appendValueRepr(tuple->items.values[i], buf, size, pos);
-        }
-        if (tuple->items.count == 1) appendRaw(",", buf, size, pos);
-        appendRaw(")", buf, size, pos);
-        return;
-    } else if (IS_DICT(v)) {
-        ObjDict* dict = AS_DICT(v);
-        appendRaw("{", buf, size, pos);
-        bool first = true;
-        // Insertion order (matching printObject and kunci()), any hashable
-        // key type (K8); keys and values as repr.
-        for (int i = 0; i < dict->keys.count; i++) {
-            Value key = dict->keys.values[i];
-            Value entryValue;
-            if (!valueTableGet(&dict->table, key, &entryValue)) continue;
-            if (!first) appendRaw(", ", buf, size, pos);
-            first = false;
-            appendValueRepr(key, buf, size, pos);
-            appendRaw(": ", buf, size, pos);
-            appendValueRepr(entryValue, buf, size, pos);
-        }
-        appendRaw("}", buf, size, pos);
-        return;
-    } else if (IS_RANGE(v)) {
-        // Mirrors printObject: rentang(0, 5) / rentang(0, 10, 2).
-        ObjRange* range = AS_RANGE(v);
-        char start[32], stop[32], step[32];
-        rangeNumberToString(range->start, start, sizeof(start));
-        rangeNumberToString(range->stop, stop, sizeof(stop));
-        appendRaw("rentang(", buf, size, pos);
-        appendRaw(start, buf, size, pos);
-        appendRaw(", ", buf, size, pos);
-        appendRaw(stop, buf, size, pos);
-        if (range->step != 1) {
-            rangeNumberToString(range->step, step, sizeof(step));
-            appendRaw(", ", buf, size, pos);
-            appendRaw(step, buf, size, pos);
-        }
-        appendRaw(")", buf, size, pos);
-        return;
-    } else {
-        s = "<objek>";
-    }
-
-    if (len == 0) len = (int)strlen(s);
-    for (int i = 0; i < len && *pos + 1 < size; i++) {
-        buf[(*pos)++] = s[i];
-    }
-    buf[*pos] = '\0';
+    *out = OBJ_VAL(copyString(buf.length > 0 ? buf.chars : "", buf.length));
+    freeTextBuf(&buf);
+    return true;
 }
 
 Value nativeFnKeAngka(int argCount, Value* args) {
@@ -1153,11 +1019,9 @@ Value nativeFnKeTeks(int argCount, Value* args) {
         nativeRaise("ke_teks() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
-    char buf[512];
-    size_t pos = 0;
-    buf[0] = '\0';
-    appendValueText(args[0], buf, sizeof(buf), &pos);
-    return OBJ_VAL(copyString(buf, (int)pos));
+    Value text;
+    if (!valueText(args[0], false, &text)) return KOSONG_VAL;
+    return text;
 }
 
 // format(pola, ...) - ganti setiap '{}' di pola dengan argumen berikutnya.
@@ -1172,28 +1036,33 @@ Value nativeFnFormat(int argCount, Value* args) {
     }
 
     ObjString* pola = AS_STRING(args[0]);
-    char buf[1024];
-    size_t pos = 0;
-    buf[0] = '\0';
+    TextBuf buf;
+    initTextBuf(&buf);
     int nextArg = 1;
+    int literalStart = 0;
 
-    for (int i = 0; i < pola->length && pos + 1 < sizeof(buf); i++) {
-        if (pola->chars[i] == '{' && i + 1 < pola->length &&
-            pola->chars[i + 1] == '}') {
-            if (nextArg < argCount) {
-                appendValueText(args[nextArg++], buf, sizeof(buf), &pos);
-            } else {
-                // Not enough args: leave the placeholder literally.
-                if (pos + 2 < sizeof(buf)) { buf[pos++] = '{'; buf[pos++] = '}'; }
-            }
-            i++; // skip '}'
-        } else {
-            buf[pos++] = pola->chars[i];
+    for (int i = 0; i < pola->length; i++) {
+        if (pola->chars[i] != '{' || i + 1 >= pola->length || pola->chars[i + 1] != '}') {
+            continue;
         }
-        buf[pos] = '\0';
+        textAppend(&buf, pola->chars + literalStart, i - literalStart);
+        if (nextArg < argCount) {
+            if (!formatValue(&buf, args[nextArg++], false, true)) {
+                freeTextBuf(&buf);
+                return KOSONG_VAL;
+            }
+        } else {
+            // Not enough args: leave the placeholder literally.
+            textAppend(&buf, "{}", 2);
+        }
+        i++;   // skip '}'
+        literalStart = i + 1;
     }
+    textAppend(&buf, pola->chars + literalStart, pola->length - literalStart);
 
-    return OBJ_VAL(copyString(buf, (int)pos));
+    Value result = OBJ_VAL(copyString(buf.length > 0 ? buf.chars : "", buf.length));
+    freeTextBuf(&buf);
+    return result;
 }
 
 // acak_bulat(min, maks) - bilangan bulat acak dalam [min, maks].
@@ -2325,10 +2194,20 @@ Value nativeFnCetak(int argCount, Value* args) {
         }
     }
 
+    // Format then write each argument in turn, like Python's print: when a
+    // _teks_ raises, the arguments before it have already been printed.
+    TextBuf buf;
+    initTextBuf(&buf);
     for (int i = 0; i < positional; i++) {
-        printValue(args[i]);
+        buf.length = 0;
+        if (!formatValue(&buf, args[i], false, true)) {
+            freeTextBuf(&buf);
+            return KOSONG_VAL;
+        }
+        if (buf.length > 0) fwrite(buf.chars, 1, (size_t)buf.length, stdout);
         if (i < positional - 1) fwrite(pisah, 1, (size_t)pisahLen, stdout);
     }
+    freeTextBuf(&buf);
     fwrite(akhir, 1, (size_t)akhirLen, stdout);
     return KOSONG_VAL;
 }

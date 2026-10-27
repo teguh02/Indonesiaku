@@ -7,6 +7,32 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 4 (K19)
+- ✨ **Metode ajaib** (`examples/oop/metode_ajaib.idk`): `_teks_`, `_repr_`,
+  `_sama_`, `_tidak_sama_`, `_kurang_dari_`, `_kurang_sama_`, `_lebih_dari_`,
+  `_lebih_sama_`, `_tambah_`, `_kurangi_`, `_kali_`, `_bagi_`, `_bagi_bulat_`,
+  `_sisa_`, `_pangkat_`, `_negatif_`. Dicari di kelas (termasuk warisan);
+  perbandingan memakai cerminan (`b > a` → `a._kurang_dari_(b)`), `!=`
+  memakai kebalikan `_sama_`, `adalah` tetap identitas. `_sama_` juga dipakai
+  `dalam` dan `==` antar-daftar; kelas ber-`_sama_` tidak bisa menjadi kunci
+  kamus. Operator pada objek tanpa metodenya → `GalatTipe`.
+
+### Fixed — ditemukan saat mengerjakan metode ajaib
+- 🐛 `>=`, `<=`, `!=` dikompilasi sebagai kebalikan operator lain, sehingga
+  `nan >= 1` bernilai `benar`. Kini opcode sendiri; hasil NaN sama dengan
+  Python.
+- 🐛 `ke_teks`, f-string, dan `repr` memotong teks di 511 karakter (`format`
+  di 1023). Semua jalur cetak kini memakai satu formatter tanpa batas.
+- 🐛 `cetak` dan `ke_teks` memakai dua pencetak berbeda: `ke_teks(cetak)`
+  memberi `<objek>`, `ke_teks(objek)` memberi `<objek>` padahal `cetak`
+  memberi `<objek Kelas>`. Kini selalu sama.
+- 🐛 `cetak` daftar yang berisi dirinya sendiri membuat interpreter crash;
+  kini dicetak `[1, [...]]` seperti Python.
+- 🐛 Galat operand (`-"teks"`, `"a" < 1`, `x / "b"`, ...) dan galat atribut
+  (`(5).x`) tidak punya kelas, jadi tidak tertangkap `kecuali GalatTipe` /
+  `kecuali GalatAtribut`. Rekursi terlalu dalam kini `GalatRekursi`, dan
+  `0 ** -1` kini `GalatBagiNol`.
+
 ## [1.0.0] - 2026-10-25
 
 Rilis stabil pertama. Mulai versi ini kebijakan **K14** berlaku: perilaku yang

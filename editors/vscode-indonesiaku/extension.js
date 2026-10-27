@@ -22,6 +22,13 @@ const BUILTINS = [
   "tutup", "waktu"
 ];
 
+// Magic methods (K19): written inside `kelas`, called by the interpreter.
+const MAGIC_METHODS = [
+  "_bagi_", "_bagi_bulat_", "_kali_", "_kurang_dari_", "_kurang_sama_", "_kurangi_",
+  "_lebih_dari_", "_lebih_sama_", "_negatif_", "_pangkat_", "_repr_", "_sama_",
+  "_sisa_", "_tambah_", "_teks_", "_tidak_sama_"
+];
+
 function item(label, kind, detail, insertText) {
   const result = new vscode.CompletionItem(label, kind);
   result.detail = detail;
@@ -34,7 +41,8 @@ function activate(context) {
     provideCompletionItems() {
       return [
         ...KEYWORDS.map((word) => item(word, vscode.CompletionItemKind.Keyword, "kata kunci Indonesiaku")),
-        ...BUILTINS.map((name) => item(name, vscode.CompletionItemKind.Function, "fungsi bawaan Indonesiaku", `${name}($0)`))
+        ...BUILTINS.map((name) => item(name, vscode.CompletionItemKind.Function, "fungsi bawaan Indonesiaku", `${name}($0)`)),
+        ...MAGIC_METHODS.map((name) => item(name, vscode.CompletionItemKind.Method, "metode ajaib Indonesiaku (K19)"))
       ];
     }
   });

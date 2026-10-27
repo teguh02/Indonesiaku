@@ -9,6 +9,11 @@
 // stack is sized for the worst case (256 slots per frame) and lives in the
 // global `vm`, so it costs static memory, not C stack.
 #define FRAMES_MAX 1000
+// Nesting limit for natives calling back into Indonesiaku (callFromNative):
+// each level costs a C run() frame plus the native's own C frame, so the C
+// stack would overflow long before FRAMES_MAX. _teks_ calling cetak(diri) is
+// the classic way to get here.
+#define NATIVE_CALL_MAX 200
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 #define TRY_MAX 64
 
@@ -70,6 +75,7 @@ typedef struct {
     ObjModule* mainModule; // the entry script's module ("__utama__")
     ObjString* scriptDir;  // directory of the entry script, for import search
     ObjString* initString;
+    ObjString* magicNames[MAGIC_COUNT];   // K19, interned; see MAGIC_NAMES in vm.c
     ObjClass* galat;
     ObjClass* galatAritmetika;
     ObjClass* galatBagiNol;
@@ -81,6 +87,7 @@ typedef struct {
     ObjClass* galatNama;
     ObjClass* galatPenegasan;
     ObjClass* galatAtribut;
+    ObjClass* galatRekursi;
     ObjClass* hentiIterasi;
 
     // Keyword argument names for the native call currently running, or NULL.

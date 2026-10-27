@@ -1,0 +1,7 @@
+# _teks_ yang mencetak dirinya sendiri berulang tanpa akhir -> GalatRekursi.
+kelas Cermin {
+    _teks_() {
+        kembalikan ke_teks(diri)
+    }
+}
+cetak(Cermin())

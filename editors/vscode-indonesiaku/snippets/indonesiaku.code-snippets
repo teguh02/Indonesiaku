@@ -73,6 +73,27 @@
     ],
     "description": "Buat kelas dengan konstruktor"
   },
+  "Metode ajaib _teks_": {
+    "prefix": "_teks_",
+    "body": [
+      "_teks_() {",
+      "    kembalikan ${0:ke_teks(diri.nama)}",
+      "}"
+    ],
+    "description": "Teks objek untuk cetak, ke_teks, dan f-string (K19)"
+  },
+  "Metode ajaib _sama_": {
+    "prefix": "_sama_",
+    "body": [
+      "_sama_(lain) {",
+      "    jika tidak adalah_instansi(lain, ${1:NamaKelas}) {",
+      "        kembalikan salah",
+      "    }",
+      "    kembalikan ${0:diri.nilai == lain.nilai}",
+      "}"
+    ],
+    "description": "Kesetaraan == untuk objek; membuat objek tidak bisa jadi kunci kamus (K19)"
+  },
   "Coba kecuali": {
     "prefix": "coba",
     "body": [

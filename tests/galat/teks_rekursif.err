@@ -1,0 +1,4 @@
+Kedalaman panggilan balik dari fungsi bawaan melebihi 200. Kemungkinan rekursi tak terbatas, misalnya _teks_ yang memanggil cetak(diri)?
+[baris 7, kolom 15] dalam skrip
+    cetak(Cermin())
+                  ^

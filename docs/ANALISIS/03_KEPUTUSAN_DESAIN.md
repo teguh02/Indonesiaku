@@ -34,6 +34,7 @@ kebijakan K14: dicatat di `CHANGELOG.md` dan didahului peringatan bila perlu
 | K15 | Nilai bawaan parameter | Dievaluasi **tiap panggilan**, bukan sekali saat definisi | Ya (beda dari Python) | disetujui — selesai ✅ (Fase 1) |
 | K16 | Argumen bernama | `f(b=2)`, boleh melewati parameter di tengah | Ya | disetujui — selesai ✅ (Fase 1) |
 | K17 | Sintaks tupel & himpunan | Tupel `(1, 2)`/`(1,)`/`()` seperti Python; himpunan **hanya** lewat `himpunan([...])`, tanpa literal `{1, 2}` | Tidak | disetujui (2026-10-25) |
+| K19 | Metode ajaib | Nama Indonesia berpola `_nama_` (06 §10), dicari di kelas; cerminan untuk perbandingan; `_sama_` membuat instansi tidak hashable | Tidak (perilaku baru; perbaikan NaN pada `>=`/`<=`/`!=`) | selesai ✅ (Fase 4) |
 
 ---
 
@@ -206,7 +207,8 @@ diam-diam diabaikan.
 **Selesai juga:** `repr` untuk elemen koleksi. Ternyata ada **dua** jalur
 cetak (`printObject` di `object.c` dan `appendValueText` di `native.c`) plus
 `repr`; memperbaiki satu saja akan membuat `cetak(x)` dan `ke_teks(x)`
-berbeda. Ketiganya kini memakai satu helper `stringEscape()`.
+berbeda. Ketiganya kini memakai satu helper `stringEscape()`. (Sejak K19,
+Fase 4, ketiganya digabung menjadi satu formatter `formatValue`.)
 
 Sekalian diperbaiki: kedua jalur mengiterasi tabel hash padahal `ObjDict`
 menyimpan `keys` untuk urutan sisip, sehingga `cetak(d)` bisa berbeda urutan
@@ -373,3 +375,35 @@ mengalokasi string tiap kolom. Daftar hasil, kamus baris, kunci, dan nilai
 harus semuanya ter-root di stack VM saat `dictSet`/`writeValueArray` dipanggil
 — keduanya bisa memicu GC. Ini pola `OP_BUILD_DICT`, tetapi bersarang dua
 tingkat.
+
+## K19 — Metode ajaib: nama dan aturan pemanggilan (selesai ✅, Fase 4)
+
+Rencana: [`RENCANA_FITUR/selesai/metode_ajaib.md`](../RENCANA_FITUR/selesai/metode_ajaib.md).
+
+**Nama.** Dunder Python diterjemahkan menjadi nama Indonesia yang diapit satu
+garis bawah, mengikuti katalog 06 §10: `_teks_`, `_repr_`, `_sama_`,
+`_tidak_sama_`, `_kurang_dari_`, `_kurang_sama_`, `_lebih_dari_`,
+`_lebih_sama_`, `_tambah_`, `_kurangi_`, `_kali_`, `_bagi_`, `_bagi_bulat_`,
+`_sisa_`, `_pangkat_`, `_negatif_`. "Kurang" sengaja dibedakan: `_kurang_dari_`
+untuk `<`, `_kurangi_` untuk `-`. `init` tetap `init` (bukan `_init_`) karena
+sudah dipakai sejak awal.
+
+**Aturan yang dikunci:**
+
+1. Dicari di kelas (termasuk warisan), tidak di field instansi — seperti
+   Python mencari dunder di tipe.
+2. Hanya instansi yang memicu metode ajaib; tipe bawaan tidak berubah.
+3. Perbandingan memakai cerminan bila sisi kiri tidak punya metodenya
+   (`a > b` → `b._kurang_dari_(a)`); `!=` tanpa `_tidak_sama_` adalah
+   `tidak _sama_`. Aritmetika belum punya cerminan (`_ktambah_`) sampai ada
+   penanda `TidakDiterapkan`.
+4. `adalah` tetap identitas murni (K7).
+5. Kelas yang mendefinisikan `_sama_` membuat instansinya tidak dapat di-hash
+   sampai `_hash_` ada (Python: `__hash__ = None`), sehingga pencarian kamus
+   dan himpunan tidak pernah menjalankan kode pengguna.
+6. `_teks_`/`_repr_` wajib mengembalikan teks; bawaan `<objek Kelas>` di semua
+   jalur cetak.
+
+**Ditolak:** nama Python apa adanya (`__add__`) — bertentangan dengan prinsip
+penamaan Indonesia; dua garis bawah (`__tambah__`) — lebih berisik tanpa
+manfaat, karena nama berpola `_x_` belum dipakai siapa pun.

@@ -185,11 +185,38 @@ typedef struct {
     double step;
 } ObjRange;
 
+// Magic methods (K19). The VM interns their names once (vm.magicNames) and
+// every class keeps a bitmask of the ones it defines, so an operator on an
+// instance tests one bit before it ever searches the method table.
+typedef enum {
+    MAGIC_TEKS,          // _teks_         cetak, ke_teks, f-string
+    MAGIC_REPR,          // _repr_         repr, elements inside a collection
+    MAGIC_SAMA,          // _sama_         ==, dalam, == inside collections
+    MAGIC_TIDAK_SAMA,    // _tidak_sama_   !=
+    MAGIC_KURANG_DARI,   // _kurang_dari_  <
+    MAGIC_KURANG_SAMA,   // _kurang_sama_  <=
+    MAGIC_LEBIH_DARI,    // _lebih_dari_   >
+    MAGIC_LEBIH_SAMA,    // _lebih_sama_   >=
+    MAGIC_TAMBAH,        // _tambah_       +
+    MAGIC_KURANGI,       // _kurangi_      -
+    MAGIC_KALI,          // _kali_         *
+    MAGIC_BAGI,          // _bagi_         /
+    MAGIC_BAGI_BULAT,    // _bagi_bulat_   //
+    MAGIC_SISA,          // _sisa_         %
+    MAGIC_PANGKAT,       // _pangkat_      **
+    MAGIC_NEGATIF,       // _negatif_      -x
+    MAGIC_COUNT,
+    MAGIC_NONE = MAGIC_COUNT
+} MagicKind;
+
+#define MAGIC_BIT(kind) (1u << (kind))
+
 typedef struct ObjClass {
     Obj obj;
     ObjString* name;
     struct ObjClass* superclass;
     Table methods;
+    uint32_t magic;      // MAGIC_BIT of every magic method in `methods`
 } ObjClass;
 
 typedef struct {
@@ -261,6 +288,32 @@ int utf8CharBytes(ObjString* string, int byteOffset);
 // needed. Shared by every path that prints a string inside a collection.
 const char* stringEscape(char c);
 void printObject(Value value);
+
+// Growable text buffer for formatValue. Plain malloc, not the GC heap: user
+// code (_teks_/_repr_) may run while a buffer is half built.
+typedef struct {
+    char* chars;
+    int length;
+    int capacity;
+} TextBuf;
+
+void initTextBuf(TextBuf* buf);
+void freeTextBuf(TextBuf* buf);
+void textAppend(TextBuf* buf, const char* chars, int length);
+void textAppendCString(TextBuf* buf, const char* chars);
+
+// _teks_/_repr_ for an instance (K19), installed by the VM: object.c cannot
+// run Indonesiaku code itself. Returns 1 when it appended text, 0 when the
+// class has no such method, -1 when the method raised (error is pending).
+typedef int (*FormatInstanceFn)(TextBuf* out, Value instance, bool repr);
+extern FormatInstanceFn formatInstanceHook;
+
+// The ONE formatter behind cetak, ke_teks, repr, format and f-strings, so
+// they can never drift apart. `repr` quotes strings (elements of a collection
+// always are). `callMagic` lets instances use _teks_/_repr_; debug and GC
+// logs pass false so they never run user code. Returns false only when a
+// magic method raised.
+bool formatValue(TextBuf* out, Value value, bool repr, bool callMagic);
 
 static inline bool isObjType(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

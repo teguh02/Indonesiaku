@@ -1,0 +1,298 @@
+# Metode ajaib (K19): objek buatan sendiri ikut aturan operator bahasa.
+# Setiap bagian dibungkus fungsi agar satu chunk tidak melebihi 256 konstanta.
+
+kelas Vektor {
+    init(x, y) {
+        diri.x = x
+        diri.y = y
+    }
+    _teks_() {
+        kembalikan f"({diri.x}, {diri.y})"
+    }
+    _repr_() {
+        kembalikan f"Vektor({diri.x}, {diri.y})"
+    }
+    _sama_(lain) {
+        jika tidak adalah_instansi(lain, Vektor) {
+            kembalikan salah
+        }
+        kembalikan diri.x == lain.x dan diri.y == lain.y
+    }
+    _kurang_dari_(lain) {
+        kembalikan diri.panjang2() < lain.panjang2()
+    }
+    _tambah_(lain) {
+        kembalikan Vektor(diri.x + lain.x, diri.y + lain.y)
+    }
+    _kurangi_(lain) {
+        kembalikan Vektor(diri.x - lain.x, diri.y - lain.y)
+    }
+    _kali_(k) {
+        kembalikan Vektor(diri.x * k, diri.y * k)
+    }
+    _bagi_(k) {
+        kembalikan Vektor(diri.x / k, diri.y / k)
+    }
+    _bagi_bulat_(k) {
+        kembalikan Vektor(diri.x // k, diri.y // k)
+    }
+    _sisa_(k) {
+        kembalikan Vektor(diri.x % k, diri.y % k)
+    }
+    _pangkat_(k) {
+        kembalikan Vektor(diri.x ** k, diri.y ** k)
+    }
+    _negatif_() {
+        kembalikan Vektor(-diri.x, -diri.y)
+    }
+    panjang2() {
+        kembalikan diri.x * diri.x + diri.y * diri.y
+    }
+}
+
+# Mewarisi semua metode ajaib Vektor.
+kelas Titik < Vektor {
+    init(x, y) {
+        super.init(x, y)
+    }
+}
+
+# Hanya _repr_: cetak/ke_teks memakai _repr_ sebagai cadangan.
+kelas Kode {
+    init(nama) {
+        diri.nama = nama
+    }
+    _repr_() {
+        kembalikan f"Kode({repr(diri.nama)})"
+    }
+}
+
+# Tanpa metode ajaib sama sekali.
+kelas Polos {
+}
+
+# Perbandingan lengkap dengan _tidak_sama_ sendiri.
+kelas Versi {
+    init(n) {
+        diri.n = n
+    }
+    _sama_(lain) {
+        kembalikan diri.n == lain.n
+    }
+    _tidak_sama_(lain) {
+        cetak("  (_tidak_sama_ dipanggil)")
+        kembalikan diri.n != lain.n
+    }
+    _kurang_sama_(lain) {
+        kembalikan diri.n <= lain.n
+    }
+    _lebih_sama_(lain) {
+        kembalikan diri.n >= lain.n
+    }
+    _lebih_dari_(lain) {
+        kembalikan diri.n > lain.n
+    }
+}
+
+fungsi representasi() {
+    cetak("== representasi ==")
+    a = Vektor(1, 2)
+    cetak(a)
+    cetak([a, Vektor(3, 4)])
+    cetak((a,), {"a": a})
+    cetak(ke_teks(a), repr(a))
+    cetak(f"a = {a}, daftar = {[a]}")
+    cetak(format("{} dan {}", a, Titik(5, 6)))
+    cetak(Kode("x"), [Kode("y")], ke_teks(Kode("z")))
+    cetak(ke_teks(Polos()), repr(Polos()), [Polos()])
+    cetak(cetak, Vektor, [Vektor])
+}
+
+fungsi aritmetika() {
+    cetak("== aritmetika ==")
+    a = Vektor(1, 2)
+    b = Vektor(3, 4)
+    cetak(a + b, b - a, a * 3, -a)
+    cetak(b / 2, b // 2, b % 2, a ** 2)
+    a += b
+    cetak(a)
+    a -= Vektor(1, 1)
+    cetak(a)
+    t = Titik(1, 1) + Titik(2, 2)
+    cetak(t, adalah_instansi(t, Titik), adalah_instansi(t, Vektor))
+}
+
+fungsi perbandingan() {
+    cetak("== perbandingan ==")
+    a = Vektor(1, 2)
+    b = Vektor(3, 4)
+    cetak(a == Vektor(1, 2), a == b, a != b, a != Vektor(1, 2))
+    cetak(a == 5, 5 == a, a != 5)
+    cetak(a < b, b < a, b > a)
+    cetak(a adalah Vektor(1, 2), a adalah a)
+    v1 = Versi(1)
+    v2 = Versi(2)
+    cetak(v1 != v2)
+    cetak(v1 <= v2, v1 >= v2, v2 > v1, v1 < v2)
+    cetak(Versi(1) <= Versi(2) <= Versi(3), Versi(3) > Versi(2) > Versi(5))
+    cetak(Polos() == Polos(), Polos() != Polos())
+}
+
+fungsi koleksi() {
+    cetak("== koleksi ==")
+    a = Vektor(1, 2)
+    cetak(Vektor(1, 2) dalam [Vektor(0, 0), Vektor(1, 2)])
+    cetak(Vektor(9, 9) dalam [a], Vektor(9, 9) tidak dalam [a])
+    cetak([a, Vektor(3, 4)] == [Vektor(1, 2), Vektor(3, 4)])
+    cetak((a,) == (Vektor(1, 2),), {"k": a} == {"k": Vektor(1, 2)})
+    p = Polos()
+    cetak(p dalam [p], Polos() dalam [p])
+    d = {}
+    d[p] = "polos boleh jadi kunci"
+    cetak(d[p])
+}
+
+fungsi galat() {
+    cetak("== galat ==")
+    a = Vektor(1, 2)
+    coba { cetak(a + 1) } kecuali GalatAtribut sebagai e { cetak("GalatAtribut:", e.pesan) }
+    coba { cetak(Polos() + 1) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(1 + a) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(Polos() < Polos()) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(-Polos()) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(-"teks") } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak("a" < 1) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba {
+        d = {}
+        d[a] = 1
+    } kecuali GalatTipe sebagai e { cetak("GalatTipe: Vektor punya _sama_, jadi tidak hashable") }
+    coba { himpunan([a]) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(0 ** -1) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+}
+
+kelas TeksSalah {
+    _teks_() {
+        kembalikan 42
+    }
+}
+
+# Galat di dalam metode ajaib merambat seperti galat biasa.
+kelas Rusak {
+    _sama_(lain) {
+        kembalikan 1 // 0
+    }
+    _teks_() {
+        kembalikan [][0]
+    }
+}
+
+fungsi galat_dari_metode() {
+    cetak("== galat dari metode ajaib ==")
+    coba { cetak(TeksSalah()) } kecuali GalatTipe sebagai e { cetak("GalatTipe:", e.pesan) }
+    coba { cetak(Rusak() == Rusak()) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+    coba { cetak(Rusak() dalam [1, Rusak()]) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+    coba { cetak([Rusak()] == [Rusak()]) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+    coba { cetak(Rusak() != 1) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+    coba { cetak(1 == Rusak() == 2) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+    coba { cetak("awal", Rusak()) } kecuali GalatIndeks sebagai e { cetak("GalatIndeks:", e.pesan) }
+    coba { cetak(f"{Rusak()}") } kecuali GalatIndeks sebagai e { cetak("GalatIndeks:", e.pesan) }
+    cetak("lanjut normal")
+}
+
+fungsi nan_dan_bawaan() {
+    cetak("== NaN dan nilai bawaan ==")
+    n = 1e308 * 10 - 1e308 * 10
+    cetak(n >= 1, n <= 1, 1 <= n, 1 >= n, n != n, n == n, 1 <= n <= 2)
+    xs = [1]
+    xs.tambah(xs)
+    cetak(xs, ke_teks(xs))
+    t = "a" * 600
+    cetak(panjang(ke_teks(t)), panjang(f"{t}"), panjang(repr(t)))
+}
+
+# _sama_ yang mengubah daftar yang sedang dibandingkan: interpreter harus
+# membaca ulang panjang daftar tiap langkah, persis seperti Python.
+kelas Penambah {
+    init(xs) {
+        diri.xs = xs
+    }
+    _sama_(lain) {
+        jika panjang(diri.xs) < 5 {
+            diri.xs.tambah(0)
+        }
+        kembalikan salah
+    }
+}
+
+kelas Pemotong {
+    init(xs) {
+        diri.xs = xs
+    }
+    _sama_(lain) {
+        selagi panjang(diri.xs) > 0 {
+            hapus(diri.xs)
+        }
+        kembalikan benar
+    }
+}
+
+kelas Cermin {
+    _teks_() {
+        kembalikan ke_teks(diri)
+    }
+}
+
+fungsi turun(n) {
+    kembalikan turun(n + 1)
+}
+
+# _repr_ yang mencabut wadahnya sendiri saat sedang dicetak (dan memicu GC):
+# wadah itu harus tetap hidup sampai selesai dicetak, seperti di Python.
+luar = []
+kelas Pencabut {
+    _repr_() {
+        hapus(luar)
+        sampah = [[i, f"t{i}"] untuk i dalam rentang(200)]
+        kembalikan "Pencabut"
+    }
+}
+
+kunci_kamus = {}
+kelas Kunci {
+    _repr_() {
+        buang kunci_kamus[diri]
+        sampah = [[i, f"t{i}"] untuk i dalam rentang(200)]
+        kembalikan "Kunci"
+    }
+}
+
+kelas Gagal {
+    _sama_(lain) {
+        kembalikan 1 // 0
+    }
+}
+
+fungsi masuk_ulang() {
+    cetak("== masuk-ulang dan rekursi ==")
+    xs = [1, 2]
+    cetak(Penambah(xs) dalam xs, xs)
+    ys = [0, 1, 2]
+    cetak([Pemotong(ys), 1, 2] == ys, ys)
+    coba { cetak(Cermin()) } kecuali GalatRekursi sebagai e { cetak("GalatRekursi: _teks_ memanggil dirinya") }
+    coba { turun(0) } kecuali GalatRekursi sebagai e { cetak("GalatRekursi: fungsi biasa") }
+    luar.tambah([Pencabut(), 1, 2, "x"])
+    cetak(luar)
+    cetak(luar)
+    kunci_kamus[Kunci()] = ["nilai", 42]
+    cetak(kunci_kamus)
+    coba { cetak(Gagal() dalam [1] == benar) } kecuali GalatBagiNol sebagai e { cetak("GalatBagiNol:", e.pesan) }
+}
+
+representasi()
+aritmetika()
+perbandingan()
+koleksi()
+galat()
+galat_dari_metode()
+nan_dan_bawaan()
+masuk_ulang()
