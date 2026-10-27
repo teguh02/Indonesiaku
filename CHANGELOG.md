@@ -82,6 +82,16 @@ variabel perlu diganti namanya.
   **`bita`**, **`base64`**, **`csv`** (gelombang B; panduannya menyusul).
 
 ### Fixed
+- 🐛 **Modul standar tidak bisa diimpor setelah dipasang.** `pustaka/` hanya
+  dicari relatif terhadap direktori kerja, jadi `impor pola` gagal dari folder
+  lain; installer Windows bahkan tidak memasang `pustaka/`, dan image Docker
+  hanya jalan dari `WORKDIR`-nya. Kini `pustaka/` juga dicari relatif
+  terhadap interpreter (di sebelah `indk`, `../pustaka`,
+  `../share/indonesiaku/pustaka`), termasuk untuk `impor "pustaka/..."`;
+  installer memasang `{app}\pustaka`, dan image Docker menaruhnya di
+  `/usr/local/share/indonesiaku/pustaka`. Urutan pencarian lama tidak
+  berubah. Diuji `tests/test_impor_lokasi.{sh,ps1}` dan dengan membangun
+  kedua image Docker.
 - 🐛 Perintah `gcc` manual di panduan instalasi tidak memuat `native.c`,
   `db.c`, dan `sqlite3.c` (serta `-lws2_32` di Windows), jadi gagal di tahap
   link. Kini lengkap dan sudah dijalankan di Windows dan Linux.

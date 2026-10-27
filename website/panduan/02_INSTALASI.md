@@ -421,6 +421,25 @@ docker run --rm teguh02/indonesiaku:latest apk list --installed
 
 ---
 
+## Lokasi Pustaka Standar
+
+Modul standar (`impor pola`, `dari koleksi impor Penghitung`, ...) ada di
+folder `pustaka/`. Interpreter mencarinya **relatif terhadap lokasinya
+sendiri**, jadi program bisa dijalankan dari folder mana pun tanpa
+pengaturan tambahan. Tata letak yang dikenali:
+
+| Pemasangan | `indk` | `pustaka/` |
+|---|---|---|
+| Build dari source | `Indonesiaku/indk` | `Indonesiaku/pustaka/` (di sebelahnya) |
+| Installer Windows | `{app}\bin\indonesiaku.exe` | `{app}\pustaka\` |
+| Docker / Linux | `/usr/local/bin/indk` | `/usr/local/share/indonesiaku/pustaka/` |
+
+Bila memasang sendiri di tempat lain, letakkan `pustaka/` mengikuti salah
+satu tata letak di atas, atau arahkan variabel lingkungan `INDK_PATH` ke
+foldernya.
+
+---
+
 ## Perbandingan Instalasi Methods
 
 | Method | Pros | Cons | Cocok untuk |

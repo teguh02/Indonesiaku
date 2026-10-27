@@ -180,6 +180,7 @@ Before committing:
 
 - Mark-sweep GC is always on. To verify GC correctness after touching allocation/stack code, build with `-DDEBUG_STRESS_GC` (collects on every allocation) and run all examples — output must be unchanged. This is the single most valuable check for VM changes.
 - Other flags in `src/common.h`: `DEBUG_LOG_GC`, `DEBUG_PRINT_CODE`, `DEBUG_TRACE_EXECUTION`.
+- **The standard library is found from the INTERPRETER, not the cwd.** Module search: importer's dir → `INDK_PATH` → `pustaka/` in the cwd → `findInInterpreterRoots` (`<exe>/pustaka`, `<exe>/../pustaka`, `<exe>/../share/indonesiaku/pustaka`; exe path from `sistemJalurInterpreter` in `src/sistem.c`, shared with `jalur_indk()`). String imports `impor "pustaka/x.idk"` fall back to the same roots when the path does not exist as written. Keep the first three steps first: they are the old order, so the change only rescues imports that used to fail. The Windows installer must ship `pustaka\` next to `bin\`, and the Docker image keeps it in `/usr/local/share/indonesiaku/pustaka` (`/opt/indonesiaku/pustaka` is a symlink the playground relies on). `tests/test_impor_lokasi.{sh,ps1}` copy the binary into each layout and import from a different cwd.
 - **Modules own their globals (Fase 3).** `vm.globals` is now the BUILTIN table
   only; each `ObjModule` has its own `globals`. Resolution goes through
   `frameGlobals(frame)` / `getGlobalValue()` in `vm.c` and follows
