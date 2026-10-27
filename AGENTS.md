@@ -195,6 +195,25 @@ Before committing:
   Name module files accordingly.
 - GC-safety rule: any C code that allocates while holding an unrooted object must keep it reachable (push it on the VM stack, or use `peek` instead of `pop`). See `makeConstant`, `concatenate`, `allocateString`, and the `kunci`/`OP_BUILD_LIST` handlers for the pattern.
 
+### Magic methods run user code in deep C paths (K19)
+
+`isFalsey`, `hashValue`, and table lookups are called from inside C loops.
+With `_logika_`/`_hash_`/`_sama_` those now **run Indonesiaku code**, which
+allocates and can trigger a GC. Two rules follow, both learned from real bugs:
+
+- **Never pop operands before a call that may run a magic method.** `kamus[k]`
+  dropped the dict and key from the stack before `valueTableGet`, so the GC
+  triggered by `_sama_` freed them — a use-after-free that the normal suite
+  passed and only the sanitizer build caught. Keep values on the stack
+  (`peek`), pop after.
+- **A pending native error outranks the caller's generic message.** When
+  `hashValue` returns false because `_hash_` raised, reporting "kunci kamus
+  harus dapat di-hash" hides the real cause. `runtimeError()` now refuses to
+  overwrite a pending native error; call sites resolve it with
+  `RESOLVE_MAGIC_ERROR()`. Note `resolveNativeError()` already unwinds the
+  stack via `throwValue()` — do **not** pop operands yourself afterwards, and
+  remember a `break` inside a `for` loop leaves the loop, not the `switch`.
+
 ## Language reality (differs from older docs)
 
 - **Blocks use braces `{ }`, not Python indentation.** The scanner has no INDENT/DEDENT. `jika c { ... } jika_lain c2 { ... } selain { ... }`, `selagi c { ... }`, `fungsi f() { ... }`.

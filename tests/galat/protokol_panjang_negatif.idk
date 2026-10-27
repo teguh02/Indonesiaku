@@ -1,0 +1,7 @@
+# _panjang_ negatif ditolak: panjang tidak pernah kurang dari nol.
+
+kelas Mundur {
+    _panjang_() { kembalikan -3 }
+}
+
+cetak(panjang(Mundur()))

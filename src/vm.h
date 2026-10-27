@@ -146,5 +146,8 @@ void nativeRaiseKelas(ObjClass* klass, const char* format, ...);
 bool callFromNative(int argCount, Value* result);
 bool valueIsInstanceOf(Value value, Value klass);
 bool isFalsey(Value value);
+// _panjang_ of an instance, run now: 1 with *out set, 0 when it raised or
+// returned an invalid length (error pending), -1 when undefined.
+int instanceLengthFor(Value value, int64_t* out);
 
 #endif

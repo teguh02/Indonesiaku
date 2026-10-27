@@ -27,10 +27,12 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
     "_kurang_dari_", "_kurang_sama_", "_lebih_dari_", "_lebih_sama_",
     "_tambah_", "_kurangi_", "_kali_", "_bagi_", "_bagi_bulat_", "_sisa_",
     "_pangkat_", "_negatif_",
+    "_panjang_", "_logika_", "_ambil_", "_atur_", "_hash_",
 };
 
 static int formatInstanceMagic(TextBuf* out, Value instance, bool repr);
 static int instanceEqualMagic(Value a, Value b);
+static int instanceHashMagic(Value value, uint32_t* out);
 
 static Value clockNative(int argCount, Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -134,6 +136,10 @@ static void reportError(const char* message) {
 // becomes the 'kecuali' value); otherwise it is printed and aborts the run.
 // Callers must still return INTERPRET_RUNTIME_ERROR so run() unwinds.
 void runtimeError(const char* format, ...) {
+    // A magic method that raised (e.g. _hash_ inside a dict lookup) already
+    // holds the real error. The caller that got `false` back cannot tell the
+    // difference and reports its own generic message; keep the original.
+    if (vm.nativeErrorPending) return;
     va_list args;
     va_start(args, format);
     vsnprintf(vm.runtimeErrorMessage, sizeof(vm.runtimeErrorMessage), format, args);
@@ -280,6 +286,7 @@ void initVM() {
     }
     formatInstanceHook = formatInstanceMagic;
     instanceEqualHook = instanceEqualMagic;
+    instanceHashHook = instanceHashMagic;
     vm.runtimeErrorClass = NULL;
     vm.galat = defineErrorClass("Galat", NULL);
     vm.galatAritmetika = defineErrorClass("GalatAritmetika", vm.galat);
@@ -1277,6 +1284,67 @@ static int compareMagicNow(MagicKind kind, MagicKind mirror, Value left, Value r
     return 1;
 }
 
+// A no-argument magic method run right now: receiver.kind(). Returns -1 when
+// the class does not define it, 0 when it raised (error pending), 1 with
+// *result set to its return value.
+static int magicNowNoArg(Value receiver, MagicKind kind, Value* result) {
+    Value method;
+    if (!instanceMagic(receiver, kind, &method)) return -1;
+    return callMagicNow(receiver, method, KOSONG_VAL, 0, result) ? 1 : 0;
+}
+
+// _panjang_ as a count: must be a bulat >= 0, like Python's __len__.
+// Returns -1 when undefined, 0 when it raised or returned something invalid.
+int instanceLengthFor(Value value, int64_t* out) {
+    Value result;
+    int found = magicNowNoArg(value, MAGIC_PANJANG, &result);
+    if (found <= 0) return found;
+    if (!IS_INT(result)) {
+        nativeRaiseKelas(vm.galatTipe, "_panjang_() harus mengembalikan bulat, bukan '%s'",
+                         valueTypeName(result));
+        return 0;
+    }
+    if (AS_INT(result) < 0) {
+        nativeRaiseKelas(vm.galatNilai, "_panjang_() tidak boleh negatif (%lld)",
+                         (long long)AS_INT(result));
+        return 0;
+    }
+    *out = AS_INT(result);
+    return 1;
+}
+
+// Truthiness of an instance: _logika_ first, then _panjang_ != 0 (Python's
+// order). Returns -1 when the class defines neither, and the caller keeps the
+// old "an instance is always true" behaviour.
+static int instanceTruthyMagic(Value value, bool* truthy) {
+    Value result;
+    int found = magicNowNoArg(value, MAGIC_LOGIKA, &result);
+    if (found == 1) { *truthy = !isFalsey(result); return 1; }
+    if (found == 0) return 0;
+    int64_t length;
+    found = instanceLengthFor(value, &length);
+    if (found == 1) { *truthy = length != 0; return 1; }
+    return found;
+}
+
+// instanceHashHook: _hash_ for dictionary keys and set members. Must return a
+// bulat; its int64 is folded into the same FNV-1a space as every other key so
+// that an object and a number never collide by construction.
+static int instanceHashMagic(Value value, uint32_t* out) {
+    if (vm.nativeErrorPending) return 0;
+    Value result;
+    int found = magicNowNoArg(value, MAGIC_HASH, &result);
+    if (found <= 0) return found;
+    if (!IS_INT(result)) {
+        nativeRaiseKelas(vm.galatTipe, "_hash_() harus mengembalikan bulat, bukan '%s'",
+                         valueTypeName(result));
+        return 0;
+    }
+    // Fold through the same hashValue() path as any other bulat, so an
+    // object's hash lands in the same space as every other key.
+    return hashValue(result, out) ? 1 : 0;
+}
+
 // instanceEqualHook: _sama_ for == inside collections, dalam, indeks, ...
 static int instanceEqualMagic(Value a, Value b) {
     // An earlier comparison in the same C loop already raised: stop running
@@ -1333,6 +1401,8 @@ static bool containsValue(Value container, Value item, bool* found) {
         // raises TypeError for it ([1] in {1}), and so do we.
         uint32_t ignored;
         if (!hashValue(item, &ignored)) {
+            // _hash_ raised: it already holds the real error, let it unwind.
+            if (vm.nativeErrorPending) return false;
             vm.runtimeErrorClass = vm.galatTipe;
             runtimeError("Nilai yang tidak dapat di-hash tidak mungkin anggota himpunan.");
             return false;
@@ -1466,6 +1536,13 @@ static bool chainCompare(ChainCompare op, Value left, Value right, bool* result)
 // Python truthiness (K1): salah, kosong, 0, "" and empty list/kamus/rentang
 // are false; everything else (including nan and every instance) is true.
 bool isFalsey(Value value) {
+    if (IS_INSTANCE(value)) {
+        // K19 tahap 2: _logika_, else _panjang_ != 0. Neither defined (or the
+        // method raised) leaves the old rule: an instance is true.
+        bool truthy;
+        if (instanceTruthyMagic(value, &truthy) == 1) return !truthy;
+        return false;
+    }
     switch (value.type) {
         case VAL_KOSONG: return true;
         case VAL_TAKTERISI: return true;   // unreachable; be safe, not crashy
@@ -1856,6 +1933,12 @@ static InterpretResult run() {
                 } else if (IS_DICT(container)) {
                     uint32_t hash;
                     if (!hashValue(key, &hash)) {
+                        if (vm.nativeErrorPending) {
+                            // _hash_ raised: its error wins over the generic one.
+                            if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                            frame = &vm.frames[vm.frameCount - 1];
+                            break;
+                        }
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash.");
                         return INTERPRET_RUNTIME_ERROR;
@@ -2179,6 +2262,9 @@ static InterpretResult run() {
             case OP_IN: {
                 bool found;
                 if (!containsValue(peek(0), peek(1), &found)) {
+                    // A _hash_/_sama_ that raised leaves a native error: it
+                    // carries the real message, so resolve it before giving up.
+                    RESOLVE_MAGIC_ERROR();
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 RESOLVE_MAGIC_ERROR();
@@ -2459,11 +2545,22 @@ static InterpretResult run() {
                 // Keep the dict reachable: dictSet can grow both the table and
                 // the insertion-order key array, either of which may GC.
                 push(OBJ_VAL(dict));
+                bool unwound = false;   // a _hash_ raised: stack already unwound
                 for (int i = count; i >= 1; i--) {
                     Value key = peek(i * 2);        // +1 for the dict itself
                     Value value = peek(i * 2 - 1);
                     uint32_t hash;
                     if (!hashValue(key, &hash)) {   // K8: any hashable key
+                        if (vm.nativeErrorPending) {
+                            // _hash_ raised: its error wins. throwValue() inside
+                            // resolveNativeError already unwound the stack to the
+                            // handler, so the pops below must NOT run -- this
+                            // `break` only leaves the for loop.
+                            if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                            frame = &vm.frames[vm.frameCount - 1];
+                            unwound = true;
+                            break;
+                        }
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
                                      "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
@@ -2471,6 +2568,7 @@ static InterpretResult run() {
                     }
                     dictSet(dict, key, value);
                 }
+                if (unwound) break;
                 pop();                          // the dict
                 vm.stackTop -= count * 2;       // the pairs
                 push(OBJ_VAL(dict));
@@ -2528,14 +2626,24 @@ static InterpretResult run() {
                     ObjDict* dict = AS_DICT(peek(1));
                     uint32_t hash;
                     if (!hashValue(key, &hash)) {
+                        if (vm.nativeErrorPending) {
+                            // _hash_ raised: its error wins over the generic one.
+                            if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                            frame = &vm.frames[vm.frameCount - 1];
+                            break;
+                        }
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
                                      "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     Value value;
+                    // Keep the dict and key on the stack while valueTableGet
+                    // runs: it compares with _sama_, whose call allocates and
+                    // can trigger a GC that would otherwise free them.
+                    bool ada = valueTableGet(&dict->table, key, &value);
                     vm.stackTop -= 2;
-                    if (!valueTableGet(&dict->table, key, &value)) {
+                    if (!ada) {
                         push(KOSONG_VAL);
                     } else {
                         push(value);
@@ -2556,6 +2664,20 @@ static InterpretResult run() {
                     ObjString* ch = copyString(str->chars + offset, utf8CharBytes(str, offset));
                     vm.stackTop -= 2;
                     push(OBJ_VAL(ch));
+                } else if (IS_INSTANCE(peek(1))) {
+                    // K19 tahap 2: objek[kunci] -> _ambil_(kunci). Stack is
+                    // already receiver, arg -- exactly call()'s layout, so the
+                    // method's return value lands where the index result goes.
+                    Value method;
+                    if (!instanceMagic(peek(1), MAGIC_AMBIL, &method)) {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("Objek '%s' tidak mendukung indeks; "
+                                     "tambahkan metode _ambil_(kunci).",
+                                     valueTypeName(peek(1)));
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    if (!call(AS_CLOSURE(method), 1, NULL)) return INTERPRET_RUNTIME_ERROR;
+                    frame = &vm.frames[vm.frameCount - 1];
                 } else {
                     // Python: TypeError ('set' object is not subscriptable).
                     vm.runtimeErrorClass = vm.galatTipe;
@@ -2594,6 +2716,12 @@ static InterpretResult run() {
                     Value value = peek(0);
                     uint32_t hash;
                     if (!hashValue(key, &hash)) {
+                        if (vm.nativeErrorPending) {
+                            // _hash_ raised: its error wins over the generic one.
+                            if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                            frame = &vm.frames[vm.frameCount - 1];
+                            break;
+                        }
                         vm.runtimeErrorClass = vm.galatTipe;
                         runtimeError("Kunci kamus harus nilai yang dapat di-hash "
                                      "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
@@ -2604,6 +2732,19 @@ static InterpretResult run() {
                     pop();  // key
                     pop();  // dict
                     push(value);
+                } else if (IS_INSTANCE(peek(2))) {
+                    // K19 tahap 2: objek[kunci] = nilai -> _atur_(kunci, nilai).
+                    // Stack is receiver, key, value: call()'s layout for 2 args.
+                    Value method;
+                    if (!instanceMagic(peek(2), MAGIC_ATUR, &method)) {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("Objek '%s' tidak mendukung penugasan indeks; "
+                                     "tambahkan metode _atur_(kunci, nilai).",
+                                     valueTypeName(peek(2)));
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    if (!call(AS_CLOSURE(method), 2, NULL)) return INTERPRET_RUNTIME_ERROR;
+                    frame = &vm.frames[vm.frameCount - 1];
                 } else {
                     vm.runtimeErrorClass = vm.galatTipe;   // Python: TypeError
                     if (IS_STRING(peek(2))) {

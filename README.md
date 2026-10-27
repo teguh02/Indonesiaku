@@ -97,7 +97,9 @@ merusak kompatibilitas sampai 2.0.
   `hentikan`/`lanjut`, serta ekspresi kondisional
 - **Fungsi** — rekursi, closure penuh, parameter bernilai bawaan, argumen
   bernama, dan fungsi anonim
-- **OOP** — `kelas`, `init`, `diri`, pewarisan (`<`), dan `super`
+- **OOP** — `kelas`, `init`, `diri`, pewarisan (`<`), `super`, dan metode
+  ajaib (`_teks_`, `_sama_`, `_tambah_`, `_panjang_`, `_logika_`,
+  `_ambil_`/`_atur_`, `_hash_`)
 - **Penanganan galat** — `naikkan` + `coba`/`kecuali`/`akhirnya`; semua galat
   runtime dapat ditangkap
 - **Modul** — `impor matematika`, `impor x sebagai y`, `dari x impor y`, paket,

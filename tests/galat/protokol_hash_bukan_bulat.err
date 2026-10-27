@@ -1,0 +1,4 @@
+_hash_() harus mengembalikan bulat, bukan 'daftar'
+[baris 8, kolom 30] dalam skrip
+    peta = {KunciRusak(): "nilai"}
+                                 ^

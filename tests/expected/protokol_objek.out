@@ -1,0 +1,26 @@
+=== _panjang_ ===
+3
+0
+=== _logika_ dan mundurnya ke _panjang_ ===
+keranjang kosong -> salah
+keranjang berisi -> benar
+benar salah
+_logika_ menang atas _panjang_
+saklar nyala -> benar
+tanpa metode -> tetap benar
+cadangan
+benar
+salah
+selagi berhenti setelah 3 putaran
+=== _ambil_ dan _atur_ ===
+4 2 2
+arsip Oktober
+=== _hash_ ===
+asal -> tujuan
+jumlah kunci: 2
+2 asal (diperbarui)
+anggota unik: 2
+benar
+=== builtin hash() ===
+benar benar benar
+salah

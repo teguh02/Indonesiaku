@@ -1,0 +1,4 @@
+Kunci kamus harus nilai yang dapat di-hash (angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).
+[baris 10, kolom 27] dalam skrip
+    peta = {Longgar(1): "satu"}
+                              ^

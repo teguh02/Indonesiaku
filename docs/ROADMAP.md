@@ -170,11 +170,14 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ✅ metode ajaib tahap 1 — representasi, perbandingan, aritmetika
 ([rencana](RENCANA_FITUR/selesai/metode_ajaib.md), K19).
 
-> Fase 4 **baru dimulai** — yang tersisa: metode ajaib tahap 2 (cerminan
-> aritmetika `_ktambah_` + `TidakDiterapkan`, `_logika_`, `_panjang_`,
-> `_hash_`, `_ambil_`/`_atur_`, `_iter_`, `_panggil_`; `terurut`/`min`/`max`
-> atas objek), atribut kelas, dekorator, `dengan ... sebagai`, pewarisan
-> berganda, kelas abstrak.
+✅ metode ajaib tahap 2a — protokol objek: `_panjang_`, `_logika_`,
+`_ambil_`/`_atur_`, `_hash_` + builtin `hash()`
+([rencana](RENCANA_FITUR/selesai/protokol_objek.md), K19).
+
+> Fase 4 **sedang dikerjakan** — yang tersisa: cerminan aritmetika
+> (`_ktambah_` + `TidakDiterapkan`), `_iter_`, `_panggil_`,
+> `terurut`/`min`/`max` atas objek, atribut kelas, dekorator,
+> `dengan ... sebagai`, pewarisan berganda, kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
 

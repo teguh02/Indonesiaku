@@ -85,6 +85,11 @@ bool valuesIdentical(Value a, Value b);
 typedef int (*InstanceEqualFn)(Value a, Value b);
 extern InstanceEqualFn instanceEqualHook;
 
+// _hash_ for instances. Returns 1 with *out set, 0 when the method raised or
+// returned a non-bulat, -1 when the class does not define _hash_.
+typedef int (*InstanceHashFn)(Value value, uint32_t* out);
+extern InstanceHashFn instanceHashHook;
+
 // --- K2: int64 arithmetic ------------------------------------------------
 // Each returns true when the mathematical result does not fit in int64; *out
 // is then unspecified. Callers raise GalatLuapan instead of wrapping silently.

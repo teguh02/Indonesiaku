@@ -1,0 +1,8 @@
+# _panjang_ yang mengembalikan bukan bulat adalah GalatTipe, bukan hasil yang
+# dibulatkan diam-diam. Tidak ditangkap: harus menghentikan program.
+
+kelas Rusak {
+    _panjang_() { kembalikan "dua" }
+}
+
+cetak(panjang(Rusak()))

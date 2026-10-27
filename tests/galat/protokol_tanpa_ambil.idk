@@ -1,0 +1,7 @@
+# Objek tanpa _ambil_ tidak bisa diindeks; pesannya menyebutkan metode yang
+# perlu ditambahkan.
+
+kelas Kosong { }
+
+k = Kosong()
+cetak(k["apa pun"])

@@ -1,0 +1,4 @@
+_panjang_() tidak boleh negatif (-3)
+[baris 7, kolom 23] dalam skrip
+    cetak(panjang(Mundur()))
+                          ^

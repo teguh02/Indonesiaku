@@ -1,0 +1,4 @@
+Objek 'Kosong' tidak mendukung indeks; tambahkan metode _ambil_(kunci).
+[baris 7, kolom 18] dalam skrip
+    cetak(k["apa pun"])
+                     ^

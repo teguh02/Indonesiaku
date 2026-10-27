@@ -1,0 +1,11 @@
+# K19: kelas dengan _sama_ TAPI tanpa _hash_ tetap tidak dapat di-hash,
+# seperti Python menyetel __hash__ = None. Tahap 2 hanya membuka jalan keluar
+# (mendefinisikan _hash_), bukan menghapus aturannya.
+
+kelas Longgar {
+    init(n) { diri.n = n }
+    _sama_(lain) { kembalikan diri.n == lain.n }
+}
+
+peta = {Longgar(1): "satu"}
+cetak(peta)

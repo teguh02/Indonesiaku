@@ -7,6 +7,31 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Fase 4 tahap 2 (K19): protokol objek
+- ✨ **`_panjang_`** — `panjang(objek)` memakai metode kelas. Wajib
+  mengembalikan `bulat` tidak negatif (`GalatTipe`/`GalatNilai` bila tidak).
+- ✨ **`_logika_`** — kebenaran objek untuk `jika`, `selagi`, `tidak`,
+  `dan`/`atau`, `semua()`, `ada_yang()`. Tanpa `_logika_`, kebenaran diambil
+  dari `_panjang_() != 0`; tanpa keduanya objek tetap selalu benar, jadi
+  program lama tidak berubah.
+- ✨ **`_ambil_(kunci)` / `_atur_(kunci, nilai)`** — `objek[kunci]` dan
+  `objek[kunci] = nilai`. Kunci boleh tipe apa pun, termasuk tupel.
+- ✨ **`_hash_`** — objek bisa menjadi kunci kamus / anggota himpunan.
+  Melonggarkan aturan K19: `_sama_` **tanpa** `_hash_` tetap tidak dapat
+  di-hash (seperti `__hash__ = None` di Python), tetapi menambahkan `_hash_`
+  kini mengembalikannya.
+- Contoh: [`examples/oop/protokol_objek.idk`](examples/oop/protokol_objek.idk).
+
+### Fixed
+- 🐛 **Use-after-free pada `kamus[kunci]`** saat kunci berupa objek dengan
+  `_sama_`: operand dibuang dari stack sebelum pencarian tabel, sehingga GC
+  yang terpicu oleh pemanggilan `_sama_` bisa membebaskan kamus dan kuncinya.
+  Ditemukan oleh build sanitizer, bukan oleh suite biasa.
+- 🐛 **Galat dari metode ajaib tertimpa pesan generik.** `_hash_` yang
+  melempar dilaporkan sebagai "kunci kamus harus dapat di-hash", menyembunyikan
+  sebab aslinya; kini galat aslinya yang muncul, di kelima jalur (literal
+  kamus, `kamus[k]`, `kamus[k] = v`, `dalam`, `buang`).
+
 ### Added — Fase 4 (K19)
 - ✨ **Metode ajaib** (`examples/oop/metode_ajaib.idk`): `_teks_`, `_repr_`,
   `_sama_`, `_tidak_sama_`, `_kurang_dari_`, `_kurang_sama_`, `_lebih_dari_`,

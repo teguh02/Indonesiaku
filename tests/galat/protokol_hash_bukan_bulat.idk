@@ -1,0 +1,9 @@
+# _hash_ wajib mengembalikan bulat. Pesannya harus menyebut _hash_, bukan
+# pesan generik "kunci kamus harus dapat di-hash" yang menyesatkan.
+
+kelas KunciRusak {
+    _hash_() { kembalikan [1, 2] }
+}
+
+peta = {KunciRusak(): "nilai"}
+cetak(peta)

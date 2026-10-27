@@ -574,7 +574,15 @@ Value nativeFnPanjang(int argCount, Value* args) {
     if (IS_RANGE(args[0])) {
         return INT_VAL((int64_t)rangeLength(AS_RANGE(args[0])));
     }
-    nativeRaise("panjang() hanya menerima string, list, kamus, atau rentang");
+    {
+        // K19 tahap 2: a class with _panjang_ reports its own length.
+        int64_t length;
+        int found = instanceLengthFor(args[0], &length);
+        if (found == 1) return INT_VAL(length);
+        if (found == 0) return NUMBER_VAL(0);   // raised; error already pending
+    }
+    nativeRaise("panjang() hanya menerima string, list, kamus, rentang, "
+                "atau objek dengan _panjang_()");
     return NUMBER_VAL(0);
 }
 

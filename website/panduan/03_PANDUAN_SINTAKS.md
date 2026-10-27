@@ -1387,6 +1387,10 @@ cetak(a)                  # (4, 6)
 | `_kurang_dari_` `_kurang_sama_` `_lebih_dari_` `_lebih_sama_` | `<` `<=` `>` `>=` |
 | `_tambah_` `_kurangi_` `_kali_` `_bagi_` `_bagi_bulat_` `_sisa_` `_pangkat_` | `+` `-` `*` `/` `//` `%` `**` (juga `+=`, `-=`, ...) |
 | `_negatif_()` | `-x` |
+| `_panjang_()` | `panjang(x)`, dan kebenaran `x` bila tak ada `_logika_` |
+| `_logika_()` | `jika x`, `selagi x`, `tidak x`, `dan`/`atau`, `semua()`, `ada_yang()` |
+| `_ambil_(kunci)` / `_atur_(kunci, nilai)` | `x[kunci]` / `x[kunci] = nilai` |
+| `_hash_()` | `x` dipakai sebagai kunci kamus atau anggota himpunan |
 
 Yang perlu diingat:
 
@@ -1398,8 +1402,9 @@ Yang perlu diingat:
   memakai kebalikan `_sama_`.
 - `adalah` **tidak pernah** memanggil `_sama_`; ia selalu menguji apakah dua
   nilai adalah objek yang sama.
-- Objek yang punya `_sama_` tidak bisa menjadi kunci kamus atau anggota
-  himpunan (`GalatTipe`), sama seperti Python.
+- Objek yang punya `_sama_` **tanpa** `_hash_` tidak bisa menjadi kunci kamus
+  atau anggota himpunan (`GalatTipe`), sama seperti Python menyetel
+  `__hash__ = None`. Tambahkan `_hash_` untuk mendapatkannya kembali.
 - Operator pada objek yang tidak punya metodenya menghasilkan `GalatTipe`:
 
 ```indonesiaku
@@ -1413,6 +1418,69 @@ coba {
 ```
 
 > Contoh lengkap: [`examples/oop/metode_ajaib.idk`](../examples/oop/metode_ajaib.idk)
+
+### Protokol objek: panjang, kebenaran, indeks, dan hash
+
+Empat metode ajaib membuat kelas buatan berperilaku seperti tipe bawaan.
+
+```indonesiaku
+kelas Keranjang {
+    init(isi) { diri.isi = isi }
+
+    _panjang_()          { kembalikan panjang(diri.isi) }
+    _ambil_(i)           { kembalikan diri.isi[i] }
+    _atur_(i, nilai)     { diri.isi[i] = nilai }
+}
+
+k = Keranjang(["apel", "jeruk"])
+cetak(panjang(k))        # 2
+cetak(k[0])              # apel
+k[0] = "mangga"
+cetak(k[0])              # mangga
+
+jika Keranjang([]) { cetak("tidak tercetak") } selain { cetak("keranjang kosong itu salah") }
+```
+
+**Kebenaran.** `_logika_` dipakai lebih dulu; tanpa itu, objek dianggap benar
+bila `_panjang_()` bukan nol. Objek yang tidak punya keduanya **selalu benar**
+— perilaku lama, jadi program yang sudah ada tidak berubah.
+
+```indonesiaku
+kelas Saklar {
+    init(nyala) { diri.nyala = nyala }
+    _logika_() { kembalikan diri.nyala }
+}
+jika tidak Saklar(salah) { cetak("saklar mati") }
+```
+
+**Kunci kamus.** `_hash_` wajib mengembalikan `bulat`. Pasangkan dengan
+`_sama_`: dua objek yang `_sama_`-nya benar **wajib** punya `_hash_` yang sama,
+persis kontrak Python. Builtin `hash()` membantu menyusunnya.
+
+```indonesiaku
+kelas Titik {
+    init(x, y) {
+        diri.x = x
+        diri.y = y
+    }
+    _sama_(lain) { kembalikan diri.x == lain.x dan diri.y == lain.y }
+    _hash_()     { kembalikan hash((diri.x, diri.y)) }
+}
+
+peta = {Titik(0, 0): "asal"}
+cetak(peta[Titik(0, 0)])     # asal — objek berbeda, kunci sama
+```
+
+Yang perlu diingat:
+
+- `_panjang_` harus mengembalikan `bulat` yang tidak negatif; selain itu
+  `GalatTipe`/`GalatNilai`.
+- Objek tanpa `_ambil_` tetap `GalatTipe` saat diindeks, dengan pesan yang
+  menyebut metode yang perlu ditambahkan.
+- Mengubah atribut yang dipakai `_hash_` setelah objek menjadi kunci membuat
+  kuncinya tidak ditemukan lagi — sama seperti Python, dan tidak dicegah.
+
+> Contoh lengkap: [`examples/oop/protokol_objek.idk`](../examples/oop/protokol_objek.idk)
 
 ---
 

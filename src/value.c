@@ -153,11 +153,19 @@ bool hashValue(Value value, uint32_t* out) {
                 return true;
             }
             if (AS_OBJ(value)->type == OBJ_INSTANCE &&
+                (AS_INSTANCE(value)->klass->magic & MAGIC_BIT(MAGIC_HASH)) &&
+                instanceHashHook != NULL) {
+                // A class that defines _hash_ decides its own hash, whether or
+                // not it also defines _sama_.
+                int handled = instanceHashHook(value, out);
+                if (handled >= 0) return handled == 1;
+                // -1: hook says no _hash_ after all; fall through.
+            }
+            if (AS_OBJ(value)->type == OBJ_INSTANCE &&
                 (AS_INSTANCE(value)->klass->magic & MAGIC_BIT(MAGIC_SAMA))) {
-                // K19: defining _sama_ (without a _hash_, which does not exist
-                // yet) makes instances unhashable, like Python setting
-                // __hash__ = None. Dict and set lookups therefore never run
-                // user code.
+                // K19: defining _sama_ without a _hash_ makes instances
+                // unhashable, like Python setting __hash__ = None. Define
+                // _hash_ too (handled above) to get the key back.
                 return false;
             }
             {
@@ -332,6 +340,7 @@ bool valuesIdentical(Value a, Value b) {
 #define EQUAL_MAX_DEPTH 64
 
 InstanceEqualFn instanceEqualHook = NULL;
+InstanceHashFn instanceHashHook = NULL;
 
 static bool valuesEqualDepth(Value a, Value b, int depth) {
     // An instance with _sama_ decides for itself (K19), after the identity

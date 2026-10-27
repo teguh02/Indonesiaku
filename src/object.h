@@ -205,6 +205,11 @@ typedef enum {
     MAGIC_SISA,          // _sisa_         %
     MAGIC_PANGKAT,       // _pangkat_      **
     MAGIC_NEGATIF,       // _negatif_      -x
+    MAGIC_PANJANG,       // _panjang_      panjang(), truthiness fallback
+    MAGIC_LOGIKA,        // _logika_       jika, selagi, bukan, dan/atau
+    MAGIC_AMBIL,         // _ambil_        objek[kunci]
+    MAGIC_ATUR,          // _atur_         objek[kunci] = nilai
+    MAGIC_HASH,          // _hash_         kunci kamus / anggota himpunan
     MAGIC_COUNT,
     MAGIC_NONE = MAGIC_COUNT
 } MagicKind;

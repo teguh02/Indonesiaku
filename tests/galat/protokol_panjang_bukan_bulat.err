@@ -1,0 +1,4 @@
+_panjang_() harus mengembalikan bulat, bukan 'teks'
+[baris 8, kolom 22] dalam skrip
+    cetak(panjang(Rusak()))
+                         ^

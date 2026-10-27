@@ -1,0 +1,91 @@
+# Protokol objek (K19 tahap 2): kelas buatan berperilaku seperti tipe bawaan.
+# _panjang_, _logika_, _ambil_, _atur_, _hash_, dan builtin hash().
+
+cetak("=== _panjang_ ===")
+
+kelas Keranjang {
+    init(isi) { diri.isi = isi }
+    _panjang_() { kembalikan panjang(diri.isi) }
+}
+
+cetak(panjang(Keranjang(["apel", "jeruk", "mangga"])))
+cetak(panjang(Keranjang([])))
+
+cetak("=== _logika_ dan mundurnya ke _panjang_ ===")
+
+# Tanpa _logika_, kebenaran diambil dari _panjang_ != 0.
+jika Keranjang([]) { cetak("SALAH") } selain { cetak("keranjang kosong -> salah") }
+jika Keranjang([1]) { cetak("keranjang berisi -> benar") }
+cetak(tidak Keranjang([]), tidak Keranjang([1]))
+
+# _logika_ menang atas _panjang_ bila keduanya ada.
+kelas Saklar {
+    init(nyala) { diri.nyala = nyala }
+    _logika_() { kembalikan diri.nyala }
+    _panjang_() { kembalikan 99 }
+}
+jika Saklar(salah) { cetak("SALAH") } selain { cetak("_logika_ menang atas _panjang_") }
+jika Saklar(benar) { cetak("saklar nyala -> benar") }
+
+# Objek tanpa keduanya tetap benar — perilaku lama, kompatibel mundur.
+kelas Polos { }
+jika Polos() { cetak("tanpa metode -> tetap benar") }
+
+# Dipakai juga oleh dan/atau, selagi, dan semua()/ada_yang().
+cetak(Keranjang([]) atau "cadangan")
+cetak(semua([Keranjang([1]), Saklar(benar)]))
+cetak(ada_yang([Keranjang([]), Saklar(salah)]))
+
+sisa = Keranjang([1, 2, 3])
+jumlah = 0
+selagi sisa {
+    hapus_pada(sisa.isi, panjang(sisa.isi) - 1)
+    jumlah = jumlah + 1
+}
+cetak("selagi berhenti setelah", jumlah, "putaran")
+
+cetak("=== _ambil_ dan _atur_ ===")
+
+kelas Lemari {
+    init() { diri.rak = {} }
+    _ambil_(kunci) { kembalikan diri.rak[kunci] }
+    _atur_(kunci, nilai) { diri.rak[kunci] = nilai }
+    _panjang_() { kembalikan panjang(diri.rak) }
+}
+
+l = Lemari()
+l["baju"] = 4
+l["celana"] = 2
+cetak(l["baju"], l["celana"], panjang(l))
+
+# Kunci boleh tipe apa pun, bukan hanya angka atau teks.
+l[(2026, 10)] = "arsip Oktober"
+cetak(l[(2026, 10)])
+
+cetak("=== _hash_ ===")
+
+kelas Titik {
+    init(x, y) {
+        diri.x = x
+        diri.y = y
+    }
+    _sama_(lain) { kembalikan diri.x == lain.x dan diri.y == lain.y }
+    _hash_() { kembalikan hash((diri.x, diri.y)) }
+    _teks_() { kembalikan f"Titik({diri.x}, {diri.y})" }
+}
+
+peta = {Titik(0, 0): "asal", Titik(1, 2): "tujuan"}
+cetak(peta[Titik(0, 0)], "->", peta[Titik(1, 2)])
+
+# Dua titik yang sama nilainya adalah satu kunci, bukan dua.
+cetak("jumlah kunci:", panjang(peta))
+peta[Titik(0, 0)] = "asal (diperbarui)"
+cetak(panjang(peta), peta[Titik(0, 0)])
+
+# Himpunan memakai _hash_ dan _sama_ yang sama.
+cetak("anggota unik:", panjang(himpunan([Titik(1, 1), Titik(1, 1), Titik(2, 2)])))
+cetak(Titik(1, 1) dalam himpunan([Titik(1, 1)]))
+
+cetak("=== builtin hash() ===")
+cetak(hash(1) == hash(1), hash("abc") == hash("abc"), hash((1, 2)) == hash((1, 2)))
+cetak(hash(1) == hash("1"))

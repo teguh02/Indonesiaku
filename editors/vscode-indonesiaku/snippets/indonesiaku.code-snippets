@@ -273,5 +273,50 @@
       "}"
     ],
     "description": "Blok yang hanya jalan saat berkas dijalankan langsung"
+  },
+  "Metode ajaib _panjang_": {
+    "prefix": "_panjang_",
+    "body": [
+      "_panjang_() {",
+      "    kembalikan panjang(${0:diri.isi})",
+      "}"
+    ],
+    "description": "Panjang objek untuk panjang(); juga menentukan kebenarannya (K19)"
+  },
+  "Metode ajaib _logika_": {
+    "prefix": "_logika_",
+    "body": [
+      "_logika_() {",
+      "    kembalikan ${0:panjang(diri.isi) > 0}",
+      "}"
+    ],
+    "description": "Kebenaran objek untuk jika, selagi, tidak, dan/atau (K19)"
+  },
+  "Metode ajaib _ambil_": {
+    "prefix": "_ambil_",
+    "body": [
+      "_ambil_(kunci) {",
+      "    kembalikan ${0:diri.isi[kunci]}",
+      "}"
+    ],
+    "description": "Baca objek[kunci] (K19)"
+  },
+  "Metode ajaib _atur_": {
+    "prefix": "_atur_",
+    "body": [
+      "_atur_(kunci, nilai) {",
+      "    ${0:diri.isi[kunci] = nilai}",
+      "}"
+    ],
+    "description": "Tulis objek[kunci] = nilai (K19)"
+  },
+  "Metode ajaib _hash_": {
+    "prefix": "_hash_",
+    "body": [
+      "_hash_() {",
+      "    kembalikan hash(${0:(diri.x, diri.y)})",
+      "}"
+    ],
+    "description": "Hash objek agar bisa jadi kunci kamus; pasangkan dengan _sama_ (K19)"
   }
 }
