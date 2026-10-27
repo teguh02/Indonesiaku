@@ -30,6 +30,17 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4: pewarisan berganda + MRO C3
+- ✨ **`kelas D < B, C { }`** — induk dipisah koma, prioritas kiri. Urutan
+  pencarian dihitung dengan linearisasi C3 seperti Python; MRO yang mustahil
+  ditolak saat kelasnya dibuat, bukan dipilih diam-diam.
+- Metode tetap diratakan ke subkelas, jadi pemanggilan metode tetap satu
+  lookup — jalur terpanas VM tidak berubah.
+- Atribut kelas, `@properti`/`@metode_statis`/`@metode_kelas`, metode ajaib,
+  `adalah_instansi`, dan `turunan_dari` ikut menelusuri MRO.
+- `super` tetap menunjuk induk pertama.
+- Contoh: [`examples/oop/pewarisan_berganda.idk`](examples/oop/pewarisan_berganda.idk).
+
 ### Added — Fase 4: `@properti`, `@metode_statis`, `@metode_kelas`
 - ✨ Tiga dekorator bawaan untuk metode. Disimpan sebagai penanda pada kelas
   (satu tabel `special`, bukan tiga) dan diputuskan saat metode didaftarkan,

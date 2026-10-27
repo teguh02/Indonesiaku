@@ -1,0 +1,4 @@
+Kelas induk 'A' disebut dua kali.
+[baris 5, kolom 14] dalam skrip
+    kelas C < A, A { }
+                 ^

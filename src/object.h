@@ -242,6 +242,19 @@ typedef struct ObjClass {
     // Satu tabel, bukan tiga: tiap Table pada objek heap menuntut tiga edit
     // GC (initTable, freeTable, markTable), jadi tiga tabel = sembilan.
     Table special;
+    // MRO C3: urutan pencarian, klass sendiri di indeks 0. Metode TETAP
+    // diratakan ke `methods` oleh OP_INHERIT, jadi jalur panas tidak berubah;
+    // mro hanya dipakai yang memang harus menelusuri (fields, special,
+    // adalah_instansi). superclass tetap berisi induk PERTAMA agar `super`
+    // dan kelas galat bawaan tidak perlu disentuh.
+    struct ObjClass** mro;
+    int mroCount;
+    // Metode yang didefinisikan di badan kelas INI saja. `methods` diratakan
+    // (berisi warisan juga), jadi tidak bisa dipakai untuk meratakan ulang ke
+    // cucu: B.methods sudah memuat f() milik A, dan menyalinnya ke D akan
+    // menimpa C.f() yang seharusnya menang. `own` yang disalin, bukan
+    // `methods`.
+    Table own;
     uint32_t magic;      // MAGIC_BIT of every magic method in `methods`
 } ObjClass;
 

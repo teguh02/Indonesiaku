@@ -2323,8 +2323,8 @@ Value nativeFnTurunanDari(int argCount, Value* args) {
         nativeRaiseKelas(vm.galatTipe, "turunan_dari() hanya menerima kelas.");
         return BOOL_VAL(false);
     }
-    for (ObjClass* k = AS_CLASS(args[0]); k != NULL; k = k->superclass) {
-        if (k == AS_CLASS(args[1])) return BOOL_VAL(true);
+    for (AncestorIter it = ancestors(AS_CLASS(args[0])); ancestorNext(&it); ) {
+        if (it.klass == AS_CLASS(args[1])) return BOOL_VAL(true);
     }
     return BOOL_VAL(false);
 }

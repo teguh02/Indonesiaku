@@ -1,0 +1,5 @@
+# Induk yang sama disebut dua kali.
+
+kelas A { }
+
+kelas C < A, A { }

@@ -1,0 +1,100 @@
+# Pewarisan berganda dengan MRO C3.
+#
+# Induk dipisah koma; yang kiri lebih diutamakan. Urutan pencariannya dihitung
+# dengan linearisasi C3, sama seperti Python.
+
+cetak("=== dua induk, yang kiri menang ===")
+
+kelas Kiri { asal() { kembalikan "kiri" } }
+kelas Kanan { asal() { kembalikan "kanan" } hanya_kanan() { kembalikan "kanan saja" } }
+
+kelas Gabung < Kiri, Kanan { }
+
+g = Gabung()
+cetak(g.asal())
+cetak(g.hanya_kanan())
+
+cetak("=== diamond: MRO D, B, C, A ===")
+
+kelas A {
+    nama() { kembalikan "A" }
+    leluhur() { kembalikan "A-leluhur" }
+}
+kelas B < A { nama() { kembalikan "B" } }
+kelas C < A { nama() { kembalikan "C" } saudara() { kembalikan "C-saudara" } }
+kelas D < B, C { }
+
+d = D()
+cetak(d.nama())
+cetak(d.saudara())
+cetak(d.leluhur())
+
+cetak("=== saudara menang atas leluhur bersama ===")
+# B tidak punya f(), jadi yang dipakai C.f() -- bukan A.f().
+# Telusur kiri-dalam yang naif akan salah memilih "A" di sini.
+
+kelas P { f() { kembalikan "P" } }
+kelas Q < P { }
+kelas R < P { f() { kembalikan "R" } }
+kelas S < Q, R { }
+
+cetak(S().f())
+
+cetak("=== campuran (mixin) tanpa induk bersama ===")
+
+kelas BisaDicetak { tampil() { kembalikan "cetak:" + diri.ringkas() } }
+
+kelas BisaDisimpan {
+    SUFIKS = ".dat"
+
+    simpan() { kembalikan diri.ringkas() + BisaDisimpan.SUFIKS }
+
+    @properti
+    ukuran() { kembalikan 42 }
+
+    @metode_statis
+    versi() { kembalikan "v1" }
+}
+
+kelas Dokumen < BisaDicetak, BisaDisimpan {
+    init(nama) { diri.nama = nama }
+    ringkas() { kembalikan diri.nama }
+    _teks_() { kembalikan "<Dokumen " + diri.nama + ">" }
+}
+
+dok = Dokumen("laporan")
+cetak(dok.tampil())
+cetak(dok.simpan())
+
+cetak("=== @properti dan @metode_statis diwariskan dari induk kedua ===")
+cetak(dok.ukuran)
+cetak(Dokumen.versi())
+cetak(dok.versi())
+
+cetak("=== atribut kelas lewat MRO ===")
+cetak(Dokumen.SUFIKS)
+
+cetak("=== metode ajaib tetap jalan ===")
+cetak(dok)
+
+cetak("=== tiga induk ===")
+
+kelas Satu { a() { kembalikan 1 } }
+kelas Dua { b() { kembalikan 2 } }
+kelas Tiga { c() { kembalikan 3 } }
+kelas Semua < Satu, Dua, Tiga { }
+
+s = Semua()
+cetak(s.a(), s.b(), s.c())
+
+cetak("=== adalah_instansi dan turunan_dari melihat semua leluhur ===")
+cetak(adalah_instansi(d, A), adalah_instansi(d, B), adalah_instansi(d, C))
+cetak(turunan_dari(D, A), turunan_dari(D, C))
+
+cetak("=== 'super' tetap menunjuk induk pertama ===")
+
+kelas U { f() { kembalikan "U" } }
+kelas V { f() { kembalikan "V" } }
+kelas W < U, V { f() { kembalikan "W+" + super.f() } }
+
+cetak(W().f())

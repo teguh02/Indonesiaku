@@ -195,8 +195,10 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ✅ Dekorator `@nama` pada fungsi, plus `@properti`, `@metode_statis`, dan
 `@metode_kelas` ([rencana](RENCANA_FITUR/selesai/dekorator.md)).
 
-> Fase 4 **sedang dikerjakan** — yang tersisa: pewarisan berganda + MRO C3,
-> kelas abstrak.
+✅ Pewarisan berganda + MRO C3
+([rencana](RENCANA_FITUR/selesai/pewarisan_berganda.md)).
+
+> Fase 4 **sedang dikerjakan** — yang tersisa: kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
 

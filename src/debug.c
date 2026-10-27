@@ -212,7 +212,7 @@ int disassembleInstruction(Chunk* chunk, int offset) {
         case OP_CLASS:
             return constantInstruction("OP_CLASS", chunk, offset);
         case OP_INHERIT:
-            return simpleInstruction("OP_INHERIT", offset);
+            return byteInstruction("OP_INHERIT", chunk, offset);
         case OP_METHOD:
             return constantInstruction("OP_METHOD", chunk, offset);
         case OP_SPECIAL_METHOD: {

@@ -1,0 +1,4 @@
+Urutan pewarisan 'Z' tidak konsisten: tidak ada urutan yang memenuhi semua induknya.
+[baris 10, kolom 14] dalam skrip
+    kelas Z < X, Y { }
+                 ^

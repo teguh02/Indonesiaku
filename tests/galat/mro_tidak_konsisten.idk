@@ -1,0 +1,10 @@
+# MRO yang mustahil ditolak saat kelasnya dibuat, bukan dibiarkan memilih
+# salah satu urutan diam-diam.
+
+kelas A { }
+kelas B { }
+
+kelas X < A, B { }
+kelas Y < B, A { }
+
+kelas Z < X, Y { }

@@ -1812,6 +1812,58 @@ menjadikannya metode biasa.
 
 > Contoh lengkap: [`examples/oop/properti_statis.idk`](../examples/oop/properti_statis.idk)
 
+### Pewarisan berganda
+
+Induk boleh lebih dari satu, dipisah koma. Yang kiri lebih diutamakan:
+
+```indonesiaku
+kelas BisaDicetak { tampil() { kembalikan "cetak:" + diri.ringkas() } }
+kelas BisaDisimpan { simpan() { kembalikan diri.ringkas() + ".dat" } }
+
+kelas Dokumen < BisaDicetak, BisaDisimpan {
+    init(nama) { diri.nama = nama }
+    ringkas() { kembalikan diri.nama }
+}
+
+dok = Dokumen("laporan")
+cetak(dok.tampil())    # cetak:laporan
+cetak(dok.simpan())    # laporan.dat
+```
+
+Urutan pencarian metodenya dihitung dengan **linearisasi C3**, sama seperti
+Python. Pada bentuk *diamond*, leluhur bersama muncul **sekali**, dan setelah
+semua saudaranya:
+
+```indonesiaku
+kelas A { nama() { kembalikan "A" } }
+kelas B < A { nama() { kembalikan "B" } }
+kelas C < A { nama() { kembalikan "C" } }
+kelas D < B, C { }
+
+cetak(D().nama())      # B — urutannya D, B, C, A
+```
+
+Yang dijamin C3, dan sebabnya ia dipilih daripada telusur kiri-dalam biasa:
+
+- Kalau `B` tidak punya metode itu tetapi `C` punya, yang dipakai **`C`** —
+  bukan `A`. Saudara yang lebih dekat selalu menang atas leluhur bersama.
+- Urutan induk yang ditulis tidak pernah terbalik di kelas turunannya.
+- Kalau tidak ada urutan yang konsisten, **kelasnya ditolak** saat dibuat:
+
+```indonesiaku-takjalan
+kelas X < A, B { }
+kelas Y < B, A { }
+kelas Z < X, Y { }     # galat: urutan pewarisan tidak konsisten
+```
+
+Atribut kelas, `@properti`, `@metode_statis`, `@metode_kelas`, dan metode
+ajaib ikut ditelusuri lewat MRO, jadi semuanya diwariskan dari induk mana pun.
+
+> `super` tetap menunjuk **induk pertama**. Memanggil berantai sepanjang MRO
+> seperti `super()` di Python belum ada.
+
+> Contoh lengkap: [`examples/oop/pewarisan_berganda.idk`](../examples/oop/pewarisan_berganda.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

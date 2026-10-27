@@ -1,0 +1,27 @@
+=== dua induk, yang kiri menang ===
+kiri
+kanan saja
+=== diamond: MRO D, B, C, A ===
+B
+C-saudara
+A-leluhur
+=== saudara menang atas leluhur bersama ===
+R
+=== campuran (mixin) tanpa induk bersama ===
+cetak:laporan
+laporan.dat
+=== @properti dan @metode_statis diwariskan dari induk kedua ===
+42
+v1
+v1
+=== atribut kelas lewat MRO ===
+.dat
+=== metode ajaib tetap jalan ===
+<Dokumen laporan>
+=== tiga induk ===
+1 2 3
+=== adalah_instansi dan turunan_dari melihat semua leluhur ===
+benar benar benar
+benar benar
+=== 'super' tetap menunjuk induk pertama ===
+W+U

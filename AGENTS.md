@@ -206,6 +206,18 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   triggered by `_sama_` freed them — a use-after-free that the normal suite
   passed and only the sanitizer build caught. Keep values on the stack
   (`peek`), pop after.
+- **Flattened inheritance is not composable: keep an `own` table.** Methods
+  are copied into the subclass so a call stays one `tableGet`, but that makes
+  `methods` useless as a source for flattening into a *grandchild*: `B.methods`
+  already holds `f()` inherited from `A`, so copying it into `D` overwrites the
+  `C.f()` that C3 says should win. Copy each ancestor's `own` (methods defined
+  in its own body) instead. The symptom is subtle -- a diamond resolves to the
+  shared ancestor instead of the nearer sibling -- so test `D < Q, R` where
+  only `R` overrides.
+- **A fixed-size square worklist on the C stack is a stack overflow waiting to
+  happen.** The C3 merge needs `lists[N][N]` of pointers; at N=128 that is
+  131 KB in a function the VM calls while already deep inside `run()`. Keep
+  such bounds small (32) and report exceeding them as a normal error.
 - **A per-class side table is NOT inherited by `OP_INHERIT`.** `OP_INHERIT`
   copies the parent's `methods` into the subclass, but nothing else. So an
   inherited `@properti` sits in the subclass's `methods` while its tag still

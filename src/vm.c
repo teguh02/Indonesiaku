@@ -37,9 +37,37 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
 static int formatInstanceMagic(TextBuf* out, Value instance, bool repr);
 static int instanceEqualMagic(Value a, Value b);
 static int instanceHashMagic(Value value, uint32_t* out);
+// Single ancestor walk used by every chain lookup. Classes built with one
+// parent (and the error classes defined from C) never get an mro array at
+// all: their superclass chain already IS their MRO, so allocating one would
+// be pure overhead. Multiple inheritance sets mro and this reads it.
+//
+//     for (AncestorIter it = ancestors(k); ancestorNext(&it); ) { it.klass }
+AncestorIter ancestors(ObjClass* klass) {
+    AncestorIter it;
+    it.klass = NULL;
+    it.next = klass;
+    it.owner = klass;
+    it.index = 0;
+    return it;
+}
+
+bool ancestorNext(AncestorIter* it) {
+    if (it->owner != NULL && it->owner->mroCount > 0) {
+        if (it->index >= it->owner->mroCount) return false;
+        it->klass = it->owner->mro[it->index++];
+        return true;
+    }
+    if (it->next == NULL) return false;
+    it->klass = it->next;
+    it->next = it->next->superclass;
+    return true;
+}
+
 static bool instanceMagic(Value value, MagicKind kind, Value* method);
 static const char* valueTypeName(Value value);
 static uint8_t specialKind(ObjClass* klass, ObjString* name);
+static bool c3Linearize(ObjClass* klass, ObjClass** bases, int baseCount);
 static bool classMethodGet(ObjClass* klass, ObjString* name, Value* out);
 
 static Value clockNative(int argCount, Value* args) {
@@ -206,13 +234,13 @@ void nativeRaiseKelas(ObjClass* klass, const char* format, ...) {
 }
 
 // The one instance check in the VM: used by OP_IS_INSTANCE (`kecuali GalatTipe`)
-// and by the builtin adalah_instansi(). Walks the superclass chain.
+// and by the builtin adalah_instansi(). Walks the MRO.
 bool valueIsInstanceOf(Value value, Value klass) {
     if (!IS_INSTANCE(value) || !IS_CLASS(klass)) return false;
     ObjClass* expected = AS_CLASS(klass);
-    for (ObjClass* actual = AS_INSTANCE(value)->klass; actual != NULL;
-         actual = actual->superclass) {
-        if (actual == expected) return true;
+    for (AncestorIter it = ancestors(AS_INSTANCE(value)->klass);
+         ancestorNext(&it); ) {
+        if (it.klass == expected) return true;
     }
     return false;
 }
@@ -674,15 +702,14 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
     return false;
 }
 
-// Atribut kelas, ditelusuri naik lewat rantai superclass saat dibaca -- bukan
-// disalin ketika OP_INHERIT. Mengubah atribut induk karena itu langsung
-// terlihat oleh subkelasnya, seperti Python.
+// Atribut kelas, ditelusuri lewat MRO saat dibaca -- bukan disalin ketika
+// OP_INHERIT. Mengubah atribut induk karena itu langsung terlihat oleh
+// subkelasnya, seperti Python.
 // ponytail: telusur linier tiap akses, tanpa cache. Kedalaman warisan nyata
-// 2-4 tingkat, jadi lebih murah daripada invalidasi cache. Kalau MRO C3 masuk,
-// hanya fungsi ini yang berubah.
+// 2-4 tingkat, jadi lebih murah daripada invalidasi cache.
 static bool classFieldGet(ObjClass* klass, ObjString* name, Value* out) {
-    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
-        if (tableGet(&k->fields, name, out)) return true;
+    for (AncestorIter it = ancestors(klass); ancestorNext(&it); ) {
+        if (tableGet(&it.klass->fields, name, out)) return true;
     }
     return false;
 }
@@ -926,17 +953,110 @@ static bool invoke(ObjString* name, int argCount) {
 
 // Returns SPECIAL_* for a method reached through `klass` or any ancestor,
 // or 0. Walks the chain because `special` is not copied by OP_INHERIT.
+// 32, not 128: the merge worklist is a square array of pointers, so 128 would
+// put 131 KB on the C stack of a function the VM calls while already deep in
+// run(). 32 bases/ancestors is far past anything sane and costs 8 KB.
+#define MRO_MAX 32
+
+
+// C3 linearization (Python's MRO):
+//     L(C) = C + merge(L(B1), ..., L(Bn), [B1, ..., Bn])
+//
+// merge repeatedly takes the head of the first remaining list that appears in
+// no other list's TAIL. "Not in a tail" is what keeps a shared ancestor from
+// being emitted before a sibling that also inherits it -- the whole reason a
+// plain depth-first walk is wrong on a diamond.
+//
+// Fails (returns false, error already reported) when no head qualifies: that
+// means the bases demand contradictory orders, and Python rejects the class
+// too rather than silently picking one.
+static bool c3Linearize(ObjClass* klass, ObjClass** bases, int baseCount) {
+    // Worklists: the MRO of each base, then the base list itself.
+    ObjClass* lists[MRO_MAX][MRO_MAX];
+    int lengths[MRO_MAX];
+    int listCount = baseCount + 1;
+    if (listCount > MRO_MAX) {
+        runtimeError("Terlalu banyak kelas induk.");
+        return false;
+    }
+
+    for (int i = 0; i < baseCount; i++) {
+        if (bases[i]->mroCount > MRO_MAX) {
+            runtimeError("Rantai pewarisan terlalu panjang.");
+            return false;
+        }
+        for (int j = 0; j < bases[i]->mroCount; j++) {
+            lists[i][j] = bases[i]->mro[j];
+        }
+        lengths[i] = bases[i]->mroCount;
+    }
+    for (int i = 0; i < baseCount; i++) lists[baseCount][i] = bases[i];
+    lengths[baseCount] = baseCount;
+
+    ObjClass* result[MRO_MAX];
+    int resultCount = 0;
+    result[resultCount++] = klass;        // C itself always comes first
+
+    for (;;) {
+        bool allEmpty = true;
+        for (int i = 0; i < listCount; i++) {
+            if (lengths[i] > 0) { allEmpty = false; break; }
+        }
+        if (allEmpty) break;
+
+        ObjClass* candidate = NULL;
+        for (int i = 0; i < listCount && candidate == NULL; i++) {
+            if (lengths[i] == 0) continue;
+            ObjClass* head = lists[i][0];
+            // Reject the head if it sits in any OTHER list's tail.
+            bool inTail = false;
+            for (int j = 0; j < listCount && !inTail; j++) {
+                for (int k = 1; k < lengths[j]; k++) {
+                    if (lists[j][k] == head) { inTail = true; break; }
+                }
+            }
+            if (!inTail) candidate = head;
+        }
+
+        if (candidate == NULL) {
+            runtimeError(
+                "Urutan pewarisan '%s' tidak konsisten: tidak ada urutan "
+                "yang memenuhi semua induknya.", klass->name->chars);
+            return false;
+        }
+
+        if (resultCount >= MRO_MAX) {
+            runtimeError("Rantai pewarisan terlalu panjang.");
+            return false;
+        }
+        result[resultCount++] = candidate;
+
+        // Drop the chosen class from the front of every list holding it.
+        for (int i = 0; i < listCount; i++) {
+            if (lengths[i] > 0 && lists[i][0] == candidate) {
+                for (int k = 1; k < lengths[i]; k++) lists[i][k - 1] = lists[i][k];
+                lengths[i]--;
+            }
+        }
+    }
+
+    klass->mro = ALLOCATE(struct ObjClass*, resultCount);
+    for (int i = 0; i < resultCount; i++) klass->mro[i] = result[i];
+    klass->mroCount = resultCount;
+    return true;
+}
+
 static bool classMethodGet(ObjClass* klass, ObjString* name, Value* out) {
-    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
-        if (tableGet(&k->methods, name, out)) return true;
+    for (AncestorIter it = ancestors(klass); ancestorNext(&it); ) {
+        if (tableGet(&it.klass->methods, name, out)) return true;
     }
     return false;
 }
 
 static uint8_t specialKind(ObjClass* klass, ObjString* name) {
-    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
+    for (AncestorIter it = ancestors(klass); ancestorNext(&it); ) {
         Value tag;
-        if (tableGet(&k->special, name, &tag)) return (uint8_t)AS_NUMBER(tag);  // 0 = sengaja ditimpa metode biasa
+        if (tableGet(&it.klass->special, name, &tag)) return (uint8_t)AS_NUMBER(tag);  // 0 = sengaja ditimpa metode biasa
         // Cannot stop at the first class whose `methods` has the name:
         // OP_INHERIT copies the parent's methods into the subclass, so an
         // inherited @properti is present in the subclass's `methods` while
@@ -951,6 +1071,7 @@ static void defineMethod(ObjString* name) {
     Value method = peek(0);
     ObjClass* klass = AS_CLASS(peek(1));
     tableSet(&klass->methods, name, method);
+    tableSet(&klass->own, name, method);   // dipakai saat meratakan ke cucu
     // A plain method here must shadow an inherited @properti/@metode_statis
     // tag. Deleting is not enough: the tag lives on the ancestor, and
     // specialKind() walks the whole chain. Record an explicit 0 to stop it.
@@ -3016,15 +3137,45 @@ static InterpretResult run() {
                 push(OBJ_VAL(newClass(READ_STRING())));
                 break;
             case OP_INHERIT: {
-                Value superclass = peek(1);
-                if (!IS_CLASS(superclass)) {
-                    runtimeError("Kelas induk harus berupa kelas.");
+                int baseCount = READ_BYTE();
+                ObjClass* subclass = AS_CLASS(peek(0));
+                ObjClass* bases[MRO_MAX];
+                if (baseCount > MRO_MAX) {
+                    runtimeError("Terlalu banyak kelas induk.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                ObjClass* subclass = AS_CLASS(peek(0));
-                subclass->superclass = AS_CLASS(superclass);
-                tableAddAll(&AS_CLASS(superclass)->methods, &subclass->methods);
-                subclass->magic |= AS_CLASS(superclass)->magic;   // copied with the methods
+                // Stack: base1 ... baseN subclass
+                for (int i = 0; i < baseCount; i++) {
+                    Value base = peek(baseCount - i);
+                    if (!IS_CLASS(base)) {
+                        runtimeError("Kelas induk harus berupa kelas.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    for (int j = 0; j < i; j++) {
+                        if (bases[j] == AS_CLASS(base)) {
+                            runtimeError("Kelas induk '%s' disebut dua kali.",
+                                         AS_CLASS(base)->name->chars);
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                    }
+                    bases[i] = AS_CLASS(base);
+                }
+
+                if (!c3Linearize(subclass, bases, baseCount)) {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                // superclass = induk pertama: 'super' dan kelas galat bawaan
+                // memakainya dan tidak perlu tahu soal MRO.
+                subclass->superclass = bases[0];
+
+                // Metode tetap DIRATAKAN supaya lookup tetap satu tableGet.
+                // Disalin dari belakang MRO ke depan: yang lebih awal di MRO
+                // menimpa yang belakangan, persis prioritas C3.
+                for (int i = subclass->mroCount - 1; i >= 1; i--) {
+                    tableAddAll(&subclass->mro[i]->own, &subclass->methods);
+                    subclass->magic |= subclass->mro[i]->magic;
+                }
                 pop();  // subclass
                 break;
             }

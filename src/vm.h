@@ -153,4 +153,16 @@ int instanceLengthFor(Value value, int64_t* out);
 // (error pending), -1 when neither operand defines an ordering.
 int instanceLessFor(Value a, Value b, bool* less);
 
+// Ancestor walk (MRO when set, superclass chain otherwise). Shared with
+// native.c so turunan_dari() sees multiple inheritance too.
+typedef struct {
+    ObjClass* klass;
+    ObjClass* next;
+    ObjClass* owner;
+    int index;
+} AncestorIter;
+
+AncestorIter ancestors(ObjClass* klass);
+bool ancestorNext(AncestorIter* it);
+
 #endif

@@ -141,6 +141,12 @@ static void blackenObject(Obj* object) {
             markTable(&klass->methods);
             markTable(&klass->fields);   // atribut kelas juga akar GC
             markTable(&klass->special);  // kuncinya ObjString -- wajib ditandai
+            markTable(&klass->own);
+            // Array MRO adalah akar GC sama seperti tabel: isinya ObjClass*
+            // yang mungkin tidak dirujuk dari mana pun lagi.
+            for (int i = 0; i < klass->mroCount; i++) {
+                markObject((Obj*)klass->mro[i]);
+            }
             break;
         }
         case OBJ_INSTANCE: {
@@ -240,6 +246,8 @@ static void freeObject(Obj* object) {
             freeTable(&klass->methods);
             freeTable(&klass->fields);
             freeTable(&klass->special);
+            freeTable(&klass->own);
+            FREE_ARRAY(struct ObjClass*, klass->mro, klass->mroCount);
             FREE(ObjClass, object);
             break;
         }

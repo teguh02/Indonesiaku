@@ -2223,19 +2223,33 @@ static void classDeclaration() {
 
     // Optional superclass:  kelas Anak < Induk { ... }
     if (match(TOKEN_LESS)) {
-        consume(TOKEN_IDENTIFIER, "Harapkan nama kelas induk.");
-        variable(false);
+        // kelas D < B, C { ... } -- semua induk didorong ke stack, lalu
+        // OP_INHERIT membaca jumlahnya sebagai operand.
+        int baseCount = 0;
+        do {
+            consume(TOKEN_IDENTIFIER, "Harapkan nama kelas induk.");
+            variable(false);
+            if (identifiersEqual(&className, &parser.previous)) {
+                error("Sebuah kelas tidak dapat mewarisi dirinya sendiri.");
+            }
+            if (baseCount == 255) {
+                error("Terlalu banyak kelas induk.");
+            }
+            baseCount++;
+        } while (match(TOKEN_COMMA));
 
-        if (identifiersEqual(&className, &parser.previous)) {
-            error("Sebuah kelas tidak dapat mewarisi dirinya sendiri.");
-        }
+        namedVariable(className, false);
+        emitBytes(OP_INHERIT, (uint8_t)baseCount);
+
+        // OP_INHERIT pops only the subclass, leaving base1..baseN. Drop all
+        // but the first so the slot 'super' names is base1 -- `super` keeps
+        // meaning the first parent, which is also what C3 puts right after
+        // the class itself.
+        for (int i = 1; i < baseCount; i++) emitByte(OP_POP);
 
         beginScope();
         addLocal(syntheticToken("super"));
         defineVariable(0);
-
-        namedVariable(className, false);
-        emitByte(OP_INHERIT);
         classCompiler.hasSuperclass = true;
     }
 
