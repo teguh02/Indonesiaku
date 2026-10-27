@@ -1,0 +1,59 @@
+# Generator: fungsi yang menghasilkan nilai satu per satu dengan 'hasilkan'.
+# Tidak ada daftar besar yang dibuat di memori; nilai dihitung saat diminta.
+
+fungsi hitung_mundur(mulai) {
+    variabel n = mulai
+    selagi n > 0 {
+        hasilkan n
+        n = n - 1
+    }
+}
+
+untuk angka dalam hitung_mundur(5) {
+    cetak(angka)
+}
+
+# Generator berhenti sendiri ketika fungsinya selesai.
+fungsi tiga_kata() {
+    hasilkan "satu"
+    hasilkan "dua"
+    hasilkan "tiga"
+}
+
+cetak(daftar(tiga_kata()))
+
+# Generator bisa dipakai generator lain.
+fungsi genap_saja(batas) {
+    untuk i dalam rentang(0, batas) {
+        jika i % 2 == 0 {
+            hasilkan i
+        }
+    }
+}
+
+cetak(daftar(genap_saja(10)))
+cetak(jumlah(genap_saja(10)))
+
+# Nilai tak terbatas aman, karena hanya diambil seperlunya.
+fungsi kelipatan(n) {
+    variabel i = 1
+    selagi benar {
+        hasilkan n * i
+        i = i + 1
+    }
+}
+
+untuk nilai dalam kelipatan(7) {
+    jika nilai > 30 {
+        hentikan
+    }
+    cetak(nilai)
+}
+
+# iter() dan lanjutkan() juga bekerja pada generator.
+variabel g = tiga_kata()
+variabel it = iter(g)
+cetak(lanjutkan(it))
+cetak(lanjutkan(it))
+cetak(lanjutkan(it))
+cetak(lanjutkan(it, "sudah habis"))

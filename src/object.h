@@ -10,6 +10,7 @@
 
 #define IS_STRING(value)       isObjType(value, OBJ_STRING)
 #define IS_ITERATOR(value)     isObjType(value, OBJ_ITERATOR)
+#define IS_GENERATOR(value)    isObjType(value, OBJ_GENERATOR)
 #define IS_MODULE(value)       isObjType(value, OBJ_MODULE)
 #define IS_FUNCTION(value)     isObjType(value, OBJ_FUNCTION)
 #define IS_NATIVE(value)       isObjType(value, OBJ_NATIVE)
@@ -44,6 +45,7 @@
 #define AS_TUPLE(value)        ((ObjTuple*)AS_OBJ(value))
 #define AS_SET(value)          ((ObjSet*)AS_OBJ(value))
 #define AS_ITERATOR(value)     ((ObjIterator*)AS_OBJ(value))
+#define AS_GENERATOR(value)    ((ObjGenerator*)AS_OBJ(value))
 #define AS_MODULE(value)       ((ObjModule*)AS_OBJ(value))
 
 typedef enum {
@@ -64,6 +66,7 @@ typedef enum {
     OBJ_TUPLE,
     OBJ_SET,
     OBJ_ITERATOR,
+    OBJ_GENERATOR,
     OBJ_MODULE,
 } ObjType;
 
@@ -98,6 +101,7 @@ typedef struct {
     // reads A's globals even when called from B, so global resolution follows
     // the callee, never the caller. GC-marked.
     struct ObjModule* module;
+    bool isGenerator;    // body contains 'hasilkan': calling it builds an ObjGenerator
 } ObjFunction;
 
 typedef Value (*NativeFn)(int argCount, Value* args);
@@ -166,6 +170,32 @@ typedef struct {
     int index;
 } ObjIterator;
 
+// A suspended generator function (Fase 5). `hasilkan` saves the frame's
+// instruction pointer and its live stack slots here, then returns to the
+// caller; the next _berikutnya_() restores them and resumes.
+//
+// ponytail: one frame is snapshotted, so 'hasilkan' is only valid directly in
+// the generator body -- not inside a helper it calls. Yield-from / nested
+// suspension would need the full frame range copied instead.
+#define GEN_SLOTS_MAX 64
+
+typedef enum {
+    GEN_BELUM_MULAI,   // created, body not entered yet
+    GEN_TERTUNDA,      // suspended at a 'hasilkan'
+    GEN_BERJALAN,      // currently executing (guards re-entrancy)
+    GEN_SELESAI        // exhausted or terminated by an error
+} GeneratorState;
+
+typedef struct {
+    Obj obj;
+    ObjClosure* closure;
+    uint8_t* ip;              // resume point, NULL before the first call
+    Value slots[GEN_SLOTS_MAX];
+    int slotCount;            // live slots saved at the yield
+    GeneratorState state;
+} ObjGenerator;
+
+
 // A module owns its global namespace. EVERY execution runs inside one,
 // including the entry script (whose module is named "__utama__"), so global
 // lookup never needs a special case for "no module".
@@ -219,6 +249,7 @@ typedef enum {
     MAGIC_KSISA,         // _ksisa_        nilai % objek
     MAGIC_KPANGKAT,      // _kpangkat_     nilai ** objek
     MAGIC_ITER,          // _iter_         untuk ... dalam objek
+    MAGIC_BERIKUTNYA,    // _berikutnya_   nilai iterator berikutnya
     MAGIC_PANGGIL,       // _panggil_      objek(...)
     MAGIC_MASUK,         // _masuk_        dengan ... sebagai
     MAGIC_KELUAR,        // _keluar_       akhir blok 'dengan'
@@ -226,7 +257,11 @@ typedef enum {
     MAGIC_NONE = MAGIC_COUNT
 } MagicKind;
 
-#define MAGIC_BIT(kind) (1u << (kind))
+#define MAGIC_BIT(kind) (1ull << (kind))
+// The mask below is 64-bit: adding a magic method past bit 63 silently breaks
+// every lookup, so fail the build instead of shifting out of range.
+_Static_assert(MAGIC_COUNT <= 64, "MAGIC_COUNT melebihi lebar bitmask magic (uint64_t)");
+
 
 #define SPECIAL_PROPERTI   1
 #define SPECIAL_STATIS     2
@@ -256,7 +291,7 @@ typedef struct ObjClass {
     // menimpa C.f() yang seharusnya menang. `own` yang disalin, bukan
     // `methods`.
     Table own;
-    uint32_t magic;      // MAGIC_BIT of every magic method in `methods`
+    uint64_t magic;      // MAGIC_BIT of every magic method in `methods`
 } ObjClass;
 
 typedef struct {
@@ -300,6 +335,7 @@ ObjTuple* newTuple();
 ObjDict* newDict();
 ObjSet* newSet();
 ObjIterator* newIterator(Value source);
+ObjGenerator* newGenerator(ObjClosure* closure);
 ObjModule* newModule(ObjString* name, ObjString* path);
 // Adds value; false (nothing added) when it is not hashable. Caller roots both.
 bool setAdd(ObjSet* set, Value value);

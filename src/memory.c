@@ -127,6 +127,14 @@ static void blackenObject(Obj* object) {
         case OBJ_ITERATOR:
             markValue(((ObjIterator*)object)->source);
             break;
+        case OBJ_GENERATOR: {
+            // A suspended generator owns the only reference to its saved
+            // locals; without marking them they are freed mid-iteration.
+            ObjGenerator* gen = (ObjGenerator*)object;
+            markObject((Obj*)gen->closure);
+            for (int i = 0; i < gen->slotCount; i++) markValue(gen->slots[i]);
+            break;
+        }
         case OBJ_MODULE: {
             ObjModule* module = (ObjModule*)object;
             markObject((Obj*)module->name);
@@ -234,6 +242,10 @@ static void freeObject(Obj* object) {
         case OBJ_ITERATOR:
             // `source` is a Value owned by the GC; nothing extra to release.
             FREE(ObjIterator, object);
+            break;
+        case OBJ_GENERATOR:
+            // slots are inline Values owned by the GC; nothing extra to free.
+            FREE(ObjGenerator, object);
             break;
         case OBJ_MODULE: {
             ObjModule* module = (ObjModule*)object;

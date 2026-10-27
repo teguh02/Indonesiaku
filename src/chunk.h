@@ -56,6 +56,9 @@ typedef enum {
     OP_BUILD_TUPLE,  // byte = jumlah elemen; (a, b) / (a,) / ()
     OP_BUILD_DICT,
     OP_APPEND,       // [daftar, nilai] -> daftar (list comprehension)
+    OP_DICT_PUT,     // [kamus, kunci, nilai] -> kamus (dict comprehension)
+    OP_SET_PUT,      // [himpunan, nilai] -> himpunan (set comprehension)
+    OP_BUILD_SET,    // himpunan kosong baru (akumulator set comprehension)
     OP_DELETE_GLOBAL,   // buang nama; byte = nama
     OP_DELETE_LOCAL,    // buang nama; byte = slot lokal (diisi VAL_TAKTERISI)
     OP_DELETE_UPVALUE,  // buang nama; byte = upvalue
@@ -65,6 +68,8 @@ typedef enum {
     OP_INDEX_GET,
     OP_SEQ_GET,      // iteration by position: kamus -> kunci ke-i (not a key lookup)
     OP_ITER_OBJEK,   // once before a loop: objek dengan _iter_ -> hasilnya
+    OP_ITER_NEXT,    // iterator protocol or indexed sequence fallback
+    OP_YIELD,        // hasilkan: suspend the generator frame, return the value
     OP_CLASS_FIELD,  // atribut kelas: NAMA = nilai di badan kelas
     OP_INDEX_SET,
     OP_SLICE,

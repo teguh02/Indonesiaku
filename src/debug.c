@@ -201,6 +201,16 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_SEQ_GET", offset);
         case OP_ITER_OBJEK:
             return simpleInstruction("OP_ITER_OBJEK", offset);
+        case OP_ITER_NEXT:
+            return simpleInstruction("OP_ITER_NEXT", offset);
+        case OP_YIELD:
+            return simpleInstruction("OP_YIELD", offset);
+        case OP_DICT_PUT:
+            return simpleInstruction("OP_DICT_PUT", offset);
+        case OP_SET_PUT:
+            return simpleInstruction("OP_SET_PUT", offset);
+        case OP_BUILD_SET:
+            return simpleInstruction("OP_BUILD_SET", offset);
         case OP_CLASS_FIELD:
             return constantInstruction("OP_CLASS_FIELD", chunk, offset);
         case OP_INDEX_SET:

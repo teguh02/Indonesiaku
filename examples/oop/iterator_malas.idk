@@ -1,0 +1,34 @@
+kelas Penghitung {
+    init() {
+        diri.posisi = 0
+        diri.batas = 4
+    }
+
+    _iter_() {
+        kembalikan diri
+    }
+
+    _berikutnya_() {
+        jika diri.posisi >= diri.batas {
+            naikkan HentiIterasi()
+        }
+        variabel nilai = diri.posisi
+        diri.posisi = diri.posisi + 1
+        kembalikan nilai
+    }
+}
+
+variabel hasil = []
+untuk angka dalam Penghitung() {
+    tambah(hasil, angka)
+}
+cetak(hasil)
+
+variabel putus = []
+untuk angka dalam Penghitung() {
+    jika angka == 3 {
+        hentikan
+    }
+    tambah(putus, angka)
+}
+cetak(putus)

@@ -102,6 +102,17 @@ ObjIterator* newIterator(Value source) {
     return it;
 }
 
+ObjGenerator* newGenerator(ObjClosure* closure) {
+    ObjGenerator* gen = ALLOCATE_OBJ(ObjGenerator, OBJ_GENERATOR);
+    gen->closure = closure;
+    gen->ip = NULL;
+    gen->slotCount = 0;
+    gen->state = GEN_BELUM_MULAI;
+    // Every slot must be a valid Value before the next GC can see this object.
+    for (int i = 0; i < GEN_SLOTS_MAX; i++) gen->slots[i] = KOSONG_VAL;
+    return gen;
+}
+
 bool setAdd(ObjSet* set, Value value) {
     uint32_t ignored;
     if (!hashValue(value, &ignored)) return false;   // same rule as dict keys (K8)
@@ -587,6 +598,9 @@ static bool formatObject(TextBuf* out, Value value, bool repr, bool callMagic) {
             return true;
         case OBJ_ITERATOR:
             textAppendCString(out, "<iterator>");   // jenis() calls it "iterator"
+            return true;
+        case OBJ_GENERATOR:
+            textAppendCString(out, "<generator>");
             return true;
         case OBJ_INSTANCE:
             if (callMagic && formatInstanceHook != NULL) {

@@ -65,6 +65,10 @@ typedef struct {
     TryHandler tryHandlers[TRY_MAX];
     int tryCount;
     int nativeCallDepth;   // >0 while a native is running an Indonesiaku callback
+    // The generator whose frame is currently executing, or NULL. OP_YIELD
+    // suspends into it; saved/restored around every resume so a generator
+    // iterating another generator cannot suspend the wrong one.
+    ObjGenerator* currentGenerator;
     // Frame depth at which run() must stop and return instead of continuing.
     // 0 at top level; raised by callFromNative() so a callback invoked from C
     // returns to its C caller instead of running the rest of the program.
@@ -144,6 +148,9 @@ void nativeRaiseKelas(ObjClass* klass, const char* format, ...);
 // returned. Returns false after flagging the error (nativeRaise-style) when
 // the call fails or raises.
 bool callFromNative(int argCount, Value* result);
+// Advance a generator one step: 1 = yielded (*result set), 0 = exhausted,
+// -1 = raised (pending native error).
+int resumeGenerator(ObjGenerator* gen, Value* result);
 bool valueIsInstanceOf(Value value, Value klass);
 bool isFalsey(Value value);
 // _panjang_ of an instance, run now: 1 with *out set, 0 when it raised or
@@ -152,6 +159,11 @@ int instanceLengthFor(Value value, int64_t* out);
 // a < b for instances, run now: 1 with *less set, 0 when _kurang_dari_ raised
 // (error pending), -1 when neither operand defines an ordering.
 int instanceLessFor(Value a, Value b, bool* less);
+// _iter_()/_berikutnya_() run now: 1 with *result set, 0 when the method
+// raised (error pending), -1 when the class does not define it.
+int instanceIterFor(Value value, Value* result);
+int instanceNextFor(Value value, Value* result);
+bool instanceHasMagic(Value value, MagicKind kind);
 
 // Ancestor walk (MRO when set, superclass chain otherwise). Shared with
 // native.c so turunan_dari() sees multiple inheritance too.

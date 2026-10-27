@@ -80,6 +80,8 @@ typedef enum {
 // inside an 'akhirnya' re-inlines the enclosing ones, so nested blocks grow
 // the code exponentially (the fuzzer hung the compiler with it); real code
 // needs a handful, and the cap keeps compile time linear.
+#define MATCH_CASE_MAX 128
+#define MATCH_ALT_MAX 32
 #define FINALLY_INLINE_MAX 64
 
 struct LoopCtx;
@@ -122,6 +124,7 @@ typedef struct Compiler {
     int finallyCount;
     int finallyInlines;           // copies made so far (FINALLY_INLINE_MAX)
     bool finallyBudgetReported;   // report the cap once per function
+    bool isGenerator;             // a 'hasilkan' was compiled in this function
 } Compiler;
 
 Parser parser;
@@ -422,6 +425,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->finallyCount = 0;
     compiler->finallyInlines = 0;
     compiler->finallyBudgetReported = false;
+    compiler->isGenerator = false;
     compiler->function = newFunction();
     compiler->function->chunk.source = compilingSource;
     compiler->function->module = compilingModule;
@@ -465,6 +469,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
 static ObjFunction* endCompiler() {
     emitReturn();
     ObjFunction* function = current->function;
+    function->isGenerator = current->isGenerator;
 
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
@@ -514,6 +519,23 @@ static void parsePrecedence(Precedence precedence);
 static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
 static Token syntheticToken(const char* text);
+static void namedVariable(Token name, bool canAssign);
+// Which collection a comprehension builds. The loop machinery is identical;
+// only the accumulator and the per-element append differ.
+typedef enum {
+    COMP_DAFTAR,      // [x untuk x dalam s]
+    COMP_KAMUS,       // {k: v untuk k dalam s}
+    COMP_HIMPUNAN,    // {x untuk x dalam s}
+    COMP_GENERATOR    // (x untuk x dalam s)
+} ComprehensionKind;
+
+// Comprehension support, defined below; argumentList() needs them for the
+// bare `f(x untuk x dalam s)` form.
+static bool scanComprehensionUntil(TokenType closer, ScannerState* state,
+                                   Token* current, Token* previous);
+static void comprehensionBody(ComprehensionKind kind, TokenType closer,
+                              ScannerState elemState, Token elemCurrent, Token elemPrevious,
+                              ScannerState untukState, Token untukCurrent, Token untukPrevious);
 
 static uint8_t identifierConstant(Token* name) {
     return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
@@ -664,6 +686,25 @@ static uint8_t argumentList(int* nameList) {
     // allocate, and a GC would free them mid-parse.
     ObjList* names = NULL;
     const char* enclosingArgStart = callArgStart;
+    // f(x untuk x dalam s) -- a bare generator expression as the ONLY argument,
+    // without its own parentheses (Python allows exactly this). Detected by a
+    // 'untuk' at paren depth 0 before the call's ')'.
+    if (!check(TOKEN_RIGHT_PAREN)) {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehensionUntil(TOKEN_RIGHT_PAREN, &untukState, &untukCurrent, &untukPrevious)) {
+            callArgStart = NULL;
+            comprehensionBody(COMP_GENERATOR, TOKEN_RIGHT_PAREN,
+                              elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            callArgStart = enclosingArgStart;
+            *nameList = -1;
+            return 1;   // comprehensionBody already consumed the ')'
+        }
+    }
     if (!check(TOKEN_RIGHT_PAREN)) {
         do {
             // A keyword argument is exactly `identifier = expr`; two tokens of
@@ -825,7 +866,8 @@ static void skipNewlines() {
 // Peeks ahead from the current token to decide whether a '[' opens a list
 // comprehension: a 'untuk' at bracket depth 0 before the closing ']'. The
 // scanner and parser tokens are restored, like scanTryClauses.
-static bool scanComprehension(ScannerState* state, Token* current, Token* previous) {
+static bool scanComprehensionUntil(TokenType closer, ScannerState* state,
+                                   Token* current, Token* previous) {
     ScannerState saved = saveScanner();
     Token savedCurrent = parser.current;
     Token savedPrevious = parser.previous;
@@ -834,7 +876,7 @@ static bool scanComprehension(ScannerState* state, Token* current, Token* previo
     for (;;) {
         TokenType type = parser.current.type;
         if (type == TOKEN_EOF) break;
-        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) break;
+        if (depth == 0 && type == closer) break;
         if (depth == 0 && type == TOKEN_UNTUK) {
             *state = saveScanner();
             *current = parser.current;
@@ -856,6 +898,39 @@ static bool scanComprehension(ScannerState* state, Token* current, Token* previo
     return found;
 }
 
+static bool scanComprehension(ScannerState* state, Token* current, Token* previous) {
+    return scanComprehensionUntil(TOKEN_RIGHT_BRACKET, state, current, previous);
+}
+
+// Inside '{ ... }', is there a ':' at depth 0 before the comprehension's
+// 'untuk'? That distinguishes {k: v untuk ...} (kamus) from {x untuk ...}
+// (himpunan). Scanner and parser tokens are restored.
+static bool colonBeforeComprehensionFor() {
+    ScannerState saved = saveScanner();
+    Token savedCurrent = parser.current;
+    Token savedPrevious = parser.previous;
+    bool colon = false;
+    int depth = 0;
+    for (;;) {
+        TokenType type = parser.current.type;
+        if (type == TOKEN_EOF) break;
+        if (depth == 0 && type == TOKEN_RIGHT_BRACE) break;
+        if (depth == 0 && type == TOKEN_UNTUK) break;
+        if (depth == 0 && type == TOKEN_COLON) { colon = true; break; }
+        if (type == TOKEN_LEFT_PAREN || type == TOKEN_LEFT_BRACKET || type == TOKEN_LEFT_BRACE) {
+            depth++;
+        } else if (type == TOKEN_RIGHT_PAREN || type == TOKEN_RIGHT_BRACKET ||
+                   type == TOKEN_RIGHT_BRACE) {
+            depth--;
+        }
+        advance();
+    }
+    restoreScanner(saved);
+    parser.current = savedCurrent;
+    parser.previous = savedPrevious;
+    return colon;
+}
+
 // [ekspresi untuk x dalam urutan jika syarat]
 //
 // Token order fights a single-pass compiler: the element expression comes
@@ -864,7 +939,8 @@ static bool scanComprehension(ScannerState* state, Token* current, Token* previo
 // re-read from a saved scanner position AFTER the header has declared 'x' —
 // see the layout in the body. (Only one 'untuk' and one optional 'jika' are
 // supported; chain conditions with 'dan'/'atau'.)
-static void listComprehension(ScannerState elemState, Token elemCurrent, Token elemPrevious,
+static void comprehensionBody(ComprehensionKind kind, TokenType closer,
+                              ScannerState elemState, Token elemCurrent, Token elemPrevious,
                               ScannerState untukState, Token untukCurrent, Token untukPrevious) {
     // Locate the tokens after the header and after the whole comprehension, so
     // the iterable, the condition and the element can each be re-read later.
@@ -893,8 +969,8 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     for (;;) {
         TokenType type = parser.current.type;
         if (type == TOKEN_EOF) break;
-        if (depth == 0 && type == TOKEN_RIGHT_BRACKET) {
-            advance();  // consume ']'
+        if (depth == 0 && type == closer) {
+            advance();  // consume the closing bracket/brace/paren
             break;
         }
         if (depth == 0 && type == TOKEN_JIKA && !hasCond) {
@@ -922,7 +998,12 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     // still visible through the normal upvalue machinery.
     Compiler compFn;
     initCompiler(&compFn, TYPE_FUNCTION);
-    current->function->name = copyString("listcomp", 8);
+    const char* compName =
+        kind == COMP_KAMUS ? "kamuscomp" :
+        kind == COMP_HIMPUNAN ? "himpunancomp" :
+        kind == COMP_GENERATOR ? "gencomp" : "listcomp";
+    current->function->name = copyString(compName, (int)strlen(compName));
+    if (kind == COMP_GENERATOR) current->isGenerator = true;
     current->function->arity = 1;
     current->function->requiredArity = 1;
     beginScope();
@@ -936,8 +1017,18 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     markInitialized();
     int varSlot = current->localCount - 1;
 
-    emitBytes(OP_BUILD_LIST, 0);
-    int resSlot = addSyntheticLocal("  comp hasil");
+    int resSlot = -1;
+    if (kind == COMP_DAFTAR) {
+        emitBytes(OP_BUILD_LIST, 0);
+        resSlot = addSyntheticLocal("  comp hasil");
+    } else if (kind == COMP_KAMUS) {
+        emitBytes(OP_BUILD_DICT, 0);
+        resSlot = addSyntheticLocal("  comp hasil");
+    } else if (kind == COMP_HIMPUNAN) {
+        emitByte(OP_BUILD_SET);
+        resSlot = addSyntheticLocal("  comp hasil");
+    }
+    // COMP_GENERATOR accumulates nothing: each element is yielded.
 
     emitBytes(OP_GET_LOCAL, 1);
     emitByte(OP_LIST_LEN);
@@ -962,12 +1053,33 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     int exitJump = emitJump(OP_JUMP_IF_FALSE);
     emitByte(OP_POP);
 
-    // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
+    // x = seq[idx]  (ITER_NEXT: generator/custom iterator first, otherwise the
+    // same positional read as before -- a kamus yields keys by position).
+    // A lazy source has no length, so it ends by raising HentiIterasi; catch
+    // exactly that here and let every other error propagate, as forInStatement
+    // does.
+    int compHandler = emitJump(OP_TRY_BEGIN);
+    current->tryDepth++;
     emitBytes(OP_GET_LOCAL, 1);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_SEQ_GET);
+    emitByte(OP_ITER_NEXT);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
+    emitByte(OP_TRY_END);
+    current->tryDepth--;
+    int compNormal = emitJump(OP_JUMP);
+
+    patchJump(compHandler);
+    namedVariable(syntheticToken("HentiIterasi"), false);
+    emitByte(OP_IS_INSTANCE);
+    int compNotExhausted = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);             // matching boolean
+    emitByte(OP_POP);             // HentiIterasi instance
+    int compExit = emitJump(OP_JUMP);
+    patchJump(compNotExhausted);
+    emitByte(OP_POP);             // non-matching boolean
+    emitByte(OP_THROW);           // rethrow the original error
+    patchJump(compNormal);
 
     // Optional 'jika syarat', evaluated inside the loop.
     int skipJump = -1;
@@ -987,11 +1099,27 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     restoreScanner(elemState);
     parser.current = elemCurrent;
     parser.previous = elemPrevious;
-    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
-    expression();
-    emitByte(OP_APPEND);
+    if (kind == COMP_GENERATOR) {
+        // Each element is yielded straight to the consumer; nothing accumulates.
+        expression();
+        emitByte(OP_YIELD);        // pops the value; resumes pushing nothing
+    } else if (kind == COMP_KAMUS) {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        expression();                                   // kunci
+        consume(TOKEN_COLON, "Harapkan ':' antara kunci dan nilai pada kamus comprehension.");
+        expression();                                   // nilai
+        emitByte(OP_DICT_PUT);
+    } else if (kind == COMP_HIMPUNAN) {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        expression();
+        emitByte(OP_SET_PUT);
+    } else {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        expression();
+        emitByte(OP_APPEND);
+    }
     if (!check(TOKEN_UNTUK)) {
-        error("Harapkan 'untuk' setelah ekspresi pada list comprehension.");
+        error("Harapkan 'untuk' setelah ekspresi pada comprehension.");
     }
 
     if (skipJump != -1) {
@@ -1005,10 +1133,14 @@ static void listComprehension(ScannerState elemState, Token elemCurrent, Token e
     emitLoop(incrementStart);
     patchJump(exitJump);
     emitByte(OP_POP);
+    patchJump(compExit);
 
-    // Return the result list. endCompiler() appends a dead 'return kosong'.
-    emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
-    emitByte(OP_RETURN);
+    // Return the accumulator. endCompiler() appends a dead 'return kosong'.
+    // A generator returns nothing: falling off the end ends the iteration.
+    if (kind != COMP_GENERATOR) {
+        emitBytes(OP_GET_LOCAL, (uint8_t)resSlot);
+        emitByte(OP_RETURN);
+    }
 
     currentLoop = savedLoop;
     ObjFunction* comprehensionFn = endCompiler();
@@ -1044,7 +1176,8 @@ static void listLiteral(bool canAssign) {
         ScannerState untukState;
         Token untukCurrent, untukPrevious;
         if (scanComprehension(&untukState, &untukCurrent, &untukPrevious)) {
-            listComprehension(elemState, elemCurrent, elemPrevious,
+            comprehensionBody(COMP_DAFTAR, TOKEN_RIGHT_BRACKET,
+                              elemState, elemCurrent, elemPrevious,
                               untukState, untukCurrent, untukPrevious);
             return;
         }
@@ -1075,6 +1208,24 @@ static void dictLiteral(bool canAssign) {
     (void)canAssign;
     int count = 0;
     skipNewlines();
+    // {kunci: nilai untuk ...} = kamus comprehension
+    // {nilai untuk ...}        = himpunan comprehension
+    // A 'untuk' at brace depth 0 before '}' selects a comprehension; a ':' at
+    // depth 0 before that 'untuk' selects the kamus form.
+    if (!check(TOKEN_RIGHT_BRACE)) {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehensionUntil(TOKEN_RIGHT_BRACE, &untukState, &untukCurrent, &untukPrevious)) {
+            bool isKamus = colonBeforeComprehensionFor();
+            comprehensionBody(isKamus ? COMP_KAMUS : COMP_HIMPUNAN, TOKEN_RIGHT_BRACE,
+                              elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            return;
+        }
+    }
     if (!check(TOKEN_RIGHT_BRACE)) {
         do {
             skipNewlines();
@@ -1164,6 +1315,22 @@ static void grouping(bool canAssign) {
     if (match(TOKEN_RIGHT_PAREN)) {
         emitBytes(OP_BUILD_TUPLE, 0);
         return;
+    }
+    // (ekspresi untuk x dalam urutan jika syarat) -- generator expression.
+    // Only a 'untuk' at paren depth 0 before the ')' makes it one, so plain
+    // grouping and tupel literals keep their exact previous behavior.
+    {
+        ScannerState elemState = saveScanner();
+        Token elemCurrent = parser.current;
+        Token elemPrevious = parser.previous;
+        ScannerState untukState;
+        Token untukCurrent, untukPrevious;
+        if (scanComprehensionUntil(TOKEN_RIGHT_PAREN, &untukState, &untukCurrent, &untukPrevious)) {
+            comprehensionBody(COMP_GENERATOR, TOKEN_RIGHT_PAREN,
+                              elemState, elemCurrent, elemPrevious,
+                              untukState, untukCurrent, untukPrevious);
+            return;
+        }
     }
     expression();
     if (!match(TOKEN_COMMA)) {
@@ -1755,6 +1922,9 @@ ParseRule rules[] = {
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
   [TOKEN_BUANG]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_HASILKAN]      = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_COCOKKAN]      = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_KASUS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
   [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
   [TOKEN_BENAR]         = {literal,  NULL,   PREC_NONE},
@@ -2378,11 +2548,29 @@ static void forStatement() {
     emitByte(OP_POP); // condition
 
     // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
+    int iteratorHandler = emitJump(OP_TRY_BEGIN);
+    current->tryDepth++;
     emitBytes(OP_GET_LOCAL, (uint8_t)seqSlot);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_SEQ_GET);
+    emitByte(OP_ITER_NEXT);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
+    emitByte(OP_TRY_END);
+    current->tryDepth--;
+    int iteratorNormal = emitJump(OP_JUMP);
+
+    patchJump(iteratorHandler);
+    // The VM leaves the raised error on the stack at the handler.
+    namedVariable(syntheticToken("HentiIterasi"), false);
+    emitByte(OP_IS_INSTANCE);
+    int iteratorNotExhausted = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);             // matching boolean
+    emitByte(OP_POP);             // HentiIterasi instance
+    int iteratorExit = emitJump(OP_JUMP);
+    patchJump(iteratorNotExhausted);
+    emitByte(OP_POP);             // non-matching boolean
+    emitByte(OP_THROW);           // rethrow the original error
+    patchJump(iteratorNormal);
 
     // Loop body. 'lanjut' jumps to incrementStart; 'hentikan' to the end.
     LoopCtx loop;
@@ -2395,6 +2583,7 @@ static void forStatement() {
 
     patchJump(exitJump);
     emitByte(OP_POP); // condition
+    patchJump(iteratorExit);
 
     endLoop();  // break jumps land here, past the condition pop
 
@@ -3001,6 +3190,199 @@ static void withStatement() {
     endScope();     // manager, bound value
 }
 
+// hasilkan <ekspresi> -- suspend this generator and hand the value to the
+// caller. Only valid inside a function; the enclosing function is flagged a
+// generator, so calling it builds an ObjGenerator instead of running the body.
+static void yieldStatement() {
+    if (current->type == TYPE_SCRIPT) {
+        error("'hasilkan' hanya bisa dipakai di dalam fungsi.");
+        return;
+    }
+    if (current->type == TYPE_INITIALIZER) {
+        error("'init' tidak bisa menjadi generator ('hasilkan' tidak diizinkan).");
+        return;
+    }
+    // The frame is snapshotted wholesale at OP_YIELD, but an inlined 'akhirnya'
+    // would have to run on a frame that is about to vanish. Reject it rather
+    // than silently skipping the cleanup.
+    if (current->finallyCount > 0) {
+        error("'hasilkan' belum didukung di dalam blok 'coba' yang punya 'akhirnya'.");
+        return;
+    }
+    current->isGenerator = true;
+
+    if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE) ||
+        check(TOKEN_SEMICOLON) || check(TOKEN_NEWLINE)) {
+        emitByte(OP_KOSONG);          // 'hasilkan' telanjang menghasilkan kosong
+    } else {
+        bool saved = allowTupleRHS;
+        allowTupleRHS = true;
+        expression();
+        maybeTupleTail();             // hasilkan a, b
+        allowTupleRHS = saved;
+    }
+    emitByte(OP_YIELD);
+}
+
+// cocokkan nilai { kasus pola { ... } ... }
+//
+// Lowered to ordinary conditional bytecode -- there is no pattern object and
+// no VM pattern engine. The subject lives in a hidden local. Every pattern
+// compiles to code leaving exactly ONE boolean on the stack, so the case
+// dispatch below is uniform.
+//
+// Supported patterns (deliberately small):
+//   literal      kasus 0 / kasus "teks" / kasus benar / kasus kosong
+//   wildcard     kasus _
+//   capture      kasus nama              (binds, always matches)
+//   kelas        kasus Kelas()           (instance test)
+//   alternatif   kasus 1 atau 2
+//   penjaga      kasus pola jika syarat
+//
+// ponytail: no sequence/mapping destructuring yet. Add a recursive pattern
+// compiler when a real case needs [a, b] or {"k": v}.
+
+// One alternative. Emits code leaving a single boolean on the stack.
+static void matchPatternTest(int subjectSlot) {
+    if (check(TOKEN_IDENTIFIER) && checkNext(TOKEN_LEFT_PAREN)) {
+        // kasus Kelas() -- instance test. OP_IS_INSTANCE wants [nilai, kelas].
+        emitBytes(OP_GET_LOCAL, (uint8_t)subjectSlot);
+        namedVariable(parser.current, false);
+        advance();                 // class name
+        advance();                 // '('
+        consume(TOKEN_RIGHT_PAREN, "Harapkan ')' pada pola kelas.");
+        emitByte(OP_IS_INSTANCE);
+        return;
+    }
+    // Literal / expression pattern: subjek == <ekspresi>.
+    // PREC_AND, not PREC_OR: 'atau' separates alternatives here, so the
+    // expression parser must not swallow it as a boolean operator.
+    emitBytes(OP_GET_LOCAL, (uint8_t)subjectSlot);
+    parsePrecedence(PREC_AND);
+    emitByte(OP_EQUAL);
+}
+
+static void matchStatement() {
+    beginScope();
+    expression();
+    int subjectSlot = addSyntheticLocal("  cocok nilai");
+
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah nilai pada 'cocokkan'.");
+    skipNewlines();
+
+    int endJumps[MATCH_CASE_MAX];
+    int endCount = 0;
+    bool sawWildcard = false;
+
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        consume(TOKEN_KASUS, "Harapkan 'kasus' di dalam 'cocokkan'.");
+        if (sawWildcard) error("'kasus _' harus menjadi kasus terakhir.");
+
+        beginScope();              // this case's bindings
+
+        bool alwaysMatches = false;
+        Token captureName = {0};
+        bool hasCapture = false;
+
+        if (check(TOKEN_IDENTIFIER) && parser.current.length == 1 &&
+            parser.current.start[0] == '_') {
+            advance();
+            alwaysMatches = true;
+            sawWildcard = true;
+        } else if (check(TOKEN_IDENTIFIER) && !checkNext(TOKEN_LEFT_PAREN) &&
+                   !checkNext(TOKEN_DOT)) {
+            // A bare name binds the subject, as in Python. Use Kelas() for an
+            // instance test and Modul.NAMA for a literal comparison.
+            captureName = parser.current;
+            hasCapture = true;
+            alwaysMatches = true;
+            advance();
+        }
+
+        // Test chain. Each alternative leaves one boolean; OR them together
+        // with the existing short-circuit shape (JUMP_IF_FALSE + POP).
+        int orJumps[MATCH_ALT_MAX];
+        int orCount = 0;
+        if (!alwaysMatches) {
+            matchPatternTest(subjectSlot);
+            while (check(TOKEN_ATAU)) {
+                if (orCount == MATCH_ALT_MAX) {
+                    error("Terlalu banyak alternatif pada satu 'kasus'.");
+                    break;
+                }
+                // Short-circuit OR, same shape as or_(): on false fall through
+                // to the next alternative, on true jump out keeping the true.
+                int isFalse = emitJump(OP_JUMP_IF_FALSE);
+                orJumps[orCount++] = emitJump(OP_JUMP);   // true: done
+                patchJump(isFalse);
+                emitByte(OP_POP);                          // discard the false
+                advance();                                 // consume 'atau'
+                matchPatternTest(subjectSlot);
+            }
+            for (int i = 0; i < orCount; i++) patchJump(orJumps[i]);
+        }
+
+        int patternFail = -1;
+        if (!alwaysMatches) {
+            patternFail = emitJump(OP_JUMP_IF_FALSE);
+            emitByte(OP_POP);              // the true boolean
+        }
+        if (hasCapture) {
+            emitBytes(OP_GET_LOCAL, (uint8_t)subjectSlot);
+            addLocal(captureName);
+            markInitialized();
+        }
+
+        int guardFail = -1;
+        if (match(TOKEN_JIKA)) {
+            parsePrecedence(PREC_OR);
+            guardFail = emitJump(OP_JUMP_IF_FALSE);
+            emitByte(OP_POP);
+        }
+
+        consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah pola 'kasus'.");
+        beginScope();
+        block();
+        endScope();
+
+        // The matched case must run its OWN binding cleanup before jumping to
+        // the end; jumping first would skip the pops and leave the capture (and
+        // the subject) stranded on the stack for the next statement.
+        int bindingPops = 0;
+        if (hasCapture) bindingPops = 1;
+        for (int i = 0; i < bindingPops; i++) emitByte(OP_POP);
+
+        if (endCount == MATCH_CASE_MAX) {
+            error("Terlalu banyak 'kasus' dalam satu 'cocokkan'.");
+        } else {
+            endJumps[endCount++] = emitJump(OP_JUMP);
+        }
+
+        if (guardFail != -1) {
+            patchJump(guardFail);
+            emitByte(OP_POP);              // the false guard
+            // the guard failed AFTER the capture was bound: drop it too
+            for (int i = 0; i < bindingPops; i++) emitByte(OP_POP);
+        }
+        if (patternFail != -1) {
+            patchJump(patternFail);
+            emitByte(OP_POP);              // the false pattern result
+        }
+        // The compiler's own local bookkeeping is closed without emitting pops,
+        // since both paths above already balanced the stack by hand.
+        current->scopeDepth--;
+        while (current->localCount > 0 &&
+               current->locals[current->localCount - 1].depth > current->scopeDepth) {
+            current->localCount--;
+        }
+        skipNewlines();
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah 'cocokkan'.");
+    for (int i = 0; i < endCount; i++) patchJump(endJumps[i]);
+    endScope();                            // drop the subject
+}
+
 static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
@@ -3319,6 +3701,10 @@ static void statement() {
         ifStatement();
     } else if (match(TOKEN_KEMBALIKAN)) {
         returnStatement();
+    } else if (match(TOKEN_HASILKAN)) {
+        yieldStatement();
+    } else if (match(TOKEN_COCOKKAN)) {
+        matchStatement();
     } else if (match(TOKEN_SELAGI)) {
         whileStatement();
     } else if (match(TOKEN_HENTIKAN)) {

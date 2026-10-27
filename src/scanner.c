@@ -167,7 +167,14 @@ static TokenType identifierType() {
                 switch (scanner.start[1]) {
                     // 'cetak' is a plain identifier now (K12): it resolves to
                     // the native, so it can be passed around and shadowed.
-                    case 'o': return checkKeyword(2, 2, "ba", TOKEN_COBA);
+                    case 'o':
+                        if (scanner.current - scanner.start > 2) {
+                            switch (scanner.start[2]) {
+                                case 'b': return checkKeyword(3, 1, "a", TOKEN_COBA);
+                                case 'c': return checkKeyword(3, 5, "okkan", TOKEN_COCOKKAN);
+                            }
+                        }
+                        break;
                 }
             }
             break;
@@ -191,7 +198,14 @@ static TokenType identifierType() {
         case 'f':
             return checkKeyword(1, 5, "ungsi", TOKEN_FUNGSI);
         case 'h':
-            return checkKeyword(1, 7, "entikan", TOKEN_HENTIKAN);
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'e': return checkKeyword(2, 6, "ntikan", TOKEN_HENTIKAN);
+                    case 'a': return checkKeyword(2, 6, "silkan", TOKEN_HASILKAN);
+                }
+            }
+            return TOKEN_IDENTIFIER;
+
         case 'i':
             return checkKeyword(1, 4, "mpor", TOKEN_IMPOR);
         case 'j':
@@ -218,6 +232,7 @@ static TokenType identifierType() {
                         }
                         break;
                     case 'o': return checkKeyword(2, 4, "song", TOKEN_KOSONG);
+                    case 'a': return checkKeyword(2, 3, "sus", TOKEN_KASUS);
                 }
             }
             break;

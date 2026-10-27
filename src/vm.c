@@ -31,7 +31,7 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
     "_panjang_", "_logika_", "_ambil_", "_atur_", "_hash_",
     "_ktambah_", "_kkurangi_", "_kkali_", "_kbagi_", "_kbagi_bulat_",
     "_ksisa_", "_kpangkat_",
-    "_iter_", "_panggil_",
+    "_iter_", "_berikutnya_", "_panggil_",
     "_masuk_", "_keluar_",
 };
 
@@ -82,6 +82,7 @@ static void resetStack() {
     vm.openUpvalues = NULL;
     vm.tryCount = 0;
     vm.exitFrame = 0;
+    vm.currentGenerator = NULL;
     vm.nativeCallDepth = 0;
 }
 
@@ -574,6 +575,28 @@ static bool call(ObjClosure* closure, int argCount, ObjList* names) {
 
     for (int i = 0; i < fn->arity; i++) base[i] = slots[i];
     vm.stackTop = base + fn->arity;
+
+    // Generator: arguments are now bound exactly as for a normal call, but the
+    // body must not run yet. Capture the parameter slots into the generator
+    // and hand it back as the call's result.
+    if (fn->isGenerator) {
+        if (fn->arity + 1 > GEN_SLOTS_MAX) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("Generator '%s' punya terlalu banyak parameter (maksimal %d).",
+                         fn->name != NULL ? fn->name->chars : "<anonim>", GEN_SLOTS_MAX - 1);
+            return false;
+        }
+        ObjGenerator* gen = newGenerator(closure);
+        // Keep it reachable while we copy: newGenerator can trigger a GC later.
+        push(OBJ_VAL(gen));
+        gen->slots[0] = base[-1];                 // slot 0 is the callee itself
+        for (int i = 0; i < fn->arity; i++) gen->slots[i + 1] = base[i];
+        gen->slotCount = fn->arity + 1;
+        pop();
+        vm.stackTop = base - 1;                   // drop callee + arguments
+        push(OBJ_VAL(gen));
+        return true;
+    }
 
     CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->closure = closure;
@@ -1629,6 +1652,23 @@ int instanceLengthFor(Value value, int64_t* out) {
     }
     *out = AS_INT(result);
     return 1;
+}
+
+// _iter_()/_berikutnya_() run now, for iter()/lanjutkan() in native.c.
+// Returns 1 with *result set, 0 when the method raised (error pending),
+// -1 when the class does not define it.
+int instanceIterFor(Value value, Value* result) {
+    return magicNowNoArg(value, MAGIC_ITER, result);
+}
+
+int instanceNextFor(Value value, Value* result) {
+    return magicNowNoArg(value, MAGIC_BERIKUTNYA, result);
+}
+
+// Does this instance's class define the magic method? No user code runs.
+bool instanceHasMagic(Value value, MagicKind kind) {
+    Value method;
+    return instanceMagic(value, kind, &method);
 }
 
 // Truthiness of an instance: _logika_ first, then _panjang_ != 0 (Python's
@@ -2865,6 +2905,44 @@ static InterpretResult run() {
                 vm.stackTop -= 2;
                 break;
             }
+            case OP_DICT_PUT: {
+                // Dict comprehension: stack is [kamus, kunci, nilai]. The dict
+                // stays rooted while dictSet grows the table (it may GC).
+                Value key = peek(1);
+                uint32_t hash;
+                if (!hashValue(key, &hash)) {
+                    if (vm.nativeErrorPending) {
+                        if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Kunci kamus harus nilai yang dapat di-hash "
+                                 "(angka, teks, logika, kosong, tupel, atau himpunan_beku berisi nilai seperti itu).");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                dictSet(AS_DICT(peek(2)), key, peek(0));
+                vm.stackTop -= 2;        // leave the kamus
+                break;
+            }
+            case OP_BUILD_SET:
+                push(OBJ_VAL(newSet()));
+                break;
+            case OP_SET_PUT: {
+                // Set comprehension: stack is [himpunan, nilai].
+                if (!setAdd(AS_SET(peek(1)), peek(0))) {
+                    if (vm.nativeErrorPending) {
+                        if (resolveNativeError() == -1) return INTERPRET_RUNTIME_ERROR;
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("Anggota himpunan harus nilai yang dapat di-hash.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                vm.stackTop -= 1;        // leave the himpunan
+                break;
+            }
             case OP_BUILD_DICT: {
                 int count = READ_BYTE();
                 // Stack: key1, val1, ... keyN, valN
@@ -2901,6 +2979,51 @@ static InterpretResult run() {
                 push(OBJ_VAL(dict));
                 break;
             }
+            case OP_ITER_NEXT:
+                // Iterator protocol uses the receiver in peek(1) and the
+                // synthetic index in peek(0). Remove the index before calling
+                // so the normal zero-argument call layout is preserved.
+                if (IS_GENERATOR(peek(1))) {
+                    ObjGenerator* gen = AS_GENERATOR(peek(1));
+                    Value produced;
+                    int step = resumeGenerator(gen, &produced);
+                    if (step == 0) {
+                        // Exhausted: raise HentiIterasi, which the loop's own
+                        // handler turns into a clean exit.
+                        vm.nativeErrorValue =
+                            OBJ_VAL(newError(vm.hentiIterasi, "Iterasi selesai."));
+                        vm.nativeErrorPending = true;
+                        step = -1;
+                    }
+                    if (step < 0) {
+                        // Pending native error (from the body or the sentinel
+                        // above): unwind through the normal handler search so
+                        // 'coba' and the loop's handler both behave as usual.
+                        pop();                      // index
+                        pop();                      // generator
+                        int handled = resolveNativeError();
+                        if (handled < 0) return INTERPRET_RUNTIME_ERROR;
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                    pop();                          // index
+                    pop();                          // generator
+                    push(produced);
+                    break;
+                }
+                if (IS_INSTANCE(peek(1))) {
+                    Value method;
+                    if (instanceMagic(peek(1), MAGIC_BERIKUTNYA, &method)) {
+                        pop();
+                        if (!call(AS_CLOSURE(method), 0, NULL)) {
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                }
+                // Ordinary sequences keep the old indexed behavior.
+                /* fall through */
             case OP_SEQ_GET:
                 // 'untuk' / comprehension read sequences by position. A kamus
                 // yields its keys in insertion order — the integer here is a
@@ -3181,6 +3304,23 @@ static InterpretResult run() {
                     push(INT_VAL(AS_SET(seq)->keys.count));
                 } else if (IS_STRING(seq)) {
                     push(INT_VAL(AS_STRING(seq)->charCount));
+                } else if (IS_GENERATOR(seq)) {
+                    // Length is unknown; the loop ends when the generator is
+                    // exhausted (OP_ITER_NEXT raises HentiIterasi).
+                    push(INT_VAL(INT64_MAX));
+                } else if (IS_INSTANCE(seq)) {
+                    Value method;
+                    if (instanceMagic(seq, MAGIC_BERIKUTNYA, &method)) {
+                        // The compiler's existing index loop remains the
+                        // control structure; an iterator runs until HentiIterasi.
+                        push(INT_VAL(INT64_MAX));
+                    } else {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, "
+                                     "tupel, himpunan, teks, rentang, kamus, atau objek "
+                                     "dengan metode _iter_().");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                 } else {
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, "
@@ -3572,6 +3712,35 @@ static InterpretResult run() {
                 }
                 break;
             }
+            case OP_YIELD: {
+                // Suspend this frame into its generator and return the value
+                // to whoever resumed it. vm.currentGenerator is set by
+                // resumeGenerator(), which is the only way this frame started.
+                ObjGenerator* gen = vm.currentGenerator;
+                if (gen == NULL) {
+                    runtimeError("'hasilkan' dijalankan di luar generator.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                Value yielded = pop();
+                int live = (int)(vm.stackTop - frame->slots);
+                if (live > GEN_SLOTS_MAX) {
+                    runtimeError("Generator memakai terlalu banyak slot (%d > %d) saat 'hasilkan'.",
+                                 live, GEN_SLOTS_MAX);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                // An upvalue closed over a slot we are about to copy away must
+                // be closed now, or it would point into reusable stack space.
+                closeUpvalues(frame->slots);
+                for (int i = 0; i < live; i++) gen->slots[i] = frame->slots[i];
+                gen->slotCount = live;
+                gen->ip = frame->ip;
+                gen->state = GEN_TERTUNDA;
+
+                vm.frameCount--;
+                vm.stackTop = frame->slots;
+                push(yielded);
+                return INTERPRET_OK;      // back to resumeGenerator()
+            }
             case OP_RETURN: {
                 Value result = pop();
                 closeUpvalues(frame->slots);
@@ -3610,6 +3779,99 @@ static InterpretResult run() {
 #undef BINARY_OP
 #undef DISPATCH_MAGIC
 #undef RESOLVE_MAGIC_ERROR
+}
+
+// Advance a generator by one step. Returns:
+//   1  with *result set to the yielded value
+//   0  the generator finished (exhausted); *result is kosong
+//  -1  an error was raised (pending as a native error)
+//
+// The suspended frame is rebuilt on top of the current stack, then run() is
+// confined to it with vm.exitFrame exactly as callFromNative does.
+int resumeGenerator(ObjGenerator* gen, Value* result) {
+    *result = KOSONG_VAL;
+    if (gen->state == GEN_SELESAI) return 0;
+    if (gen->state == GEN_BERJALAN) {
+        nativeRaiseKelas(vm.galatNilai, "Generator sedang berjalan; tidak bisa dilanjutkan ulang.");
+        return -1;
+    }
+    if (vm.frameCount >= FRAMES_MAX) {
+        nativeRaiseKelas(vm.galatRekursi,
+                         "Kedalaman panggilan maksimal %d terlampaui saat melanjutkan generator.",
+                         FRAMES_MAX);
+        return -1;
+    }
+    if (vm.stackTop + gen->slotCount + 1 >= vm.stack + STACK_MAX) {
+        nativeRaiseKelas(vm.galatRekursi, "Stack penuh saat melanjutkan generator.");
+        return -1;
+    }
+
+    Value* base = vm.stackTop;
+    for (int i = 0; i < gen->slotCount; i++) push(gen->slots[i]);
+
+    CallFrame* frame = &vm.frames[vm.frameCount++];
+    frame->closure = gen->closure;
+    frame->ip = gen->state == GEN_BELUM_MULAI ? gen->closure->function->chunk.code : gen->ip;
+    frame->slots = base;
+
+    int frameBefore = vm.frameCount - 1;
+    int savedExit = vm.exitFrame;
+    ObjGenerator* savedGen = vm.currentGenerator;
+    vm.exitFrame = frameBefore;
+    vm.currentGenerator = gen;
+    gen->state = GEN_BERJALAN;
+    // Same contract as callFromNative: errors raised inside are only recorded,
+    // then converted to a catchable native error below.
+    vm.nativeCallDepth++;
+
+    InterpretResult ir = run();
+
+    vm.nativeCallDepth--;
+    vm.exitFrame = savedExit;
+    vm.currentGenerator = savedGen;
+
+    if (ir != INTERPRET_OK) {
+        // The body raised. The generator is dead; unwind whatever is left of
+        // its frame so the caller's stack is exactly as it was.
+        if (vm.runtimeErrorPending) {
+            vm.runtimeErrorPending = false;
+            vm.hadError = false;
+            ObjClass* klass = vm.runtimeErrorClass != NULL ? vm.runtimeErrorClass : vm.galat;
+            vm.runtimeErrorClass = NULL;
+            vm.nativeErrorValue = OBJ_VAL(newError(klass, vm.runtimeErrorMessage));
+            vm.nativeErrorPending = true;
+        }
+        gen->state = GEN_SELESAI;
+        gen->slotCount = 0;
+        if (vm.frameCount > frameBefore) vm.frameCount = frameBefore;
+        // Drop any try handlers the dead frame registered.
+        while (vm.tryCount > 0 && vm.tryHandlers[vm.tryCount - 1].frameCount > frameBefore) {
+            vm.tryCount--;
+        }
+        vm.stackTop = base;
+        return -1;
+    }
+
+    if (vm.nativeErrorPending) {   // raised and already converted inside
+        gen->state = GEN_SELESAI;
+        gen->slotCount = 0;
+        if (vm.frameCount > frameBefore) vm.frameCount = frameBefore;
+        vm.stackTop = base;
+        return -1;
+    }
+
+    Value produced = pop();
+    vm.stackTop = base;
+
+    if (gen->state == GEN_TERTUNDA) {   // OP_YIELD ran
+        *result = produced;
+        return 1;
+    }
+    // OP_RETURN ran: the body is over. The returned value is discarded, as in
+    // Python, where it only travels inside StopIteration.
+    gen->state = GEN_SELESAI;
+    gen->slotCount = 0;
+    return 0;
 }
 
 // Call an Indonesiaku callable from inside a native. The callee and its
