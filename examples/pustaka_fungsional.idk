@@ -1,0 +1,46 @@
+# Modul `fungsional` (Fase 6): lipat, parsial, urut berdasar kunci/banding.
+
+impor fungsional
+dari fungsional impor lipat, parsial, urutkan_dengan, urutkan_dengan_banding
+dari fungsional impor banding_ke_kunci, GalatFungsional
+
+fungsi tambah_dua(a, b) { kembalikan a + b }
+fungsi kali(a, b) { kembalikan a * b }
+
+cetak("== lipat ==")
+cetak(lipat(tambah_dua, [1, 2, 3, 4]))
+cetak(lipat(kali, [1, 2, 3, 4], 10))
+cetak(lipat(tambah_dua, [], 100))
+cetak(lipat(fungsi(a, b) { kembalikan a + b }, ["a", "b", "c"]))
+
+cetak("== parsial ==")
+fungsi volume(p, l, t) { kembalikan p * l * t }
+alas = parsial(volume, [2, 3])
+cetak(alas(4))
+
+cetak("== urutkan_dengan (stabil) ==")
+orang = [["Budi", 80], ["Ani", 95], ["Cici", 80]]
+cetak(urutkan_dengan(orang, fungsi(o) { kembalikan o[1] }))
+cetak(urutkan_dengan(orang, fungsi(o) { kembalikan o[0] }))
+cetak(orang)
+
+fungsi banding_angka(a, b) {
+    jika a < b { kembalikan 0 - 1 }
+    jika a > b { kembalikan 1 }
+    kembalikan 0
+}
+
+cetak("== urutkan_dengan_banding ==")
+cetak(urutkan_dengan_banding([3, 1, 2], banding_angka))
+
+cetak("== banding_ke_kunci ==")
+Kunci = banding_ke_kunci(banding_angka)
+dibungkus = peta(Kunci, [3, 1, 2])
+cetak(peta(fungsi(b) { kembalikan b.nilai }, terurut(dibungkus)))
+
+cetak("== galat dapat ditangkap ==")
+coba {
+    lipat(tambah_dua, [])
+} kecuali GalatFungsional sebagai e {
+    cetak(e.pesan)
+}
