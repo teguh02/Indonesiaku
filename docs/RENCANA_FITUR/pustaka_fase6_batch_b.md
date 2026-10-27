@@ -24,6 +24,16 @@ sidik jari berkas, autentikasi) dan `csv` untuk pertukaran data tabular.
    md5/sha1/sha256/sha512 harus akurat bit-per-bit dan cepat; menulisnya di
    idk lambat dan rawan salah. Ini mengikuti prinsip katalog "C bila perlu
    cepat".
+3. **Hash mengembalikan TEKS HEKSA huruf kecil, bukan objek hash tersendiri.**
+   Katalog menulis `.heksa()`, tetapi objek khusus menuntut tipe `OBJ_HASH`
+   baru (object/memory/value/vm + GC). Mengembalikan teks sudah memberi nilai
+   yang sama tanpa menyentuh GC; `bita.dari_heksa()` sudah menutup kebutuhan
+   byte. Objek hash dicatat sebagai penyempurnaan lanjutan, bukan dikerjakan
+   sekarang.
+4. **Tidak ada modul `hash`** (dari `hashlib`): nama `hash` sudah dipakai
+   builtin `hash(x)`, jadi modul bernama sama hanya akan menutupinya. Karena
+   itu keempat fungsi menjadi **builtin global** (`md5`, `sha1`, `sha256`,
+   `sha512`) dan langsung terlihat dari mana saja.
 
 ## 3. Sintaks usulan
 
@@ -37,7 +47,7 @@ cetak(ke_teks([72, 97, 108, 111]))# Halo
 cetak(base64.enkode("Halo"))      # SGFsbw==
 cetak(base64.dekode("SGFsbw=="))  # Halo
 
-cetak(hash.sha256("abc").heksa())
+cetak(sha256("abc"))
 # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 ```
 
@@ -66,11 +76,13 @@ cetak(hash.sha256("abc").heksa())
 | `pustaka/bita.idk` | `ke_bita`, `ke_teks`, `ke_heksa`, `dari_heksa` (idk, UTF-8 manual) |
 | `pustaka/base64.idk` | `enkode`, `dekode`, `enkode_url`, `dekode_url` (idk) |
 | `pustaka/csv.idk` | `urai`, `bentuk`, `urai_kamus`, `bentuk_kamus` (idk) |
-| `src/object.h`/`.c` | `OBJ_HASH`, `ObjHash` (digest 64 byte + panjang), `newHash`, format |
-| `src/memory.c` | tandai/bebaskan `ObjHash` |
-| `src/native.c` | implementasi md5/sha1/sha256/sha512 + 4 native + tabel metode `heksa`/`bita` |
-| `src/vm.c` | `defineNative` keempatnya, `methodsForValue` untuk hash, tabel `hashMethods` |
-| `src/value.c` | `hashValue`/`valuesEqual` untuk `ObjHash` |
+| `src/native.c` | implementasi md5/sha1/sha256/sha512 + 4 native (mengembalikan teks heksa) |
+| `src/native.h` | deklarasi keempat native |
+| `src/vm.c` | `defineNative("md5"|"sha1"|"sha256"|"sha512", ...)` |
+| `editors/vscode-indonesiaku/` | BUILTINS + alternasi tmLanguage |
+
+Tidak ada tipe objek baru, jadi `object.*`, `memory.c`, dan `value.c` **tidak**
+ disentuh — itu yang membuat perubahan ini tetap kecil dan aman dari GC.
 
 **GC-safety:** `newHash` mengalokasi; digest disimpan inline (bukan pointer)
 sehingga tidak ada pointer mentah yang perlu di-root. Native yang menerima

@@ -15,8 +15,9 @@ const BUILTINS = [
   "enumerasi", "format", "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_kunci",
   "hapus_pada", "hash", "heksa", "henti", "himpunan", "himpunan_beku", "huruf_besar", "huruf_kecil",
   "id", "input", "iter", "jam", "jenis", "jumlah", "kamus", "karakter", "ke_angka", "ke_bulat",
-  "ke_desimal", "ke_logika", "ke_teks", "kunci", "lanjutkan", "lantai", "max", "min", "oktal", "ord",
+  "ke_desimal", "ke_logika", "ke_teks", "kunci", "lanjutkan", "lantai", "max", "md5", "min", "oktal", "ord",
   "pangkat", "panjang", "pasangkan", "peta", "potong", "punya", "rentang", "repr", "saring", "semua",
+  "sha1", "sha256", "sha512",
   "sisip", "soket_baca", "soket_dengar", "soket_terima", "soket_tulis", "soket_tutup", "tambah",
   "tambah_berkas", "tanggal", "terbalik", "terurut", "tulis", "tulis_semua", "tupel", "turunan_dari",
   "tutup", "waktu"

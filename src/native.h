@@ -214,4 +214,13 @@ Value nativeFnHimpunanBeku(int argCount, Value* args);   // himpunan_beku([uruta
 Value nativeFnIter(int argCount, Value* args);           // iter(urutan)
 Value nativeFnLanjutkan(int argCount, Value* args);      // lanjutkan(it[, bawaan])
 
+// ============================================================================
+// HASH KRIPTOGRAFIS (Fase 6) — mengembalikan teks heksa huruf kecil
+// ============================================================================
+
+Value nativeFnMd5(int argCount, Value* args);      // md5(teks | daftar byte)
+Value nativeFnSha1(int argCount, Value* args);     // sha1(...)
+Value nativeFnSha256(int argCount, Value* args);   // sha256(...)
+Value nativeFnSha512(int argCount, Value* args);   // sha512(...)
+
 #endif

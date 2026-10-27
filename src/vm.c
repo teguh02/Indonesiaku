@@ -448,6 +448,12 @@ void initVM() {
     defineNative("soket_baca", nativeFnSoketBaca);
     defineNative("soket_tulis", nativeFnSoketTulis);
     defineNative("soket_tutup", nativeFnSoketTutup);
+
+    // Hash kriptografis (Fase 6). Mengembalikan teks heksa huruf kecil.
+    defineNative("md5", nativeFnMd5);
+    defineNative("sha1", nativeFnSha1);
+    defineNative("sha256", nativeFnSha256);
+    defineNative("sha512", nativeFnSha512);
 }
 
 void freeVM() {

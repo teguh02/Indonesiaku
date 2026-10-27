@@ -1,0 +1,28 @@
+# Hash kriptografis (Fase 6): md5, sha1, sha256, sha512.
+# Vektor uji standar (RFC) — hasilnya teks heksa huruf kecil.
+
+cetak("== vektor standar ==")
+cetak(md5(""))
+cetak(md5("abc"))
+cetak(sha1("abc"))
+cetak(sha256(""))
+cetak(sha256("abc"))
+cetak(sha512("abc"))
+
+cetak("== teks UTF-8 & daftar byte sama saja ==")
+cetak(sha256("Halo"))
+cetak(sha256([72, 97, 108, 111]))
+cetak(sha256("café") == sha256([99, 97, 102, 195, 169]))
+cetak(sha256("😀") == sha256([240, 159, 152, 128]))
+
+cetak("== galat dapat ditangkap ==")
+coba {
+    md5(123)
+} kecuali GalatTipe sebagai e {
+    cetak(e.pesan)
+}
+coba {
+    sha256([300])
+} kecuali GalatTipe sebagai e {
+    cetak(e.pesan)
+}
