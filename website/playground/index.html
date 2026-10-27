@@ -30,6 +30,7 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script defer src="../assets/indonesiaku-hljs.js?v=1.0.0"></script>
+  <script defer src="../assets/templat-playground.js?v=1.0.0"></script>
 </head>
 
 <body x-data="shell" class="min-h-full bg-paper font-sans text-ink antialiased dark:bg-night dark:text-paper">
@@ -107,6 +108,13 @@
           <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/70"></span>
           <span class="ml-2 font-mono text-[11px] font-medium text-ink-3 dark:text-paper/45" x-text="t('pg_editor')">main.idk</span>
           <span class="ml-auto hidden font-mono text-[10px] text-ink-3 dark:text-paper/35 sm:block" x-text="t('pg_hint')">Ctrl+Enter</span>
+        </div>
+        <!-- Template: klik mengganti isi editor. Tombol dibangkitkan oleh
+             skrip dari window.INDK_TEMPLAT (assets/templat-playground.js). -->
+        <div class="flex flex-wrap items-center gap-1.5 border-b border-ink/10 bg-paper-2/30 px-3 py-2 dark:border-white/10 dark:bg-white/[0.02]">
+          <span class="mr-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-3 dark:text-paper/40"
+                x-text="t('pg_tpl')">Template</span>
+          <div id="templat" class="flex flex-wrap gap-1.5" role="group" :aria-label="t('pg_tpl')"></div>
         </div>
         <label for="kode" class="sr-only">Kode Indonesiaku</label>
         <!-- Editor: textarea transparan ditumpuk di atas lapisan <pre> yang
@@ -258,6 +266,81 @@ cetak("Rata-rata:", (1 + 2 + 3) / 3)
     }
 
     const t = (k) => window.t18n(k);
+
+    // -------------------------------------------------------------
+    // Tombol template: mengganti isi editor dengan contoh siap pakai.
+    // Daftar template ada di assets/templat-playground.js; setiap kode
+    // di sana sudah diuji berjalan oleh tests/test_templat_playground.sh.
+    // -------------------------------------------------------------
+    const templatEl = document.getElementById("templat");
+    let templatAktif = null;
+
+    const KELAS_TPL_MATI =
+      "rounded-full border border-ink/15 px-2.5 py-1 font-mono text-[11px] transition " +
+      "hover:border-brand-500/50 hover:text-brand-700 dark:border-white/15 " +
+      "dark:hover:border-brand-400/50 dark:hover:text-brand-300";
+    const KELAS_TPL_HIDUP =
+      "rounded-full border border-brand-500/50 bg-brand-500/10 px-2.5 py-1 font-mono " +
+      "text-[11px] font-semibold text-brand-700 transition dark:text-brand-300";
+
+    function tandaiTemplat(id) {
+      templatAktif = id;
+      templatEl.querySelectorAll("button").forEach((b) => {
+        const aktif = b.dataset.id === id;
+        b.className = aktif ? KELAS_TPL_HIDUP : KELAS_TPL_MATI;
+        b.setAttribute("aria-pressed", aktif ? "true" : "false");
+      });
+    }
+
+    function pakaiTemplat(tpl) {
+      kodeEl.value = tpl.kode;
+      kodeEl.selectionStart = kodeEl.selectionEnd = 0;
+      perbaruiSorot();
+      wrapEl.scrollTop = 0;
+      wrapEl.scrollLeft = 0;
+      tandaiTemplat(tpl.id);
+      // Keluaran lama milik kode sebelumnya — jangan dibiarkan menyesatkan.
+      cetakKeluaran("");
+      setStatus(t("pg_ready"));
+      kodeEl.focus();
+    }
+
+    function bangunTemplat() {
+      const daftar = window.INDK_TEMPLAT;
+      if (!templatEl || !Array.isArray(daftar)) return false;
+      // app.js memuat i18n.json secara asinkron dan t18n() mengembalikan
+      // KUNCI MENTAH selama kamus masih kosong. Tunggu sampai benar-benar
+      // siap, kalau tidak tombol tampil sebagai "pg_tpl_halo".
+      if (t("pg_tpl_halo") === "pg_tpl_halo") return false;
+      templatEl.textContent = "";
+      daftar.forEach((tpl) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.id = tpl.id;
+        b.className = KELAS_TPL_MATI;
+        b.textContent = t(tpl.label);
+        b.title = t("pg_tpl_ganti");
+        b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", () => pakaiTemplat(tpl));
+        templatEl.appendChild(b);
+      });
+      if (templatAktif) tandaiTemplat(templatAktif);
+      return true;
+    }
+
+    // templat-playground.js dimuat dengan `defer`, jadi window.INDK_TEMPLAT
+    // belum tentu ada saat skrip inline ini berjalan — dan pada navigasi SPA
+    // (Senna) tidak ada event `load` baru. Coba sekarang, lalu ulangi.
+    if (!bangunTemplat()) {
+      let sisa = 40;                         // ~6 detik, lalu menyerah
+      const tungguTpl = setInterval(() => {
+        if (bangunTemplat() || --sisa <= 0) clearInterval(tungguTpl);
+      }, 150);
+    }
+    // app.js memancarkan "indk:lang" di <html> setiap bahasa ditukar
+    // (lihat assets/app.js) — label tombol ikut diterjemahkan ulang.
+    // Di titik ini kamus sudah pasti siap, jadi penjaga di atas tidak menahan.
+    document.documentElement.addEventListener("indk:lang", bangunTemplat);
 
     function setStatus(teks, jenis) {
       statusEl.textContent = teks;

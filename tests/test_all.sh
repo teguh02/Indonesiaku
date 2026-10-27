@@ -108,6 +108,17 @@ if [ -f tests/test_panduan.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Template playground juga dipamerkan ke pengunjung — ikut diuji berjalan.
+if [ -f tests/test_templat_playground.sh ]; then
+    echo ""
+    if bash tests/test_templat_playground.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES templat-playground"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 echo -e "${BLUE}=================================================${NC}"
 echo -e "TOTAL: ${GREEN}$PASSED/$TOTAL PASSED${NC}"
 if [ "$FAILED" -eq 0 ]; then

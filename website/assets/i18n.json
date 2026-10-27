@@ -10,7 +10,6 @@
     "ui_theme": "Ganti tema",
     "ui_copy": "salin",
     "ui_copied": "tersalin",
-
     "hero_eyebrow": "BAHASA PEMROGRAMAN INDONESIA · V1.0.0",
     "hero_title_1": "Menulis kode",
     "hero_title_2": "dalam Bahasa Indonesia",
@@ -22,7 +21,6 @@
     "stat_std": "pustaka standar",
     "stat_platforms": "platform CI",
     "stat_image": "image Docker",
-
     "feat_eyebrow": "01 — Fitur bahasa",
     "feat_title": "Sintaks yang akrab, fitur yang tersedia",
     "feat_lead": "Indonesiaku membawa kata kunci Bahasa Indonesia ke dalam interpreter bytecode yang mendukung kebutuhan pemrograman sehari-hari.",
@@ -38,14 +36,12 @@
     "feat5_d": "teks, daftar, matematika, dan kamus.",
     "feat6_t": "Satu binary C11",
     "feat6_d": "Dibangun dengan make dan dijalankan tanpa runtime tambahan.",
-
     "code_eyebrow": "02 — Sekilas kode",
     "code_title": "Kelas, pewarisan, dan penanganan kesalahan",
     "code_lead": "Kata kunci Bahasa Indonesia tetap konsisten saat program memakai fitur-fitur yang lebih lengkap.",
     "code_note1": "init dipakai untuk menyiapkan objek; diri menunjuk objek saat ini.",
     "code_note2": "Pewarisan memakai < dan super, mengikuti bentuk yang sudah dikenal banyak pembelajar.",
     "code_note3": "coba dan kecuali menangkap kesalahan; naikkan dipakai saat program perlu menghentikan alur.",
-
     "quick_eyebrow": "03 — Mulai menggunakan Indonesiaku",
     "quick_title": "Jalankan dengan cara yang sesuai",
     "quick_lead": "Pilih Docker, build dari sumber, atau telusuri contoh program yang tersedia.",
@@ -55,7 +51,6 @@
     "q2_d": "Kompilasi interpreter C11 secara langsung dengan make.",
     "q3_t": "Lihat contoh program",
     "q3_d": "Contoh CLI dan HTTP tersedia di repositori beserta skrip pengujiannya.",
-
     "apps_eyebrow": "04 — Contoh penggunaan",
     "apps_title": "Todo-list CLI dan server HTTP",
     "apps_lead": "Repositori menyertakan dua contoh aplikasi yang menunjukkan penggunaan file, JSON, soket TCP, dan HTTP dalam Indonesiaku.",
@@ -64,12 +59,10 @@
     "app2_t": "Server REST HTTP",
     "app2_d": "Server soket TCP dengan GET/POST/PUT/DELETE /todos, diuji curl di CI.",
     "app_cta": "Lihat di GitHub",
-
     "cta_title": "Mulai menulis dengan Indonesiaku",
     "cta_lead": "Buka dokumentasi untuk mempelajari sintaks, pustaka standar, dan cara menjalankan program pertama.",
     "cta_docs": "Buka dokumentasi",
     "cta_about": "Tentang Indonesiaku",
-
     "foot_tagline": "Bahasa pemrograman dengan sintaks Bahasa Indonesia.",
     "foot_product": "Produk",
     "foot_source": "Sumber",
@@ -83,14 +76,12 @@
     "foot_author": "Penulis",
     "foot_license": "Lisensi MIT",
     "foot_rights": "Dibuat di Indonesia",
-
     "docs_sidebar": "Panduan",
     "docs_loading": "Memuat…",
     "docs_err_title": "Gagal memuat",
     "docs_err_hint": "Pastikan situs diakses lewat HTTP, bukan berkas lokal.",
     "docs_note": "Panduan ditulis dalam Bahasa Indonesia.",
     "docs_open": "Buka di GitHub",
-
     "pg_title": "Playground",
     "pg_lead": "Tulis kode Indonesiaku lalu jalankan. Kode dieksekusi oleh interpreter indk di server.",
     "pg_editor": "main.idk",
@@ -114,9 +105,18 @@
     "pg_nocode_out": "Tulis kode terlebih dahulu.",
     "pg_client_timeout": "Tidak ada respons dalam waktu yang ditentukan.",
     "pg_backend_hint": "Pastikan layanan playground (API indk) berjalan di server ini.",
-    "pg_placeholder": "Keluaran program akan muncul di sini."
+    "pg_placeholder": "Keluaran program akan muncul di sini.",
+    "pg_tpl": "Template",
+    "pg_tpl_halo": "Halo Dunia",
+    "pg_tpl_percabangan": "Percabangan",
+    "pg_tpl_perulangan": "Perulangan",
+    "pg_tpl_fungsi": "Fungsi",
+    "pg_tpl_kelas": "Kelas & OOP",
+    "pg_tpl_koleksi": "Koleksi Data",
+    "pg_tpl_galat": "Penanganan Galat",
+    "pg_tpl_masukan": "Masukan Pengguna",
+    "pg_tpl_ganti": "Ganti kode editor dengan template ini"
   },
-
   "en": {
     "nav_home": "Home",
     "nav_about": "About",
@@ -128,7 +128,6 @@
     "ui_theme": "Toggle theme",
     "ui_copy": "copy",
     "ui_copied": "copied",
-
     "hero_eyebrow": "INDONESIAN PROGRAMMING LANGUAGE · V1.0.0",
     "hero_title_1": "Write code",
     "hero_title_2": "in Indonesian",
@@ -140,7 +139,6 @@
     "stat_std": "stdlib modules",
     "stat_platforms": "CI platforms",
     "stat_image": "Docker image",
-
     "feat_eyebrow": "01 — Why Indonesiaku",
     "feat_title": "Complete features, familiar syntax",
     "feat_lead": "Not just translated keywords: the parser, VM, and garbage collector are written from scratch so the behaviour is learnable.",
@@ -156,14 +154,12 @@
     "feat5_d": "text, list, math, dictionary — written in Indonesiaku itself.",
     "feat6_t": "Lightweight & portable",
     "feat6_d": "A single dependency-free C11 binary; the Docker image is ~12 MB.",
-
     "code_eyebrow": "02 — A code preview",
     "code_title": "Classes, inheritance, error handling",
     "code_lead": "Every language feature uses consistent Indonesian keywords, so nothing has to be guessed.",
     "code_note1": "init is the constructor, diri is this.",
     "code_note2": "Inheritance uses < like Python, with no extra braces.",
     "code_note3": "naikkan and coba/kecuali handle errors without leaking the stack.",
-
     "quick_eyebrow": "03 — Quick start",
     "quick_title": "Three steps, no complicated setup",
     "quick_lead": "Pick the easiest path: Docker, build from source, or the REPL.",
@@ -173,7 +169,6 @@
     "q2_d": "Only a C11 compiler and make are required.",
     "q3_t": "Try it in the browser",
     "q3_d": "No installation — the playground runs code through the server.",
-
     "apps_eyebrow": "04 — Real applications",
     "apps_title": "Not just toy examples",
     "apps_lead": "The repository ships two Todo-list applications with automated tests, proving the language can carry a real project.",
@@ -182,12 +177,10 @@
     "app2_t": "HTTP REST server",
     "app2_d": "A TCP socket server with GET/POST/PUT/DELETE /todos, curl-tested in CI.",
     "app_cta": "View on GitHub",
-
     "cta_title": "Ready to write your first program?",
     "cta_lead": "Full documentation in Indonesian, and a playground you can try right away.",
     "cta_docs": "Read the docs",
     "cta_about": "About the project",
-
     "foot_tagline": "A programming language with Indonesian syntax.",
     "foot_product": "Product",
     "foot_source": "Source",
@@ -201,14 +194,12 @@
     "foot_author": "Author",
     "foot_license": "MIT License",
     "foot_rights": "Made in Indonesia",
-
     "docs_sidebar": "Guides",
     "docs_loading": "Loading…",
     "docs_err_title": "Failed to load",
     "docs_err_hint": "Make sure the site is served over HTTP, not from a local file.",
     "docs_note": "The guides are written in Indonesian.",
     "docs_open": "Open on GitHub",
-
     "pg_title": "Playground",
     "pg_lead": "Write Indonesiaku code and run it. The code is executed by the indk interpreter on the server.",
     "pg_editor": "main.idk",
@@ -232,6 +223,16 @@
     "pg_nocode_out": "Write some code first.",
     "pg_client_timeout": "No response within the time limit.",
     "pg_backend_hint": "Make sure the playground service (indk API) is running on this server.",
-    "pg_placeholder": "Program output will appear here."
+    "pg_placeholder": "Program output will appear here.",
+    "pg_tpl": "Templates",
+    "pg_tpl_halo": "Hello World",
+    "pg_tpl_percabangan": "Conditionals",
+    "pg_tpl_perulangan": "Loops",
+    "pg_tpl_fungsi": "Functions",
+    "pg_tpl_kelas": "Classes & OOP",
+    "pg_tpl_koleksi": "Collections",
+    "pg_tpl_galat": "Error Handling",
+    "pg_tpl_masukan": "User Input",
+    "pg_tpl_ganti": "Replace the editor code with this template"
   }
 }
