@@ -5,6 +5,43 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Belum dirilis]
+
+**Fase 5 — Iterator & generator.** Seluruh item Fase 5 di `docs/ROADMAP.md`
+selesai.
+
+### Ditambahkan
+
+- Protokol iterator malas: metode ajaib **`_berikutnya_`** (total kini 31).
+  Objek dengan `_iter_()` + `_berikutnya_()` bisa dipakai `untuk ... dalam`,
+  dan berhenti dengan `naikkan HentiIterasi()`.
+- **`hasilkan`** (yield): fungsi yang memakainya menjadi generator dengan
+  frame yang ditangguhkan dan dilanjutkan saat nilai berikutnya diminta.
+- **Generator expression**: `(x * 2 untuk x dalam s jika syarat)`, termasuk
+  bentuk tanpa kurung sendiri sebagai argumen tunggal: `jumlah(x untuk x dalam s)`.
+- **Comprehension kamus dan himpunan**: `{k: v untuk ...}` dan `{x untuk ...}`.
+- **`cocokkan` / `kasus`** (pattern matching) dengan pola literal, `_`,
+  pengikatan nama, `Kelas()`, alternatif `atau`, dan penjaga `jika`.
+- `iter()` dan `lanjutkan()` kini menerima generator dan iterator kustom.
+- `daftar`, `tupel`, `himpunan`, `himpunan_beku`, `jumlah`, `semua`,
+  `ada_yang`, `terurut`, `terbalik`, `peta`, dan `saring` menerima generator
+  maupun iterator kustom.
+
+### Diperbaiki
+
+- ⚠️ **Bitmask metode ajaib meluap.** Setelah `_berikutnya_` ditambahkan,
+  jumlah metode ajaib melewati 32 sehingga `MAGIC_BIT` menggeser di luar
+  jangkauan `uint32_t`. Akibatnya pencarian `_keluar_` (blok `dengan`) menjadi
+  *undefined behavior*. Bitmask kini 64-bit dan dijaga `_Static_assert`.
+  Ditemukan oleh UBSan.
+- Kebocoran GC pada pencairan generator: hasilnya kini ditulis ke slot argumen
+  yang sudah di-root, memperbaiki *heap-use-after-free* yang terdeteksi ASan.
+
+### Kata kunci baru
+
+`hasilkan`, `cocokkan`, `kasus`. Program yang memakai ketiganya sebagai nama
+variabel perlu diganti namanya.
+
 ## [1.1.0] - 2026-10-27
 
 **Fase 4 — OOP lengkap.** Seluruh item Fase 4 di `docs/ROADMAP.md` selesai:

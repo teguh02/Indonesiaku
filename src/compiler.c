@@ -80,6 +80,8 @@ typedef enum {
 // inside an 'akhirnya' re-inlines the enclosing ones, so nested blocks grow
 // the code exponentially (the fuzzer hung the compiler with it); real code
 // needs a handful, and the cap keeps compile time linear.
+#define MATCH_CASE_MAX 128
+#define MATCH_ALT_MAX 32
 #define FINALLY_INLINE_MAX 64
 
 struct LoopCtx;
@@ -1921,6 +1923,8 @@ ParseRule rules[] = {
   [TOKEN_BUANG]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
   [TOKEN_HASILKAN]      = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_COCOKKAN]      = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_KASUS]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
   [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
   [TOKEN_BENAR]         = {literal,  NULL,   PREC_NONE},
@@ -3220,6 +3224,165 @@ static void yieldStatement() {
     emitByte(OP_YIELD);
 }
 
+// cocokkan nilai { kasus pola { ... } ... }
+//
+// Lowered to ordinary conditional bytecode -- there is no pattern object and
+// no VM pattern engine. The subject lives in a hidden local. Every pattern
+// compiles to code leaving exactly ONE boolean on the stack, so the case
+// dispatch below is uniform.
+//
+// Supported patterns (deliberately small):
+//   literal      kasus 0 / kasus "teks" / kasus benar / kasus kosong
+//   wildcard     kasus _
+//   capture      kasus nama              (binds, always matches)
+//   kelas        kasus Kelas()           (instance test)
+//   alternatif   kasus 1 atau 2
+//   penjaga      kasus pola jika syarat
+//
+// ponytail: no sequence/mapping destructuring yet. Add a recursive pattern
+// compiler when a real case needs [a, b] or {"k": v}.
+
+// One alternative. Emits code leaving a single boolean on the stack.
+static void matchPatternTest(int subjectSlot) {
+    if (check(TOKEN_IDENTIFIER) && checkNext(TOKEN_LEFT_PAREN)) {
+        // kasus Kelas() -- instance test. OP_IS_INSTANCE wants [nilai, kelas].
+        emitBytes(OP_GET_LOCAL, (uint8_t)subjectSlot);
+        namedVariable(parser.current, false);
+        advance();                 // class name
+        advance();                 // '('
+        consume(TOKEN_RIGHT_PAREN, "Harapkan ')' pada pola kelas.");
+        emitByte(OP_IS_INSTANCE);
+        return;
+    }
+    // Literal / expression pattern: subjek == <ekspresi>.
+    // PREC_AND, not PREC_OR: 'atau' separates alternatives here, so the
+    // expression parser must not swallow it as a boolean operator.
+    emitBytes(OP_GET_LOCAL, (uint8_t)subjectSlot);
+    parsePrecedence(PREC_AND);
+    emitByte(OP_EQUAL);
+}
+
+static void matchStatement() {
+    beginScope();
+    expression();
+    int subjectSlot = addSyntheticLocal("  cocok nilai");
+
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah nilai pada 'cocokkan'.");
+    skipNewlines();
+
+    int endJumps[MATCH_CASE_MAX];
+    int endCount = 0;
+    bool sawWildcard = false;
+
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        consume(TOKEN_KASUS, "Harapkan 'kasus' di dalam 'cocokkan'.");
+        if (sawWildcard) error("'kasus _' harus menjadi kasus terakhir.");
+
+        beginScope();              // this case's bindings
+
+        bool alwaysMatches = false;
+        Token captureName = {0};
+        bool hasCapture = false;
+
+        if (check(TOKEN_IDENTIFIER) && parser.current.length == 1 &&
+            parser.current.start[0] == '_') {
+            advance();
+            alwaysMatches = true;
+            sawWildcard = true;
+        } else if (check(TOKEN_IDENTIFIER) && !checkNext(TOKEN_LEFT_PAREN) &&
+                   !checkNext(TOKEN_DOT)) {
+            // A bare name binds the subject, as in Python. Use Kelas() for an
+            // instance test and Modul.NAMA for a literal comparison.
+            captureName = parser.current;
+            hasCapture = true;
+            alwaysMatches = true;
+            advance();
+        }
+
+        // Test chain. Each alternative leaves one boolean; OR them together
+        // with the existing short-circuit shape (JUMP_IF_FALSE + POP).
+        int orJumps[MATCH_ALT_MAX];
+        int orCount = 0;
+        if (!alwaysMatches) {
+            matchPatternTest(subjectSlot);
+            while (check(TOKEN_ATAU)) {
+                if (orCount == MATCH_ALT_MAX) {
+                    error("Terlalu banyak alternatif pada satu 'kasus'.");
+                    break;
+                }
+                // Short-circuit OR, same shape as or_(): on false fall through
+                // to the next alternative, on true jump out keeping the true.
+                int isFalse = emitJump(OP_JUMP_IF_FALSE);
+                orJumps[orCount++] = emitJump(OP_JUMP);   // true: done
+                patchJump(isFalse);
+                emitByte(OP_POP);                          // discard the false
+                advance();                                 // consume 'atau'
+                matchPatternTest(subjectSlot);
+            }
+            for (int i = 0; i < orCount; i++) patchJump(orJumps[i]);
+        }
+
+        int patternFail = -1;
+        if (!alwaysMatches) {
+            patternFail = emitJump(OP_JUMP_IF_FALSE);
+            emitByte(OP_POP);              // the true boolean
+        }
+        if (hasCapture) {
+            emitBytes(OP_GET_LOCAL, (uint8_t)subjectSlot);
+            addLocal(captureName);
+            markInitialized();
+        }
+
+        int guardFail = -1;
+        if (match(TOKEN_JIKA)) {
+            parsePrecedence(PREC_OR);
+            guardFail = emitJump(OP_JUMP_IF_FALSE);
+            emitByte(OP_POP);
+        }
+
+        consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah pola 'kasus'.");
+        beginScope();
+        block();
+        endScope();
+
+        // The matched case must run its OWN binding cleanup before jumping to
+        // the end; jumping first would skip the pops and leave the capture (and
+        // the subject) stranded on the stack for the next statement.
+        int bindingPops = 0;
+        if (hasCapture) bindingPops = 1;
+        for (int i = 0; i < bindingPops; i++) emitByte(OP_POP);
+
+        if (endCount == MATCH_CASE_MAX) {
+            error("Terlalu banyak 'kasus' dalam satu 'cocokkan'.");
+        } else {
+            endJumps[endCount++] = emitJump(OP_JUMP);
+        }
+
+        if (guardFail != -1) {
+            patchJump(guardFail);
+            emitByte(OP_POP);              // the false guard
+            // the guard failed AFTER the capture was bound: drop it too
+            for (int i = 0; i < bindingPops; i++) emitByte(OP_POP);
+        }
+        if (patternFail != -1) {
+            patchJump(patternFail);
+            emitByte(OP_POP);              // the false pattern result
+        }
+        // The compiler's own local bookkeeping is closed without emitting pops,
+        // since both paths above already balanced the stack by hand.
+        current->scopeDepth--;
+        while (current->localCount > 0 &&
+               current->locals[current->localCount - 1].depth > current->scopeDepth) {
+            current->localCount--;
+        }
+        skipNewlines();
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah 'cocokkan'.");
+    for (int i = 0; i < endCount; i++) patchJump(endJumps[i]);
+    endScope();                            // drop the subject
+}
+
 static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
@@ -3540,6 +3703,8 @@ static void statement() {
         returnStatement();
     } else if (match(TOKEN_HASILKAN)) {
         yieldStatement();
+    } else if (match(TOKEN_COCOKKAN)) {
+        matchStatement();
     } else if (match(TOKEN_SELAGI)) {
         whileStatement();
     } else if (match(TOKEN_HENTIKAN)) {

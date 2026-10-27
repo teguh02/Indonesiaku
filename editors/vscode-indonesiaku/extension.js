@@ -1,8 +1,9 @@
 const vscode = require("vscode");
 
 const KEYWORDS = [
-  "adalah", "akhirnya", "atau", "benar", "buang", "bukan", "coba", "dalam", "dan", "dari",
-  "dengan", "diri", "fungsi", "global", "hentikan", "impor", "jika", "jika_lain", "kecuali",
+  "adalah", "akhirnya", "atau", "benar", "buang", "bukan", "coba", "cocokkan", "dalam", "dan", "dari",
+  "dengan", "diri", "fungsi", "global", "hasilkan", "hentikan", "impor", "jika", "jika_lain",
+  "kasus", "kecuali",
   "kelas", "kembalikan", "kosong", "lanjut", "lewati", "naikkan", "nonlokal", "pastikan", "salah",
   "sebagai", "selagi", "selain", "super", "tidak", "untuk", "variabel"
 ];

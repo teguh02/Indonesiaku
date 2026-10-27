@@ -1,0 +1,69 @@
+# Pencocokan pola: cocokkan ... { kasus ... { ... } }
+# Blok memakai { } seperti biasa, tanpa aturan indentasi.
+
+fungsi namai(n) {
+    cocokkan n {
+        kasus 0 { kembalikan "nol" }
+        kasus 1 { kembalikan "satu" }
+        kasus 2 { kembalikan "dua" }
+        kasus _ { kembalikan "banyak" }
+    }
+}
+
+cetak(namai(0))
+cetak(namai(2))
+cetak(namai(17))
+
+# Beberapa pola sekaligus dengan 'atau'.
+untuk angka dalam [1, 2, 3, 4, 5, 6] {
+    cocokkan angka {
+        kasus 1 atau 3 atau 5 { cetak(angka, "ganjil") }
+        kasus 2 atau 4 atau 6 { cetak(angka, "genap") }
+    }
+}
+
+# Menangkap nilai ke sebuah nama.
+cocokkan 99 {
+    kasus 0 { cetak("nol") }
+    kasus nilai { cetak("tertangkap:", nilai) }
+}
+
+# Penjaga 'jika' menyaring lebih lanjut.
+untuk suhu dalam [5, 25, 40] {
+    cocokkan suhu {
+        kasus t jika t < 15 { cetak(t, "dingin") }
+        kasus t jika t < 30 { cetak(t, "nyaman") }
+        kasus t { cetak(t, "panas") }
+    }
+}
+
+# Pola kelas memakai Kelas() untuk menguji jenis objek.
+kelas Lingkaran { }
+kelas Persegi { }
+
+fungsi bentuk(b) {
+    cocokkan b {
+        kasus Lingkaran() { kembalikan "lingkaran" }
+        kasus Persegi() { kembalikan "persegi" }
+        kasus _ { kembalikan "bukan bentuk" }
+    }
+}
+
+cetak(bentuk(Lingkaran()))
+cetak(bentuk(Persegi()))
+cetak(bentuk(123))
+
+# Teks dan kosong juga cocok seperti literal biasa.
+untuk v dalam ["merah", kosong, "hijau"] {
+    cocokkan v {
+        kasus kosong { cetak("tidak ada") }
+        kasus "merah" { cetak("warna merah") }
+        kasus _ { cetak("warna lain") }
+    }
+}
+
+# Tanpa kasus yang cocok, 'cocokkan' tidak melakukan apa pun.
+cocokkan 1000 {
+    kasus 1 { cetak("satu") }
+}
+cetak("selesai")

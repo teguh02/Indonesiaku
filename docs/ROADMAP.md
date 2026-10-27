@@ -208,10 +208,25 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 
 ### Fase 5 — Iterator & generator (1.3)
 
-Protokol iterator malas `_berikutnya_` (melengkapi `_iter_` dari Fase 4),
-`hasilkan` (yield), generator expression,
-dict/set comprehension, `cocokkan`/`kasus` (pattern matching).
+✅ Protokol iterator malas `_berikutnya_` (melengkapi `_iter_` dari Fase 4)
+([rencana](RENCANA_FITUR/selesai/iterator_malas.md)).
+
+✅ `hasilkan` (yield) — fungsi generator dengan frame yang ditangguhkan.
+
+✅ Generator expression `(x untuk x dalam s)`.
+
+✅ Comprehension kamus `{k: v untuk ...}` dan himpunan `{x untuk ...}`.
+
+✅ `cocokkan`/`kasus` (pattern matching): literal, `_`, pengikatan nama,
+`Kelas()`, alternatif `atau`, dan penjaga `jika`.
+
 Ref: 04 §7.
+
+> **Fase 5 SELESAI.** Metode ajaib kini 31 (`_berikutnya_`), generator dan
+> generator expression berjalan malas, comprehension tersedia untuk daftar,
+> kamus, dan himpunan, serta semuanya dapat membaca generator maupun iterator
+> kustom. Batas yang disengaja: pola belum bersarang (`[a, b]` destructuring
+> belum ada), dan `hasilkan` belum didukung di dalam blok `coba ... akhirnya`.
 
 ### Fase 6 — Pustaka standar luas (1.x berkelanjutan)
 

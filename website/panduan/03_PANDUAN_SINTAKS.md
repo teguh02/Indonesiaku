@@ -1150,6 +1150,116 @@ cetak([k[0] untuk k dalam ["apel", "bunga"]])        # [a, b]
 
 > Contoh: [`examples/komprehensi.idk`](../examples/komprehensi.idk)
 
+### Comprehension kamus dan himpunan
+
+Bentuk yang sama di dalam `{ }` membangun kamus atau himpunan:
+
+```indonesiaku
+cetak({n: n * n untuk n dalam rentang(1, 5)})           # {1: 1, 2: 4, 3: 9, 4: 16}
+cetak({n: "genap" untuk n dalam rentang(0, 6) jika n % 2 == 0})
+cetak(panjang({x % 4 untuk x dalam rentang(0, 20)}))    # 4
+```
+
+- Ada `:` sebelum `untuk` → kamus; tanpa `:` → himpunan.
+- `{}` tetap berarti kamus kosong.
+
+### Generator expression
+
+Di dalam `( )`, bentuk yang sama menghasilkan generator yang malas —
+nilainya baru dihitung saat diminta:
+
+```indonesiaku
+variabel kuadrat = (x * x untuk x dalam rentang(1, 6))
+cetak(jenis(kuadrat))                                   # generator
+cetak(daftar(kuadrat))                                  # [1, 4, 9, 16, 25]
+
+cetak(jumlah(x * 2 untuk x dalam rentang(1, 5)))        # 20
+```
+
+Sebagai argumen tunggal sebuah fungsi, kurungnya boleh ikut kurung panggilan.
+
+> Contoh: [`examples/oop/comprehension_generator.idk`](../examples/oop/comprehension_generator.idk)
+
+### Generator dengan `hasilkan`
+
+Fungsi yang memakai `hasilkan` menjadi generator: tubuhnya berjalan sampai
+`hasilkan` berikutnya, lalu berhenti sampai nilai berikutnya diminta.
+
+```indonesiaku
+fungsi hitung_mundur(mulai) {
+    variabel n = mulai
+    selagi n > 0 {
+        hasilkan n
+        n = n - 1
+    }
+}
+
+untuk angka dalam hitung_mundur(3) {
+    cetak(angka)                                        # 3, 2, 1
+}
+```
+
+- Tidak ada daftar besar di memori; nilai dihitung satu per satu.
+- Sumber tak terbatas aman selama dipotong dengan `hentikan`.
+- `iter()` dan `lanjutkan()` juga bekerja pada generator.
+
+> Contoh: [`examples/oop/generator.idk`](../examples/oop/generator.idk)
+
+### Iterator sendiri dengan `_berikutnya_`
+
+Objek menjadi iterator dengan `_iter_()` yang mengembalikan dirinya dan
+`_berikutnya_()` yang menaikkan `HentiIterasi` saat habis:
+
+```indonesiaku
+kelas Penghitung {
+    init() { diri.posisi = 0 }
+    _iter_() { kembalikan diri }
+    _berikutnya_() {
+        jika diri.posisi >= 3 {
+            naikkan HentiIterasi()
+        }
+        variabel n = diri.posisi
+        diri.posisi = diri.posisi + 1
+        kembalikan n
+    }
+}
+
+cetak(daftar(Penghitung()))                             # [0, 1, 2]
+```
+
+> Contoh: [`examples/oop/iterator_malas.idk`](../examples/oop/iterator_malas.idk)
+
+### Pencocokan pola: `cocokkan` dan `kasus`
+
+Memilih satu cabang berdasarkan bentuk sebuah nilai. Kasus pertama yang
+cocok menang; bila tidak ada yang cocok, tidak terjadi apa-apa.
+
+```indonesiaku
+fungsi namai(n) {
+    cocokkan n {
+        kasus 0 { kembalikan "nol" }
+        kasus 1 atau 2 { kembalikan "sedikit" }
+        kasus x jika x > 100 { kembalikan "banyak sekali" }
+        kasus _ { kembalikan "biasa" }
+    }
+}
+```
+
+Pola yang didukung:
+
+| Pola | Arti |
+|------|------|
+| `kasus 0`, `kasus "teks"`, `kasus kosong` | sama dengan nilai literal |
+| `kasus _` | cocok apa pun; harus kasus terakhir |
+| `kasus nama` | selalu cocok, nilainya diikat ke `nama` |
+| `kasus Kelas()` | cocok bila objek merupakan instance kelas itu |
+| `kasus a atau b` | salah satu alternatif |
+| `kasus pola jika syarat` | penjaga tambahan |
+
+Nama yang diikat hanya hidup di dalam kasusnya sendiri.
+
+> Contoh: [`examples/oop/cocokkan.idk`](../examples/oop/cocokkan.idk)
+
 ### Penugasan berganda (unpacking)
 
 Beberapa nama sekaligus dari satu urutan; jumlahnya harus sama persis:
