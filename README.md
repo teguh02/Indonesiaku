@@ -109,7 +109,8 @@ merusak kompatibilitas sampai 2.0.
   comprehension*, penugasan berganda, operator bitwise, metode tipe bawaan
 - **Pustaka standar** — berkas I/O, JSON, HTTP, soket TCP, SQLite tertanam,
   serta modul bernamespace `koleksi`, `statistik`, `iterasi`, `fungsional`,
-  `salin`, `jalur`, dan `pola` (ekspresi reguler) (Fase 6)
+  `salin`, `jalur`, `pola` (ekspresi reguler), `opsi` (argumen baris perintah),
+  `log`, dan `proses` (menjalankan program lain) (Fase 6); mode `indk --sandbox`
 - **Mesin** — *garbage collector* mark-sweep dan REPL interaktif
 
 Daftar lengkap beserta contoh tiap fitur ada di

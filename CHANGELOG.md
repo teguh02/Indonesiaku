@@ -45,6 +45,26 @@ variabel perlu diganti namanya.
 **Fase 6 — Pustaka standar luas (gelombang B & C, sebagian).**
 
 ### Added
+- ✨ **`opsi`** — padanan `argparse`: `PenguraiArgumen`, argumen posisi dan
+  opsi, `pendek`, `--x=nilai`, `-j3`, bendera digabung (`-vq`), aksi
+  `simpan`/`benar`/`salah`/`hitung`/`tambahkan`, `jenis_nilai`, `pilihan`,
+  bantuan otomatis bergaya argparse 3.13+. Galat pemakaian → stderr + kode
+  2, `-h` → kode 0; `keluar_saat_galat = salah` untuk `GalatOpsi`. Diuji
+  1.600 daftar argumen acak berbanding argparse (1 beda: `--` di ujung).
+- ✨ **`log`** — padanan `logging`: `debug`/`info`/`peringatan`/`galat`/
+  `kritis`, `atur` (basicConfig), `ambil_pencatat` bertingkat dengan titik;
+  bawaan ke stderr, ambang `PERINGATAN`, format `{level}:{nama}:{pesan}`.
+- ✨ **`proses`** — padanan `subprocess.run`: `jalankan`, `keluaran`,
+  `GalatProses`; perintah berupa daftar, tanpa shell.
+- ✨ Builtin sistem operasi (`src/sistem.c` baru): `keluar`, `tulis_galat`,
+  `lingkungan`, `ambil_lingkungan`, `direktori_kini`, `isi_direktori`,
+  `buat_direktori`, `hapus_direktori`, `jalur_indk`; serta `atur_atribut`,
+  `ambil_atribut`, `punya_atribut` (setattr/getattr/hasattr). Galat sistem
+  kini `GalatOS`; kelas baru `GalatIzin`.
+- ✨ **`indk --sandbox`** menolak lingkungan, isi direktori, dan menjalankan
+  program lain (`GalatIzin`). Playground web memakai mode ini.
+- ✨ `jalur` mendapat `ada`, `adalah_berkas`, `adalah_direktori`, `ukuran`,
+  `waktu_ubah`, `absolut`.
 - ✨ **`pola`** — ekspresi reguler, padanan `re`: `kompilasi`, `cari`,
   `cocok`, `cocok_penuh`, `cari_semua`, `iter_cari`, `ganti` (templat `\1`,
   `\g<nama>`, atau fungsi), `ganti_n`, `pisah`, `lolos`; objek `Cocokan`

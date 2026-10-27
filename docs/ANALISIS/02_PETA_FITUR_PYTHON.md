@@ -248,16 +248,16 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 | `string` | `teks` | 🟡 | 3 |
 | `json` | `json` | ✅ | — |
 | `time` / `datetime` | `waktu` / `tanggal_waktu` | 🟡 | 3 |
-| `os` / `os.path` / `pathlib` / `shutil` / `glob` | `os` / `jalur` | 🟡 `jalur` (olah teks jalur, persis `posixpath`); sistem berkas belum | 6 |
-| `sys` | `sistem` (`argumen`, `keluar`, `versi`) | 🟡 `argumen`, `henti` | 3 |
+| `os` / `os.path` / `pathlib` / `shutil` / `glob` | `os` / `jalur` | 🟡 `jalur` (persis `posixpath`, plus `ada`/`ukuran`/`absolut`), builtin `direktori_kini`/`isi_direktori`/`buat_direktori`/`lingkungan`; `pathlib`/`shutil`/`glob` belum | 6 |
+| `sys` | `sistem` (`argumen`, `keluar`, `versi`) | 🟡 `argumen`, `keluar`, `tulis_galat`, `jalur_indk` (builtin) | 3 |
 | `re` | `pola` (regex) | ✅ Pike VM linear; tanpa backreference/lookaround, kelas ASCII | 6 |
 | `collections` | `koleksi` (`Penghitung`, `Antrian`, `KamusBawaan`) | ✅ `pustaka/koleksi.idk` (gelombang A); `tupel_bernama` menunggu `*args` | 6 |
 | `itertools` / `functools` | `iterasi` / `fungsional` | ✅ eager (gelombang A); versi malas menunggu Fase 5 | 6 |
 | `csv` | `csv` | 🟨 kode + tes (gelombang B) | 6 |
 | `unittest` / `pytest` | `uji` (+ runner `indk uji`) | ❌ | 7 |
-| `logging` | `log` | ❌ | 6 |
-| `argparse` | `argparse` → `opsi` | ❌ | 6 |
-| `subprocess` | `proses` | ❌ | 6 |
+| `logging` | `log` | ✅ | 6 |
+| `argparse` | `argparse` → `opsi` | ✅ tanpa singkatan/nargs/sub-perintah | 6 |
+| `subprocess` | `proses` | ✅ `jalankan`/`keluaran`, tanpa shell, belum timeout | 6 |
 | `socket` | `soket` | ✅ (TCP, localhost) | — |
 | `http.server` / `urllib` | `http` | 🟡 parse/build | 6 |
 | `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | 🟨 `md5`/`sha*` builtin, `base64` (gelombang B); `rahasia`/`uuid` belum | 6 |

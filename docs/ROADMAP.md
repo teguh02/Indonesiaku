@@ -251,15 +251,17 @@ baru.
 
 | Modul | Status | Bukti |
 |---|---|---|
-| `jalur` (os.path, bagian teks) | ✅ | `examples/pustaka_jalur.idk` |
+| `jalur` (os.path) | ✅ | `examples/pustaka_jalur.idk`, `examples/sistem_dasar.idk` |
+| `opsi` (argparse) | ✅ | `examples/pustaka_opsi.idk` |
+| `log` (logging) | ✅ | `examples/pustaka_log.idk` |
+| `proses` (subprocess) + `indk --sandbox` | ✅ | `examples/pustaka_proses.idk` |
+| builtin sistem operasi (`src/sistem.c`) | ✅ | `examples/sistem_dasar.idk` |
 | `pola` (re, mesin C linear) | ✅ | `examples/pustaka_pola.idk` |
 | `bita`, `base64`, `csv` | 🟨 kode + tes; panduan belum | `examples/pustaka_{bita,base64,csv}.idk` |
 | `md5`/`sha1`/`sha256`/`sha512` | 🟨 kode + tes; panduan belum | `examples/pustaka_hash.idk` |
 
-**Belum dikerjakan:** `opsi` (argparse), `log`, `proses`, sisa `jalur`/`os`
-(sistem berkas, lingkungan), klien HTTP, dan mode `--sandbox` yang harus ada
-sebelum `proses`/jaringan; lalu `kura` (turtle). Semuanya butuh native baru
-di `src/sistem.c` (rencana gelombang C, tahap C2–C4).
+**Belum dikerjakan:** klien HTTP (tahap C4, butuh `soket_sambung`), panduan
+`bita`/`base64`/`csv`/hash, lalu `kura` (turtle).
 
 **Ditunda karena keterbatasan bahasa** (bukan lupa): `tupel_bernama`,
 `@cache_lru`, dan `urutan_lengkap` menunggu fungsi variadik (`*args`) dan

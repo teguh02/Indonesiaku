@@ -1,6 +1,6 @@
 # Rencana Fitur: Fase 6 — Pustaka standar, gelombang C (sistem, teks, jaringan)
 
-- **Status:** dikerjakan (C1 `jalur` dan mesin `pola` C3 selesai diuji; registrasi menunggu `vm.c`)
+- **Status:** dikerjakan — C1 `jalur`, C2 (`src/sistem.c`, `--sandbox`, `opsi`, `log`, `proses`), dan C3 `pola` selesai; tersisa C4 klien HTTP
 - **Target versi:** 1.x (lanjutan Fase 6)
 - **Pemilik:** kontributor Fase 6
 - **Butir ROADMAP:** Fase 6 — `jalur`, `opsi`, `log`, `proses`, `pola`, klien HTTP.
@@ -196,6 +196,60 @@ bukan byte. Fungsi pengganti di `ganti` boleh berupa fungsi.
 `Respons(status, kepala, badan)`. Native baru `soket_sambung(host, port)`
 di samping soket yang ada; resolusi nama lewat `getaddrinfo`. Dimatikan di
 `--sandbox`.
+
+### Rincian tahap C2 (disetujui pemilik untuk dikerjakan)
+
+Native baru di `src/sistem.c`. Yang **publik** (builtin global, seperti
+`ada_berkas`/`hapus_berkas` yang sudah ada):
+
+| Builtin | Python | `--sandbox` |
+|---|---|---|
+| `keluar(kode=0)` | `sys.exit` | boleh |
+| `tulis_galat(teks)` | `sys.stderr.write` | boleh |
+| `lingkungan()` / `ambil_lingkungan(nama, bawaan=kosong)` | `os.environ` / `os.getenv` | **ditolak** |
+| `direktori_kini()` | `os.getcwd` | boleh |
+| `isi_direktori(jalur=".")` | `os.listdir` (diurutkan) | **ditolak** |
+| `buat_direktori(j)` / `hapus_direktori(j)` | `os.mkdir` / `os.rmdir` | boleh (sama seperti menulis berkas) |
+| `jalur_indk()` | `sys.executable` | boleh |
+| `atur_atribut` / `ambil_atribut` / `punya_atribut` | `setattr` / `getattr` / `hasattr` (di `native.c`) | boleh |
+
+Internal (dibungkus modul): `_info_jalur(j)` → `(jenis, ukuran, waktu_ubah)`
+atau `kosong`; `_jalankan_proses(perintah, masukan)` → `(kode, keluaran,
+galat)`, **ditolak** di `--sandbox`.
+
+Keputusan tambahan:
+
+- **`keluar` mengakhiri proses saat itu juga** (stdout/stderr di-flush). Di
+  Python `sys.exit` melempar `SystemExit` sehingga blok `finally` masih jalan;
+  di sini `akhirnya`/`dengan` tidak dijalankan. Meniru `SystemExit` berarti
+  galat yang tidak bisa ditangkap `kecuali` biasa tetapi menjalankan
+  `akhirnya` -- mekanisme baru di VM, ditunda. `keluar("pesan")` mencetak
+  pesan ke stderr dan keluar dengan kode 1, seperti Python.
+- **`isi_direktori` diurutkan**, tidak seperti `os.listdir`, supaya hasilnya
+  sama di semua sistem dan bisa diuji golden.
+- **Galat OS memakai `GalatOS`** (sudah terdaftar, belum dipakai) dan
+  penolakan sandbox memakai kelas baru **`GalatIzin < GalatOS`**, mengikuti
+  `PermissionError < OSError`.
+- **`_jalankan_proses` tanpa shell, lewat berkas sementara**, bukan pipa:
+  stdin/stdout/stderr anak diarahkan ke berkas sementara sehingga tidak ada
+  deadlock saat anak menulis banyak ke dua aliran sekaligus. POSIX:
+  `fork`/`execvp` (+ pipa `CLOEXEC` untuk melaporkan "program tidak
+  ditemukan"); Windows: `CreateProcessW` dengan argumen dikutip menurut aturan
+  MSVCRT. Keluaran dinormalkan `\r\n`/`\r` → `\n` seperti `text=True` Python,
+  sehingga hasilnya sama di Windows dan golden tidak memuat `\r`. Belum ada
+  `batas_waktu` (timeout).
+- **`proses` diuji dengan menjalankan `indk` sendiri** (`jalur_indk()`):
+  satu-satunya program yang pasti ada di ketiga CI. Mode `--sandbox` diuji
+  dengan cara yang sama (anak dijalankan dengan `--sandbox`), karena runner
+  `tests/galat/` tidak bisa memberi bendera.
+
+Modul: `opsi` (`PenguraiArgumen`; galat pemakaian → pesan ke stderr dan
+`keluar(2)`, `-h` → bantuan ke stdout dan `keluar(0)`, atau `GalatOpsi`
+bila `keluar_saat_galat=salah` seperti `exit_on_error=False`), `log`
+(level `DEBUG`/`INFO`/`PERINGATAN`/`GALAT`/`KRITIS`, ambang bawaan
+`PERINGATAN`, format bawaan `{level}:{nama}:{pesan}`, pencatat akar bernama
+`akar`), `proses` (`jalankan`, `keluaran`, `GalatProses`), dan `jalur`
+mendapat `ada`, `adalah_berkas`, `adalah_direktori`, `ukuran`, `absolut`.
 
 ## 5. Rencana implementasi
 

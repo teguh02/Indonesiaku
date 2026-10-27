@@ -628,6 +628,71 @@ Contoh lengkap, termasuk transaksi dan uji anti-injeksi:
 
 ---
 
+### 1.11 Sistem Operasi
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `keluar(kode=0)` | Akhiri program sekarang dengan kode keluar `kode` (`sys.exit`). `keluar("pesan")` mencetak pesan ke stderr lalu keluar dengan kode 1 |
+| `tulis_galat(teks)` | Tulis teks apa adanya ke **stderr** (tanpa baris baru otomatis) |
+| `lingkungan()` | Kamus semua variabel lingkungan (`os.environ`) |
+| `ambil_lingkungan(nama, bawaan=kosong)` | Nilai satu variabel lingkungan, atau `bawaan` bila tidak ada (`os.getenv`) |
+| `direktori_kini()` | Direktori kerja saat ini (`os.getcwd`) |
+| `isi_direktori(jalur=".")` | Daftar nama isi direktori, **selalu terurut** (`os.listdir`) |
+| `buat_direktori(jalur)` / `hapus_direktori(jalur)` | Buat / hapus satu direktori (yang dihapus harus kosong) |
+| `jalur_indk()` | Jalur lengkap interpreter `indk` yang sedang berjalan (`sys.executable`) |
+| `atur_atribut(objek, nama, nilai)` | Isi atribut dengan nama berupa teks (`setattr`) |
+| `ambil_atribut(objek, nama, bawaan)` | Baca atribut dengan nama berupa teks; `bawaan` bila tidak ada, selain itu `GalatAtribut` (`getattr`) |
+| `punya_atribut(objek, nama)` | `benar` bila atribut itu ada (`hasattr`) |
+
+```indonesiaku
+cetak(ambil_lingkungan("VARIABEL_TIDAK_ADA", "bawaan"))   # bawaan
+
+d = "_panduan_direktori_sementara"
+buat_direktori(d)
+tulis_semua(d + "/b.txt", "isi")
+tulis_semua(d + "/a.txt", "isi")
+cetak(isi_direktori(d))            # ["a.txt", "b.txt"]
+hapus_berkas(d + "/a.txt")
+hapus_berkas(d + "/b.txt")
+hapus_direktori(d)
+
+kelas Kotak {
+}
+k = Kotak()
+atur_atribut(k, "lebar", 3)
+cetak(k.lebar, punya_atribut(k, "tinggi"), ambil_atribut(k, "tinggi", 0))   # 3 salah 0
+```
+
+Kesalahan sistem operasi (direktori tidak ada, sudah ada, tidak kosong, ...)
+adalah `GalatOS`, seperti `OSError` Python, dengan alasan yang sama di semua
+sistem operasi:
+
+```indonesiaku
+coba {
+    isi_direktori("direktori_yang_tidak_ada")
+} kecuali GalatOS sebagai e {
+    cetak(e.pesan)    # isi_direktori(): 'direktori_yang_tidak_ada' tidak ada
+}
+```
+
+`keluar` dan `tulis_galat` dipakai untuk program baris perintah:
+
+```indonesiaku-takjalan
+jika panjang(argumen) == 0 {
+    tulis_galat("pemakaian: program.idk BERKAS\n")
+    keluar(2)
+}
+```
+
+`keluar` mengakhiri program **saat itu juga**. Berbeda dengan `sys.exit`
+Python, blok `akhirnya` dan `dengan` yang sedang berjalan tidak dijalankan
+lagi.
+
+**Mode `--sandbox`.** `indk --sandbox program.idk` menolak `lingkungan`,
+`ambil_lingkungan`, `isi_direktori`, dan menjalankan program lain (modul
+`proses`) dengan `GalatIzin`, turunan `GalatOS`. Playground web menjalankan
+setiap program dengan mode ini.
+
 ## 2. Pustaka Standar (`pustaka/`)
 
 Di-`impor` sesuai kebutuhan. Fungsi diberi awalan agar tidak bentrok dengan
@@ -932,12 +997,16 @@ untuk nama dalam ["foto/a.png", "foto/b.jpeg"] {
 | `adalah_absolut(j)` | `benar` bila diawali `/` |
 | `dari_windows(j)` | Ganti setiap `\` dengan `/` |
 | `pemisah` | Konstanta `"/"` |
+| `ada(j)` | `benar` bila ada berkas **atau** direktori di `j` (`os.path.exists`) |
+| `adalah_berkas(j)` / `adalah_direktori(j)` | Jenis isi jalur (`isfile` / `isdir`) |
+| `ukuran(j)` / `waktu_ubah(j)` | Ukuran dalam byte / waktu terakhir diubah dalam detik sejak 1970 (`getsize` / `getmtime`) |
+| `absolut(j)` | Jalur absolut yang dinormalkan, selalu dengan `/` (`abspath`) |
 
 `gabung` menerima paling banyak enam bagian karena bahasa ini belum punya
-fungsi variadik; untuk lebih banyak, pakai `gabung_semua([...])`. Modul ini
-belum menyentuh sistem berkas: `jalur.ada`, `adalah_direktori`, isi
-direktori, dan direktori kini menyusul bersama fungsi bawaannya. Sementara
-itu, `ada_berkas(j)` memeriksa apakah sebuah **berkas** ada.
+fungsi variadik; untuk lebih banyak, pakai `gabung_semua([...])`.
+`ukuran`/`waktu_ubah` pada jalur yang tidak ada menghasilkan `GalatJalur`,
+turunan `GalatOS`. Isi direktori dan direktori kini ada di fungsi bawaan
+`isi_direktori` dan `direktori_kini` (bagian 1.11).
 
 ### 2.14 `pustaka/pola.idk` — ekspresi reguler
 
@@ -1025,6 +1094,151 @@ Yang perlu diketahui:
   ASCII, seperti bendera `re.ASCII` di Python: `\w` tidak cocok dengan `é`.
 - Tangkap galatnya dengan `dari pola impor GalatPola` lalu
   `kecuali GalatPola`; bentuk `kecuali pola.GalatPola` belum didukung.
+
+### 2.15 `pustaka/opsi.idk` — argumen baris perintah
+
+Padanan `argparse` Python. Daftarkan argumen yang diharapkan, lalu `urai()`
+membaca daftar global `argumen` dan mengembalikan objek dengan satu atribut
+per argumen.
+
+```indonesiaku-takjalan
+# hitung.idk
+dari opsi impor PenguraiArgumen
+
+p = PenguraiArgumen("hitung", "Menghitung baris berkas.")
+p.tambah_argumen("berkas", bantuan = "berkas yang dihitung")
+p.tambah_argumen("--jumlah", pendek = "-j", bawaan = 1, jenis_nilai = "bulat", bantuan = "berapa kali")
+p.tambah_argumen("--verbose", pendek = "-v", aksi = "hitung")
+a = p.urai()
+cetak(a.berkas, a.jumlah, a.verbose)
+```
+
+```text
+$ indk hitung.idk data.txt -j 3 -vv
+data.txt 3 2
+$ indk hitung.idk -h
+pemakaian: hitung [-h] [-j JUMLAH] [-v] berkas
+
+Menghitung baris berkas.
+
+argumen posisi:
+  berkas                berkas yang dihitung
+
+opsi:
+  -h, --bantuan         tampilkan bantuan ini lalu keluar
+  -j, --jumlah JUMLAH   berapa kali
+  -v, --verbose
+$ indk hitung.idk data.txt --jumlah x
+pemakaian: hitung [-h] [-j JUMLAH] [-v] berkas
+hitung: galat: argumen --jumlah: nilai bulat tidak sah: "x"
+```
+
+Seperti `argparse`, `-h`/`--bantuan` mencetak bantuan lalu keluar dengan
+kode 0, dan argumen yang salah mencetak pemakaian serta pesan galat ke
+stderr lalu keluar dengan kode 2. Dengan `keluar_saat_galat = salah`
+(`exit_on_error=False`), galat pemakaian menjadi `GalatOpsi` yang bisa
+ditangkap — berguna untuk menguji, dan daftar argumen boleh diberikan
+langsung ke `urai`:
+
+```indonesiaku
+dari opsi impor PenguraiArgumen, GalatOpsi
+
+p = PenguraiArgumen("salin", keluar_saat_galat = salah)
+p.tambah_argumen("sumber")
+p.tambah_argumen("--paksa", pendek = "-p", aksi = "benar")
+p.tambah_argumen("--mode", pilihan = ["cepat", "teliti"], bawaan = "cepat")
+p.tambah_argumen("--tag", aksi = "tambahkan")
+
+a = p.urai(["a.txt", "-p", "--tag", "x", "--tag", "y"])
+cetak(a)          # Hasil(sumber="a.txt", paksa=benar, mode="cepat", tag=["x", "y"])
+cetak(a["mode"], a.ke_kamus()["paksa"])   # cepat benar
+
+coba {
+    p.urai(["a.txt", "--mode", "lambat"])
+} kecuali GalatOpsi sebagai e {
+    cetak(e.pesan)  # argumen --mode: pilihan tidak sah: "lambat" (pilih dari "cepat", "teliti")
+}
+```
+
+`tambah_argumen(nama, pendek=, bawaan=, jenis_nilai=, bantuan=, wajib=,
+aksi=, pilihan=, metavar=)`:
+
+| Parameter | Arti |
+|---|---|
+| `nama` | `"berkas"` = argumen posisi (wajib); `"--nama"` = opsi. `-` di nama menjadi `_` di atribut (`--jumlah-baris` → `a.jumlah_baris`) |
+| `pendek` | Bentuk satu huruf, mis. `"-j"`. Bendera pendek boleh digabung: `-vq` sama dengan `-v -q` |
+| `jenis_nilai` | `"teks"` (bawaan), `"bulat"`, `"desimal"`, atau fungsi pengubah |
+| `aksi` | `"simpan"` (bawaan), `"benar"`/`"salah"` (bendera), `"hitung"` (`-vv` → 2), `"tambahkan"` (boleh berulang → daftar) |
+| `pilihan` | Daftar nilai yang diizinkan |
+| `wajib` | Jadikan opsi wajib diisi |
+
+Didukung juga `--nama=nilai`, `-j3`, angka negatif sebagai nilai (`-j -5`),
+dan `--` untuk mengakhiri opsi. Belum didukung: singkatan opsi panjang
+(`--jum` untuk `--jumlah`), `nargs`, grup argumen, dan sub-perintah.
+
+### 2.16 `pustaka/log.idk` — pencatatan
+
+Padanan `logging` Python. Bawaannya menulis ke **stderr** dengan format
+`LEVEL:nama:pesan`, dan hanya level `PERINGATAN` ke atas yang ditampilkan:
+
+```indonesiaku-takjalan
+impor log
+log.info("tidak tampil")             # di bawah ambang PERINGATAN
+log.peringatan("disk hampir penuh")  # stderr: PERINGATAN:akar:disk hampir penuh
+```
+
+`atur(ambang=, format=, berkas=)` (`basicConfig`) mengubah ambang, format,
+dan tujuan. Format memakai `{level}`, `{nama}`, `{pesan}`, dan `{waktu}`.
+
+```indonesiaku
+impor log
+
+log.atur(ambang = log.INFO, format = "[{level}] {nama}: {pesan}", berkas = "_panduan_log_sementara.txt")
+log.info("aplikasi mulai")
+db = log.ambil_pencatat("app.db")
+db.galat("koneksi putus")
+cetak(baca_semua("_panduan_log_sementara.txt"))
+# [INFO] akar: aplikasi mulai
+# [GALAT] app.db: koneksi putus
+hapus_berkas("_panduan_log_sementara.txt")
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `debug`, `info`, `peringatan`, `galat`, `kritis` | Catat pesan lewat pencatat akar |
+| `DEBUG`, `INFO`, `PERINGATAN`, `GALAT`, `KRITIS` | Level: 10, 20, 30, 40, 50 |
+| `ambil_pencatat(nama)` | `Pencatat` bernama; nama sama → objek sama. Bertingkat dengan titik: `"app.db"` mewarisi ambang `"app"` bila ambangnya sendiri belum diatur |
+| `Pencatat.atur_ambang(level)` | Ambang khusus pencatat itu |
+| `atur(ambang, format, berkas)` | Pengaturan bersama; `berkas = ""` kembali ke stderr |
+
+### 2.17 `pustaka/proses.idk` — menjalankan program lain
+
+Padanan `subprocess.run` Python. Perintah **wajib berupa daftar teks** dan
+dijalankan **tanpa shell**, jadi tidak ada injeksi lewat `;` atau `|` dan
+tidak ada aturan kutip yang perlu diingat.
+
+```indonesiaku
+impor proses
+
+# Program anak kecil: membaca satu baris, mencetaknya dalam huruf besar.
+tulis_semua("_panduan_anak_sementara.idk", "cetak(input().huruf_besar())\n")
+
+h = proses.jalankan([jalur_indk(), "_panduan_anak_sementara.idk"], masukan = "halo\n")
+cetak(h.kode_keluar, repr(h.keluaran), repr(h.galat))   # 0 "HALO\n" ""
+cetak(proses.keluaran([jalur_indk(), "_panduan_anak_sementara.idk"], masukan = "lagi\n"))
+# LAGI
+hapus_berkas("_panduan_anak_sementara.idk")
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `jalankan(perintah, masukan="", periksa=salah)` | Jalankan dan tunggu sampai selesai. Mengembalikan `Hasil` dengan `kode_keluar`, `keluaran` (stdout), `galat` (stderr), dan `perintah`. `masukan` dikirim ke stdin. `periksa=benar` → `GalatProses` bila kode keluar bukan 0 |
+| `keluaran(perintah, masukan="")` | Hanya stdout; `GalatProses` bila gagal (`check_output`) |
+| `GalatProses` | Punya `.pesan` dan `.hasil` |
+
+Baris baru di keluaran dinormalkan ke `\n` di semua sistem operasi.
+Program yang tidak ditemukan menghasilkan `GalatOS`. Belum ada
+`batas_waktu` (timeout). Ditolak dengan `GalatIzin` di `indk --sandbox`.
 
 ## 3. Aplikasi Contoh: Todo-list JSON DB
 

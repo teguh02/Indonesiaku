@@ -105,17 +105,17 @@ Nama hari/bulan dalam bahasa Indonesia secara bawaan (`Senin`, `Januari`).
 
 | Python | Usulan | Ada |
 |---|---|---|
-| `os.getcwd` / `chdir` | `direktori_kini` / `pindah_direktori` | |
-| `os.listdir` / `scandir` / `walk` | `isi_direktori` / `pindai_direktori` / `jelajahi` | |
-| `os.mkdir` / `makedirs` / `rmdir` | `buat_direktori` / `buat_direktori_bertingkat` / `hapus_direktori` | |
+| `os.getcwd` / `chdir` | `direktori_kini` / `pindah_direktori` | ✅ `direktori_kini` |
+| `os.listdir` / `scandir` / `walk` | `isi_direktori` / `pindai_direktori` / `jelajahi` | ✅ `isi_direktori` (terurut) |
+| `os.mkdir` / `makedirs` / `rmdir` | `buat_direktori` / `buat_direktori_bertingkat` / `hapus_direktori` | ✅ `buat_direktori`, `hapus_direktori` |
 | `os.remove` / `rename` | `hapus_berkas` / `ganti_nama` | `hapus_berkas` |
-| `os.environ` / `getenv` | `lingkungan` / `ambil_lingkungan` | |
+| `os.environ` / `getenv` | `lingkungan` / `ambil_lingkungan` | ✅ |
 | `os.system` | `jalankan_perintah` (dimatikan di `--sandbox`) | |
 | `os.getpid`, `cpu_count`, `sep`, `linesep`, `urandom` | `id_proses`, `jumlah_cpu`, `pemisah`, `pemisah_baris`, `bita_acak` | |
 | `os.path.join` / `split` / `splitext` | `jalur.gabung` / `jalur.pisah` / `jalur.pisah_ekstensi` | ✅ |
-| `os.path.exists` / `isfile` / `isdir` | `jalur.ada` / `jalur.adalah_berkas` / `jalur.adalah_direktori` | `ada_berkas` |
+| `os.path.exists` / `isfile` / `isdir` | `jalur.ada` / `jalur.adalah_berkas` / `jalur.adalah_direktori` | ✅ |
 | `os.path.basename` / `dirname` / `abspath` / `expanduser` | `jalur.nama_dasar` / `jalur.nama_direktori` / `jalur.absolut` / `jalur.rumah` | ✅ dua pertama; `absolut`/`rumah` butuh native |
-| `os.path.getsize` / `getmtime` | `jalur.ukuran` / `jalur.waktu_ubah` | |
+| `os.path.getsize` / `getmtime` | `jalur.ukuran` / `jalur.waktu_ubah` | ✅ |
 | `pathlib.Path` | kelas `Jalur` (`/` operator, `.baca_teks()`, `.tulis_teks()`, `.anak()`, `.induk`) | |
 | `shutil.copy` / `copytree` / `move` / `rmtree` / `which` | `salin_berkas` / `salin_pohon` / `pindahkan` / `hapus_pohon` / `cari_program` | |
 | `glob.glob` | `cocok_jalur("*.idk")` | |
@@ -215,9 +215,9 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 
 | Python | Usulan | P |
 |---|---|---|
-| `subprocess.run` / `check_output` / `Popen` | `proses.jalankan` / `proses.keluaran` / `Proses` | P2 |
-| `argparse.ArgumentParser` | `opsi.PenguraiArgumen` (`tambah_argumen`, `urai`) | P2 |
-| `logging` (`debug`, `info`, `warning`, `error`, `critical`, `basicConfig`, `getLogger`) | `log` (`debug`, `info`, `peringatan`, `galat`, `kritis`, `atur`, `ambil_pencatat`) | P2 |
+| `subprocess.run` / `check_output` / `Popen` | `proses.jalankan` / `proses.keluaran` / `Proses` | ✅ dua pertama; `Proses` (Popen) belum |
+| `argparse.ArgumentParser` | `opsi.PenguraiArgumen` (`tambah_argumen`, `urai`) | ✅ |
+| `logging` (`debug`, `info`, `warning`, `error`, `critical`, `basicConfig`, `getLogger`) | `log` (`debug`, `info`, `peringatan`, `galat`, `kritis`, `atur`, `ambil_pencatat`) | ✅ |
 | `warnings.warn` | `peringatan.peringatkan` | P2 |
 | `platform.system` / `python_version` | `platform.sistem` / `platform.versi` | P2 |
 | `signal` | `sinyal` | P3 |

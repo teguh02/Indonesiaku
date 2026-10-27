@@ -376,7 +376,7 @@ coba {
 }
 ```
 
-Kelas bawaan mencakup `Galat`, `GalatAritmetika`, `GalatBagiNol`, `GalatPencarian`, `GalatIndeks`, `GalatKunci`, `GalatTipe`, `GalatNilai`, `GalatNama`, dan `GalatAtribut`.
+Kelas bawaan mencakup `Galat`, `GalatAritmetika`, `GalatBagiNol`, `GalatPencarian`, `GalatIndeks`, `GalatKunci`, `GalatTipe`, `GalatNilai`, `GalatNama`, `GalatAtribut`, `GalatOS` (sistem operasi), dan `GalatIzin` (turunan `GalatOS`, penolakan `--sandbox`).
 
 Klausa `kecuali` dicoba **berurutan dari atas**, dan yang pertama cocok
 menang — jadi tulis tipe yang paling khusus lebih dulu, baru yang umum.
