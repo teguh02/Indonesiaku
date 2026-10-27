@@ -1,0 +1,188 @@
+# pustaka/jalur.idk - Mengolah jalur berkas sebagai teks (modul `jalur`).
+# Pemakaian:
+#     impor jalur
+#     dari jalur impor gabung, nama_dasar
+#
+# Mengikuti `posixpath` Python persis: hanya "/" yang memisahkan bagian
+# jalur, di semua sistem operasi, sehingga hasilnya sama di Windows, Linux,
+# dan macOS. Windows sendiri menerima "/"; jalur bergaya Windows bisa diubah
+# dulu dengan `dari_windows`.
+#
+# Modul ini hanya mengolah TEKS -- tidak ada yang menyentuh sistem berkas.
+# Pemeriksaan seperti `ada`/`adalah_direktori` menyusul bersama native-nya.
+
+pemisah = "/"
+
+# _cari_terakhir(t, c) -> indeks kemunculan terakhir karakter c, atau -1.
+fungsi _cari_terakhir(t, c) {
+    variabel i = panjang(t) - 1
+    selagi i >= 0 {
+        jika t[i] == c {
+            kembalikan i
+        }
+        i -= 1
+    }
+    kembalikan -1
+}
+
+# _hanya_garis(t) -> benar bila t tidak kosong dan seluruhnya "/".
+fungsi _hanya_garis(t) {
+    jika t == "" {
+        kembalikan salah
+    }
+    untuk c dalam t {
+        jika c != "/" {
+            kembalikan salah
+        }
+    }
+    kembalikan benar
+}
+
+# _buang_garis_kanan(t) -> t tanpa "/" di ujung kanan.
+fungsi _buang_garis_kanan(t) {
+    variabel akhir = panjang(t)
+    selagi akhir > 0 dan t[akhir - 1] == "/" {
+        akhir -= 1
+    }
+    kembalikan t[:akhir]
+}
+
+# _pecah(t) -> daftar bagian di antara "/" (bagian kosong ikut, seperti
+# str.split("/") di Python).
+fungsi _pecah(t) {
+    variabel bagian = []
+    variabel awal = 0
+    variabel i = 0
+    selagi i < panjang(t) {
+        jika t[i] == "/" {
+            bagian.tambah(t[awal:i])
+            awal = i + 1
+        }
+        i += 1
+    }
+    bagian.tambah(t[awal:])
+    kembalikan bagian
+}
+
+# gabung(a, b, ...) -> os.path.join: bagian yang diawali "/" membuang semua
+# bagian sebelumnya. Sampai enam bagian; untuk lebih, pakai gabung_semua.
+# (Fungsi variadik belum ada di bahasa ini.)
+fungsi gabung(a, b = kosong, c = kosong, d = kosong, e = kosong, f = kosong) {
+    kembalikan gabung_semua([a, b, c, d, e, f])
+}
+
+# gabung_semua(bagian) -> gabung untuk daftar bagian berapa pun panjangnya.
+# Nilai `kosong` di dalam daftar dilewati.
+fungsi gabung_semua(bagian) {
+    variabel hasil = kosong
+    untuk b dalam bagian {
+        jika b adalah kosong {
+            lanjut
+        }
+        jika hasil adalah kosong {
+            hasil = b
+        } jika_lain panjang(b) > 0 dan b[0] == "/" {
+            hasil = b
+        } jika_lain hasil == "" atau hasil[panjang(hasil) - 1] == "/" {
+            hasil = hasil + b
+        } selain {
+            hasil = hasil + "/" + b
+        }
+    }
+    jika hasil adalah kosong {
+        kembalikan ""
+    }
+    kembalikan hasil
+}
+
+# pisah(j) -> os.path.split: tupel (kepala, ekor), ekor tanpa "/".
+fungsi pisah(j) {
+    variabel i = _cari_terakhir(j, "/") + 1
+    variabel kepala = j[:i]
+    variabel ekor = j[i:]
+    jika kepala != "" dan tidak _hanya_garis(kepala) {
+        kepala = _buang_garis_kanan(kepala)
+    }
+    kembalikan kepala, ekor
+}
+
+# nama_dasar(j) -> os.path.basename: bagian terakhir jalur.
+fungsi nama_dasar(j) {
+    kembalikan j[_cari_terakhir(j, "/") + 1:]
+}
+
+# nama_direktori(j) -> os.path.dirname: semua kecuali bagian terakhir.
+fungsi nama_direktori(j) {
+    kembalikan pisah(j)[0]
+}
+
+# pisah_ekstensi(j) -> os.path.splitext: tupel (akar, ekstensi). Titik di
+# awal nama berkas bukan ekstensi: ".bashrc" tidak punya ekstensi.
+fungsi pisah_ekstensi(j) {
+    variabel garis = _cari_terakhir(j, "/")
+    variabel titik = _cari_terakhir(j, ".")
+    jika titik > garis {
+        variabel i = garis + 1
+        selagi i < titik {
+            jika j[i] != "." {
+                kembalikan j[:titik], j[titik:]
+            }
+            i += 1
+        }
+    }
+    kembalikan j, ""
+}
+
+# ekstensi(j) -> ekstensi saja, termasuk titiknya (".csv"), atau "".
+fungsi ekstensi(j) {
+    kembalikan pisah_ekstensi(j)[1]
+}
+
+# adalah_absolut(j) -> os.path.isabs: diawali "/".
+fungsi adalah_absolut(j) {
+    kembalikan panjang(j) > 0 dan j[0] == "/"
+}
+
+# normalisasi(j) -> os.path.normpath: buang "." dan "//", selesaikan "..".
+fungsi normalisasi(j) {
+    jika j == "" {
+        kembalikan "."
+    }
+    variabel garis_awal = 0
+    jika j[0] == "/" {
+        garis_awal = 1
+        # POSIX: tepat dua garis di awal punya arti khusus dan dipertahankan.
+        jika panjang(j) > 1 dan j[1] == "/" dan (panjang(j) == 2 atau j[2] != "/") {
+            garis_awal = 2
+        }
+    }
+    variabel baru = []
+    untuk bagian dalam _pecah(j) {
+        jika bagian == "" atau bagian == "." {
+            lanjut
+        }
+        jika (bagian != ".." atau (garis_awal == 0 dan panjang(baru) == 0) atau
+              (panjang(baru) > 0 dan baru[-1] == "..")) {
+            baru.tambah(bagian)
+        } jika_lain panjang(baru) > 0 {
+            baru.hapus()
+        }
+    }
+    variabel hasil = ""
+    untuk i dalam rentang(panjang(baru)) {
+        jika i > 0 {
+            hasil = hasil + "/"
+        }
+        hasil = hasil + baru[i]
+    }
+    hasil = "/" * garis_awal + hasil
+    jika hasil == "" {
+        kembalikan "."
+    }
+    kembalikan hasil
+}
+
+# dari_windows(j) -> ganti setiap "\" dengan "/" (C:\data\a.txt -> C:/data/a.txt).
+fungsi dari_windows(j) {
+    kembalikan ganti(j, "\\", "/")
+}
