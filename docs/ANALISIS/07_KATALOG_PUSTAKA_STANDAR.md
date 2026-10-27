@@ -112,9 +112,9 @@ Nama hari/bulan dalam bahasa Indonesia secara bawaan (`Senin`, `Januari`).
 | `os.environ` / `getenv` | `lingkungan` / `ambil_lingkungan` | |
 | `os.system` | `jalankan_perintah` (dimatikan di `--sandbox`) | |
 | `os.getpid`, `cpu_count`, `sep`, `linesep`, `urandom` | `id_proses`, `jumlah_cpu`, `pemisah`, `pemisah_baris`, `bita_acak` | |
-| `os.path.join` / `split` / `splitext` | `jalur.gabung` / `jalur.pisah` / `jalur.pisah_ekstensi` | |
+| `os.path.join` / `split` / `splitext` | `jalur.gabung` / `jalur.pisah` / `jalur.pisah_ekstensi` | ✅ |
 | `os.path.exists` / `isfile` / `isdir` | `jalur.ada` / `jalur.adalah_berkas` / `jalur.adalah_direktori` | `ada_berkas` |
-| `os.path.basename` / `dirname` / `abspath` / `expanduser` | `jalur.nama_dasar` / `jalur.nama_direktori` / `jalur.absolut` / `jalur.rumah` | |
+| `os.path.basename` / `dirname` / `abspath` / `expanduser` | `jalur.nama_dasar` / `jalur.nama_direktori` / `jalur.absolut` / `jalur.rumah` | ✅ dua pertama; `absolut`/`rumah` butuh native |
 | `os.path.getsize` / `getmtime` | `jalur.ukuran` / `jalur.waktu_ubah` | |
 | `pathlib.Path` | kelas `Jalur` (`/` operator, `.baca_teks()`, `.tulis_teks()`, `.anak()`, `.induk`) | |
 | `shutil.copy` / `copytree` / `move` / `rmtree` / `which` | `salin_berkas` / `salin_pohon` / `pindahkan` / `hapus_pohon` / `cari_program` | |
@@ -156,6 +156,12 @@ Butuh iterator/generator (fase 5); versi awal boleh mengembalikan daftar.
 | `operator.add/mul/itemgetter/attrgetter` | `operator.tambah/kali/pengambil_item/pengambil_atribut` |
 
 ## 9. `re` → `pola` (P2, C)
+
+**Status: ✅ terlaksana** (`src/pola.c` + `pustaka/pola.idk`, Fase 6
+gelombang C). Gaya Pike VM, bukan PCRE2: waktu linear, sehingga
+backreference/lookaround/kuantifier posesif sengaja ditolak. Kelas karakter
+ASCII seperti `re.ASCII`. Fungsi dan objek di bawah semuanya ada, kecuali
+`ganti_n` mengembalikan tupel seperti `subn`.
 
 Implementasi: port mesin regex kecil (mis. gaya Pike VM / `re1` Russ Cox,
 atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),

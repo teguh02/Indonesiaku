@@ -109,7 +109,7 @@ merusak kompatibilitas sampai 2.0.
   comprehension*, penugasan berganda, operator bitwise, metode tipe bawaan
 - **Pustaka standar** — berkas I/O, JSON, HTTP, soket TCP, SQLite tertanam,
   serta modul bernamespace `koleksi`, `statistik`, `iterasi`, `fungsional`,
-  dan `salin` (Fase 6)
+  `salin`, `jalur`, dan `pola` (ekspresi reguler) (Fase 6)
 - **Mesin** — *garbage collector* mark-sweep dan REPL interaktif
 
 Daftar lengkap beserta contoh tiap fitur ada di

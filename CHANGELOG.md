@@ -42,6 +42,30 @@ selesai.
 `hasilkan`, `cocokkan`, `kasus`. Program yang memakai ketiganya sebagai nama
 variabel perlu diganti namanya.
 
+**Fase 6 — Pustaka standar luas (gelombang B & C, sebagian).**
+
+### Added
+- ✨ **`pola`** — ekspresi reguler, padanan `re`: `kompilasi`, `cari`,
+  `cocok`, `cocok_penuh`, `cari_semua`, `iter_cari`, `ganti` (templat `\1`,
+  `\g<nama>`, atau fungsi), `ganti_n`, `pisah`, `lolos`; objek `Cocokan`
+  dan grup bernama `(?P<nama>...)`; bendera `ABAIKAN_KAPITAL`, `MULTIBARIS`,
+  `TITIK_SEMUA`. Mesin Pike VM di C (`src/pola.c`) dengan waktu linear:
+  tidak ada pola ReDoS. Backreference, lookaround, dan kuantifier posesif
+  ditolak dengan `GalatPola`; `\d \w \s` bersifat ASCII. Diuji 240.000
+  kasus fuzz dan 9.000 keluaran API identik dengan `re` Python.
+  Contoh: `examples/pustaka_pola.idk`.
+- ✨ **`jalur`** — mengolah jalur berkas sebagai teks, persis `posixpath`:
+  `gabung`, `gabung_semua`, `pisah`, `nama_dasar`, `nama_direktori`,
+  `pisah_ekstensi`, `ekstensi`, `normalisasi`, `adalah_absolut`,
+  `dari_windows`. Contoh: `examples/pustaka_jalur.idk`.
+- ✨ Builtin **`md5`, `sha1`, `sha256`, `sha512`** (teks heksa) dan modul
+  **`bita`**, **`base64`**, **`csv`** (gelombang B; panduannya menyusul).
+
+### Fixed
+- 🐛 Perintah `gcc` manual di panduan instalasi tidak memuat `native.c`,
+  `db.c`, dan `sqlite3.c` (serta `-lws2_32` di Windows), jadi gagal di tahap
+  link. Kini lengkap dan sudah dijalankan di Windows dan Linux.
+
 **Fase 6 — Pustaka standar luas (gelombang A: modul murni Indonesiaku).**
 Lima modul baru di `pustaka/`, dipakai lewat `impor <nama>` bernamespace
 (mis. `dari koleksi impor Penghitung`). Tidak ada perubahan bahasa: kode

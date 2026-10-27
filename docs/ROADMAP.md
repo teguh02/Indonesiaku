@@ -246,9 +246,20 @@ baru.
 | `iterasi` (itertools, eager) | ✅ | `examples/pustaka_iterasi.idk` |
 | `fungsional` (functools) | ✅ | `examples/pustaka_fungsional.idk` |
 
-**Belum dikerjakan:** `os`/`jalur`, `pola` (regex), `csv`, `hash`,
-`base64`, `log`, `opsi`, `proses`, `kura` (turtle), klien HTTP, `bita`.
-Sebagian butuh native C baru.
+**Gelombang B & C** ([B](RENCANA_FITUR/pustaka_fase6_batch_b.md),
+[C](RENCANA_FITUR/pustaka_fase6_gelombang_c.md)):
+
+| Modul | Status | Bukti |
+|---|---|---|
+| `jalur` (os.path, bagian teks) | ✅ | `examples/pustaka_jalur.idk` |
+| `pola` (re, mesin C linear) | ✅ | `examples/pustaka_pola.idk` |
+| `bita`, `base64`, `csv` | 🟨 kode + tes; panduan belum | `examples/pustaka_{bita,base64,csv}.idk` |
+| `md5`/`sha1`/`sha256`/`sha512` | 🟨 kode + tes; panduan belum | `examples/pustaka_hash.idk` |
+
+**Belum dikerjakan:** `opsi` (argparse), `log`, `proses`, sisa `jalur`/`os`
+(sistem berkas, lingkungan), klien HTTP, dan mode `--sandbox` yang harus ada
+sebelum `proses`/jaringan; lalu `kura` (turtle). Semuanya butuh native baru
+di `src/sistem.c` (rencana gelombang C, tahap C2–C4).
 
 **Ditunda karena keterbatasan bahasa** (bukan lupa): `tupel_bernama`,
 `@cache_lru`, dan `urutan_lengkap` menunggu fungsi variadik (`*args`) dan

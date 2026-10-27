@@ -893,6 +893,139 @@ Lihat contoh lengkap di folder `examples/` (mis. `pustaka_teks.idk`,
 
 ---
 
+### 2.13 `pustaka/jalur.idk` — jalur berkas
+
+Padanan `os.path` Python untuk **mengolah jalur sebagai teks**: menggabung,
+memecah, mengambil ekstensi, dan merapikan jalur. Hasilnya persis
+`posixpath` Python. Hanya `/` yang memisahkan bagian jalur, di semua sistem
+operasi, sehingga program yang sama memberi hasil yang sama di Windows,
+Linux, dan macOS. Windows sendiri menerima `/`.
+
+```indonesiaku
+impor jalur
+dari jalur impor gabung, pisah_ekstensi
+
+cetak(gabung("data", "2026", "laporan.csv"))   # data/2026/laporan.csv
+cetak(gabung("data", "/etc", "passwd"))         # /etc/passwd
+cetak(jalur.nama_dasar("/rumah/budi/a.txt"))    # a.txt
+cetak(jalur.nama_direktori("/rumah/budi/a.txt"))  # /rumah/budi
+cetak(pisah_ekstensi("arsip.tar.gz"))           # ("arsip.tar", ".gz")
+cetak(pisah_ekstensi(".bashrc"))                # (".bashrc", "")
+cetak(jalur.normalisasi("a/./b//c/../d"))       # a/b/d
+cetak(jalur.dari_windows("C:\\data\\a.txt"))    # C:/data/a.txt
+
+# Ganti ekstensi setiap berkas:
+untuk nama dalam ["foto/a.png", "foto/b.jpeg"] {
+    akar, ekst = pisah_ekstensi(nama)
+    cetak(akar + ".webp")                      # foto/a.webp, lalu foto/b.webp
+}
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `gabung(a, b, ...)` | `os.path.join`: sampai enam bagian; bagian yang diawali `/` membuang bagian sebelumnya |
+| `gabung_semua(daftar)` | Seperti `gabung` untuk daftar bagian berapa pun panjangnya |
+| `pisah(j)` | Tupel `(kepala, ekor)`: semua kecuali bagian terakhir, dan bagian terakhir |
+| `nama_dasar(j)` / `nama_direktori(j)` | Bagian terakhir / semua kecuali bagian terakhir (`basename` / `dirname`) |
+| `pisah_ekstensi(j)` / `ekstensi(j)` | Tupel `(akar, ekstensi)` / ekstensi saja termasuk titiknya; titik di awal nama bukan ekstensi |
+| `normalisasi(j)` | Buang `.` dan `//`, selesaikan `..` (`os.path.normpath`) |
+| `adalah_absolut(j)` | `benar` bila diawali `/` |
+| `dari_windows(j)` | Ganti setiap `\` dengan `/` |
+| `pemisah` | Konstanta `"/"` |
+
+`gabung` menerima paling banyak enam bagian karena bahasa ini belum punya
+fungsi variadik; untuk lebih banyak, pakai `gabung_semua([...])`. Modul ini
+belum menyentuh sistem berkas: `jalur.ada`, `adalah_direktori`, isi
+direktori, dan direktori kini menyusul bersama fungsi bawaannya. Sementara
+itu, `ada_berkas(j)` memeriksa apakah sebuah **berkas** ada.
+
+### 2.14 `pustaka/pola.idk` — ekspresi reguler
+
+Padanan `re` Python: mencari, mengambil, mengganti, dan memecah teks
+berdasarkan pola.
+
+```indonesiaku
+impor pola
+dari pola impor GalatPola
+
+m = pola.cari("(\\d{3})-(\\d+)", "telepon: 021-5550123")
+cetak(m.grup(), m.grup(1), m.grup(2))      # 021-5550123 021 5550123
+cetak(m.rentang(), m[1])                   # (9, 20) 021
+
+cetak(pola.cari_semua("\\d+", "3 apel, 12 jeruk"))       # ["3", "12"]
+cetak(pola.cari_semua("(\\w+)=(\\d+)", "a=1, b=22"))      # [("a", "1"), ("b", "22")]
+cetak(pola.ganti("\\s+", " ", "terlalu    banyak   spasi"))  # terlalu banyak spasi
+cetak(pola.ganti("(\\w+)@(\\w+)", "\\2 (\\1)", "budi@rumah"))  # rumah (budi)
+cetak(pola.pisah("[,;]\\s*", "a, b;c;  d"))              # ["a", "b", "c", "d"]
+
+# Grup bernama:
+t = pola.cari("(?P<tahun>\\d{4})-(?P<bulan>\\d{2})", "2026-10")
+cetak(t.grup("tahun"), t.kamus_grup())    # 2026 {"tahun": "2026", "bulan": "10"}
+
+# Pengganti berupa fungsi:
+fungsi kali_dua(m) {
+    kembalikan ke_teks(ke_angka(m.grup()) * 2)
+}
+cetak(pola.ganti("\\d+", kali_dua, "3 apel dan 12 jeruk"))  # 6 apel dan 24 jeruk
+
+# Pola dipakai berulang? Kompilasi sekali.
+vokal = pola.kompilasi("[aiueo]", pola.ABAIKAN_KAPITAL)
+cetak(vokal.cari_semua("IndONEsia"))     # ["I", "O", "E", "i", "a"]
+
+coba {
+    pola.kompilasi("(a")
+} kecuali GalatPola sebagai e {
+    cetak("pola salah:", e.pesan)
+}
+```
+
+Di dalam teks Indonesiaku, `\` harus ditulis `\\`, jadi pola `\d+` ditulis
+`"\\d+"`.
+
+**Fungsi modul** (semuanya juga tersedia sebagai metode objek `Pola` hasil
+`kompilasi`, tanpa argumen pola):
+
+| Nama | Deskripsi |
+|------|-----------|
+| `kompilasi(pola, bendera=0)` | Objek `Pola` untuk dipakai berulang |
+| `cari(pola, teks, bendera=0)` | `Cocokan` pertama di mana pun, atau `kosong` (`re.search`) |
+| `cocok(pola, teks, bendera=0)` | Cocokan yang harus dimulai di awal teks (`re.match`) |
+| `cocok_penuh(pola, teks, bendera=0)` | Cocokan yang harus meliputi seluruh teks (`re.fullmatch`) |
+| `cari_semua(pola, teks, bendera=0)` | Daftar semua cocokan: teks bila tanpa grup, isi grup bila satu grup, tupel grup bila lebih (`re.findall`) |
+| `iter_cari(pola, teks, bendera=0)` | Daftar objek `Cocokan` (`re.finditer`) |
+| `ganti(pola, pengganti, teks, jumlah=0, bendera=0)` | Ganti cocokan; `pengganti` berupa teks (`\1`, `\g<nama>`, `\g<0>`) atau fungsi yang menerima `Cocokan` (`re.sub`) |
+| `ganti_n(...)` | Seperti `ganti`, tetapi mengembalikan tupel `(teks_baru, banyak_penggantian)` |
+| `pisah(pola, teks, maks=0, bendera=0)` | Pecah teks di setiap cocokan; isi grup ikut dimasukkan (`re.split`) |
+| `lolos(teks)` | Beri `\` pada karakter khusus agar teks dicari apa adanya (`re.escape`) |
+
+**Objek `Cocokan`:** `grup(g=0)` (nomor atau nama; `kosong` bila grup tidak
+ikut cocok), `m[g]`, `grup_semua(bawaan=kosong)`, `kamus_grup()`,
+`awal(g=0)`, `akhir(g=0)`, `rentang(g=0)`. Posisi dihitung **per karakter**,
+bukan per byte, sama seperti indeks teks di bahasa ini.
+
+**Bendera:** `pola.ABAIKAN_KAPITAL`, `pola.MULTIBARIS` (`^`/`$` di setiap
+baris), `pola.TITIK_SEMUA` (`.` juga cocok dengan baris baru). Gabungkan
+dengan `|`: `pola.ABAIKAN_KAPITAL | pola.MULTIBARIS`.
+
+**Sintaks pola** sama dengan Python: `.`, `[abc]`, `[^0-9]`, `\d \w \s` dan
+kebalikannya, `\b`, `^ $`, `* + ? {m,n}` beserta versi malasnya (`*?`),
+grup `( )`, `(?: )`, `(?P<nama> )`, dan alternatif `|`.
+
+Yang perlu diketahui:
+
+- **Tidak ada pola yang membuat program macet.** Mesinnya bekerja dalam
+  waktu linear terhadap panjang teks, jadi pola seperti `(a*)*b` yang
+  membuat banyak mesin regex lain berjalan bertahun-tahun di sini selesai
+  seketika.
+- Karena itu, fitur yang membutuhkan penelusuran mundur **tidak didukung**
+  dan ditolak dengan `GalatPola`: *backreference* (`\1` di dalam pola),
+  *lookaround* (`(?=...)`, `(?!...)`), dan kuantifier posesif (`a++`).
+  `\1` di dalam **teks pengganti** `ganti` tetap boleh.
+- `\d`, `\w`, `\s`, `\b`, dan `ABAIKAN_KAPITAL` hanya mengenal huruf dan angka
+  ASCII, seperti bendera `re.ASCII` di Python: `\w` tidak cocok dengan `é`.
+- Tangkap galatnya dengan `dari pola impor GalatPola` lalu
+  `kecuali GalatPola`; bentuk `kecuali pola.GalatPola` belum didukung.
+
 ## 3. Aplikasi Contoh: Todo-list JSON DB
 
 Dua aplikasi contoh lengkap menunjukkan penggunaan pustaka standar untuk
