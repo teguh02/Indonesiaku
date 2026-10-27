@@ -1,0 +1,68 @@
+# Modul `iterasi` (Fase 6): padanan itertools secara eager (daftar).
+
+impor iterasi
+dari iterasi impor hitung_naik, ulangi, putar_ulang, cabang, akumulasi, rangkai
+dari iterasi impor saring_dengan, ambil_selama, lewati_selama, saring_salah
+dari iterasi impor kelompokkan, iris, berpasangan, kelompok_per, peta_bintang
+dari iterasi impor pasangkan_terpanjang, produk, permutasi, kombinasi
+dari iterasi impor kombinasi_berulang, GalatIterasi
+
+fungsi genap(n) { kembalikan n % 2 == 0 }
+fungsi kali(a, b) { kembalikan a * b }
+fungsi jumlah_dua(p) { kembalikan p[0] + p[1] }
+
+cetak("== hitung_naik / ulangi / putar_ulang ==")
+cetak(hitung_naik(jumlah=5))
+cetak(hitung_naik(10, 2, 3))
+cetak(ulangi("x", 4))
+cetak(putar_ulang([1, 2], 5))
+
+cetak("== cabang ==")
+cetak(cabang([1, 2], 3))
+
+cetak("== akumulasi ==")
+cetak(akumulasi([1, 2, 3, 4]))
+cetak(akumulasi([1, 2, 3], kosong, 10))
+cetak(akumulasi([1, 2, 3, 4], kali))
+
+cetak("== rangkai ==")
+cetak(rangkai([[1, 2], [3], [4, 5]]))
+
+cetak("== saring_dengan ==")
+cetak(saring_dengan([1, 2, 3, 4, 5], [benar, salah, benar, salah, benar]))
+
+cetak("== ambil_selama / lewati_selama / saring_salah ==")
+cetak(ambil_selama([2, 4, 5, 6], genap))
+cetak(lewati_selama([2, 4, 5, 6], genap))
+cetak(saring_salah([1, 2, 3, 4], genap))
+
+cetak("== kelompokkan ==")
+cetak(kelompokkan("aabbbc"))
+cetak(kelompokkan([1, 3, 2, 4, 5], genap))
+
+cetak("== iris ==")
+cetak(iris([0, 1, 2, 3, 4, 5], 1, 5, 2))
+cetak(iris([0, 1, 2, 3], 2))
+
+cetak("== berpasangan / kelompok_per ==")
+cetak(berpasangan([1, 2, 3, 4]))
+cetak(kelompok_per([1, 2, 3, 4, 5], 2))
+
+cetak("== peta_bintang ==")
+cetak(peta_bintang(jumlah_dua, [[1, 2], [3, 4]]))
+
+cetak("== pasangkan_terpanjang ==")
+cetak(pasangkan_terpanjang([1, 2, 3], ["a", "b"], "-"))
+
+cetak("== kombinatorik ==")
+cetak(produk([[1, 2], ["a", "b"]]))
+cetak(permutasi([1, 2, 3], 2))
+cetak(kombinasi([1, 2, 3], 2))
+cetak(kombinasi_berulang([1, 2], 2))
+
+cetak("== galat dapat ditangkap ==")
+coba {
+    hitung_naik()
+} kecuali GalatIterasi sebagai e {
+    cetak(e.pesan)
+}

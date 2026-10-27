@@ -1,0 +1,39 @@
+== hitung_naik / ulangi / putar_ulang ==
+[0, 1, 2, 3, 4]
+[10, 12, 14]
+["x", "x", "x", "x"]
+[1, 2, 1, 2, 1]
+== cabang ==
+[[1, 2], [1, 2], [1, 2]]
+== akumulasi ==
+[1, 3, 6, 10]
+[10, 11, 13, 16]
+[1, 2, 6, 24]
+== rangkai ==
+[1, 2, 3, 4, 5]
+== saring_dengan ==
+[1, 3, 5]
+== ambil_selama / lewati_selama / saring_salah ==
+[2, 4]
+[5, 6]
+[1, 3]
+== kelompokkan ==
+[["a", ["a", "a"]], ["b", ["b", "b", "b"]], ["c", ["c"]]]
+[[salah, [1, 3]], [benar, [2, 4]], [salah, [5]]]
+== iris ==
+[1, 3]
+[2, 3]
+== berpasangan / kelompok_per ==
+[[1, 2], [2, 3], [3, 4]]
+[[1, 2], [3, 4], [5]]
+== peta_bintang ==
+[3, 7]
+== pasangkan_terpanjang ==
+[[1, "a"], [2, "b"], [3, "-"]]
+== kombinatorik ==
+[[1, "a"], [1, "b"], [2, "a"], [2, "b"]]
+[[1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2]]
+[[1, 2], [1, 3], [2, 3]]
+[[1, 1], [1, 2], [2, 2]]
+== galat dapat ditangkap ==
+hitung_naik: sebutkan `jumlah` (versi eager punya batas)
