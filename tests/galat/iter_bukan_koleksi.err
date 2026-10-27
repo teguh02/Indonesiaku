@@ -1,0 +1,4 @@
+'untuk ... dalam' hanya dapat mengiterasi daftar, tupel, himpunan, teks, rentang, kamus, atau objek dengan metode _iter_().
+[baris 7, kolom 21] dalam skrip
+    untuk x dalam Salah() {
+                        ^

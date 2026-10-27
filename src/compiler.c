@@ -2164,6 +2164,10 @@ static void forStatement() {
 
     // Evaluate the iterable and stash it in a hidden slot.
     expression();
+    // K19: an instance with _iter_ is replaced by whatever it returns, ONCE,
+    // before the loop starts. It cannot live in OP_LIST_LEN/OP_SEQ_GET -- both
+    // run every iteration and would re-enter the user's method n times.
+    emitByte(OP_ITER_OBJEK);
     int seqSlot = addSyntheticLocal("  untuk seq");
 
     // Hidden length slot.

@@ -30,11 +30,13 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
     "_panjang_", "_logika_", "_ambil_", "_atur_", "_hash_",
     "_ktambah_", "_kkurangi_", "_kkali_", "_kbagi_", "_kbagi_bulat_",
     "_ksisa_", "_kpangkat_",
+    "_iter_", "_panggil_",
 };
 
 static int formatInstanceMagic(TextBuf* out, Value instance, bool repr);
 static int instanceEqualMagic(Value a, Value b);
 static int instanceHashMagic(Value value, uint32_t* out);
+static bool instanceMagic(Value value, MagicKind kind, Value* method);
 
 static Value clockNative(int argCount, Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -641,10 +643,29 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
                 push(result);
                 return true;
             }
+            case OBJ_INSTANCE: {
+                // K19: an instance with _panggil_ is callable. Replacing the
+                // callee slot with the bound method means keyword arguments
+                // and defaults work exactly as on any other method, and every
+                // call site (OP_CALL, OP_INVOKE, natives like peta) routes
+                // through here.
+                Value method;
+                if (instanceMagic(callee, MAGIC_PANGGIL, &method)) {
+                    // Slot -argCount-1 becomes `diri` for the method, exactly
+                    // like the OBJ_BOUND_METHOD case above. No allocation: the
+                    // receiver is already the value sitting in that slot.
+                    return call(AS_CLOSURE(method), argCount, names);
+                }
+                vm.runtimeErrorClass = vm.galatTipe;
+                runtimeError("Objek '%s' tidak dapat dipanggil; tambahkan metode "
+                             "_panggil_().", AS_INSTANCE(callee)->klass->name->chars);
+                return false;
+            }
             default:
                 break; // Non-callable object type.
         }
     }
+    vm.runtimeErrorClass = vm.galatTipe;
     runtimeError("Hanya dapat memanggil fungsi dan kelas.");
     return false;
 }
@@ -2823,6 +2844,22 @@ static InterpretResult run() {
                 }
                 break;
             }
+            case OP_ITER_OBJEK: {
+                // Runs once, just before a loop. The iterable sits on top of
+                // the stack. An instance with _iter_ is replaced by that
+                // method's return value: call() with 0 arguments makes the
+                // receiver slot 0, so the result lands exactly where the
+                // iterable was and the loop proceeds over it. Anything else is
+                // left untouched -- zero cost for every existing program.
+                Value method;
+                if (instanceMagic(peek(0), MAGIC_ITER, &method)) {
+                    if (!call(AS_CLOSURE(method), 0, NULL)) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    frame = &vm.frames[vm.frameCount - 1];
+                }
+                break;
+            }
             case OP_LIST_LEN: {
                 // Length of what 'untuk' iterates; elements are then read
                 // with OP_INDEX_GET, so any indexable sequence works.
@@ -2838,7 +2875,10 @@ static InterpretResult run() {
                 } else if (IS_STRING(seq)) {
                     push(INT_VAL(AS_STRING(seq)->charCount));
                 } else {
-                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, tupel, himpunan, teks, rentang, atau kamus.");
+                    vm.runtimeErrorClass = vm.galatTipe;
+                    runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, "
+                                 "tupel, himpunan, teks, rentang, kamus, atau objek "
+                                 "dengan metode _iter_().");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;

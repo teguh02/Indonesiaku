@@ -1,0 +1,9 @@
+# _iter_ harus mengembalikan sesuatu yang bisa diiterasi.
+
+kelas Salah {
+    _iter_() { kembalikan 5 }
+}
+
+untuk x dalam Salah() {
+    cetak(x)
+}

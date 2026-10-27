@@ -199,6 +199,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
             return simpleInstruction("OP_INDEX_GET", offset);
         case OP_SEQ_GET:
             return simpleInstruction("OP_SEQ_GET", offset);
+        case OP_ITER_OBJEK:
+            return simpleInstruction("OP_ITER_OBJEK", offset);
         case OP_INDEX_SET:
             return simpleInstruction("OP_INDEX_SET", offset);
         case OP_SLICE:

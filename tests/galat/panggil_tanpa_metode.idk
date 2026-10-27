@@ -1,0 +1,8 @@
+# Objek tanpa _panggil_ tidak bisa dipanggil seperti fungsi.
+
+kelas Biasa {
+    init() { diri.x = 1 }
+}
+
+obj = Biasa()
+obj(10)

@@ -1,0 +1,28 @@
+=== untuk ... dalam objek ===
+apel
+jeruk
+mangga
+3
+=== _iter_ boleh mengembalikan koleksi apa pun ===
+10
+20
+a
+b
+c
+0
+1
+2
+x
+y
+daftar kosong: aman
+=== hentikan dan lanjut tetap bekerja ===
+apel
+=== _panggil_: objek sebagai fungsi ===
+42
+Halo, Teguh!
+Selamat pagi, Teguh!
+dipanggil tanpa argumen
+[3, 6, 9]
+=== galat merambat dari dalam metode ===
+tertangkap: Indeks list di luar jangkauan (indeks 99, panjang 1).
+tertangkap galat dari _panggil_

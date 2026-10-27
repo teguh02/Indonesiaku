@@ -1,0 +1,4 @@
+Objek 'Biasa' tidak dapat dipanggil; tambahkan metode _panggil_().
+[baris 8, kolom 7] dalam skrip
+    obj(10)
+          ^

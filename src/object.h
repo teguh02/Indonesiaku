@@ -218,6 +218,8 @@ typedef enum {
     MAGIC_KBAGI_BULAT,   // _kbagi_bulat_  nilai // objek
     MAGIC_KSISA,         // _ksisa_        nilai % objek
     MAGIC_KPANGKAT,      // _kpangkat_     nilai ** objek
+    MAGIC_ITER,          // _iter_         untuk ... dalam objek
+    MAGIC_PANGGIL,       // _panggil_      objek(...)
     MAGIC_COUNT,
     MAGIC_NONE = MAGIC_COUNT
 } MagicKind;

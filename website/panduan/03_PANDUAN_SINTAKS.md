@@ -1579,6 +1579,48 @@ Yang perlu diingat:
 
 > Contoh lengkap: [`examples/oop/urut_objek.idk`](../examples/oop/urut_objek.idk)
 
+### Objek yang bisa di-`untuk`-kan dan dipanggil: `_iter_`, `_panggil_`
+
+`_iter_` membuat kelas sendiri bisa dipakai langsung di `untuk ... dalam`.
+Metode ini dipanggil **sekali** di awal loop, dan yang diiterasi adalah nilai
+kembaliannya — jadi cukup kembalikan koleksi yang sudah ada:
+
+```indonesiaku
+kelas Keranjang {
+    init() { diri.isi = ["apel", "jeruk"] }
+    _iter_() { kembalikan diri.isi }
+}
+
+untuk buah dalam Keranjang() {
+    cetak(buah)                   # apel, jeruk
+}
+```
+
+Kembaliannya boleh daftar, tupel, teks, rentang, himpunan, atau kamus.
+`hentikan` dan `lanjut` tetap bekerja seperti biasa.
+
+`_panggil_` membuat objek bisa dipanggil seperti fungsi:
+
+```indonesiaku
+kelas Pengali {
+    init(n) { diri.n = n }
+    _panggil_(x) { kembalikan x * diri.n }
+}
+
+kali2 = Pengali(2)
+cetak(kali2(21))                  # 42
+cetak(peta(Pengali(3), [1, 2, 3]))   # [3, 6, 9]
+```
+
+Nilai bawaan dan argumen bernama ikut berlaku, karena `_panggil_` dipanggil
+lewat jalur yang sama dengan metode biasa.
+
+> Catatan: `_iter_` di sini adalah bentuk sederhana — ia mengembalikan koleksi
+> yang sudah jadi, bukan iterator malas. Protokol iterator penuh
+> (`_berikutnya_` dan `hasilkan`) dijadwalkan di Fase 5.
+
+> Contoh lengkap: [`examples/oop/iter_panggil.idk`](../examples/oop/iter_panggil.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

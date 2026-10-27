@@ -1,0 +1,91 @@
+# _iter_ dan _panggil_ (K19 tahap 2d): objek di posisi 'untuk' dan posisi panggil.
+
+kelas Keranjang {
+    init() { diri.isi = ["apel", "jeruk", "mangga"] }
+    _iter_() { kembalikan diri.isi }
+    _panjang_() { kembalikan panjang(diri.isi) }
+}
+
+cetak("=== untuk ... dalam objek ===")
+untuk buah dalam Keranjang() {
+    cetak(buah)
+}
+cetak(panjang(Keranjang()))
+
+cetak("=== _iter_ boleh mengembalikan koleksi apa pun ===")
+
+kelas Pasangan { _iter_() { kembalikan (10, 20) } }
+untuk n dalam Pasangan() { cetak(n) }
+
+kelas Huruf { _iter_() { kembalikan "abc" } }
+untuk h dalam Huruf() { cetak(h) }
+
+kelas Hitungan { _iter_() { kembalikan rentang(0, 3) } }
+untuk i dalam Hitungan() { cetak(i) }
+
+kelas Peta { _iter_() { kembalikan {"x": 1, "y": 2} } }
+untuk kunci dalam Peta() { cetak(kunci) }
+
+kelas Hampa { _iter_() { kembalikan [] } }
+untuk apa_pun dalam Hampa() { cetak("tidak pernah tercetak") }
+cetak("daftar kosong: aman")
+
+cetak("=== hentikan dan lanjut tetap bekerja ===")
+untuk b dalam Keranjang() {
+    jika b == "jeruk" { lanjut }
+    jika b == "mangga" { hentikan }
+    cetak(b)
+}
+
+cetak("=== _panggil_: objek sebagai fungsi ===")
+
+kelas Pengali {
+    init(n) { diri.n = n }
+    _panggil_(x) { kembalikan x * diri.n }
+}
+
+kali2 = Pengali(2)
+cetak(kali2(21))
+
+# Argumen bernama dan nilai bawaan ikut jalan, karena _panggil_ dipanggil
+# lewat jalur metode yang sama dengan metode biasa.
+kelas Sapa {
+    _panggil_(nama, salam="Halo") { kembalikan f"{salam}, {nama}!" }
+}
+sapa = Sapa()
+cetak(sapa("Teguh"))
+cetak(sapa("Teguh", salam="Selamat pagi"))
+
+kelas TanpaArgumen {
+    _panggil_() { kembalikan "dipanggil tanpa argumen" }
+}
+cetak(TanpaArgumen()())
+
+# Objek yang bisa dipanggil boleh dioper ke fungsi bawaan yang menerima fungsi.
+cetak(peta(Pengali(3), [1, 2, 3]))
+
+cetak("=== galat merambat dari dalam metode ===")
+
+kelas IterGalak {
+    _iter_() {
+        d = [1]
+        kembalikan d[99]
+    }
+}
+coba {
+    untuk x dalam IterGalak() { cetak(x) }
+} kecuali GalatIndeks sebagai e {
+    cetak("tertangkap:", e)
+}
+
+kelas PanggilGalak {
+    _panggil_() {
+        d = [1]
+        kembalikan d[99]
+    }
+}
+coba {
+    PanggilGalak()()
+} kecuali GalatIndeks sebagai e {
+    cetak("tertangkap galat dari _panggil_")
+}

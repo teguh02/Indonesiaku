@@ -181,13 +181,19 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ✅ metode ajaib tahap 2c — `terurut`/`min`/`max` atas objek
 ([rencana](RENCANA_FITUR/selesai/urut_objek.md), K19).
 
-> Fase 4 **sedang dikerjakan** — yang tersisa: `_iter_`, `_panggil_`,
-> atribut kelas, dekorator, `dengan ... sebagai`, pewarisan berganda,
-> kelas abstrak.
+✅ metode ajaib tahap 2d — `_iter_` (objek di `untuk ... dalam`) dan
+`_panggil_` (objek sebagai fungsi)
+([rencana](RENCANA_FITUR/selesai/iter_panggil.md), K19). Metode ajaib kini
+**lengkap**: 30 metode. `adalah_instansi` sudah ada sejak Fase 2.
+
+> Fase 4 **sedang dikerjakan** — yang tersisa: atribut kelas, dekorator
+> (`@properti`/`@metode_statis`/`@metode_kelas`), `dengan ... sebagai`,
+> pewarisan berganda + MRO C3, kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
 
-Protokol `_iter_`/`_berikutnya_`, `hasilkan` (yield), generator expression,
+Protokol iterator malas `_berikutnya_` (melengkapi `_iter_` dari Fase 4),
+`hasilkan` (yield), generator expression,
 dict/set comprehension, `cocokkan`/`kasus` (pattern matching).
 Ref: 04 §7.
 

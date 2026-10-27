@@ -30,6 +30,14 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4 tahap 2d (K19): `_iter_` dan `_panggil_`
+- ✨ **`_iter_`** — kelas sendiri bisa dipakai di `untuk ... dalam`. Dipanggil
+  sekali di awal loop; kembaliannya (daftar, tupel, teks, rentang, himpunan,
+  kamus) yang diiterasi. `hentikan`/`lanjut` tetap bekerja.
+- ✨ **`_panggil_`** — objek bisa dipanggil seperti fungsi, lengkap dengan
+  nilai bawaan dan argumen bernama, dan bisa dioper ke `peta()`/`saring()`.
+- Contoh: [`examples/oop/iter_panggil.idk`](examples/oop/iter_panggil.idk).
+
 ### Added — Fase 4 tahap 2c (K19): terurut/min/max atas objek
 - ✨ **`terurut()`, `min()`, `max()` menerima objek** yang punya
   `_kurang_dari_` (atau hanya `_lebih_dari_`, lewat cerminan). Pengurutan

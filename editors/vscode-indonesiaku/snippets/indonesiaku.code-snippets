@@ -336,5 +336,23 @@
       "}"
     ],
     "description": "Cerminan *: dipanggil saat objek ada di kanan, nilai * objek (K19)"
+  },
+  "Metode ajaib _iter_": {
+    "prefix": "_iter_",
+    "body": [
+      "_iter_() {",
+      "\tkembalikan ${1:diri.isi}",
+      "}"
+    ],
+    "description": "Membuat objek bisa dipakai di 'untuk ... dalam'"
+  },
+  "Metode ajaib _panggil_": {
+    "prefix": "_panggil_",
+    "body": [
+      "_panggil_(${1:x}) {",
+      "\tkembalikan ${2:x}",
+      "}"
+    ],
+    "description": "Membuat objek bisa dipanggil seperti fungsi"
   }
 }
