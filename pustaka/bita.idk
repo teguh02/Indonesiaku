@@ -1,0 +1,113 @@
+# pustaka/bita.idk - Data biner (modul `bita`).
+# Pemakaian:
+#     impor bita
+#     dari bita impor ke_bita, ke_teks
+#
+# Bahasa ini belum punya tipe byte tersendiri, jadi **bita direpresentasikan
+# sebagai daftar bulat 0..255**. Encoding UTF-8 dihitung di sini memakai
+# ord/chr + bitwise, sehingga aman untuk teks non-ASCII. Saat bahasa punya
+# tipe `bita` sendiri, fungsi di modul ini tetap bisa dipertahankan sebagai
+# pembungkus.
+
+kelas GalatBita < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+# _tambah_utf8(kode, hasil) -> tambahkan encoding UTF-8 dari satu code point.
+fungsi _tambah_utf8(kode, hasil) {
+    jika kode < 128 {
+        tambah(hasil, kode)
+    } jika_lain kode < 2048 {
+        tambah(hasil, 192 + kode // 64)
+        tambah(hasil, 128 + kode % 64)
+    } jika_lain kode < 65536 {
+        tambah(hasil, 224 + kode // 4096)
+        tambah(hasil, 128 + (kode // 64) % 64)
+        tambah(hasil, 128 + kode % 64)
+    } selain {
+        tambah(hasil, 240 + kode // 262144)
+        tambah(hasil, 128 + (kode // 4096) % 64)
+        tambah(hasil, 128 + (kode // 64) % 64)
+        tambah(hasil, 128 + kode % 64)
+    }
+}
+
+# ke_bita(teks) -> daftar byte UTF-8 dari teks.
+fungsi ke_bita(teks) {
+    variabel hasil = []
+    untuk c dalam teks {
+        _tambah_utf8(ord(c), hasil)
+    }
+    kembalikan hasil
+}
+
+# ke_teks(bita) -> teks hasil mendekode daftar byte UTF-8.
+# GalatBita bila urutannya tidak sah (byte lanjutan menggantung, terpotong).
+fungsi ke_teks(data) {
+    variabel hasil = ""
+    variabel n = panjang(data)
+    variabel i = 0
+    selagi i < n {
+        variabel b = data[i]
+        jika b < 128 {
+            hasil = hasil + chr(b)
+            i = i + 1
+        } jika_lain b >= 192 dan b < 224 {
+            jika i + 1 >= n {
+                naikkan GalatBita("ke_teks: urutan UTF-8 terpotong")
+            }
+            hasil = hasil + chr((b - 192) * 64 + (data[i + 1] - 128))
+            i = i + 2
+        } jika_lain b >= 224 dan b < 240 {
+            jika i + 2 >= n {
+                naikkan GalatBita("ke_teks: urutan UTF-8 terpotong")
+            }
+            hasil = hasil + chr((b - 224) * 4096 + (data[i + 1] - 128) * 64 + (data[i + 2] - 128))
+            i = i + 3
+        } jika_lain b >= 240 {
+            jika i + 3 >= n {
+                naikkan GalatBita("ke_teks: urutan UTF-8 terpotong")
+            }
+            hasil = hasil + chr((b - 240) * 262144 + (data[i + 1] - 128) * 4096 + (data[i + 2] - 128) * 64 + (data[i + 3] - 128))
+            i = i + 4
+        } selain {
+            naikkan GalatBita("ke_teks: byte 128..191 tanpa pemimpin")
+        }
+    }
+    kembalikan hasil
+}
+
+# ke_heksa(bita) -> teks heksa huruf kecil.
+fungsi ke_heksa(data) {
+    variabel tabel = "0123456789abcdef"
+    variabel hasil = ""
+    untuk b dalam data {
+        hasil = hasil + tabel[b // 16] + tabel[b % 16]
+    }
+    kembalikan hasil
+}
+
+fungsi _nilai_heksa(c) {
+    jika c >= "0" dan c <= "9" {
+        kembalikan ord(c) - 48
+    }
+    jika c >= "a" dan c <= "f" {
+        kembalikan ord(c) - 87
+    }
+    naikkan GalatBita("dari_heksa: karakter bukan heksa: " + c)
+}
+
+# dari_heksa(teks) -> daftar byte dari teks heksa (panjang harus genap).
+fungsi dari_heksa(teks) {
+    variabel t = huruf_kecil(teks)
+    jika panjang(t) % 2 != 0 {
+        naikkan GalatBita("dari_heksa: panjang heksa harus genap")
+    }
+    variabel hasil = []
+    variabel i = 0
+    selagi i < panjang(t) {
+        tambah(hasil, _nilai_heksa(t[i]) * 16 + _nilai_heksa(t[i + 1]))
+        i = i + 2
+    }
+    kembalikan hasil
+}
