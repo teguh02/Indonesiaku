@@ -336,6 +336,12 @@ Before committing:
 - **Theme:** `darkMode: 'class'`; the inline pre-paint script in each `<head>` applies `dark` from `localStorage['indk-theme']` or `prefers-color-scheme`. Never move that script below the stylesheet or the page flashes light.
 - **SPA gotchas:** new pages must also load `marked` + `highlight.js` in the `<head>` (Senna does not swap `<head>`, so the docs reader would break when reached by SPA navigation); docs code uses `history.replaceState(history.state, …)` because plain `null` wipes Senna's history entry and breaks the back button.
 - `website/playground/index.html` is the playground client (plain HTML+JS, no build step). It `POST`s `{ kode }` to `/api/jalankan` and expects `{ stdout, stderr, kode_keluar, ms }`. The API is served by the same Docker bundle; until it exists the page shows a "backend tidak tersedia" state.
+- **Aset statis diberi versi: `assets/site.css?v=1.0.0`.** Cloudflare men-cache
+  `assets/*` sampai 4 jam, jadi tanpa query ini HTML baru bisa berpasangan
+  dengan CSS/JS lama dan tata letak rusak di produksi (pernah terjadi pada
+  editor playground). **Saat menaikkan `INDK_VERSION`, naikkan juga `?v=` di
+  SEMUA halaman** (`website/*.html` + `website/playground/index.html`) —
+  `grep -rn "assets/.*?v=" website/` untuk memastikan tidak ada yang tertinggal.
 - Local preview must be over HTTP (fetch + CDN + Senna): `python -m http.server 8000 -d website`, then open `http://localhost:8000/`. `file://` will not work.
 
 ## Playground API (`docker/playground/`)
