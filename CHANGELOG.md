@@ -5,7 +5,19 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-10-27
+
+**Fase 4 — OOP lengkap.** Seluruh item Fase 4 di `docs/ROADMAP.md` selesai:
+metode ajaib kini lengkap (30), atribut kelas, `dengan ... sebagai`,
+dekorator (`@properti`, `@metode_statis`, `@metode_kelas`, `@abstrak`),
+pewarisan berganda + MRO C3, dan kelas abstrak. Tidak ada perubahan yang
+merusak kompatibilitas — kode 1.0.0 tetap jalan apa adanya (K14).
+
+Diverifikasi: seluruh 90 contoh era 1.0.0 dijalankan dengan biner 1.1.0,
+**89 byte-identik**. Satu-satunya perbedaan adalah teks pesan galat
+`panjang()` yang kini ikut menyebut `_panjang_()` — perilakunya sama, hanya
+pesannya lebih lengkap. Program yang mencocokkan pesan galat itu secara
+harfiah perlu menyesuaikan.
 
 ### Added — Fase 4 tahap 2 (K19): protokol objek
 - ✨ **`_panjang_`** — `panjang(objek)` memakai metode kelas. Wajib

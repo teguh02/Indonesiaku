@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - develop
+      # Branch seri pemeliharaan (1.0.x, 1.1.x, ...). Tambalan untuk rilis
+      # lama justru yang paling butuh diuji, jadi jangan sampai lolos CI.
+      - '[0-9]+.[0-9]+.x'
     paths:
       - 'src/**'
       - 'include/**'
@@ -16,6 +19,7 @@ on:
     branches:
       - main
       - develop
+      - '[0-9]+.[0-9]+.x'
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
