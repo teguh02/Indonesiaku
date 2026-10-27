@@ -2378,11 +2378,29 @@ static void forStatement() {
     emitByte(OP_POP); // condition
 
     // x = seq[idx]  (SEQ_GET: a kamus yields keys by position)
+    int iteratorHandler = emitJump(OP_TRY_BEGIN);
+    current->tryDepth++;
     emitBytes(OP_GET_LOCAL, (uint8_t)seqSlot);
     emitBytes(OP_GET_LOCAL, (uint8_t)idxSlot);
-    emitByte(OP_SEQ_GET);
+    emitByte(OP_ITER_NEXT);
     emitBytes(OP_SET_LOCAL, (uint8_t)varSlot);
     emitByte(OP_POP);
+    emitByte(OP_TRY_END);
+    current->tryDepth--;
+    int iteratorNormal = emitJump(OP_JUMP);
+
+    patchJump(iteratorHandler);
+    // The VM leaves the raised error on the stack at the handler.
+    namedVariable(syntheticToken("HentiIterasi"), false);
+    emitByte(OP_IS_INSTANCE);
+    int iteratorNotExhausted = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);             // matching boolean
+    emitByte(OP_POP);             // HentiIterasi instance
+    int iteratorExit = emitJump(OP_JUMP);
+    patchJump(iteratorNotExhausted);
+    emitByte(OP_POP);             // non-matching boolean
+    emitByte(OP_THROW);           // rethrow the original error
+    patchJump(iteratorNormal);
 
     // Loop body. 'lanjut' jumps to incrementStart; 'hentikan' to the end.
     LoopCtx loop;
@@ -2395,6 +2413,7 @@ static void forStatement() {
 
     patchJump(exitJump);
     emitByte(OP_POP); // condition
+    patchJump(iteratorExit);
 
     endLoop();  // break jumps land here, past the condition pop
 

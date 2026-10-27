@@ -30,7 +30,7 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
     "_panjang_", "_logika_", "_ambil_", "_atur_", "_hash_",
     "_ktambah_", "_kkurangi_", "_kkali_", "_kbagi_", "_kbagi_bulat_",
     "_ksisa_", "_kpangkat_",
-    "_iter_", "_panggil_",
+    "_iter_", "_berikutnya_", "_panggil_",
     "_masuk_", "_keluar_",
 };
 
@@ -2888,6 +2888,23 @@ static InterpretResult run() {
                 push(OBJ_VAL(dict));
                 break;
             }
+            case OP_ITER_NEXT:
+                // Iterator protocol uses the receiver in peek(1) and the
+                // synthetic index in peek(0). Remove the index before calling
+                // so the normal zero-argument call layout is preserved.
+                if (IS_INSTANCE(peek(1))) {
+                    Value method;
+                    if (instanceMagic(peek(1), MAGIC_BERIKUTNYA, &method)) {
+                        pop();
+                        if (!call(AS_CLOSURE(method), 0, NULL)) {
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                        frame = &vm.frames[vm.frameCount - 1];
+                        break;
+                    }
+                }
+                // Ordinary sequences keep the old indexed behavior.
+                /* fall through */
             case OP_SEQ_GET:
                 // 'untuk' / comprehension read sequences by position. A kamus
                 // yields its keys in insertion order — the integer here is a
@@ -3168,6 +3185,19 @@ static InterpretResult run() {
                     push(INT_VAL(AS_SET(seq)->keys.count));
                 } else if (IS_STRING(seq)) {
                     push(INT_VAL(AS_STRING(seq)->charCount));
+                } else if (IS_INSTANCE(seq)) {
+                    Value method;
+                    if (instanceMagic(seq, MAGIC_BERIKUTNYA, &method)) {
+                        // The compiler's existing index loop remains the
+                        // control structure; an iterator runs until HentiIterasi.
+                        push(INT_VAL(INT64_MAX));
+                    } else {
+                        vm.runtimeErrorClass = vm.galatTipe;
+                        runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, "
+                                     "tupel, himpunan, teks, rentang, kamus, atau objek "
+                                     "dengan metode _iter_().");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                 } else {
                     vm.runtimeErrorClass = vm.galatTipe;
                     runtimeError("'untuk ... dalam' hanya dapat mengiterasi daftar, "

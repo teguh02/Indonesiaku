@@ -1,6 +1,6 @@
 # Rencana Fitur: Iterator malas `_berikutnya_`
 
-- **Status:** dikerjakan
+- **Status:** selesai
 - **Target versi:** 1.3.0
 - **Pemilik:** Tim Indonesiaku
 

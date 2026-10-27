@@ -219,6 +219,7 @@ typedef enum {
     MAGIC_KSISA,         // _ksisa_        nilai % objek
     MAGIC_KPANGKAT,      // _kpangkat_     nilai ** objek
     MAGIC_ITER,          // _iter_         untuk ... dalam objek
+    MAGIC_BERIKUTNYA,    // _berikutnya_   nilai iterator berikutnya
     MAGIC_PANGGIL,       // _panggil_      objek(...)
     MAGIC_MASUK,         // _masuk_        dengan ... sebagai
     MAGIC_KELUAR,        // _keluar_       akhir blok 'dengan'
