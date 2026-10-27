@@ -1,6 +1,6 @@
 # Rencana Fitur: Fase 6 — Pustaka standar, gelombang A (modul murni Indonesiaku)
 
-- **Status:** disetujui
+- **Status:** selesai
 - **Target versi:** 1.2.0 (menutup bagian Fase 6)
 - **Pemilik:** kontributor Fase 6
 - **Butir ROADMAP:** Fase 6 — `koleksi`, `iterasi`, `fungsional`,
@@ -105,7 +105,23 @@ golden tetap dijalankan di bawah `-DDEBUG_STRESS_GC` sebagai pengaman.
       variadik
 - [ ] Berkas rencana ini → `docs/RENCANA_FITUR/selesai/`
 
-## 7. Risiko & alternatif
+## 7. Hasil
+
+Selesai (gelombang A). Suite **197/197** — naik dari 188: lima golden modul
+(`pustaka_salin`, `pustaka_statistik`, `pustaka_koleksi`, `pustaka_iterasi`,
+`pustaka_fungsional`) plus empat tes galat. `tests/test_panduan.sh`
+**174/174** blok dijalankan bersih (12 ditandai `takjalan`). Nol perubahan
+`src/`, jadi tidak ada risiko GC baru dan biner instrumentasi tidak diwajibkan.
+
+Modul yang mendarat: `salin`, `statistik`, `koleksi`, `iterasi`, `fungsional`.
+Ditunda dengan alasan tercatat di §3: `tupel_bernama`, `@cache_lru`,
+`urutan_lengkap`.
+
+Semua tabel, komentar hasil, dan klaim di
+`website/panduan/07_PUSTAKA_STANDAR.md` benar-benar dijalankan (blok
+`indonesiaku` diuji otomatis), bukan ditulis dari ingatan.
+
+## 8. Risiko & alternatif
 
 - **Risiko: modul baru bentrok nama dengan `pustaka/*.idk` lama.** Tidak:
   modul punya namespace sendiri, dan `impor "..."` lama tetap memakai namespace

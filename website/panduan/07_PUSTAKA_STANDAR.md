@@ -738,11 +738,158 @@ impor "pustaka/http.idk"
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
 di atas soket TCP.
 
+### 2.7 `pustaka/koleksi.idk` — wadah data
+
+Padanan `collections` Python. Di-`impor` sebagai **modul** bernamespace, jadi
+nama di dalamnya tidak perlu awalan:
+
+```indonesiaku
+impor koleksi
+dari koleksi impor Penghitung, KamusBawaan, Antrian
+
+c = Penghitung("abracadabra")
+cetak(c["a"], c["z"])            # 5 0  -- kunci absen = 0
+cetak(c.paling_umum(2))           # [["a", 5], ["b", 2]]
+cetak(terurut(c.ke_daftar()))     # ["a", "b", "c", "d", "r"]
+
+kb = KamusBawaan(daftar)          # nilainya daftar baru tiap kunci baru
+tambah(kb["buah"], "apel")
+cetak(kb["buah"], kb["sayur"])  # ["apel"] []
+
+q = Antrian([1, 2, 3])
+q.tambah_kiri(0)
+cetak(q.ambil_kanan(), q.daftar())  # 3 [0, 1, 2]
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `Penghitung(urutan=kosong)` | Pencacah ala `Counter`. `c[k]` = hitungan (0 bila absen), `paling_umum(n)`, `total()`, `kunci()`, `nilai()`, `tambah(v, n=1)`, `kurang(v, n=1)`, `tambah_banyak(urutan)`, `ke_daftar()`; operator `+` dan `-`; `==` mengabaikan urutan |
+| `KamusBawaan(pabrik)` | Kamus dengan nilai bawaan ala `defaultdict`. `kb[k]` memanggil `pabrik()` saat kunci absen lalu menyimpannya; `ambil(k, bawaan=kosong)` **tidak** membuat nilai baru |
+| `KamusBerurut` | Alias `kamus` biasa — kamus diIndonesiaku sudah berurut penyisipan |
+| `Antrian(urutan=kosong, maks_panjang=kosong)` | Antrian dua ujung ala `deque`: `tambah_kiri`, `tambah_kanan`, `ambil_kiri`, `ambil_kanan`, `putar(n=1)`, `daftar()`, `panjang()`. `maks_panjang` membuang ujung yang berlawanan saat penuh |
+
+`tupel_bernama` (namedtuple) belum ada: membuat konstruktor dengan jumlah
+bidang dinamis butuh fungsi variadik (`*args`), yang belum didukung bahasa.
+
+### 2.8 `pustaka/statistik.idk` — statistik dasar
+
+```indonesiaku
+impor statistik
+cetak(statistik.rata_rata([1, 2, 3, 4]))   # 2.5
+cetak(statistik.median([1, 2, 3, 4]))      # 2.5
+cetak(statistik.modus("aabbbc"))           # b
+cetak(statistik.kuantil([1, 2, 3, 4]))     # [1.25, 2.5, 3.75]
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `rata_rata(urutan)` | Rata-rata (`mean`) |
+| `median(urutan)` | Nilai tengah; rata-rata dua tengah bila genap |
+| `modus(urutan)` | Nilai paling sering; seri dimenangkan yang muncul lebih dulu |
+| `varians(urutan)` / `simpangan_baku(urutan)` | **Sampel** (bagi `n-1`), seperti `statistics.variance` |
+| `varians_populasi` / `simpangan_baku_populasi` | Populasi (bagi `n`) |
+| `kuantil(urutan, n=4)` | `n-1` titik potong, metode *exclusive* seperti `statistics.quantiles` |
+
+Urutan kosong (atau data kurang dari dua untuk sebaran) menaikkan
+`GalatStatistik` yang membawa `.pesan` dan bisa ditangkap:
+
+```indonesiaku
+impor statistik
+dari statistik impor GalatStatistik
+coba {
+    statistik.rata_rata([])
+} kecuali GalatStatistik sebagai e {
+    cetak(e.pesan)                 # rata_rata: urutan kosong
+}
+```
+
+### 2.9 `pustaka/iterasi.idk` — alat iterasi
+
+Padanan `itertools`. Karena bahasa belum punya generator (Fase 5), semuanya
+**eager**: mengembalikan daftar, bukan iterator malas. Karena itu fungsi yang
+di Python tak hingga (`hitung_naik`, `putar_ulang`, `ulangi`) mewajibkan
+jumlah elemennya.
+
+```indonesiaku
+impor iterasi
+cetak(iterasi.akumulasi([1, 2, 3, 4]))        # [1, 3, 6, 10]
+cetak(iterasi.berpasangan([1, 2, 3]))         # [[1, 2], [2, 3]]
+cetak(iterasi.rangkai([[1, 2], [3]]))         # [1, 2, 3]
+cetak(iterasi.kombinasi([1, 2, 3], 2))        # [[1, 2], [1, 3], [2, 3]]
+```
+
+Isi: `hitung_naik`, `ulangi`, `putar_ulang`, `cabang`, `akumulasi`, `rangkai`,
+`saring_dengan`, `ambil_selama`, `lewati_selama`, `saring_salah`,
+`kelompokkan`, `iris`, `berpasangan`, `kelompok_per`, `peta_bintang`,
+`pasangkan_terpanjang`, `produk`, `permutasi`, `kombinasi`,
+`kombinasi_berulang`.
+
+Dua penyesuaian karena bahasa belum punya `*args`: `rangkai` dan `produk`
+menerima **satu daftar urutan** (`rangkai([[1], [2]])`, bukan
+`rangkai([1], [2])`), dan `peta_bintang(f, urutan)` meneruskan tiap elemen
+utuh ke `f` (Python membongkarnya jadi beberapa argumen).
+
+### 2.10 `pustaka/fungsional.idk` — alat fungsional
+
+```indonesiaku
+impor fungsional
+cetak(fungsional.lipat(fungsi(a, b) { kembalikan a + b }, [1, 2, 3, 4]))  # 10
+orang = [["Budi", 80], ["Ani", 95]]
+cetak(fungsional.urutkan_dengan(orang, fungsi(o) { kembalikan o[1] }))
+# [["Budi", 80], ["Ani", 95]]
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `lipat(f, urutan, awal=kosong)` | Reduksi kiri (`functools.reduce`). Tanpa `awal`, elemen pertama jadi nilai awal; urutan kosong lalu menaikkan `GalatFungsional` |
+| `parsial(f, arg_depan)` | `arg_depan` adalah **daftar**; mengembalikan fungsi satu argumen `g(x) = f(arg_depan..., x)` |
+| `urutkan_dengan(urutan, kunci)` | Daftar baru terurut berdasar `kunci(nilai)`, stabil seperti `sorted(key=...)` |
+| `urutkan_dengan_banding(urutan, banding)` | Terurut memakai pembanding tiga arah `banding(a, b)` (`< 0`, `0`, `> 0`) |
+| `banding_ke_kunci(banding)` | Kelas pembungkus ala `cmp_to_key`; bungkus tiap nilai lalu serahkan ke `terurut` |
+
+`@cache_lru` dan `urutan_lengkap` belum ada: masing-masing butuh fungsi
+variadik dan penyuntikan metode ke kelas saat runtime.
+
+### 2.11 `pustaka/salin.idk` — penyalinan
+
+```indonesiaku
+impor salin
+asal = {"x": [1]}
+salinan = salin.salin_dalam(asal)
+tambah(salinan["x"], 2)
+cetak(asal["x"], salinan["x"])     # [1] [1, 2]
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `salin(x)` | Salinan **dangkal** untuk daftar/kamus/himpunan; nilai lain dikembalikan apa adanya. Elemen di dalamnya masih dibagi |
+| `salin_dalam(x)` | Salinan **rekursif** untuk daftar/kamus/himpunan/tupel; struktur bersiklus aman. Objek buatan sendiri dikembalikan apa adanya |
+
+> Hati-hati: `dari salin impor salin` menimpa nama modul dengan fungsinya,
+> persis seperti `from copy import copy` di Python. Pakai alias bila butuh
+> keduanya: `dari salin impor salin sebagai kopi`.
+
+### 2.12 Catatan: objek ber-`_iter_` dan fungsi urutan
+
+Objek dengan metode `_iter_` sudah bisa dipakai di `untuk ... dalam` dan
+`panjang()`, tetapi **belum** dikenali `daftar()`, `tupel()`, `terurut()`,
+`jumlah()`, dan `semua()`. Untuk itu, kelas di modul ini menyediakan
+`ke_daftar()`/`daftar()` sehingga Anda menulis:
+
+```indonesiaku
+dari koleksi impor Penghitung
+c = Penghitung("abracadabra")
+cetak(terurut(c.ke_daftar()))     # ["a", "b", "c", "d", "r"]
+cetak(jumlah(c.nilai()))          # 11
+```
+
 ---
 
 Lihat contoh lengkap di folder `examples/` (mis. `pustaka_teks.idk`,
-`pustaka_daftar.idk`, `berkas.idk`, `konversi.idk`, `json_pakai.idk`,
-`todo_demo.idk`, `todo_server.idk`, `http_pakai.idk`).
+`pustaka_daftar.idk`, `pustaka_koleksi.idk`, `pustaka_statistik.idk`,
+`pustaka_iterasi.idk`, `pustaka_fungsional.idk`, `pustaka_salin.idk`,
+`berkas.idk`, `konversi.idk`, `json_pakai.idk`, `todo_demo.idk`,
+`todo_server.idk`, `http_pakai.idk`).
 
 ---
 

@@ -251,8 +251,8 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 | `os` / `os.path` / `pathlib` / `shutil` / `glob` | `os` / `jalur` | 🟡 berkas dasar | 6 |
 | `sys` | `sistem` (`argumen`, `keluar`, `versi`) | 🟡 `argumen`, `henti` | 3 |
 | `re` | `pola` (regex) | ❌ | 6 |
-| `collections` | `koleksi` (`Penghitung`, `Antrian`, `KamusBawaan`) | ❌ | 6 |
-| `itertools` / `functools` | `iterasi` / `fungsional` | 🟡 `daftar_peta` dkk | 6 |
+| `collections` | `koleksi` (`Penghitung`, `Antrian`, `KamusBawaan`) | ✅ `pustaka/koleksi.idk` (gelombang A); `tupel_bernama` menunggu `*args` | 6 |
+| `itertools` / `functools` | `iterasi` / `fungsional` | ✅ eager (gelombang A); versi malas menunggu Fase 5 | 6 |
 | `csv` | `csv` | ❌ | 6 |
 | `unittest` / `pytest` | `uji` (+ runner `indk uji`) | ❌ | 7 |
 | `logging` | `log` | ❌ | 6 |
@@ -263,8 +263,8 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 | `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | ❌ | 6 |
 | `sqlite3` | `sqlite` (`db_*`) | ✅ | 3 — selesai; 10 fungsi, SQLite 3.50.4 vendored, parameter `?` wajib |
 | `threading` / `asyncio` | `utas` / `asinkron` | ❌ | 7 |
-| `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | ❌ | 6 |
-| `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | ❌ | 6 |
+| `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | 🟡 `statistik` ✅ (gelombang A); `desimal`/`pecahan` ❌ | 6 |
+| `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | 🟡 `salin` ✅ (gelombang A); sisanya ❌ | 6 |
 | `tkinter` / `turtle` | `kura` (turtle — sangat cocok untuk pendidikan!) | ❌ | 8 |
 
 > **Catatan pendidikan:** modul `turtle` adalah salah satu alasan Python

@@ -5,6 +5,43 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Belum dirilis]
+
+**Fase 6 — Pustaka standar luas (gelombang A: modul murni Indonesiaku).**
+Lima modul baru di `pustaka/`, dipakai lewat `impor <nama>` bernamespace
+(mis. `dari koleksi impor Penghitung`). Tidak ada perubahan bahasa: kode
+1.1.0 tetap jalan apa adanya (K14). Semuanya ditulis dalam Indonesiaku di
+atas builtin dan metode ajaib K19 — nol perubahan `src/`.
+
+### Added
+- ✨ **`koleksi`** — `Penghitung` (Counter), `KamusBawaan` (defaultdict),
+  `KamusBerurut`, dan `Antrian` (deque dua ujung O(1) teramortisasi, dengan
+  `maks_panjang` dan `putar`). Contoh: `examples/pustaka_koleksi.idk`.
+- ✨ **`statistik`** — `rata_rata`, `median`, `modus`, `varians`,
+  `simpangan_baku` (sampel) beserta varian `_populasi`, dan `kuantil`.
+  Galat bertipe `GalatStatistik`. Contoh: `examples/pustaka_statistik.idk`.
+- ✨ **`iterasi`** — padanan `itertools` secara *eager* (mengembalikan
+  daftar): `hitung_naik`, `ulangi`, `putar_ulang`, `cabang`, `akumulasi`,
+  `rangkai`, `saring_dengan`, `ambil_selama`, `lewati_selama`,
+  `saring_salah`, `kelompokkan`, `iris`, `berpasangan`, `kelompok_per`,
+  `peta_bintang`, `pasangkan_terpanjang`, `produk`, `permutasi`,
+  `kombinasi`, `kombinasi_berulang`. Contoh: `examples/pustaka_iterasi.idk`.
+- ✨ **`fungsional`** — `lipat` (reduce), `parsial`, `urutkan_dengan`,
+  `urutkan_dengan_banding`, dan `banding_ke_kunci` (cmp_to_key).
+  Contoh: `examples/pustaka_fungsional.idk`.
+- ✨ **`salin`** — `salin` (dangkal) dan `salin_dalam` (rekursif, aman
+  siklus). Contoh: `examples/pustaka_salin.idk`.
+
+### Catatan keterbatasan (sengaja, dicatat di rencana)
+- `iterasi` mengembalikan **daftar**, bukan iterator malas, sampai generator
+  (Fase 5) ada. Karena bahasa belum punya `*args`, `rangkai`/`produk`
+  menerima satu daftar urutan dan `parsial` menerima daftar argumen depan.
+- `tupel_bernama`, `@cache_lru`, dan `urutan_lengkap` **ditunda** dengan
+  alasan yang sama (butuh fungsi variadik atau penyuntikan metode saat
+  runtime).
+- `daftar()`/`terurut()`/`jumlah()`/`semua()`/`tupel()` belum mengenali objek
+  ber-`_iter_`; kelas di modul ini menyediakan `ke_daftar()`/`daftar()`.
+
 ## [1.1.0] - 2026-10-27
 
 **Fase 4 — OOP lengkap.** Seluruh item Fase 4 di `docs/ROADMAP.md` selesai:

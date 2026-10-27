@@ -1,6 +1,6 @@
 # Roadmap — Bahasa Indonesiaku
 
-**Satu-satunya sumber kebenaran untuk roadmap.** Versi saat ini: `1.0.0`
+**Satu-satunya sumber kebenaran untuk roadmap.** Versi saat ini: `1.1.0`
 (`INDK_VERSION` di `src/common.h`). Riwayat detail per rilis ada di
 [`CHANGELOG.md`](../CHANGELOG.md).
 
@@ -18,6 +18,7 @@ alasan setiap fase ada di [`ANALISIS/`](ANALISIS/README.md).
 | 0.3.0 | Pustaka standar `pustaka/*.idk`, file I/O, waktu/tanggal, konversi, escape string, `argumen`, REPL multi-baris | `pustaka/`, `examples/berkas.idk` |
 | 0.4.0 | JSON, HTTP, soket TCP, server REST contoh, `ord`/`chr`/`sisip`/`hapus_pada`; pesan error dengan nomor baris + jejak panggilan | `examples/todo_server.idk`, `src/vm.c` `runtimeError` |
 | 1.0.0 | Fase 0–3 tuntas: stabilisasi, inti mirip Python, tipe data lengkap (`bulat`/`desimal`, tupel, himpunan, himpunan beku), modul bernamespace + paket + `__utama__`, SQLite; `SPESIFIKASI.md` normatif; contoh panduan diuji otomatis | `docs/SPESIFIKASI.md`, `tests/test_panduan.sh` |
+| 1.1.0 | Fase 4 tuntas: metode ajaib lengkap (30), atribut kelas, `dengan ... sebagai`, dekornator (`@properti`, `@metode_statis`, `@metode_kelas`, `@abstrak`), pewarisan berganda + MRO C3, kelas abstrak | `examples/oop/`, `docs/RENCANA_FITUR/selesai/` |
 
 ## Fase pengembangan
 
@@ -213,12 +214,31 @@ Protokol iterator malas `_berikutnya_` (melengkapi `_iter_` dari Fase 4),
 dict/set comprehension, `cocokkan`/`kasus` (pattern matching).
 Ref: 04 §7.
 
-### Fase 6 — Pustaka standar luas (1.x berkelanjutan)
+### Fase 6 — Pustaka standar luas (1.x berkelanjutan) — 🟨 dikerjakan
 
-Modul P2 dari katalog 07: `os`/`jalur`, `koleksi`, `iterasi`,
-`fungsional`, `pola` (regex), `csv`, `hash`, `base64`, `log`, `opsi`,
-`proses`, `salin`, `statistik`, `kura` (turtle), klien HTTP, `bita`.
-Sebagian besar cocok untuk kontributor baru.
+Modul P2 dari katalog 07. Modul baru berbentuk **modul bernamespace**
+(`impor koleksi`, `dari koleksi impor Penghitung`), ditulis dalam Indonesiaku
+di `pustaka/` kecuali yang ditandai C. Sebagian besar cocok untuk kontributor
+baru.
+
+**Gelombang A — modul murni Indonesiaku (selesai):**
+
+| Modul | Status | Bukti |
+|---|---|---|
+| `salin` (copy) | ✅ | `examples/pustaka_salin.idk` |
+| `statistik` (statistics) | ✅ | `examples/pustaka_statistik.idk` |
+| `koleksi` (collections) | ✅ | `examples/pustaka_koleksi.idk` |
+| `iterasi` (itertools, eager) | ✅ | `examples/pustaka_iterasi.idk` |
+| `fungsional` (functools) | ✅ | `examples/pustaka_fungsional.idk` |
+
+**Belum dikerjakan:** `os`/`jalur`, `pola` (regex), `csv`, `hash`,
+`base64`, `log`, `opsi`, `proses`, `kura` (turtle), klien HTTP, `bita`.
+Sebagian butuh native C baru.
+
+**Ditunda karena keterbatasan bahasa** (bukan lupa): `tupel_bernama`,
+`@cache_lru`, dan `urutan_lengkap` menunggu fungsi variadik (`*args`) dan
+penyuntikan metode saat runtime. Alasannya dicatat di
+[`RENCANA_FITUR/selesai/pustaka_fase6_modul_dasar.md`](RENCANA_FITUR/selesai/pustaka_fase6_modul_dasar.md).
 
 ### Fase 7 — Perkakas & kinerja
 
