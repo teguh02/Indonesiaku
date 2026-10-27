@@ -1,0 +1,6 @@
+fungsi f() {
+    variabel n = 1
+    n = 2
+    kembalikan 0
+}
+cetak(f())

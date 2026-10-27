@@ -1,0 +1,6 @@
+fungsi hitung(a, b) {
+    variabel hasil = a + b
+    variabel sementara = a * b
+    kembalikan hasil
+}
+cetak(hitung(2, 3))

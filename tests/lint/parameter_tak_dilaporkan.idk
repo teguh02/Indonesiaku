@@ -1,0 +1,4 @@
+kelas Dua {
+    _tambah_(lain) { kembalikan "dua" }
+}
+cetak(Dua() + 1)

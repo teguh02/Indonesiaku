@@ -1,6 +1,6 @@
 # Rencana Fitur: Deteksi variabel dan fungsi tidak terpakai (`indk periksa`)
 
-- **Status:** usulan
+- **Status:** dikerjakan (tingkat 2 selesai; tingkat 1 dan 3 tidak dikerjakan)
 - **Target versi:** Fase 7 (perkakas) — dikerjakan setelah Fase 1 tuntas
 - **Pengusul:** Teguh
 - **Keputusan terkait:** K3 (lingkup assignment), calon K15
@@ -162,6 +162,48 @@ daripada nilai yang diberikannya.
 **Alternatif ditolak:** menjadikannya galat dengan opsi `--izinkan-tak-terpakai`.
 Ditolak karena flag yang hampir selalu dinyalakan adalah tanda aturannya
 memang salah.
+
+## 8b. Catatan pelaksanaan (diisi saat implementasi)
+
+**Tingkat 1 dibatalkan, bukan ditunda.** Peringatan di setiap kali menjalankan
+program menulis ke stderr, sedangkan seluruh tes golden mensyaratkan stderr
+kosong. Memasangnya berarti menyentuh ~90 fixture demi fitur yang nilainya
+sudah diberikan tingkat 2 secara opt-in. Tingkat 2 (`indk periksa`) saja.
+
+**Yang diperiksa dipersempit ke deklarasi eksplisit.** Percobaan pertama
+memeriksa semua slot lokal dan menghasilkan **30 berkas** temuan di
+`examples/` + `pustaka/` — hampir semuanya positif palsu:
+
+- parameter fungsi (`_tambah_(lain)` wajib ada demi tanda tangan),
+- `kecuali ... sebagai e` yang memang tidak membaca `e`,
+- variabel loop `untuk`, `dengan ... sebagai`, dan slot `super`,
+- slot hasil `prescanFunctionBody` yang kembar dengan `variabel` di blok
+  bersarang: pembacaan menyelesaikan ke slot dalam, sehingga salinan prescan
+  tampak tak terpakai.
+
+Sekarang hanya `variabel x` yang eksplisit yang dilinting (`lintCheck`),
+sehingga temuan tinggal **2 berkas**, keduanya benar-benar mati.
+
+**Dua berkas itu diperbaiki di sumbernya**, bukan dengan melonggarkan aturan:
+`lingkup_variabel.idk` dan `metode_tipe.idk` memang sengaja menyimpan nilai
+yang tak dibaca (fixture regresi scope dan probe jalur galat), jadi namanya
+diberi awalan `_` sesuai konvensi di §3. Keluaran golden-nya byte-identik.
+
+**Jejak di jalur normal: nol.** Diff `src/compiler.c` tidak menambah satu pun
+pemanggilan `emitByte`/`emitBytes`/`emitJump`/`emitConstant`, jadi bytecode
+untuk `indk program.idk` tidak berubah sama sekali.
+
+**Jebakan yang ditemukan saat implementasi:**
+
+1. `endCompiler()` **tidak** memanggil `endScope()` — lokal tingkat atas sebuah
+   fungsi ikut hilang bersama `Compiler`-nya. Tanpa hook kedua di
+   `endCompiler`, variabel seperti `sementara` di contoh §1 tidak pernah
+   terlihat linter.
+2. `compilerSetLint(false)` sempat me-reset `lintCount`, sehingga temuan
+   terhapus tepat sebelum dicetak dan hasilnya selalu "0 temuan". Reset hanya
+   dilakukan saat menyalakan.
+3. Slot 0 setiap fungsi adalah slot penerima dengan nama kosong; harus
+   dikecualikan atau ia dilaporkan sebagai variabel tak terpakai.
 
 ## 8. Urutan pengerjaan
 

@@ -1,0 +1,5 @@
+fungsi f() {
+    variabel _abai = 99
+    kembalikan 1
+}
+cetak(f())

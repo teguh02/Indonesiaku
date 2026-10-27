@@ -4,7 +4,9 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "compiler.h"
 #include "debug.h"
+#include "object.h"
 #include "vm.h"
 
 // Count net brace depth in a line, ignoring braces inside strings and after
@@ -111,6 +113,47 @@ static char* readFile(const char* path) {
     return buffer;
 }
 
+// indk --dis <skrip>: compile only, print bytecode, never run.
+// Recurses into nested function constants so the whole program is covered.
+static void disassembleFunction(ObjFunction* function) {
+    const char* name = function->name != NULL ? function->name->chars : "<skrip utama>";
+    disassembleChunk(&function->chunk, name);
+    for (int i = 0; i < function->chunk.constants.count; i++) {
+        Value v = function->chunk.constants.values[i];
+        if (IS_FUNCTION(v)) {
+            printf("\n");
+            disassembleFunction(AS_FUNCTION(v));
+        }
+    }
+}
+
+static int disassembleFile(const char* path) {
+    char* source = readFile(path);
+    setScriptPath(path);
+    ObjFunction* function = compile(source);
+    if (function == NULL) {
+        free(source);
+        return 65;
+    }
+    disassembleFunction(function);
+    free(source);
+    return 0;
+}
+
+// indk periksa <skrip>: compile with lint on, report, never run.
+// Exit 0 when clean, 1 when there are findings.
+static int lintFile(const char* path) {
+    char* source = readFile(path);
+    setScriptPath(path);
+    compilerSetLint(true);
+    ObjFunction* function = compile(source);
+    compilerSetLint(false);
+    free(source);
+    if (function == NULL) return 65;
+    compilerLintPrint(path);
+    return compilerLintCount() > 0 ? 1 : 0;
+}
+
 static int runFile(const char* path) {
     char* source = readFile(path);
     // Imports resolve relative to the script's own directory first.
@@ -131,10 +174,35 @@ int main(int argc, const char* argv[]) {
             printf("%s\n", INDK_VERSION);
             return 0;
         }
+        if (strcmp(argv[1], "periksa") == 0) {
+            if (argc < 3) {
+                fprintf(stderr, "Penggunaan: indk periksa <skrip.idk>\n");
+                return 64;
+            }
+            initVM();
+            int code = lintFile(argv[2]);
+            freeVM();
+            return code;
+        }
+        if (strcmp(argv[1], "--dis") == 0) {
+            if (argc < 3) {
+                fprintf(stderr, "Penggunaan: indk --dis <skrip.idk>\n");
+                return 64;
+            }
+            initVM();
+            int code = disassembleFile(argv[2]);
+            freeVM();
+            return code;
+        }
         if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Indonesiaku %s\n", INDK_VERSION);
             printf("Penggunaan: indk [path] [argumen...]\n");
-            printf("Opsi:\n  -v, --version   Tampilkan versi\n  -h, --help      Tampilkan bantuan\n");
+                printf("Opsi:\n");
+            printf("  -v, --version   Tampilkan versi\n");
+            printf("  -h, --help      Tampilkan bantuan\n");
+            printf("  --dis <skrip>   Tampilkan bytecode tanpa menjalankan\n");
+            printf("Perintah:\n");
+            printf("  periksa <skrip> Laporkan variabel lokal tidak terpakai\n");
             return 0;
         }
     }

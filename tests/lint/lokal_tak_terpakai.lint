@@ -1,0 +1,2 @@
+tests/lint/lokal_tak_terpakai.idk:3  variabel lokal 'sementara' tidak pernah dipakai
+1 temuan

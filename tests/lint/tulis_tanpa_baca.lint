@@ -1,0 +1,2 @@
+tests/lint/tulis_tanpa_baca.idk:2  variabel lokal 'n' tidak pernah dipakai
+1 temuan

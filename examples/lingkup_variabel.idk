@@ -5,7 +5,7 @@
 fungsi uji_selagi_break() {
     variabel i = 0
     selagi i < 5 {
-        variabel sementara = "BOCOR"
+        variabel _sementara = "BOCOR"
         jika i == 2 { hentikan }
         i = i + 1
     }
@@ -26,7 +26,7 @@ fungsi uji_untuk() {
 fungsi uji_jika() {
     variabel x = 10
     jika x > 5 {
-        variabel dalam_jika = "abc"
+        variabel _dalam_jika = "abc"
     }
     variabel luar = x * 2
     kembalikan luar

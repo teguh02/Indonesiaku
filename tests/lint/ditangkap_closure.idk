@@ -1,0 +1,6 @@
+fungsi luar() {
+    variabel tertangkap = 5
+    fungsi bagian_dalam() { kembalikan tertangkap }
+    kembalikan bagian_dalam
+}
+cetak(luar()())

@@ -59,7 +59,47 @@ typedef struct {
     Token name;
     int depth;
     bool isCaptured;
+    bool used;       // name was ever READ (assignment alone does not count)
+    bool lintCheck;  // a real user declaration worth linting (see markLintable)
 } Local;
+
+// ---- Linter (indk periksa) -------------------------------------------------
+// Off by default: a normal `indk program.idk` run must stay byte-identical,
+// and every golden test requires empty stderr.
+#define LINT_MAX 256
+typedef struct { int line; char name[64]; } LintFinding;
+static bool lintEnabled = false;
+static LintFinding lintFindings[LINT_MAX];
+static int lintCount = 0;
+
+void compilerSetLint(bool enabled) {
+    lintEnabled = enabled;
+    if (enabled) lintCount = 0;   // reset when turning ON, never when turning off
+}
+int compilerLintCount(void) { return lintCount; }
+
+static void lintReportUnused(Token* name, int line) {
+    if (!lintEnabled || lintCount >= LINT_MAX) return;
+    if (name->length == 0) return;   // reserved slot 0 (receiver/function)
+    // '_' prefix is the conventional "deliberately unused" marker.
+    if (name->length > 0 && name->start[0] == '_') return;
+    // Synthetic locals are named with a leading space and are never user code.
+    if (name->length > 0 && name->start[0] == ' ') return;
+    LintFinding* f = &lintFindings[lintCount++];
+    f->line = line;
+    int n = name->length < 63 ? name->length : 63;
+    memcpy(f->name, name->start, n);
+    f->name[n] = '\0';
+}
+
+void compilerLintPrint(const char* path) {
+    for (int i = 0; i < lintCount; i++) {
+        fprintf(stderr, "%s:%d  variabel lokal '%s' tidak pernah dipakai\n",
+                path, lintFindings[i].line, lintFindings[i].name);
+    }
+    fprintf(stderr, "%d temuan\n", lintCount);
+}
+
 
 typedef struct {
     uint8_t index;
@@ -471,6 +511,18 @@ static ObjFunction* endCompiler() {
     ObjFunction* function = current->function;
     function->isGenerator = current->isGenerator;
 
+    // A function's own top-level locals never pass through endScope(): the
+    // whole Compiler is discarded instead. Report them here or they are
+    // invisible to the linter.
+    if (lintEnabled) {
+        for (int i = 0; i < current->localCount; i++) {
+            Local* l = &current->locals[i];
+            if (l->lintCheck && !l->used && !l->isCaptured) {
+                lintReportUnused(&l->name, l->name.line);
+            }
+        }
+    }
+
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
         disassembleChunk(currentChunk(), function->name != NULL
@@ -492,6 +544,10 @@ static void endScope() {
     while (current->localCount > 0 &&
            current->locals[current->localCount - 1].depth >
                current->scopeDepth) {
+        Local* dying = &current->locals[current->localCount - 1];
+        if (lintEnabled && dying->lintCheck && !dying->used && !dying->isCaptured) {
+            lintReportUnused(&dying->name, dying->name.line);
+        }
         if (current->locals[current->localCount - 1].isCaptured) {
             emitByte(OP_CLOSE_UPVALUE);
         } else {
@@ -520,6 +576,7 @@ static void beginLoop(LoopCtx* loop, int continueTarget);
 static void endLoop();
 static Token syntheticToken(const char* text);
 static void namedVariable(Token name, bool canAssign);
+
 // Which collection a comprehension builds. The loop machinery is identical;
 // only the accumulator and the per-element append differ.
 typedef enum {
@@ -592,12 +649,14 @@ static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal) {
     return compiler->function->upvalueCount++;
 }
 
+// A captured local is used by definition -- the closure reads it.
 static int resolveUpvalue(Compiler* compiler, Token* name) {
     if (compiler->enclosing == NULL) return -1;
 
     int local = resolveLocal(compiler->enclosing, name);
     if (local != -1) {
         compiler->enclosing->locals[local].isCaptured = true;
+        compiler->enclosing->locals[local].used = true;
         return addUpvalue(compiler, (uint8_t)local, true);
     }
 
@@ -619,6 +678,19 @@ static void addLocal(Token name) {
     local->name = name;
     local->depth = -1;
     local->isCaptured = false;
+    local->used = false;
+    // Opt-in: only `variabel x` and an implicit `x = ...` are linted. Bindings
+    // the language forces on you (parameters, loop vars, `kecuali ... sebagai e`,
+    // `dengan ... sebagai`, `super`, synthetics) are not the user's choice to
+    // declare and produced only false positives.
+    local->lintCheck = false;
+}
+
+// Mark the local just added by addLocal() as a real user declaration.
+static void markLintable(void) {
+    if (current->localCount > 0) {
+        current->locals[current->localCount - 1].lintCheck = true;
+    }
 }
 
 // Add a synthetic, already-initialized local whose name cannot collide with
@@ -650,6 +722,7 @@ static void declareVariable() {
     }
 
     addLocal(*name);
+    markLintable();
 }
 
 static uint8_t parseVariable(const char* errorMessage) {
@@ -1703,6 +1776,12 @@ static void namedVariable(Token name, bool canAssign) {
         setOp = OP_SET_GLOBAL;
     }
 
+    // A plain assignment is NOT a use; a compound assignment and a bare
+    // mention both read the variable first.
+    bool reads = true;
+    if (canAssign && check(TOKEN_EQUAL)) reads = false;
+    if (reads && getOp == OP_GET_LOCAL && arg >= 0) current->locals[arg].used = true;
+
     if (canAssign && match(TOKEN_EQUAL)) {
         parsePrecedence(PREC_ASSIGNMENT);
         maybeTupleTail();           // x = 1, 2
@@ -2211,6 +2290,10 @@ static void function(FunctionType type) {
     }
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah parameter.");
     current->function->requiredArity = current->function->arity - defaultCount;
+
+    // Parameters are part of a signature, not a user decision to declare a
+    // variable: an unused one is usually required (callbacks, _tambah_(lain)).
+    for (int i = 0; i < current->localCount; i++) current->locals[i].lintCheck = false;
 
     // Parameter names must survive to runtime: keyword arguments are matched
     // in the VM, because the callee is only known there.
