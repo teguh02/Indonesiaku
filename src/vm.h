@@ -152,6 +152,11 @@ int instanceLengthFor(Value value, int64_t* out);
 // a < b for instances, run now: 1 with *less set, 0 when _kurang_dari_ raised
 // (error pending), -1 when neither operand defines an ordering.
 int instanceLessFor(Value a, Value b, bool* less);
+// _iter_()/_berikutnya_() run now: 1 with *result set, 0 when the method
+// raised (error pending), -1 when the class does not define it.
+int instanceIterFor(Value value, Value* result);
+int instanceNextFor(Value value, Value* result);
+bool instanceHasMagic(Value value, MagicKind kind);
 
 // Ancestor walk (MRO when set, superclass chain otherwise). Shared with
 // native.c so turunan_dari() sees multiple inheritance too.

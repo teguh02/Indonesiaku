@@ -1618,6 +1618,23 @@ int instanceLengthFor(Value value, int64_t* out) {
     return 1;
 }
 
+// _iter_()/_berikutnya_() run now, for iter()/lanjutkan() in native.c.
+// Returns 1 with *result set, 0 when the method raised (error pending),
+// -1 when the class does not define it.
+int instanceIterFor(Value value, Value* result) {
+    return magicNowNoArg(value, MAGIC_ITER, result);
+}
+
+int instanceNextFor(Value value, Value* result) {
+    return magicNowNoArg(value, MAGIC_BERIKUTNYA, result);
+}
+
+// Does this instance's class define the magic method? No user code runs.
+bool instanceHasMagic(Value value, MagicKind kind) {
+    Value method;
+    return instanceMagic(value, kind, &method);
+}
+
 // Truthiness of an instance: _logika_ first, then _panjang_ != 0 (Python's
 // order). Returns -1 when the class defines neither, and the caller keeps the
 // old "an instance is always true" behaviour.

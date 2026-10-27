@@ -2434,9 +2434,29 @@ Value nativeFnIter(int argCount, Value* args) {
     }
     Value src = args[0];
     if (IS_ITERATOR(src)) return src;   // iter(iter(x)) is iter(x), as in Python
+    if (IS_INSTANCE(src)) {
+        // K19/Fase 5: _iter_() runs ONCE here, exactly as OP_ITER_OBJEK does
+        // before a loop. Whatever it returns is iterated: a custom iterator
+        // with _berikutnya_(), or an ordinary collection.
+        Value iterated = src;
+        int found = instanceIterFor(src, &iterated);
+        if (found == 0) return KOSONG_VAL;          // _iter_ raised
+        if (found < 0) iterated = src;              // no _iter_: try _berikutnya_
+        if (IS_ITERATOR(iterated)) return iterated;
+        if (IS_INSTANCE(iterated)) {
+            if (!instanceHasMagic(iterated, MAGIC_BERIKUTNYA)) {
+                nativeRaiseKelas(vm.galatTipe,
+                                 "iter() memerlukan objek dengan metode _berikutnya_().");
+                return KOSONG_VAL;
+            }
+            return OBJ_VAL(newIterator(iterated));
+        }
+        src = iterated;
+    }
     if (!IS_DICT(src) && iterCount(src) < 0) {
         nativeRaiseKelas(vm.galatTipe,
-                         "iter() hanya menerima daftar, tupel, himpunan, teks, rentang, atau kamus");
+                         "iter() hanya menerima daftar, tupel, himpunan, teks, rentang, kamus, "
+                         "atau objek dengan _iter_()/_berikutnya_()");
         return KOSONG_VAL;
     }
     return OBJ_VAL(newIterator(src));
@@ -2454,9 +2474,33 @@ Value nativeFnLanjutkan(int argCount, Value* args) {
         return KOSONG_VAL;
     }
     ObjIterator* it = AS_ITERATOR(args[0]);
+    Value src = it->source;
+    if (IS_INSTANCE(src)) {
+        // Custom iterator: _berikutnya_() drives it, HentiIterasi ends it.
+        // index is unused here -- the object owns its own position.
+        Value value;
+        int found = instanceNextFor(src, &value);
+        if (found < 0) {
+            nativeRaiseKelas(vm.galatTipe,
+                             "Iterator objek kehilangan metode _berikutnya_().");
+            return KOSONG_VAL;
+        }
+        if (found == 0) {
+            // It raised. A HentiIterasi means "exhausted": with a default
+            // argument that is not an error, so swallow it and return it.
+            if (argCount == 2 && vm.nativeErrorPending &&
+                valueIsInstanceOf(vm.nativeErrorValue, OBJ_VAL(vm.hentiIterasi))) {
+                vm.nativeErrorPending = false;
+                vm.nativeErrorValue = KOSONG_VAL;
+                return args[1];
+            }
+            return KOSONG_VAL;      // any other error propagates unchanged
+        }
+        it->index++;                // keep a count for debugging/introspection
+        return value;
+    }
     // Re-read the length every call: mutating the source mid-iteration ends it
     // early instead of reading out of bounds.
-    Value src = it->source;
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0 || it->index >= count) {
         if (argCount == 2) return args[1];

@@ -1,0 +1,27 @@
+
+kelas Kata {
+    init() { diri.i = 0 }
+    _iter_() { kembalikan diri }
+    _berikutnya_() {
+        jika diri.i >= 40 { naikkan HentiIterasi() }
+        variabel n = diri.i
+        diri.i = diri.i + 1
+        # alokasi berat di dalam _berikutnya_: teks + daftar + kamus baru
+        variabel sampah = []
+        untuk j dalam rentang(0, 5) { tambah(sampah, "x" + ke_teks(n) + "-" + ke_teks(j)) }
+        kembalikan {"ke": n, "data": sampah}
+    }
+}
+variabel total = 0
+untuk item dalam Kata() { total = total + item["ke"] }
+cetak(total)
+
+# iter()/lanjutkan() manual di bawah tekanan yang sama
+variabel it = iter(Kata())
+variabel t2 = 0
+selagi benar {
+    variabel v = lanjutkan(it, kosong)
+    jika v == kosong { hentikan }
+    t2 = t2 + v["ke"]
+}
+cetak(t2)

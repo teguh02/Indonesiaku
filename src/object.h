@@ -227,7 +227,11 @@ typedef enum {
     MAGIC_NONE = MAGIC_COUNT
 } MagicKind;
 
-#define MAGIC_BIT(kind) (1u << (kind))
+#define MAGIC_BIT(kind) (1ull << (kind))
+// The mask below is 64-bit: adding a magic method past bit 63 silently breaks
+// every lookup, so fail the build instead of shifting out of range.
+_Static_assert(MAGIC_COUNT <= 64, "MAGIC_COUNT melebihi lebar bitmask magic (uint64_t)");
+
 
 #define SPECIAL_PROPERTI   1
 #define SPECIAL_STATIS     2
@@ -257,7 +261,7 @@ typedef struct ObjClass {
     // menimpa C.f() yang seharusnya menang. `own` yang disalin, bukan
     // `methods`.
     Table own;
-    uint32_t magic;      // MAGIC_BIT of every magic method in `methods`
+    uint64_t magic;      // MAGIC_BIT of every magic method in `methods`
 } ObjClass;
 
 typedef struct {
