@@ -29,9 +29,9 @@ opsional. Modul yang tidak masuk akal untuk bahasa pendidikan (mis.
 | Pembulatan | `ceil`, `floor`, `trunc`, `modf` | `atap`, `lantai`, `potong`, `pecah` | `atap`, `lantai` |
 | Akar & pangkat | `sqrt`, `isqrt`, `cbrt`, `pow`, `exp`, `exp2`, `expm1` | `akar`, `akar_bulat`, `akar_pangkat_tiga`, `pangkat`, `eksp`, `eksp2`, `eksp_kurang_satu` | `akar`, `pangkat` |
 | Logaritma | `log`, `log2`, `log10`, `log1p` | `log`, `log2`, `log10`, `log_satu_plus` | |
-| Trigonometri | `sin cos tan asin acos atan atan2` | sama (`sin`, `cos`, …) | |
+| Trigonometri | `sin cos tan asin acos atan atan2` | sama (`sin`, `cos`, …) | ✅ builtin C |
 | Hiperbolik | `sinh cosh tanh asinh acosh atanh` | sama | |
-| Sudut | `degrees`, `radians` | `derajat`, `radian` | |
+| Sudut | `degrees`, `radians` | `derajat`, `radian` | ✅ builtin C |
 | Teori bilangan | `gcd`, `lcm`, `factorial`, `comb`, `perm` | `fpb`, `kpk`, `faktorial`, `kombinasi`, `permutasi` | `mat_fpb`, `mat_kpk`, `mat_faktorial` |
 | Jumlah | `fsum`, `prod`, `sumprod`, `dist`, `hypot` | `jumlah_tepat`, `hasil_kali`, `jumlah_hasil_kali`, `jarak`, `hipotenusa` | |
 | Pemeriksaan | `isclose`, `isfinite`, `isinf`, `isnan` | `hampir_sama`, `adalah_hingga`, `adalah_takhingga`, `adalah_nan` | |
@@ -228,9 +228,9 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 
 | Python | Usulan | Ada | P |
 |---|---|---|---|
-| `socket` | `soket` | ✅ TCP localhost (`soket_dengar`, …) | P2: alamat selain 127.0.0.1, klien `soket_sambung`, UDP |
+| `socket` | `soket` | ✅ TCP localhost (`soket_dengar`, …) | klien `soket_sambung` ✅; P2: server di alamat selain 127.0.0.1, UDP |
 | `http.server` | `http.server` | 🟡 `pustaka/http.idk` + `todo_server.idk` | P2 |
-| `urllib.request.urlopen` / `http.client` | `http.ambil(url)` (klien) | | P2 — HTTPS butuh TLS (embed mbedTLS) → P3 |
+| `urllib.request.urlopen` / `http.client` | `http_ambil(url)` (klien) | ✅ `http://` saja, `Respons`, `GalatJaringan` | HTTPS butuh TLS (embed mbedTLS) → P3 |
 | `urllib.parse` (`quote`, `urlencode`, `urlparse`) | `url.kutip`, `url.enkode_kueri`, `url.urai` | | P2 |
 | `smtplib`, `email` | — | | P3 |
 
@@ -250,7 +250,7 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 
 | Python | Usulan | P |
 |---|---|---|
-| `turtle` (`forward`, `backward`, `left`, `right`, `penup`, `pendown`, `goto`, `circle`, `color`, `speed`, `done`) | `kura` (`maju`, `mundur`, `kiri`, `kanan`, `angkat_pena`, `turunkan_pena`, `ke`, `lingkaran`, `warna`, `kecepatan`, `selesai`) | P2 — output SVG (CLI) dan kanvas (playground) |
+| `turtle` (`forward`, `backward`, `left`, `right`, `penup`, `pendown`, `goto`, `circle`, `color`, `speed`, `done`) | `kura` (`maju`, `mundur`, `kiri`, `kanan`, `angkat_pena`, `turunkan_pena`, `ke`, `lingkaran`, `warna`, `kecepatan`, `selesai`) | ✅ `pustaka/kura.idk` → SVG (plus `hadap`, `pulang`, `tebal`, `svg_dari`); kanvas playground → P3 |
 | `tkinter` | `jendela` | P3 — via FFI/binding |
 
 ---

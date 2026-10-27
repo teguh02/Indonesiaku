@@ -1,6 +1,6 @@
 # Rencana Fitur: Fase 6 — Pustaka standar, gelombang C (sistem, teks, jaringan)
 
-- **Status:** dikerjakan — C1 `jalur`, C2 (`src/sistem.c`, `--sandbox`, `opsi`, `log`, `proses`), dan C3 `pola` selesai; tersisa C4 klien HTTP
+- **Status:** selesai — C1 `jalur`, C2 (`src/sistem.c`, `--sandbox`, `opsi`, `log`, `proses`), C3 `pola`, dan C4 klien HTTP
 - **Target versi:** 1.x (lanjutan Fase 6)
 - **Pemilik:** kontributor Fase 6
 - **Butir ROADMAP:** Fase 6 — `jalur`, `opsi`, `log`, `proses`, `pola`, klien HTTP.
@@ -196,6 +196,19 @@ bukan byte. Fungsi pengganti di `ganti` boleh berupa fungsi.
 `Respons(status, kepala, badan)`. Native baru `soket_sambung(host, port)`
 di samping soket yang ada; resolusi nama lewat `getaddrinfo`. Dimatikan di
 `--sandbox`.
+
+**Sebagaimana dibangun:** karena `pustaka/http.idk` adalah modul gaya lama
+(dipakai lewat `impor "pustaka/http.idk"`), namanya `http_ambil`, bukan
+`http.ambil`; dengan `impor http` keduanya sama saja. `Respons` juga membawa
+`url` dan `alasan`, plus `ok()` dan `periksa()` (`raise_for_status`). Bawaan
+`kepala` adalah `kosong` (K15 sebenarnya aman untuk `kamus()`, tetapi
+`kosong` lebih jelas). Permintaan dikirim sebagai **HTTP/1.0** supaya server
+tidak memakai `chunked` dan badan cukup dibaca sampai EOF. `soket_sambung`
+tinggal di `native.c` bersama soket lain dan memeriksa `sistemSandbox()`.
+Uji: `examples/pustaka_http_klien.idk` (luring), `tests/test_klien_http.sh`
+(melawan `todo_server.idk`, job CI `todo-http`), dan anak `--sandbox` di
+`examples/proses_contoh/terkurung.idk`. Ditemukan sekalian: `http_response`
+menghitung `Content-Length` dalam karakter -- diperbaiki ke byte UTF-8.
 
 ### Rincian tahap C2 (disetujui pemilik untuk dikerjakan)
 

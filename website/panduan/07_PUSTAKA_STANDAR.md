@@ -29,8 +29,27 @@ luar jangkauan.
 | `biner(n)` | Teks representasi biner: `"0b1010"` |
 | `oktal(n)` | Teks representasi oktal: `"0o12"` |
 | `heksa(n)` | Teks representasi heksadesimal: `"0xff"` |
+| `sin(x)`, `cos(x)`, `tan(x)` | Trigonometri, sudut dalam **radian** (seperti `math`). Hasil `desimal` |
+| `asin(x)`, `acos(x)`, `atan(x)` | Kebalikan trigonometri → radian. `asin`/`acos` hanya menerima `[-1, 1]` (selain itu `GalatNilai`) |
+| `atan2(y, x)` | Sudut titik `(x, y)` dalam radian, `-π..π` — kuadrannya benar, tidak seperti `atan(y / x)` |
+| `radian(derajat)`, `derajat(radian)` | Konversi satuan sudut |
 | `acak()` | Angka acak `[0, 1)` |
 | `acak_bulat(min, maks)` | Bilangan bulat acak `[min, maks]` |
+
+#### Trigonometri — radian, bukan derajat
+
+```indonesiaku
+cetak(sin(radian(30)))            # 0.49999999999999994 (desimal, bukan 0.5 persis)
+cetak(bulatkan(cos(radian(60)), 10))   # 0.5
+cetak(derajat(atan2(1, -1)))      # 135.0 -- kuadran II
+coba {
+    asin(2)
+} kecuali GalatNilai sebagai e {
+    cetak(e.pesan)                # asin(): argumen di luar domain [-1, 1]
+}
+```
+
+`sin`/`cos`/`tan` menolak tak hingga dengan `GalatNilai`, sama seperti Python.
 
 #### `min` / `max` — dua bentuk pemanggilan
 
@@ -566,7 +585,8 @@ disimpan ke berkas.
 ### 1.9 Soket TCP
 
 Server mendengarkan di `127.0.0.1` saja (localhost). Semua kesalahan dapat
-ditangkap `coba/kecuali`. Untuk server HTTP, gunakan `pustaka/http.idk`.
+ditangkap `coba/kecuali`. Untuk server **dan klien** HTTP, gunakan
+`pustaka/http.idk`.
 
 | Fungsi | Deskripsi |
 |--------|-----------|
@@ -575,6 +595,7 @@ ditangkap `coba/kecuali`. Untuk server HTTP, gunakan `pustaka/http.idk`.
 | `soket_baca(klien)` | Baca data yang diterima (satu recv) → string |
 | `soket_tulis(klien, teks)` | Kirim teks → jumlah byte |
 | `soket_tutup(soket)` | Tutup soket (server atau klien) |
+| `soket_sambung(host, port)` | Klien: sambung ke `host:port` (nama host atau IP, IPv4/IPv6) → soket. Host tak dikenal atau koneksi ditolak → `GalatOS`. Ditolak (`GalatIzin`) di `indk --sandbox` |
 
 ### 1.10 Basis Data (SQLite)
 
@@ -693,6 +714,32 @@ lagi.
 `proses`) dengan `GalatIzin`, turunan `GalatOS`. Playground web menjalankan
 setiap program dengan mode ini.
 
+### 1.12 Hash Kriptografis
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `md5(data)` | Hash MD5, 32 karakter heksa |
+| `sha1(data)` | Hash SHA-1, 40 karakter heksa |
+| `sha256(data)` | Hash SHA-256, 64 karakter heksa |
+| `sha512(data)` | Hash SHA-512, 128 karakter heksa |
+
+Padanan `hashlib` Python, tetapi langsung mengembalikan **teks heksa huruf
+kecil** (seperti `.hexdigest()`). `data` berupa teks (di-hash sebagai UTF-8)
+atau daftar byte `0..255`; keduanya memberi hasil yang sama untuk isi yang
+sama.
+
+```indonesiaku
+cetak(sha256("abc"))
+# ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+cetak(md5(""))                                   # d41d8cd98f00b204e9800998ecf8427e
+cetak(sha256("Halo") == sha256([72, 97, 108, 111]))   # benar
+```
+
+Nama modulnya bukan `hash` karena nama itu sudah dipakai fungsi bawaan
+`hash(x)` (nilai hash untuk kunci kamus, bukan hash kriptografis).
+Untuk menyimpan kata sandi, jangan memakai MD5/SHA-1 polos: keduanya
+dipertahankan untuk kecocokan dengan sistem lama dan pemeriksaan isi berkas.
+
 ## 2. Pustaka Standar (`pustaka/`)
 
 Di-`impor` sesuai kebutuhan. Fungsi diberi awalan agar tidak bentrok dengan
@@ -799,9 +846,52 @@ impor "pustaka/http.idk"
 | `http_urai_request(teks)` | Parse request HTTP mentah → kamus `{metode, path, versi, header, badan}` |
 | `http_response(kode, tipe_konten, badan)` | Bangun string response HTTP |
 | `http_response_json(kode, badan)` | Pintasan response JSON |
+| `http_ambil(url, metode="GET", kepala=kosong, badan="")` | **Klien**: kirim permintaan → objek `Respons` |
+| `http_urai_url(url)` | `[host, port, jalur]` dari url `http://` |
 
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
 di atas soket TCP.
+
+#### Klien: `http_ambil`
+
+Padanan `urllib.request.urlopen`/`requests.get`, khusus `http://`:
+
+```python
+impor "pustaka/http.idk"
+
+r = http_ambil("http://127.0.0.1:8080/todos")
+cetak(r.status, r.ok(), r.kepala["content-type"])   # 200 benar application/json
+cetak(r.badan)
+
+r = http_ambil("http://127.0.0.1:8080/todos", "POST",
+               {"Content-Type": "application/json"}, "{\"teks\":\"Beli kopi\"}")
+r.periksa()   # GalatJaringan bila status 4xx/5xx
+```
+
+`Respons` punya `url`, `status` (bulat), `alasan` (`"Not Found"`), `kepala`
+(kamus, **nama header huruf kecil**), dan `badan` (teks). Sama seperti
+`requests`, status 4xx/5xx **bukan** galat — `ok()` memberi `salah`, dan
+`periksa()` baru melempar `GalatJaringan`. Host yang tidak ditemukan atau
+koneksi yang ditolak menjadi `GalatOS` dari `soket_sambung`.
+
+```indonesiaku
+impor "pustaka/http.idk"
+
+cetak(http_urai_url("http://contoh.id:8080/a?b=1#c"))   # ["contoh.id", 8080, "/a?b=1"]
+coba {
+    http_ambil("https://contoh.id/")
+} kecuali GalatJaringan sebagai e {
+    cetak(e.pesan)    # HTTPS belum didukung (butuh TLS); pakai http://
+}
+```
+
+Batasan: **HTTPS belum didukung** (perlu TLS); permintaan dikirim sebagai
+HTTP/1.0, sehingga server tidak mengirim `chunked` dan badan dibaca sampai
+koneksi ditutup; tidak ada pengalihan (redirect) otomatis maupun **batas
+waktu** (server yang diam membuat program menunggu); url dengan nama pengguna
+(`user@host`) atau alamat IPv6 berkurung (`[::1]`) belum didukung. CR/LF di
+url, metode, atau header ditolak dengan `GalatJaringan` supaya tidak bisa
+menyisipkan header. Di playground (`--sandbox`) koneksi keluar ditolak.
 
 ### 2.7 `pustaka/koleksi.idk` — wadah data
 
@@ -1239,6 +1329,149 @@ hapus_berkas("_panduan_anak_sementara.idk")
 Baris baru di keluaran dinormalkan ke `\n` di semua sistem operasi.
 Program yang tidak ditemukan menghasilkan `GalatOS`. Belum ada
 `batas_waktu` (timeout). Ditolak dengan `GalatIzin` di `indk --sandbox`.
+
+### 2.18 `pustaka/bita.idk` — data biner
+
+Bahasa ini belum punya tipe byte tersendiri, jadi **data biner adalah daftar
+bulat `0..255`**. Modul `bita` mengubah teks ke byte UTF-8 dan sebaliknya,
+serta dari dan ke heksa (padanan `str.encode`/`bytes.decode`/`bytes.hex`).
+
+```indonesiaku
+dari bita impor ke_bita, ke_teks, ke_heksa, dari_heksa, GalatBita
+
+cetak(ke_bita("café"))            # [99, 97, 102, 195, 169]
+cetak(ke_teks([72, 97, 108, 111]))  # Halo
+cetak(ke_heksa(ke_bita("abc")))   # 616263
+cetak(ke_teks(dari_heksa("c3a9")))  # é
+
+coba {
+    ke_teks([226, 130])
+} kecuali GalatBita sebagai e {
+    cetak(e.pesan)                # ke_teks: urutan UTF-8 terpotong
+}
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `ke_bita(teks)` | Daftar byte UTF-8 dari teks |
+| `ke_teks(data)` | Teks dari daftar byte UTF-8; `GalatBita` bila urutannya tidak sah |
+| `ke_heksa(data)` | Teks heksa huruf kecil (`bytes.hex()`) |
+| `dari_heksa(teks)` | Daftar byte dari teks heksa (panjang harus genap; `bytes.fromhex`) |
+
+### 2.19 `pustaka/base64.idk` — Base64
+
+Padanan modul `base64` Python. `enkode` menerima teks (dienkode UTF-8 dulu)
+atau daftar byte; `dekode` mengembalikan daftar byte, dan `dekode_teks`
+langsung teks. Padding `=` dipertahankan.
+
+```indonesiaku
+impor base64
+
+cetak(base64.enkode("Halo"))            # SGFsbw==
+cetak(base64.dekode_teks("SGFsbw=="))   # Halo
+cetak(base64.dekode("SGFsbw=="))        # [72, 97, 108, 111]
+cetak(base64.enkode_url([251, 255]))    # -_8=
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `enkode(data)` / `dekode(teks)` / `dekode_teks(teks)` | Base64 standar (`b64encode`/`b64decode`) |
+| `enkode_url(data)` / `dekode_url(teks)` / `dekode_url_teks(teks)` | Alfabet aman-URL dengan `-` dan `_` (`urlsafe_b64encode`) |
+| `GalatBase64` | Panjang atau karakter base64 tidak sah |
+
+### 2.20 `pustaka/csv.idk` — CSV
+
+Mengurai dan membentuk CSV **sebagai teks** (bukan objek berkas), mengikuti
+RFC 4180 dan perilaku modul `csv` Python: kolom yang memuat pemisah, kutip,
+atau baris baru diapit kutip ganda, dan `""` berarti satu kutip.
+
+```indonesiaku
+impor csv
+
+cetak(csv.urai("nama,catatan\nBudi,\"a,b\"\n"))
+# [["nama", "catatan"], ["Budi", "a,b"]]
+
+data = csv.urai_kamus("nama,umur\nBudi,20\nAni,21\n")
+cetak(data)    # [{"nama": "Budi", "umur": "20"}, {"nama": "Ani", "umur": "21"}]
+cetak(csv.bentuk_kamus(data, ["umur", "nama"]))
+# umur,nama
+# 20,Budi
+# 21,Ani
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `urai(teks, pemisah=",", kutip="\"")` | Daftar baris, tiap baris daftar kolom (teks). Baris kosong menjadi `[]`, seperti `csv.reader` |
+| `bentuk(baris, pemisah=",", kutip="\"")` | Teks CSV; kutip hanya bila perlu. Nilai bukan teks diubah dengan `ke_teks` |
+| `urai_kamus(teks, ...)` | Daftar kamus; baris pertama menjadi header (`csv.DictReader`) |
+| `bentuk_kamus(daftar, kolom=kosong, ...)` | CSV dengan header; tanpa `kolom`, urutan kunci kamus pertama (`csv.DictWriter`) |
+
+Untuk berkas, gabungkan dengan `baca_semua`/`tulis_semua`. Berbeda dengan
+`csv.writer` Python yang memakai `\r\n`, `bentuk` mengakhiri setiap baris
+dengan `\n`.
+
+### 2.21 `pustaka/kura.idk` — grafika kura-kura
+
+Padanan `turtle` Python, tanpa jendela: kura menggambar garis dan hasilnya
+disimpan sebagai **SVG** yang bisa dibuka di peramban mana pun. Arah dan
+koordinat mengikuti turtle: mulai di `(0, 0)` menghadap timur, sumbu y ke
+atas, `kiri()` berlawanan arah jarum jam, sudut dalam **derajat**.
+
+```indonesiaku
+impor kura
+
+untuk i dalam rentang(4) {
+    kura.maju(100)
+    kura.kiri(90)
+}
+cetak(kura.posisi(), kura.arah())   # (0.0, 0.0) 0.0
+# kura.selesai("persegi.svg")      # tulis gambar ke berkas
+cetak(kura.svg())
+# <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -110 120 120" ...>
+# ...
+#   <polyline points="0,0 100,0 100,-100 0,-100 0,0" stroke="black" stroke-width="1"/>
+# ...
+```
+
+Kura sendiri, dengan pemanggilan berantai:
+
+```indonesiaku
+dari kura impor Kura, svg_dari
+
+bintang = Kura()
+bintang.warna("#c0392b").tebal(2)
+untuk i dalam rentang(5) {
+    bintang.maju(80).kanan(144)
+}
+lingkar = Kura()
+lingkar.angkat_pena()
+lingkar.ke(40, -60)
+lingkar.turunkan_pena()
+lingkar.warna("teal").lingkaran(30)
+cetak(panjang(svg_dari([bintang, lingkar])) > 0)    # benar
+```
+
+| Nama (fungsi modul / metode `Kura`) | Padanan `turtle` | Deskripsi |
+|------|------|-----------|
+| `maju(n)`, `mundur(n)` | `forward`, `backward` | Bergerak `n` satuan |
+| `kiri(d)`, `kanan(d)` | `left`, `right` | Berputar `d` derajat |
+| `ke(x, y)` | `goto` | Pindah lurus ke titik; menggambar bila pena turun |
+| `hadap(d)` | `setheading` | Arah mutlak: 0 timur, 90 utara |
+| `pulang()` | `home` | Ke `(0, 0)` menghadap timur |
+| `lingkaran(jari, busur=360, langkah=kosong)` | `circle` | Pusat `jari` satuan di kiri kura; `jari` negatif = searah jarum jam. Poligon dengan jumlah langkah bawaan yang sama seperti turtle |
+| `angkat_pena()`, `turunkan_pena()` | `penup`, `pendown` | |
+| `warna(w)` | `pencolor` | Nama warna SVG atau `"#rrggbb"` |
+| `tebal(n)` | `pensize` | Tebal garis |
+| `kecepatan(n)` | `speed` | 0–10, disimpan saja (SVG tidak beranimasi) |
+| `posisi()`, `arah()` | `position`, `heading` | Dibulatkan 2 desimal |
+| `svg()` | — | Teks SVG |
+| `selesai(berkas="kura.svg")` / `k.simpan(berkas)` | `done` | Tulis SVG ke berkas |
+| `reset()` | `reset` | Kura bawaan baru, kanvas kosong (fungsi modul) |
+| `svg_dari(daftar_kura, tepi=10)` | — | Satu SVG dari beberapa kura |
+
+Angka di SVG dibulatkan 2 desimal, jadi gambar yang sama selalu menghasilkan
+teks yang sama persis. Kesalahan argumen menimbulkan `GalatKura`. Belum ada:
+isian bentuk (`begin_fill`), teks (`write`), dan kanvas animasi di playground.
 
 ## 3. Aplikasi Contoh: Todo-list JSON DB
 

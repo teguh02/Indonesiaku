@@ -9,20 +9,22 @@ const KEYWORDS = [
 ];
 
 const BUILTINS = [
-  "abs", "acak", "acak_bulat", "ada_berkas", "ada_yang", "adalah_instansi", "akar",
-  "ambil_atribut", "ambil_lingkungan", "atap", "atur_atribut", "baca", "baca_baris", "baca_semua",
-  "bagi_sisa", "biner", "bisa_dipanggil", "buat_direktori", "buka_berkas", "bulat", "bulatkan",
-  "cetak", "chr", "daftar", "db_ambil_satu", "db_ambil_semua", "db_baris_terpengaruh", "db_batal",
-  "db_buka", "db_eksekusi", "db_id_terakhir", "db_komit", "db_mulai", "db_tutup", "direktori_kini",
-  "enumerasi", "format", "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_direktori",
-  "hapus_kunci", "hapus_pada", "hash", "heksa", "henti", "himpunan", "himpunan_beku",
-  "huruf_besar", "huruf_kecil", "id", "input", "isi_direktori", "iter", "jalur_indk", "jam",
-  "jenis", "jumlah", "kamus", "karakter", "ke_angka", "ke_bulat", "ke_desimal", "ke_logika",
-  "ke_teks", "keluar", "kunci", "lanjutkan", "lantai", "lingkungan", "max", "md5", "min", "oktal",
-  "ord", "pangkat", "panjang", "pasangkan", "peta", "potong", "punya", "punya_atribut", "rentang",
-  "repr", "saring", "semua", "sha1", "sha256", "sha512", "sisip", "soket_baca", "soket_dengar",
-  "soket_terima", "soket_tulis", "soket_tutup", "tambah", "tambah_berkas", "tanggal", "terbalik",
-  "terurut", "tulis", "tulis_galat", "tulis_semua", "tupel", "turunan_dari", "tutup", "waktu"
+  "abs", "acak", "acak_bulat", "acos", "ada_berkas", "ada_yang", "adalah_instansi", "akar",
+  "ambil_atribut", "ambil_lingkungan", "asin", "atan", "atan2", "atap", "atur_atribut", "baca",
+  "baca_baris", "baca_semua", "bagi_sisa", "biner", "bisa_dipanggil", "buat_direktori",
+  "buka_berkas", "bulat", "bulatkan", "cetak", "chr", "cos", "daftar", "db_ambil_satu",
+  "db_ambil_semua", "db_baris_terpengaruh", "db_batal", "db_buka", "db_eksekusi", "db_id_terakhir",
+  "db_komit", "db_mulai", "db_tutup", "derajat", "direktori_kini", "enumerasi", "format",
+  "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_direktori", "hapus_kunci",
+  "hapus_pada", "hash", "heksa", "henti", "himpunan", "himpunan_beku", "huruf_besar",
+  "huruf_kecil", "id", "input", "isi_direktori", "iter", "jalur_indk", "jam", "jenis", "jumlah",
+  "kamus", "karakter", "ke_angka", "ke_bulat", "ke_desimal", "ke_logika", "ke_teks", "keluar",
+  "kunci", "lanjutkan", "lantai", "lingkungan", "max", "md5", "min", "oktal", "ord", "pangkat",
+  "panjang", "pasangkan", "peta", "potong", "punya", "punya_atribut", "radian", "rentang", "repr",
+  "saring", "semua", "sha1", "sha256", "sha512", "sin", "sisip", "soket_baca", "soket_dengar",
+  "soket_sambung", "soket_terima", "soket_tulis", "soket_tutup", "tambah", "tambah_berkas", "tan",
+  "tanggal", "terbalik", "terurut", "tulis", "tulis_galat", "tulis_semua", "tupel", "turunan_dari",
+  "tutup", "waktu"
 ];
 
 // Magic methods (K19): written inside `kelas`, called by the interpreter.

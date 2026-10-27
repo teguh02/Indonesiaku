@@ -229,7 +229,7 @@ Ref: 04 §7.
 > kustom. Batas yang disengaja: pola belum bersarang (`[a, b]` destructuring
 > belum ada), dan `hasilkan` belum didukung di dalam blok `coba ... akhirnya`.
 
-### Fase 6 — Pustaka standar luas (1.x berkelanjutan) — 🟨 dikerjakan
+### Fase 6 — Pustaka standar luas (1.x berkelanjutan) — ✅ selesai (kecuali yang ditunda)
 
 Modul P2 dari katalog 07. Modul baru berbentuk **modul bernamespace**
 (`impor koleksi`, `dari koleksi impor Penghitung`), ditulis dalam Indonesiaku
@@ -246,8 +246,9 @@ baru.
 | `iterasi` (itertools, eager) | ✅ | `examples/pustaka_iterasi.idk` |
 | `fungsional` (functools) | ✅ | `examples/pustaka_fungsional.idk` |
 
-**Gelombang B & C** ([B](RENCANA_FITUR/pustaka_fase6_batch_b.md),
-[C](RENCANA_FITUR/pustaka_fase6_gelombang_c.md)):
+**Gelombang B & C** ([B](RENCANA_FITUR/selesai/pustaka_fase6_batch_b.md),
+[C](RENCANA_FITUR/selesai/pustaka_fase6_gelombang_c.md),
+[kura](RENCANA_FITUR/selesai/pustaka_kura.md)):
 
 | Modul | Status | Bukti |
 |---|---|---|
@@ -257,11 +258,14 @@ baru.
 | `proses` (subprocess) + `indk --sandbox` | ✅ | `examples/pustaka_proses.idk` |
 | builtin sistem operasi (`src/sistem.c`) | ✅ | `examples/sistem_dasar.idk` |
 | `pola` (re, mesin C linear) | ✅ | `examples/pustaka_pola.idk` |
-| `bita`, `base64`, `csv` | 🟨 kode + tes; panduan belum | `examples/pustaka_{bita,base64,csv}.idk` |
-| `md5`/`sha1`/`sha256`/`sha512` | 🟨 kode + tes; panduan belum | `examples/pustaka_hash.idk` |
+| `bita`, `base64`, `csv` | ✅ | `examples/pustaka_{bita,base64,csv}.idk` |
+| `md5`/`sha1`/`sha256`/`sha512` | ✅ | `examples/pustaka_hash.idk` |
+| klien HTTP (`http_ambil`) + `soket_sambung` | ✅ | `examples/pustaka_http_klien.idk`, `tests/test_klien_http.sh` |
+| trigonometri (`sin` … `atan2`, `radian`, `derajat`) | ✅ | `examples/trigonometri.idk` |
+| `kura` (turtle → SVG) | ✅ | `examples/pustaka_kura.idk` |
 
-**Belum dikerjakan:** klien HTTP (tahap C4, butuh `soket_sambung`), panduan
-`bita`/`base64`/`csv`/hash, lalu `kura` (turtle).
+Lanjutan yang sengaja di luar Fase 6: HTTPS (butuh TLS, Fase 8), kanvas
+`kura` beranimasi di playground, dan modul P3 katalog 07.
 
 **Ditunda karena keterbatasan bahasa** (bukan lupa): `tupel_bernama`,
 `@cache_lru`, dan `urutan_lengkap` menunggu fungsi variadik (`*args`) dan

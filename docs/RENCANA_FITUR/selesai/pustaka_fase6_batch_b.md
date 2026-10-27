@@ -1,6 +1,6 @@
 # Rencana Fitur: Fase 6 — Pustaka standar, gelombang B (data & format)
 
-- **Status:** disetujui
+- **Status:** selesai (kode, tes, dan panduan 07 §1.12, §2.18–2.20)
 - **Target versi:** 1.2.0 (lanjutan Fase 6)
 - **Pemilik:** kontributor Fase 6
 - **Butir ROADMAP:** Fase 6 — `bita`, `base64`, `hash`, `csv`.

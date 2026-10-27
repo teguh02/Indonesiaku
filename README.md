@@ -107,10 +107,12 @@ merusak kompatibilitas sampai 2.0.
   jalur pencarian `INDK_PATH`, serta `__nama__`/`__utama__`
 - **Kemudahan menulis** — f-string, irisan & indeks negatif, *list
   comprehension*, penugasan berganda, operator bitwise, metode tipe bawaan
-- **Pustaka standar** — berkas I/O, JSON, HTTP, soket TCP, SQLite tertanam,
-  serta modul bernamespace `koleksi`, `statistik`, `iterasi`, `fungsional`,
-  `salin`, `jalur`, `pola` (ekspresi reguler), `opsi` (argumen baris perintah),
-  `log`, dan `proses` (menjalankan program lain) (Fase 6); mode `indk --sandbox`
+- **Pustaka standar** — berkas I/O, JSON, server dan klien HTTP, soket TCP,
+  SQLite tertanam, trigonometri, hash (`md5`/`sha*`), serta modul
+  bernamespace `koleksi`, `statistik`, `iterasi`, `fungsional`, `salin`,
+  `jalur`, `pola` (ekspresi reguler), `opsi` (argumen baris perintah), `log`,
+  `proses` (menjalankan program lain), `bita`, `base64`, `csv`, dan `kura`
+  (grafika kura-kura ke SVG) (Fase 6); mode `indk --sandbox`
 - **Mesin** — *garbage collector* mark-sweep dan REPL interaktif
 
 Daftar lengkap beserta contoh tiap fitur ada di

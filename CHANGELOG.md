@@ -42,7 +42,7 @@ selesai.
 `hasilkan`, `cocokkan`, `kasus`. Program yang memakai ketiganya sebagai nama
 variabel perlu diganti namanya.
 
-**Fase 6 — Pustaka standar luas (gelombang B & C, sebagian).**
+**Fase 6 — Pustaka standar luas (gelombang B & C).**
 
 ### Added
 - ✨ **`opsi`** — padanan `argparse`: `PenguraiArgumen`, argumen posisi dan
@@ -79,7 +79,23 @@ variabel perlu diganti namanya.
   `pisah_ekstensi`, `ekstensi`, `normalisasi`, `adalah_absolut`,
   `dari_windows`. Contoh: `examples/pustaka_jalur.idk`.
 - ✨ Builtin **`md5`, `sha1`, `sha256`, `sha512`** (teks heksa) dan modul
-  **`bita`**, **`base64`**, **`csv`** (gelombang B; panduannya menyusul).
+  **`bita`**, **`base64`**, **`csv`** (gelombang B), kini dengan panduan.
+- ✨ **Klien HTTP**: `http_ambil(url, metode, kepala, badan)` di
+  `pustaka/http.idk` mengembalikan `Respons` (`status`, `alasan`, `kepala`
+  huruf kecil, `badan`, `ok()`, `periksa()`), plus `http_urai_url` dan
+  `GalatJaringan`. Khusus `http://` (HTTPS butuh TLS, Fase 8). Diuji
+  melawan `examples/todo_server.idk` lewat `tests/test_klien_http.sh`.
+- ✨ Builtin **`soket_sambung(host, port)`** (koneksi TCP keluar, IPv4/IPv6
+  lewat `getaddrinfo`); ditolak di `--sandbox`.
+- ✨ Builtin trigonometri **`sin`, `cos`, `tan`, `asin`, `acos`, `atan`,
+  `atan2`, `radian`, `derajat`** — memanggil libm C seperti modul
+  `math` Python (digit terakhir bisa berbeda 1 ulp antar-platform, sama
+  seperti Python sendiri). Contoh: `examples/trigonometri.idk`.
+- ✨ **`kura`** — padanan `turtle` yang menyimpan gambar sebagai SVG:
+  `maju`, `mundur`, `kiri`, `kanan`, `ke`, `hadap`, `pulang`, `lingkaran`
+  (jumlah langkah sama dengan turtle), `angkat_pena`, `turunkan_pena`,
+  `warna`, `tebal`, `kecepatan`, `selesai`; kelas `Kura` untuk beberapa
+  kura dan `svg_dari`. Contoh: `examples/pustaka_kura.idk`.
 
 ### Fixed
 - 🐛 **Modul standar tidak bisa diimpor setelah dipasang.** `pustaka/` hanya
@@ -92,6 +108,9 @@ variabel perlu diganti namanya.
   `/usr/local/share/indonesiaku/pustaka`. Urutan pencarian lama tidak
   berubah. Diuji `tests/test_impor_lokasi.{sh,ps1}` dan dengan membangun
   kedua image Docker.
+- 🐛 **`http_response` mengirim `Content-Length` dalam karakter, bukan
+  byte**, sehingga badan non-ASCII (mis. `"☕"`) terpotong di curl dan
+  peramban. Kini dihitung dalam byte UTF-8.
 - 🐛 Perintah `gcc` manual di panduan instalasi tidak memuat `native.c`,
   `db.c`, dan `sqlite3.c` (serta `-lws2_32` di Windows), jadi gagal di tahap
   link. Kini lengkap dan sudah dijalankan di Windows dan Linux.

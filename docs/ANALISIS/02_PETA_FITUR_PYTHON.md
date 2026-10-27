@@ -243,7 +243,7 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 
 | Python | Modul Indonesiaku | Status | Fase |
 |---|---|---|---|
-| `math` | `matematika` | 🟡 builtin + `pustaka/matematika.idk` | 3 |
+| `math` | `matematika` | 🟡 builtin (termasuk trigonometri) + `pustaka/matematika.idk` | 3 |
 | `random` | `acak` | 🟡 `acak`, `acak_bulat` | 3 |
 | `string` | `teks` | 🟡 | 3 |
 | `json` | `json` | ✅ | — |
@@ -259,13 +259,13 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 | `argparse` | `argparse` → `opsi` | ✅ tanpa singkatan/nargs/sub-perintah | 6 |
 | `subprocess` | `proses` | ✅ `jalankan`/`keluaran`, tanpa shell, belum timeout | 6 |
 | `socket` | `soket` | ✅ (TCP, localhost) | — |
-| `http.server` / `urllib` | `http` | 🟡 parse/build | 6 |
-| `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | 🟨 `md5`/`sha*` builtin, `base64` (gelombang B); `rahasia`/`uuid` belum | 6 |
+| `http.server` / `urllib` | `http` | 🟡 server (parse/build) + klien `http_ambil` (`http://`); HTTPS belum | 6 |
+| `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | 🟡 `md5`/`sha*` builtin, `base64` ✅; `rahasia`/`uuid` belum | 6 |
 | `sqlite3` | `sqlite` (`db_*`) | ✅ | 3 — selesai; 10 fungsi, SQLite 3.50.4 vendored, parameter `?` wajib |
 | `threading` / `asyncio` | `utas` / `asinkron` | ❌ | 7 |
 | `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | 🟡 `statistik` ✅ (gelombang A); `desimal`/`pecahan` ❌ | 6 |
 | `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | 🟡 `salin` ✅ (gelombang A); sisanya ❌ | 6 |
-| `tkinter` / `turtle` | `kura` (turtle — sangat cocok untuk pendidikan!) | ❌ | 8 |
+| `tkinter` / `turtle` | `kura` (turtle — sangat cocok untuk pendidikan!) | 🟡 `kura` ✅ (SVG); kanvas playground dan `tkinter` belum | 6 |
 
 > **Catatan pendidikan:** modul `turtle` adalah salah satu alasan Python
 > populer di sekolah. Modul `kura` (kura-kura) yang menggambar ke SVG/kanvas di
