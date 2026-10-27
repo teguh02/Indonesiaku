@@ -1,0 +1,93 @@
+# dengan ... sebagai — manajer konteks.
+# _keluar_() dijamin dipanggil: selesai normal, galat, kembalikan, hentikan,
+# maupun lanjut.
+
+kelas Berkas {
+    init(nama) { diri.nama = nama }
+    _masuk_() {
+        cetak("buka", diri.nama)
+        kembalikan diri
+    }
+    _keluar_() { cetak("tutup", diri.nama) }
+    baca() { kembalikan f"isi {diri.nama}" }
+}
+
+cetak("=== selesai normal ===")
+dengan Berkas("catatan.txt") sebagai f {
+    cetak(f.baca())
+}
+
+cetak("=== galat tetap merambat setelah _keluar_ ===")
+coba {
+    dengan Berkas("rusak.txt") sebagai f {
+        daftar = [1]
+        cetak(daftar[99])
+    }
+} kecuali GalatIndeks sebagai e {
+    cetak("tertangkap:", e)
+}
+
+cetak("=== kembalikan dari dalam blok ===")
+
+fungsi ambil() {
+    dengan Berkas("data.txt") sebagai f {
+        kembalikan f.baca()
+    }
+}
+cetak(ambil())
+
+cetak("=== hentikan dan lanjut ===")
+
+untuk i dalam rentang(0, 3) {
+    dengan Berkas(f"a{i}") {
+        jika i == 1 { hentikan }
+        cetak("badan", i)
+    }
+}
+
+untuk i dalam rentang(0, 3) {
+    dengan Berkas(f"b{i}") {
+        jika i == 1 { lanjut }
+        cetak("badan", i)
+    }
+}
+
+cetak("=== bersarang: yang dalam ditutup lebih dulu ===")
+dengan Berkas("luar") {
+    dengan Berkas("dalam") {
+        cetak("badan bersarang")
+    }
+}
+
+cetak("=== tanpa 'sebagai' ===")
+
+kelas Pengunci {
+    _masuk_() { cetak("kunci diambil"); kembalikan diri }
+    _keluar_() { cetak("kunci dilepas") }
+}
+
+dengan Pengunci() {
+    cetak("bagian terlindungi")
+}
+
+cetak("=== yang terikat adalah kembalian _masuk_ ===")
+
+kelas Pembungkus {
+    _masuk_() { kembalikan [1, 2, 3] }
+    _keluar_() { cetak("pembungkus selesai") }
+}
+
+dengan Pembungkus() sebagai isi {
+    cetak(isi)
+    cetak(panjang(isi))
+}
+
+cetak("=== 'coba' di dalam 'dengan' ===")
+dengan Berkas("campur.txt") sebagai f {
+    coba {
+        daftar = [1]
+        cetak(daftar[5])
+    } kecuali GalatIndeks sebagai e {
+        cetak("ditangani di dalam:", e)
+    }
+}

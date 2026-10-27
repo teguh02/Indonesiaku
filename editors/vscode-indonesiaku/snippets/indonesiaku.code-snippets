@@ -361,5 +361,27 @@
       "${1:NAMA} = ${2:nilai}"
     ],
     "description": "Atribut kelas: nilai bersama semua instance"
+  },
+  "dengan ... sebagai": {
+    "prefix": "dengan",
+    "body": [
+      "dengan ${1:ekspresi} sebagai ${2:nama} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Manajer konteks: _keluar_() dijamin dipanggil"
+  },
+  "Metode ajaib _masuk_/_keluar_": {
+    "prefix": "_masuk_",
+    "body": [
+      "_masuk_() {",
+      "\tkembalikan diri",
+      "}",
+      "",
+      "_keluar_() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Membuat kelas bisa dipakai di blok 'dengan'"
   }
 }

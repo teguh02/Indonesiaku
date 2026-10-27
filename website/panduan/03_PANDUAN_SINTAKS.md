@@ -1654,6 +1654,42 @@ Aturannya mengikuti Python:
 
 > Contoh lengkap: [`examples/oop/atribut_kelas.idk`](../examples/oop/atribut_kelas.idk)
 
+### `dengan ... sebagai` — manajer konteks
+
+Untuk sumber daya yang harus dilepas (berkas, koneksi, kunci), `dengan`
+menjamin pembersihan berjalan tanpa perlu `coba ... akhirnya` ditulis tangan:
+
+```indonesiaku
+kelas Berkas {
+    init(nama) { diri.nama = nama }
+    _masuk_() { kembalikan diri }
+    _keluar_() { cetak("tutup", diri.nama) }
+    baca() { kembalikan f"isi {diri.nama}" }
+}
+
+dengan Berkas("catatan.txt") sebagai f {
+    cetak(f.baca())
+}
+# tutup catatan.txt
+```
+
+Kelasnya perlu dua metode: `_masuk_()` dijalankan sebelum blok, `_keluar_()`
+sesudahnya.
+
+- **`_keluar_()` dijamin dipanggil** — baik blok selesai normal, melempar
+  galat, maupun keluar lewat `kembalikan`, `hentikan`, atau `lanjut`.
+- Galat di dalam blok tetap merambat setelah `_keluar_()` dijalankan.
+- Yang diikat `sebagai` adalah **nilai kembalian `_masuk_()`**, bukan objek
+  manajernya.
+- `sebagai <nama>` boleh dihilangkan jika nilainya tidak dipakai.
+- Blok `dengan` yang bersarang ditutup dari yang terdalam.
+
+> Catatan: `_keluar_()` dipanggil tanpa argumen dan nilai kembaliannya
+> diabaikan. Berbeda dari Python, sebuah manajer di sini **tidak bisa menelan
+> galat** — pembersihan tetap jalan, galatnya tetap keluar.
+
+> Contoh lengkap: [`examples/oop/dengan_sebagai.idk`](../examples/oop/dengan_sebagai.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

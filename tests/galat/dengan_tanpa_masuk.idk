@@ -1,0 +1,9 @@
+# Manajer konteks wajib punya _masuk_() dan _keluar_().
+
+kelas BukanManajer {
+    init() { diri.x = 1 }
+}
+
+dengan BukanManajer() sebagai m {
+    cetak(m)
+}

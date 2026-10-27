@@ -1,0 +1,5 @@
+# 'dengan' atas nilai yang bukan objek.
+
+dengan 42 sebagai x {
+    cetak(x)
+}

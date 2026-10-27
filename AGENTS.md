@@ -206,6 +206,13 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   triggered by `_sama_` freed them — a use-after-free that the normal suite
   passed and only the sanitizer build caught. Keep values on the stack
   (`peek`), pop after.
+- **Anything that must run before every jump out of a block belongs in
+  `FinallyRegion`, not in new code.** `dengan` (context managers) reuses the
+  `akhirnya` machinery with a `kind` tag: `FINALLY_EXIT_CALL` emits three
+  instructions calling `_keluar_()` instead of re-scanning source. That is why
+  `kembalikan`/`hentikan`/`lanjut` inside `dengan` were correct without
+  touching any of those three statements -- `exitTryBlocks()` already handles
+  them.
 - **A new `Table` on a heap object needs THREE edits, not one.** `ObjClass.fields`
   (class attributes) had to be `initTable`d in `newClass`, `freeTable`d in
   `freeObject`, and — the one that silently corrupts — `markTable`d in

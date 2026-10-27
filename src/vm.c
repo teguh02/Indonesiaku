@@ -31,12 +31,14 @@ static const char* const MAGIC_NAMES[MAGIC_COUNT] = {
     "_ktambah_", "_kkurangi_", "_kkali_", "_kbagi_", "_kbagi_bulat_",
     "_ksisa_", "_kpangkat_",
     "_iter_", "_panggil_",
+    "_masuk_", "_keluar_",
 };
 
 static int formatInstanceMagic(TextBuf* out, Value instance, bool repr);
 static int instanceEqualMagic(Value a, Value b);
 static int instanceHashMagic(Value value, uint32_t* out);
 static bool instanceMagic(Value value, MagicKind kind, Value* method);
+static const char* valueTypeName(Value value);
 
 static Value clockNative(int argCount, Value* args) {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -697,11 +699,30 @@ static bool bindMethod(ObjClass* klass, ObjString* name) {
     return true;
 }
 
+// 'dengan' compiles to _masuk_()/_keluar_() invokes, so a manager missing one
+// of them surfaces here as a bare "Metode tidak terdefinisi '_masuk_'". Say
+// what the user actually wrote instead. Placed in the shared invoke paths so
+// both the missing-method and the not-an-object case are covered.
+static const char* contextManagerHint(ObjString* name) {
+    if (name == vm.magicNames[MAGIC_MASUK] ||
+        name == vm.magicNames[MAGIC_KELUAR]) {       // interned
+        return "'dengan' memerlukan objek dengan metode _masuk_() dan _keluar_()";
+    }
+    return NULL;
+}
+
 static bool invokeFromClass(ObjClass* klass, ObjString* name, int argCount) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
         vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
-        runtimeError("Metode tidak terdefinisi '%s'.", name->chars);
+        const char* hint = contextManagerHint(name);
+        if (hint != NULL) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("%s; kelas '%s' tidak punya '%s'.",
+                         hint, klass->name->chars, name->chars);
+        } else {
+            runtimeError("Metode tidak terdefinisi '%s'.", name->chars);
+        }
         return false;
     }
     return call(AS_CLOSURE(method), argCount, NULL);
@@ -854,7 +875,13 @@ static bool invoke(ObjString* name, int argCount) {
             return true;
         }
         vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
-        runtimeError("Hanya objek yang memiliki metode.");
+        const char* hint = contextManagerHint(name);
+        if (hint != NULL) {
+            vm.runtimeErrorClass = vm.galatTipe;
+            runtimeError("%s, bukan '%s'.", hint, valueTypeName(receiver));
+        } else {
+            runtimeError("Hanya objek yang memiliki metode.");
+        }
         return false;
     }
 

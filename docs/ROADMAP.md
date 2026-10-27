@@ -189,9 +189,12 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ✅ atribut kelas — nilai bersama di badan kelas
 ([rencana](RENCANA_FITUR/selesai/atribut_kelas.md)).
 
+✅ `dengan ... sebagai` — manajer konteks lewat `_masuk_`/`_keluar_`
+([rencana](RENCANA_FITUR/selesai/dengan_sebagai.md)).
+
 > Fase 4 **sedang dikerjakan** — yang tersisa: dekorator
-> (`@properti`/`@metode_statis`/`@metode_kelas`), `dengan ... sebagai`,
-> pewarisan berganda + MRO C3, kelas abstrak.
+> (`@properti`/`@metode_statis`/`@metode_kelas`), pewarisan berganda + MRO C3,
+> kelas abstrak.
 
 ### Fase 5 — Iterator & generator (1.3)
 

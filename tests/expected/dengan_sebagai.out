@@ -1,0 +1,44 @@
+=== selesai normal ===
+buka catatan.txt
+isi catatan.txt
+tutup catatan.txt
+=== galat tetap merambat setelah _keluar_ ===
+buka rusak.txt
+tutup rusak.txt
+tertangkap: Indeks list di luar jangkauan (indeks 99, panjang 1).
+=== kembalikan dari dalam blok ===
+buka data.txt
+tutup data.txt
+isi data.txt
+=== hentikan dan lanjut ===
+buka a0
+badan 0
+tutup a0
+buka a1
+tutup a1
+buka b0
+badan 0
+tutup b0
+buka b1
+tutup b1
+buka b2
+badan 2
+tutup b2
+=== bersarang: yang dalam ditutup lebih dulu ===
+buka luar
+buka dalam
+badan bersarang
+tutup dalam
+tutup luar
+=== tanpa 'sebagai' ===
+kunci diambil
+bagian terlindungi
+kunci dilepas
+=== yang terikat adalah kembalian _masuk_ ===
+[1, 2, 3]
+3
+pembungkus selesai
+=== 'coba' di dalam 'dengan' ===
+buka campur.txt
+ditangani di dalam: Indeks list di luar jangkauan (indeks 5, panjang 1).
+tutup campur.txt

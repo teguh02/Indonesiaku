@@ -46,7 +46,7 @@ Prinsip penamaan:
 | `global` / `nonlocal` | `global` / `nonlokal` | ✅ | — |
 | `del` | `buang` | ❌ | 2 |
 | `assert` | `pastikan` | ✅ | 1 — selesai; pesan dinilai hanya saat gagal |
-| `with` | `dengan ... sebagai` | ❌ (token ada) | 4 |
+| `with` | `dengan ... sebagai` | ✅ `_masuk_`/`_keluar_` | 4 |
 | `yield` | `hasilkan` | ❌ | 5 |
 | `async` / `await` | `asinkron` / `tunggu` | ❌ | 7 |
 | `match` / `case` (3.10) | `cocokkan` / `kasus` | ❌ | 5 |
@@ -184,7 +184,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | Kelas, konstruktor, metode, pewarisan tunggal, `super` | ✅ | — |
 | `isinstance`, kelas sebagai nilai pertama | ❌ / ✅ | 2 |
 | Pewarisan berganda + MRO (C3) | ❌ | 4 |
-| Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | 🟡 representasi, perbandingan, aritmetika + cerminannya (`__radd__` dst), panjang, kebenaran, indeks, hash (K19); manajer konteks, `NotImplemented`, dan iterator malas `_berikutnya_` belum; `_iter_`/`_panggil_` sudah ada; `terurut`/`min`/`max` memakai `_kurang_dari_` | 4 |
+| Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | 🟡 representasi, perbandingan, aritmetika + cerminannya (`__radd__` dst), panjang, kebenaran, indeks, hash (K19); `NotImplemented` dan iterator malas `_berikutnya_` belum; `_iter_`/`_panggil_` dan manajer konteks `_masuk_`/`_keluar_` sudah ada; `terurut`/`min`/`max` memakai `_kurang_dari_` | 4 |
 | Usulan nama: `_teks_`, `_sama_`, `_kurang_`, `_tambah_`, `_panjang_`, `_ambil_`, `_iter_`, `_panggil_` | | |
 | Atribut kelas (bukan per instansi) | ✅ | 4 |
 | `@property`, `@staticmethod`, `@classmethod` | ❌ | 4 |

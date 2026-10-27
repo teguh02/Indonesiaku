@@ -1,0 +1,4 @@
+'dengan' memerlukan objek dengan metode _masuk_() dan _keluar_(); kelas 'BukanManajer' tidak punya '_masuk_'.
+[baris 7, kolom 21] dalam skrip
+    dengan BukanManajer() sebagai m {
+                        ^

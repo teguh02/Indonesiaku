@@ -82,11 +82,21 @@ typedef enum {
 
 struct LoopCtx;
 
-// A 'coba ... akhirnya' whose body or 'kecuali' block is being compiled.
+// What exitTryBlocks() must emit when jumping out of a region.
+typedef enum {
+    FINALLY_SOURCE,     // 'akhirnya': re-scan and re-compile its block
+    FINALLY_EXIT_CALL   // 'dengan': call _keluar_() on the manager local
+} FinallyKind;
+
+// A 'coba ... akhirnya' or a 'dengan' block whose body is being compiled.
+// Both need the same guarantee -- run something before any jump out -- so
+// 'dengan' reuses this machinery instead of growing a parallel one.
 typedef struct {
+    FinallyKind kind;
     int tryDepth;               // Compiler.tryDepth before its handler
-    ScannerState finallyBlock;  // scanner positioned just before its '{'
-    struct LoopCtx* loop;       // loop enclosing the 'coba' statement
+    ScannerState finallyBlock;  // FINALLY_SOURCE: scanner just before its '{'
+    uint8_t managerSlot;        // FINALLY_EXIT_CALL: local holding the manager
+    struct LoopCtx* loop;       // loop enclosing the statement
 } FinallyRegion;
 
 typedef struct Compiler {
@@ -481,6 +491,7 @@ static void maybeTupleTail();
 
 static void expression();
 static void statement();
+static void withStatement();
 static void declaration();
 static ParseRule* getRule(TokenType type);
 static void function(FunctionType type);
@@ -2281,6 +2292,16 @@ static void block();
 // block's normal copy, so — like CPython — the block is duplicated: rewind
 // the scanner to it, compile it, then restore the parser exactly.
 static void inlineFinallyBlock(FinallyRegion* region) {
+    if (region->kind == FINALLY_EXIT_CALL) {
+        // 'dengan': three instructions instead of re-compiling a block, so
+        // the inline budget buys far more copies here than for 'akhirnya'.
+        Token keluar = syntheticToken("_keluar_");
+        emitBytes(OP_GET_LOCAL, region->managerSlot);
+        emitBytes(OP_INVOKE, identifierConstant(&keluar));
+        emitByte(0);                        // argCount
+        emitByte(OP_POP);                   // discard _keluar_'s return value
+        return;
+    }
     Parser savedParser = parser;
     ScannerState savedScanner = saveScanner();
     LoopCtx* savedLoop = currentLoop;
@@ -2679,6 +2700,7 @@ static void tryStatement() {
             hasFinally = false;
         } else {
             FinallyRegion* region = &current->finallies[current->finallyCount++];
+            region->kind = FINALLY_SOURCE;
             region->tryDepth = current->tryDepth;
             region->finallyBlock = finallyBlock;
             region->loop = currentLoop;
@@ -2744,6 +2766,94 @@ static void tryStatement() {
         patchJump(toFinally);
         finallyClause();
     }
+}
+
+// dengan <ekspresi> [sebagai <nama>] { ... }
+//
+// Compiled with the same shape as 'coba ... akhirnya': an OP_TRY_BEGIN whose
+// handler routes errors through the _keluar_ call and rethrows. Registering a
+// FinallyRegion means 'kembalikan', 'hentikan', and 'lanjut' already run
+// _keluar_() on their way out, via exitTryBlocks() -- no changes needed in any
+// of those three statements.
+static void withStatement() {
+    beginScope();
+
+    // The manager lives in a hidden local so the handler can reach it after
+    // the body's own locals have been discarded.
+    expression();
+    int managerSlot = addSyntheticLocal(" dengan mgr");
+
+    Token masuk = syntheticToken("_masuk_");
+    emitBytes(OP_GET_LOCAL, (uint8_t)managerSlot);
+    emitBytes(OP_INVOKE, identifierConstant(&masuk));
+    emitByte(0);                            // argCount
+
+    // What _masuk_() returned is what 'sebagai' binds -- not the manager.
+    if (match(TOKEN_SEBAGAI)) {
+        consume(TOKEN_IDENTIFIER, "Harapkan nama variabel setelah 'sebagai'.");
+        addLocal(parser.previous);
+        markInitialized();
+    } else {
+        addSyntheticLocal(" dengan nilai");
+    }
+
+    if (current->finallyCount == FINALLY_MAX) {
+        error("Terlalu banyak blok 'dengan'/'akhirnya' bersarang.");
+        endScope();
+        return;
+    }
+    FinallyRegion* region = &current->finallies[current->finallyCount++];
+    region->kind = FINALLY_EXIT_CALL;
+    region->tryDepth = current->tryDepth;
+    region->managerSlot = (uint8_t)managerSlot;
+    region->loop = currentLoop;
+
+    int handler = emitJump(OP_TRY_BEGIN);
+    current->tryDepth++;
+
+    consume(TOKEN_LEFT_BRACE, "Harapkan '{' setelah ekspresi 'dengan'.");
+    beginScope();
+    block();
+    endScope();
+
+    emitByte(OP_TRY_END);
+    current->tryDepth--;
+    current->finallyCount--;
+
+    // Normal path: no error to rethrow. Error path: the VM pushed the value.
+    emitByte(OP_KOSONG);
+    emitByte(OP_SALAH);
+    int toExit = emitJump(OP_JUMP);
+    patchJump(handler);
+    emitByte(OP_BENAR);
+    patchJump(toExit);
+
+    // Mirrors finallyClause(): run the cleanup, then rethrow if we got here
+    // through the error path.
+    beginScope();
+    addLocal(syntheticToken(" galat"));
+    markInitialized();
+    addLocal(syntheticToken(" lempar"));
+    markInitialized();
+    uint8_t errorSlot = (uint8_t)(current->localCount - 2);
+    uint8_t rethrowSlot = (uint8_t)(current->localCount - 1);
+
+    Token keluar = syntheticToken("_keluar_");
+    emitBytes(OP_GET_LOCAL, (uint8_t)managerSlot);
+    emitBytes(OP_INVOKE, identifierConstant(&keluar));
+    emitByte(0);
+    emitByte(OP_POP);
+
+    emitBytes(OP_GET_LOCAL, rethrowSlot);
+    int noRethrow = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    emitBytes(OP_GET_LOCAL, errorSlot);
+    emitByte(OP_THROW);
+    patchJump(noRethrow);
+    emitByte(OP_POP);
+    endScope();     // the two hidden locals
+
+    endScope();     // manager, bound value
 }
 
 static void returnStatement() {
@@ -3061,6 +3171,8 @@ static void statement() {
         buangStatement();
     } else if (match(TOKEN_COBA)) {
         tryStatement();
+    } else if (match(TOKEN_DENGAN)) {
+        withStatement();
     } else if (match(TOKEN_NAIKKAN)) {
         raiseStatement();
     } else if (match(TOKEN_PASTIKAN)) {

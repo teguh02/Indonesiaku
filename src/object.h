@@ -220,6 +220,8 @@ typedef enum {
     MAGIC_KPANGKAT,      // _kpangkat_     nilai ** objek
     MAGIC_ITER,          // _iter_         untuk ... dalam objek
     MAGIC_PANGGIL,       // _panggil_      objek(...)
+    MAGIC_MASUK,         // _masuk_        dengan ... sebagai
+    MAGIC_KELUAR,        // _keluar_       akhir blok 'dengan'
     MAGIC_COUNT,
     MAGIC_NONE = MAGIC_COUNT
 } MagicKind;

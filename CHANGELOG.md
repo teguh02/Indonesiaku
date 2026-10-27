@@ -30,6 +30,15 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4: `dengan ... sebagai` (manajer konteks)
+- ✨ **`dengan <ekspresi> [sebagai <nama>] { ... }`** — `_masuk_()` sebelum
+  blok, `_keluar_()` sesudahnya. Dijamin dipanggil pada jalur normal, galat,
+  `kembalikan`, `hentikan`, dan `lanjut`. `TOKEN_DENGAN` sudah dikenali
+  scanner sejak lama tetapi belum pernah dipakai compiler.
+- `_keluar_()` dipanggil tanpa argumen dan tidak bisa menelan galat —
+  penyederhanaan yang disengaja terhadap Python.
+- Contoh: [`examples/oop/dengan_sebagai.idk`](examples/oop/dengan_sebagai.idk).
+
 ### Added — Fase 4: atribut kelas
 - ✨ **Atribut kelas** — `NAMA = ekspresi` di badan kelas. Dibaca lewat kelas
   maupun instance, diwariskan ke subkelas, dievaluasi sekali saat kelas

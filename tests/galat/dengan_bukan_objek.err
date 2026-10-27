@@ -1,0 +1,4 @@
+'dengan' memerlukan objek dengan metode _masuk_() dan _keluar_(), bukan 'bulat'.
+[baris 3, kolom 8] dalam skrip
+    dengan 42 sebagai x {
+           ^
