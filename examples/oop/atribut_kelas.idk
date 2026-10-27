@@ -1,0 +1,90 @@
+# Atribut kelas: nilai yang dimiliki bersama oleh semua instance.
+
+kelas Lingkaran {
+    PHI = 3.14159
+    satuan = "cm"
+
+    init(jari) { diri.jari = jari }
+    luas() { kembalikan Lingkaran.PHI * diri.jari * diri.jari }
+}
+
+cetak("=== dibaca lewat kelas maupun instance ===")
+cetak(Lingkaran.PHI)
+cetak(Lingkaran.satuan)
+kecil = Lingkaran(2)
+cetak(kecil.PHI)
+cetak(kecil.luas())
+
+cetak("=== field instance menutupi atribut kelas ===")
+khusus = Lingkaran(1)
+khusus.PHI = 3
+cetak(khusus.PHI)           # milik objek ini saja
+cetak(Lingkaran(1).PHI)     # objek lain tidak terpengaruh
+cetak(Lingkaran.PHI)        # kelasnya sendiri juga tidak
+
+cetak("=== menulis lewat kelas mengubah nilai bersama ===")
+Lingkaran.satuan = "meter"
+cetak(Lingkaran(1).satuan)
+cetak(kecil.satuan)
+
+cetak("=== diwariskan ke subkelas ===")
+
+kelas Bola < Lingkaran {
+    init(jari) { diri.jari = jari }
+}
+
+cetak(Bola.PHI)
+cetak(Bola(1).satuan)
+
+# Menulis di subkelas membuat miliknya sendiri; induknya tidak berubah.
+Bola.PHI = 3
+cetak(Bola.PHI)
+cetak(Lingkaran.PHI)
+
+# Atribut dicari lewat rantai warisan saat dibaca, bukan disalin saat kelas
+# dibuat -- jadi perubahan pada induk langsung terlihat oleh subkelasnya.
+Lingkaran.satuan = "mm"
+cetak(Bola.satuan)
+
+cetak("=== dievaluasi sekali, saat kelas didefinisikan ===")
+
+variabel berapa_kali = 0
+fungsi catat() {
+    global berapa_kali
+    berapa_kali = berapa_kali + 1
+    kembalikan "nilai tetap"
+}
+
+kelas Sekali {
+    penanda = catat()
+}
+
+Sekali()
+Sekali()
+Sekali()
+cetak(berapa_kali)
+cetak(Sekali.penanda)
+
+cetak("=== atribut boleh berisi koleksi ===")
+
+kelas Gudang {
+    rak = ["palu", "obeng"]
+    harga = {"palu": 25000}
+}
+
+cetak(Gudang.rak)
+cetak(Gudang.harga)
+
+cetak("=== atribut dan metode berbagi satu ruang nama ===")
+
+kelas Belakangan {
+    nilai = 1
+    nilai() { kembalikan "metode yang menang" }
+}
+cetak(Belakangan.nilai())
+
+kelas Sebaliknya {
+    nilai() { kembalikan "metode" }
+    nilai = "atribut yang menang"
+}
+cetak(Sebaliknya.nilai)

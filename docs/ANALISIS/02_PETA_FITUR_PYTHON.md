@@ -186,7 +186,7 @@ Legenda kolom "Ada": nama builtin Indonesiaku yang sudah terdaftar di
 | Pewarisan berganda + MRO (C3) | ❌ | 4 |
 | Metode ajaib (dunder): `__str__`, `__eq__`, `__lt__`, `__add__`, `__len__`, `__getitem__`, `__iter__`, `__call__`, `__hash__`, `__enter__/__exit__` | 🟡 representasi, perbandingan, aritmetika + cerminannya (`__radd__` dst), panjang, kebenaran, indeks, hash (K19); manajer konteks, `NotImplemented`, dan iterator malas `_berikutnya_` belum; `_iter_`/`_panggil_` sudah ada; `terurut`/`min`/`max` memakai `_kurang_dari_` | 4 |
 | Usulan nama: `_teks_`, `_sama_`, `_kurang_`, `_tambah_`, `_panjang_`, `_ambil_`, `_iter_`, `_panggil_` | | |
-| Atribut kelas (bukan per instansi) | ❌ | 4 |
+| Atribut kelas (bukan per instansi) | ✅ | 4 |
 | `@property`, `@staticmethod`, `@classmethod` | ❌ | 4 |
 | Kelas abstrak, `dataclass`, `enum` | ❌ | 6 |
 | Hierarki pengecualian berbasis kelas (`class GalatSaya(Galat)`) | 🟡 `Galat*` bawaan dan `kecuali Tipe sebagai e`; kelas galat pengguna menyusul | 1 |

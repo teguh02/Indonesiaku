@@ -2113,6 +2113,16 @@ static void classDeclaration() {
         while (match(TOKEN_NEWLINE) || match(TOKEN_SEMICOLON)) { }
         if (check(TOKEN_RIGHT_BRACE) || check(TOKEN_EOF)) break;
         if (match(TOKEN_LEWATI)) continue;
+        // Atribut kelas: NAMA = ekspresi. Satu token lihat-depan memisahkannya
+        // dari metode, yang selalu NAMA '('. Kelasnya sudah ada di atas stack.
+        if (check(TOKEN_IDENTIFIER) && checkNext(TOKEN_EQUAL)) {
+            consume(TOKEN_IDENTIFIER, "Harapkan nama atribut kelas.");
+            uint8_t attr = identifierConstant(&parser.previous);
+            consume(TOKEN_EQUAL, "Harapkan '=' setelah nama atribut kelas.");
+            expression();
+            emitBytes(OP_CLASS_FIELD, attr);
+            continue;
+        }
         method();
     }
     consume(TOKEN_RIGHT_BRACE, "Harapkan '}' setelah badan kelas.");

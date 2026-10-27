@@ -206,6 +206,11 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   triggered by `_sama_` freed them — a use-after-free that the normal suite
   passed and only the sanitizer build caught. Keep values on the stack
   (`peek`), pop after.
+- **A new `Table` on a heap object needs THREE edits, not one.** `ObjClass.fields`
+  (class attributes) had to be `initTable`d in `newClass`, `freeTable`d in
+  `freeObject`, and — the one that silently corrupts — `markTable`d in
+  `blackenObject`. Miss the mark and its values are collected while still
+  reachable; the normal suite passes and only `-DDEBUG_STRESS_GC` catches it.
 - **Never hand `qsort` a comparator that runs user code.** `terurut()` over
   objects calls `_kurang_dari_`, which can raise (qsort cannot stop early) and
   can append to the very list being sorted (realloc leaves qsort holding a

@@ -354,5 +354,12 @@
       "}"
     ],
     "description": "Membuat objek bisa dipanggil seperti fungsi"
+  },
+  "Atribut kelas": {
+    "prefix": "atribut",
+    "body": [
+      "${1:NAMA} = ${2:nilai}"
+    ],
+    "description": "Atribut kelas: nilai bersama semua instance"
   }
 }

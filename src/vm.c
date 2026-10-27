@@ -670,6 +670,19 @@ static bool callValue(Value callee, int argCount, ObjList* names) {
     return false;
 }
 
+// Atribut kelas, ditelusuri naik lewat rantai superclass saat dibaca -- bukan
+// disalin ketika OP_INHERIT. Mengubah atribut induk karena itu langsung
+// terlihat oleh subkelasnya, seperti Python.
+// ponytail: telusur linier tiap akses, tanpa cache. Kedalaman warisan nyata
+// 2-4 tingkat, jadi lebih murah daripada invalidasi cache. Kalau MRO C3 masuk,
+// hanya fungsi ini yang berubah.
+static bool classFieldGet(ObjClass* klass, ObjString* name, Value* out) {
+    for (ObjClass* k = klass; k != NULL; k = k->superclass) {
+        if (tableGet(&k->fields, name, out)) return true;
+    }
+    return false;
+}
+
 static bool bindMethod(ObjClass* klass, ObjString* name) {
     Value method;
     if (!tableGet(&klass->methods, name, &method)) {
@@ -803,6 +816,24 @@ static bool invoke(ObjString* name, int argCount) {
         return callValue(member, argCount, NULL);
     }
 
+    if (IS_CLASS(receiver)) {
+        // Lingkaran.buat(...) -- atribut kelas yang bisa dipanggil, atau metode
+        // diambil lewat kelas (tanpa instance). Slot penerima diganti nilainya
+        // supaya yang dipanggil hanya melihat argumennya sendiri, sama seperti
+        // jalur modul di atas.
+        ObjClass* klass = AS_CLASS(receiver);
+        Value member;
+        if (!classFieldGet(klass, name, &member) &&
+            !tableGet(&klass->methods, name, &member)) {
+            vm.runtimeErrorClass = vm.galatAtribut;
+            runtimeError("Kelas '%s' tidak punya atribut '%s'.",
+                         klass->name->chars, name->chars);
+            return false;
+        }
+        vm.stackTop[-argCount - 1] = member;
+        return callValue(member, argCount, NULL);
+    }
+
     if (!IS_INSTANCE(receiver)) {
         const char* typeName;
         NativeMethod* table = methodsForValue(receiver, &typeName);
@@ -843,6 +874,7 @@ static void defineMethod(ObjString* name) {
     Value method = peek(0);
     ObjClass* klass = AS_CLASS(peek(1));
     tableSet(&klass->methods, name, method);
+    tableDelete(&klass->fields, name);   // ruang nama bersama: yang belakangan menang
     for (int i = 0; i < MAGIC_COUNT; i++) {
         if (vm.magicNames[i] == name) klass->magic |= MAGIC_BIT(i);   // interned
     }
@@ -2844,6 +2876,18 @@ static InterpretResult run() {
                 }
                 break;
             }
+            case OP_CLASS_FIELD: {
+                // NAMA = nilai di badan kelas. Kelas ada di bawah nilainya
+                // karena classDeclaration mendorongnya sebelum badan.
+                ObjString* name = READ_STRING();
+                ObjClass* klass = AS_CLASS(peek(1));
+                tableSet(&klass->fields, name, peek(0));
+                // Atribut dan metode berbagi satu ruang nama, seperti Python:
+                // yang ditulis belakangan menang.
+                tableDelete(&klass->methods, name);
+                pop();                      // nilai; kelas tetap di stack
+                break;
+            }
             case OP_ITER_OBJEK: {
                 // Runs once, just before a loop. The iterable sits on top of
                 // the stack. An instance with _iter_ is replaced by that
@@ -2918,6 +2962,23 @@ static InterpretResult run() {
                     push(value);
                     break;
                 }
+                if (IS_CLASS(peek(0))) {
+                    // Lingkaran.PHI -- atribut lewat kelas; metode lewat kelas
+                    // adalah fungsi biasa yang belum terikat ke instance.
+                    ObjClass* klass = AS_CLASS(peek(0));
+                    ObjString* name = READ_STRING();
+                    Value value;
+                    if (classFieldGet(klass, name, &value) ||
+                        tableGet(&klass->methods, name, &value)) {
+                        pop();              // kelas
+                        push(value);
+                        break;
+                    }
+                    vm.runtimeErrorClass = vm.galatAtribut;
+                    runtimeError("Kelas '%s' tidak punya atribut '%s'.",
+                                 klass->name->chars, name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
                 if (!IS_INSTANCE(peek(0))) {
                     // ponytail: built-in methods can be called but not taken
                     // as values — ObjBoundMethod only carries ObjClosure, and
@@ -2955,12 +3016,29 @@ static InterpretResult run() {
                     break;
                 }
 
+                // Urutan Python: field instance -> atribut kelas -> metode.
+                if (classFieldGet(instance->klass, name, &value)) {
+                    pop();  // instance
+                    push(value);
+                    break;
+                }
+
                 if (!bindMethod(instance->klass, name)) {
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 break;
             }
             case OP_SET_PROPERTY: {
+                if (IS_CLASS(peek(1))) {
+                    // Lingkaran.PHI = x -- mengubah nilai bersama. Menulis
+                    // lewat instance tidak pernah sampai ke sini; itu selalu
+                    // membuat field instance.
+                    tableSet(&AS_CLASS(peek(1))->fields, READ_STRING(), peek(0));
+                    Value value = pop();
+                    pop();                  // kelas
+                    push(value);
+                    break;
+                }
                 if (!IS_INSTANCE(peek(1))) {
                     vm.runtimeErrorClass = vm.galatAtribut;   // Python: AttributeError
                     runtimeError("Hanya objek yang memiliki properti.");

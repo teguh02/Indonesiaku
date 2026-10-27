@@ -1621,6 +1621,39 @@ lewat jalur yang sama dengan metode biasa.
 
 > Contoh lengkap: [`examples/oop/iter_panggil.idk`](../examples/oop/iter_panggil.idk)
 
+### Atribut kelas
+
+Nilai yang sama untuk semua instance ditulis langsung di badan kelas, sejajar
+dengan metode:
+
+```indonesiaku
+kelas Lingkaran {
+    PHI = 3.14159
+
+    init(jari) { diri.jari = jari }
+    luas() { kembalikan Lingkaran.PHI * diri.jari * diri.jari }
+}
+
+cetak(Lingkaran.PHI)        # 3.14159 — lewat kelas
+cetak(Lingkaran(2).PHI)     # 3.14159 — lewat instance
+cetak(Lingkaran(2).luas())  # 12.56636
+```
+
+Aturannya mengikuti Python:
+
+- Urutan pencarian pada objek: **field instance → atribut kelas → metode**.
+- `obj.PHI = 3` selalu membuat field milik objek itu saja dan menutupi atribut
+  kelas; objek lain tidak terpengaruh. Untuk mengubah nilai bersama, tulis
+  lewat kelasnya: `Lingkaran.PHI = 3`.
+- Subkelas mewarisi atribut induknya. Menulis di subkelas membuat miliknya
+  sendiri tanpa menyentuh induk, dan mengubah atribut induk langsung terlihat
+  oleh subkelas yang belum menimpanya.
+- Ekspresinya dijalankan **sekali**, saat kelas didefinisikan — bukan setiap
+  objek dibuat.
+- Atribut dan metode berbagi satu ruang nama: yang ditulis belakangan menang.
+
+> Contoh lengkap: [`examples/oop/atribut_kelas.idk`](../examples/oop/atribut_kelas.idk)
+
 ---
 
 ## Metode pada Tipe Bawaan

@@ -1,0 +1,4 @@
+Kelas 'Kosong' tidak punya atribut 'tidak_ada'.
+[baris 7, kolom 14] dalam skrip
+    cetak(Kosong.tidak_ada)
+                 ^

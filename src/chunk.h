@@ -65,6 +65,7 @@ typedef enum {
     OP_INDEX_GET,
     OP_SEQ_GET,      // iteration by position: kamus -> kunci ke-i (not a key lookup)
     OP_ITER_OBJEK,   // once before a loop: objek dengan _iter_ -> hasilnya
+    OP_CLASS_FIELD,  // atribut kelas: NAMA = nilai di badan kelas
     OP_INDEX_SET,
     OP_SLICE,
     OP_LIST_LEN,

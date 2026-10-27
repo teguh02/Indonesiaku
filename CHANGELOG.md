@@ -30,6 +30,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   Operator gabungan (`+=`, `*=`, ...) ikut otomatis.
 - Contoh: [`examples/oop/cerminan_aritmetika.idk`](examples/oop/cerminan_aritmetika.idk).
 
+### Added — Fase 4: atribut kelas
+- ✨ **Atribut kelas** — `NAMA = ekspresi` di badan kelas. Dibaca lewat kelas
+  maupun instance, diwariskan ke subkelas, dievaluasi sekali saat kelas
+  didefinisikan. Urutan pencarian mengikuti Python: field instance → atribut
+  kelas → metode; menulis lewat instance selalu membuat field instance.
+- Contoh: [`examples/oop/atribut_kelas.idk`](examples/oop/atribut_kelas.idk).
+
 ### Added — Fase 4 tahap 2d (K19): `_iter_` dan `_panggil_`
 - ✨ **`_iter_`** — kelas sendiri bisa dipakai di `untuk ... dalam`. Dipanggil
   sekali di awal loop; kembaliannya (daftar, tupel, teks, rentang, himpunan,

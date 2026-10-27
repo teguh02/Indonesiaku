@@ -1,0 +1,27 @@
+=== dibaca lewat kelas maupun instance ===
+3.14159
+cm
+3.14159
+12.56636
+=== field instance menutupi atribut kelas ===
+3
+3.14159
+3.14159
+=== menulis lewat kelas mengubah nilai bersama ===
+meter
+meter
+=== diwariskan ke subkelas ===
+3.14159
+meter
+3
+3.14159
+mm
+=== dievaluasi sekali, saat kelas didefinisikan ===
+1
+nilai tetap
+=== atribut boleh berisi koleksi ===
+["palu", "obeng"]
+{"palu": 25000}
+=== atribut dan metode berbagi satu ruang nama ===
+metode yang menang
+atribut yang menang

@@ -1,0 +1,7 @@
+# Membaca atribut kelas yang tidak pernah didefinisikan.
+
+kelas Kosong {
+    ada = 1
+}
+
+cetak(Kosong.tidak_ada)

@@ -186,7 +186,10 @@ Metode ajaib (06 §10), atribut kelas, `@properti`/`@metode_statis`/
 ([rencana](RENCANA_FITUR/selesai/iter_panggil.md), K19). Metode ajaib kini
 **lengkap**: 30 metode. `adalah_instansi` sudah ada sejak Fase 2.
 
-> Fase 4 **sedang dikerjakan** — yang tersisa: atribut kelas, dekorator
+✅ atribut kelas — nilai bersama di badan kelas
+([rencana](RENCANA_FITUR/selesai/atribut_kelas.md)).
+
+> Fase 4 **sedang dikerjakan** — yang tersisa: dekorator
 > (`@properti`/`@metode_statis`/`@metode_kelas`), `dengan ... sebagai`,
 > pewarisan berganda + MRO C3, kelas abstrak.
 

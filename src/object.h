@@ -231,6 +231,7 @@ typedef struct ObjClass {
     ObjString* name;
     struct ObjClass* superclass;
     Table methods;
+    Table fields;        // atribut kelas: nilai bersama, bukan ObjClosure
     uint32_t magic;      // MAGIC_BIT of every magic method in `methods`
 } ObjClass;
 
