@@ -122,6 +122,7 @@ typedef struct Compiler {
     int finallyCount;
     int finallyInlines;           // copies made so far (FINALLY_INLINE_MAX)
     bool finallyBudgetReported;   // report the cap once per function
+    bool isGenerator;             // a 'hasilkan' was compiled in this function
 } Compiler;
 
 Parser parser;
@@ -422,6 +423,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
     compiler->finallyCount = 0;
     compiler->finallyInlines = 0;
     compiler->finallyBudgetReported = false;
+    compiler->isGenerator = false;
     compiler->function = newFunction();
     compiler->function->chunk.source = compilingSource;
     compiler->function->module = compilingModule;
@@ -465,6 +467,7 @@ static void initCompiler(Compiler* compiler, FunctionType type) {
 static ObjFunction* endCompiler() {
     emitReturn();
     ObjFunction* function = current->function;
+    function->isGenerator = current->isGenerator;
 
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
@@ -1755,6 +1758,7 @@ ParseRule rules[] = {
   [TOKEN_ATAU]          = {NULL,     or_,    PREC_OR},
   [TOKEN_BUANG]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_KEMBALIKAN]    = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_HASILKAN]      = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SUPER]         = {super_,   NULL,   PREC_NONE},
   [TOKEN_DIRI]          = {diri_,    NULL,   PREC_NONE},
   [TOKEN_BENAR]         = {literal,  NULL,   PREC_NONE},
@@ -3020,6 +3024,40 @@ static void withStatement() {
     endScope();     // manager, bound value
 }
 
+// hasilkan <ekspresi> -- suspend this generator and hand the value to the
+// caller. Only valid inside a function; the enclosing function is flagged a
+// generator, so calling it builds an ObjGenerator instead of running the body.
+static void yieldStatement() {
+    if (current->type == TYPE_SCRIPT) {
+        error("'hasilkan' hanya bisa dipakai di dalam fungsi.");
+        return;
+    }
+    if (current->type == TYPE_INITIALIZER) {
+        error("'init' tidak bisa menjadi generator ('hasilkan' tidak diizinkan).");
+        return;
+    }
+    // The frame is snapshotted wholesale at OP_YIELD, but an inlined 'akhirnya'
+    // would have to run on a frame that is about to vanish. Reject it rather
+    // than silently skipping the cleanup.
+    if (current->finallyCount > 0) {
+        error("'hasilkan' belum didukung di dalam blok 'coba' yang punya 'akhirnya'.");
+        return;
+    }
+    current->isGenerator = true;
+
+    if (check(TOKEN_EOF) || check(TOKEN_RIGHT_BRACE) ||
+        check(TOKEN_SEMICOLON) || check(TOKEN_NEWLINE)) {
+        emitByte(OP_KOSONG);          // 'hasilkan' telanjang menghasilkan kosong
+    } else {
+        bool saved = allowTupleRHS;
+        allowTupleRHS = true;
+        expression();
+        maybeTupleTail();             // hasilkan a, b
+        allowTupleRHS = saved;
+    }
+    emitByte(OP_YIELD);
+}
+
 static void returnStatement() {
     if (current->type == TYPE_SCRIPT) {
         error("Tidak dapat 'kembalikan' dari kode tingkat atas.");
@@ -3338,6 +3376,8 @@ static void statement() {
         ifStatement();
     } else if (match(TOKEN_KEMBALIKAN)) {
         returnStatement();
+    } else if (match(TOKEN_HASILKAN)) {
+        yieldStatement();
     } else if (match(TOKEN_SELAGI)) {
         whileStatement();
     } else if (match(TOKEN_HENTIKAN)) {

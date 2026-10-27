@@ -191,7 +191,14 @@ static TokenType identifierType() {
         case 'f':
             return checkKeyword(1, 5, "ungsi", TOKEN_FUNGSI);
         case 'h':
-            return checkKeyword(1, 7, "entikan", TOKEN_HENTIKAN);
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'e': return checkKeyword(2, 6, "ntikan", TOKEN_HENTIKAN);
+                    case 'a': return checkKeyword(2, 6, "silkan", TOKEN_HASILKAN);
+                }
+            }
+            return TOKEN_IDENTIFIER;
+
         case 'i':
             return checkKeyword(1, 4, "mpor", TOKEN_IMPOR);
         case 'j':

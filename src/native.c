@@ -905,6 +905,8 @@ Value nativeFnJenis(int argCount, Value* args) {
         return OBJ_VAL(copyString("rentang", 7));
     } else if (IS_ITERATOR(args[0])) {
         return OBJ_VAL(copyString("iterator", 8));
+    } else if (IS_GENERATOR(args[0])) {
+        return OBJ_VAL(copyString("generator", 9));
     } else if (IS_MODULE(args[0])) {
         return OBJ_VAL(copyString("modul", 5));
     } else if (IS_FUNCTION(args[0]) || IS_CLOSURE(args[0]) ||
@@ -1826,6 +1828,58 @@ static int iterCount(Value v) {
     return -1;
 }
 
+// Fase 5: a generator or custom iterator has no length and no index, so the
+// index-based natives below cannot walk it. Drain it into a plain daftar once
+// and let every existing consumer work unchanged.
+//
+// Returns true when *v was replaced by a materialized list (or left alone),
+// false when draining raised -- the error is already pending.
+//
+// GC-SAFETY: the list being filled is kept on the VM stack, because resuming
+// the generator runs arbitrary user code that can allocate.
+static bool materializeLazy(Value* v) {
+    bool isGen = IS_GENERATOR(*v);
+    bool isLazyInstance = IS_INSTANCE(*v) && instanceHasMagic(*v, MAGIC_BERIKUTNYA);
+    if (!isGen && !isLazyInstance) return true;
+
+    ObjList* out = newList();
+    push(OBJ_VAL(out));                  // root while filling
+
+    Value source = *v;
+    for (;;) {
+        Value item;
+        if (isGen) {
+            int step = resumeGenerator(AS_GENERATOR(source), &item);
+            if (step < 0) { pop(); return false; }
+            if (step == 0) break;
+        } else {
+            int found = instanceNextFor(source, &item);
+            if (found < 0) {
+                pop();
+                nativeRaiseKelas(vm.galatTipe, "Objek kehilangan metode _berikutnya_().");
+                return false;
+            }
+            if (found == 0) {
+                // HentiIterasi means "done"; anything else propagates.
+                if (vm.nativeErrorPending &&
+                    valueIsInstanceOf(vm.nativeErrorValue, OBJ_VAL(vm.hentiIterasi))) {
+                    vm.nativeErrorPending = false;
+                    vm.nativeErrorValue = KOSONG_VAL;
+                    break;
+                }
+                pop();
+                return false;
+            }
+        }
+        push(item);                      // root the element across the write
+        writeValueArray(&out->items, item);
+        pop();
+    }
+    pop();
+    *v = OBJ_VAL(out);
+    return true;
+}
+
 // Elemen ke-i. Untuk teks ini MENGALOKASI sebuah ObjString baru.
 static Value iterAt(Value v, int i) {
     if (sequenceItems(v) != NULL) return sequenceItems(v)->values[i];
@@ -1847,6 +1901,8 @@ Value nativeFnTupel(int argCount, Value* args) {
     Value src = args[0];
     if (IS_TUPLE(src)) return src;   // immutable, so sharing it is safe (Python does too)
 
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&src)) return KOSONG_VAL;
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -1878,6 +1934,8 @@ Value nativeFnHimpunan(int argCount, Value* args) {
     if (argCount == 0) return OBJ_VAL(set);
 
     Value src = args[0];
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&src)) return KOSONG_VAL;
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -1922,6 +1980,8 @@ Value nativeFnJumlah(int argCount, Value* args) {
         nativeRaise("jumlah() memerlukan 1 atau 2 argumen");
         return NUMBER_VAL(0);
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     int count = iterCount(args[0]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "jumlah() hanya menerima daftar, rentang, atau teks");
@@ -1968,6 +2028,8 @@ Value nativeFnSemua(int argCount, Value* args) {
         nativeRaise("semua() memerlukan 1 argumen");
         return BOOL_VAL(false);
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     int count = iterCount(args[0]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "semua() hanya menerima daftar, rentang, atau teks");
@@ -1985,6 +2047,8 @@ Value nativeFnAdaYang(int argCount, Value* args) {
         nativeRaise("ada_yang() memerlukan 1 argumen");
         return BOOL_VAL(false);
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     int count = iterCount(args[0]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "ada_yang() hanya menerima daftar, rentang, atau teks");
@@ -2059,6 +2123,8 @@ Value nativeFnTerurut(int argCount, Value* args) {
         nativeRaise("terurut() memerlukan 1 atau 2 argumen");
         return KOSONG_VAL;
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     int count = iterCount(args[0]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "terurut() hanya menerima daftar, rentang, atau teks");
@@ -2128,6 +2194,8 @@ Value nativeFnTerbalik(int argCount, Value* args) {
         nativeRaise("terbalik() memerlukan 1 argumen");
         return KOSONG_VAL;
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[0])) return KOSONG_VAL;
     int count = iterCount(args[0]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "terbalik() hanya menerima daftar, rentang, atau teks");
@@ -2185,6 +2253,8 @@ Value nativeFnPeta(int argCount, Value* args) {
         nativeRaise("peta() memerlukan 2 argumen (fungsi, iterable)");
         return KOSONG_VAL;
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[1])) return KOSONG_VAL;
     int count = iterCount(args[1]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "peta() argumen kedua harus daftar, rentang, atau teks");
@@ -2215,6 +2285,8 @@ Value nativeFnSaring(int argCount, Value* args) {
         nativeRaise("saring() memerlukan 2 argumen (fungsi, iterable)");
         return KOSONG_VAL;
     }
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&args[1])) return KOSONG_VAL;
     int count = iterCount(args[1]);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe, "saring() argumen kedua harus daftar, rentang, atau teks");
@@ -2370,6 +2442,8 @@ Value nativeFnDaftar(int argCount, Value* args) {
     if (argCount == 0) return OBJ_VAL(list);
 
     Value src = args[0];
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&src)) return KOSONG_VAL;
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -2402,6 +2476,8 @@ Value nativeFnHimpunanBeku(int argCount, Value* args) {
     }
 
     Value src = args[0];
+    // Fase 5: generator/iterator kustom dicairkan dulu jadi daftar.
+    if (!materializeLazy(&src)) return KOSONG_VAL;
     int count = IS_DICT(src) ? dictLength(AS_DICT(src)) : iterCount(src);
     if (count < 0) {
         nativeRaiseKelas(vm.galatTipe,
@@ -2434,6 +2510,7 @@ Value nativeFnIter(int argCount, Value* args) {
     }
     Value src = args[0];
     if (IS_ITERATOR(src)) return src;   // iter(iter(x)) is iter(x), as in Python
+    if (IS_GENERATOR(src)) return OBJ_VAL(newIterator(src));   // already lazy
     if (IS_INSTANCE(src)) {
         // K19/Fase 5: _iter_() runs ONCE here, exactly as OP_ITER_OBJEK does
         // before a loop. Whatever it returns is iterated: a custom iterator
@@ -2475,6 +2552,18 @@ Value nativeFnLanjutkan(int argCount, Value* args) {
     }
     ObjIterator* it = AS_ITERATOR(args[0]);
     Value src = it->source;
+    if (IS_GENERATOR(src)) {
+        Value value;
+        int step = resumeGenerator(AS_GENERATOR(src), &value);
+        if (step < 0) return KOSONG_VAL;          // raised; propagate
+        if (step == 0) {                          // exhausted
+            if (argCount == 2) return args[1];
+            nativeRaiseKelas(vm.hentiIterasi, "Iterasi selesai.");
+            return KOSONG_VAL;
+        }
+        it->index++;
+        return value;
+    }
     if (IS_INSTANCE(src)) {
         // Custom iterator: _berikutnya_() drives it, HentiIterasi ends it.
         // index is unused here -- the object owns its own position.
