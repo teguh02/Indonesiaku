@@ -1,0 +1,26 @@
+== urai url ==
+["example.com", 80, "/"]
+["Example.com", 8080, "/a/b?x=1"]
+["h", 80, "/?q=1"]
+["127.0.0.1", 8137, "/todos"]
+== url yang ditolak ==
+GalatJaringan: HTTPS belum didukung (butuh TLS); pakai http://
+GalatJaringan: url harus diawali http://: "ftp://x"
+GalatJaringan: url tanpa host: "http://"
+GalatJaringan: port tidak sah di url: "http://h:80x/"
+GalatJaringan: url harus teks, bukan angka
+GalatJaringan: url memuat karakter terlarang: "http://h/a\r\nX-Sisip: 1"
+GalatJaringan: url memuat karakter terlarang: "http://h/a b"
+GalatJaringan: url dengan nama pengguna belum didukung: "http://u@h/"
+GalatJaringan: alamat IPv6 dalam url belum didukung: "http://[::1]:80/"
+== penyisipan header ditolak sebelum tersambung ==
+GalatJaringan: metode memuat karakter terlarang: "GET\r\nX: 1"
+GalatJaringan: nilai header memuat karakter terlarang: "1\r\nX-B: 2"
+GalatJaringan: nama header memuat karakter terlarang: "X A"
+== koneksi ditolak adalah GalatOS ==
+GalatOS: soket_sambung(): tidak dapat tersambung ke 127.0.0.1:1
+== Respons ==
+<Respons 404 Not Found> salah text/plain
+GalatJaringan: 404 Not Found untuk http://x/
+benar
+8

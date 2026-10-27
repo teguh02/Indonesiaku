@@ -1,0 +1,41 @@
+== persegi dengan kura bawaan ==
+(0.0, 0.0) 0.0
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -110 120 120" width="120" height="120">
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="0,0 100,0 100,-100 0,-100 0,0" stroke="black" stroke-width="1"/>
+</g>
+</svg>
+
+== bintang, warna, tebal ==
+(0.0, 0.0) 0.0 1
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -39.06 100 96.08" width="100" height="96.08">
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="0,0 80,0 15.28,47.02 40,-29.06 64.72,47.02 0,0" stroke="#c0392b" stroke-width="2.5"/>
+</g>
+</svg>
+
+== lingkaran: titik-titiknya di busur, kembali ke awal ==
+langkah: 20 posisi akhir: (0.0, 0.0) arah: 0.0
+semua titik berjarak 50 dari pusat: benar
+setengah lingkaran searah jarum jam: (0.0, -60.0) 180.0
+== angkat_pena, ke, hadap, beberapa kura ==
+2 benar (0.0, 60.0) 90.0
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -65 110 110" width="110" height="110">
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="0,0 50,0" stroke="black" stroke-width="1"/>
+  <polyline points="70,0 100,0 80,40" stroke="blue" stroke-width="1"/>
+  <polyline points="0,0 0,-60" stroke="green" stroke-width="1"/>
+</g>
+</svg>
+
+== selesai() menulis berkas ==
+kura_uji_golden.svg benar
+kecepatan: 3 10
+== galat ==
+GalatKura: jarak harus angka, bukan teks
+GalatKura: warna harus teks yang tidak kosong
+GalatKura: warna tidak sah: "red\" onload=\"x"
+GalatKura: tebal harus lebih dari 0
+GalatKura: kecepatan harus 0 sampai 10
+GalatKura: langkah harus bulat positif
+GalatKura: jarak harus angka terhingga, bukan takhingga

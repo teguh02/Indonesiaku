@@ -365,6 +365,15 @@ void initVM() {
     defineNative("abs", nativeFnAbs);
     defineNative("akar", nativeFnAkar);
     defineNative("pangkat", nativeFnPangkat);
+    defineNative("sin", nativeFnSin);
+    defineNative("cos", nativeFnCos);
+    defineNative("tan", nativeFnTan);
+    defineNative("asin", nativeFnAsin);
+    defineNative("acos", nativeFnAcos);
+    defineNative("atan", nativeFnAtan);
+    defineNative("atan2", nativeFnAtan2);
+    defineNative("radian", nativeFnRadian);
+    defineNative("derajat", nativeFnDerajat);
     defineNative("bulat", nativeFnBulat);
     defineNative("lantai", nativeFnLantai);
     defineNative("atap", nativeFnAtap);
@@ -452,6 +461,7 @@ void initVM() {
     defineNative("soket_baca", nativeFnSoketBaca);
     defineNative("soket_tulis", nativeFnSoketTulis);
     defineNative("soket_tutup", nativeFnSoketTutup);
+    defineNative("soket_sambung", nativeFnSoketSambung);   // klien; ditolak di --sandbox
 
     // Hash kriptografis (Fase 6). Mengembalikan teks heksa huruf kecil.
     defineNative("md5", nativeFnMd5);

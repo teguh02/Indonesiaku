@@ -14,9 +14,9 @@
 #include <errno.h>
 
 #ifdef _WIN32
-    #include <windows.h>
-    #include <winsock2.h>
+    #include <winsock2.h>   // sebelum windows.h, atau MinGW memperingatkan
     #include <ws2tcpip.h>
+    #include <windows.h>
     typedef SOCKET indk_socket_t;
     #define INDK_INVALID_SOCKET INVALID_SOCKET
     #define INDK_CLOSESOCKET(s) closesocket(s)
@@ -25,12 +25,14 @@
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <arpa/inet.h>
+    #include <netdb.h>
     typedef int indk_socket_t;
     #define INDK_INVALID_SOCKET (-1)
     #define INDK_CLOSESOCKET(s) close(s)
 #endif
 
 #include "native.h"
+#include "sistem.h"
 #include "vm.h"
 #include "object.h"
 #include "memory.h"
@@ -87,6 +89,53 @@ Value nativeFnAkar(int argCount, Value* args) {
         return NUMBER_VAL(0);
     }
     return NUMBER_VAL(sqrt(num));
+}
+
+// Trigonometri (Fase 6): sin cos tan asin acos atan atan2, radian, derajat.
+// Satuan sudut radian, seperti modul math Python. Hasil selalu desimal.
+typedef double (*FungsiSatu)(double);
+typedef enum { DOMAIN_SEMUA, DOMAIN_HINGGA, DOMAIN_SATU } DomainTrig;
+
+#define INDK_PI 3.14159265358979323846
+
+static double keRadian(double x) { return x * (INDK_PI / 180.0); }
+static double keDerajat(double x) { return x * (180.0 / INDK_PI); }
+
+// DOMAIN_HINGGA: sin/cos/tan menolak tak hingga; DOMAIN_SATU: asin/acos
+// hanya [-1, 1]. Python melempar ValueError untuk keduanya.
+static Value trigSatu(const char* nama, FungsiSatu f, DomainTrig domain,
+                      int argCount, Value* args) {
+    if (argCount != 1 || !IS_NUMBER(args[0])) {
+        nativeRaiseKelas(vm.galatTipe, "%s() memerlukan 1 angka", nama);
+        return KOSONG_VAL;
+    }
+    double x = AS_NUMBER(args[0]);
+    if (domain == DOMAIN_SATU && (x < -1.0 || x > 1.0)) {
+        nativeRaiseKelas(vm.galatNilai, "%s(): argumen di luar domain [-1, 1]", nama);
+        return KOSONG_VAL;
+    }
+    if (domain == DOMAIN_HINGGA && isinf(x)) {
+        nativeRaiseKelas(vm.galatNilai, "%s(): argumen tak hingga", nama);
+        return KOSONG_VAL;
+    }
+    return NUMBER_VAL(f(x));
+}
+
+Value nativeFnSin(int argCount, Value* args) { return trigSatu("sin", sin, DOMAIN_HINGGA, argCount, args); }
+Value nativeFnCos(int argCount, Value* args) { return trigSatu("cos", cos, DOMAIN_HINGGA, argCount, args); }
+Value nativeFnTan(int argCount, Value* args) { return trigSatu("tan", tan, DOMAIN_HINGGA, argCount, args); }
+Value nativeFnAsin(int argCount, Value* args) { return trigSatu("asin", asin, DOMAIN_SATU, argCount, args); }
+Value nativeFnAcos(int argCount, Value* args) { return trigSatu("acos", acos, DOMAIN_SATU, argCount, args); }
+Value nativeFnAtan(int argCount, Value* args) { return trigSatu("atan", atan, DOMAIN_SEMUA, argCount, args); }
+Value nativeFnRadian(int argCount, Value* args) { return trigSatu("radian", keRadian, DOMAIN_SEMUA, argCount, args); }
+Value nativeFnDerajat(int argCount, Value* args) { return trigSatu("derajat", keDerajat, DOMAIN_SEMUA, argCount, args); }
+
+Value nativeFnAtan2(int argCount, Value* args) {
+    if (argCount != 2 || !IS_NUMBER(args[0]) || !IS_NUMBER(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "atan2(y, x) memerlukan 2 angka");
+        return KOSONG_VAL;
+    }
+    return NUMBER_VAL(atan2(AS_NUMBER(args[0]), AS_NUMBER(args[1])));
 }
 
 Value nativeFnPangkat(int argCount, Value* args) {
@@ -1704,6 +1753,55 @@ Value nativeFnSoketDengar(int argCount, Value* args) {
         return KOSONG_VAL;
     }
 
+    return OBJ_VAL(newSocket((long long)s));
+}
+
+// soket_sambung(host, port) -> soket TCP yang tersambung ke host:port
+// (klien; padanan socket.create_connection). Nama host diresolusi dengan
+// getaddrinfo, IPv4 maupun IPv6. Ditolak di `indk --sandbox`: membuka
+// koneksi keluar adalah akses ke luar program.
+Value nativeFnSoketSambung(int argCount, Value* args) {
+    if (argCount != 2 || !IS_STRING(args[0]) || !IS_INT(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "soket_sambung(host, port) memerlukan teks dan bulat");
+        return KOSONG_VAL;
+    }
+    if (sistemSandbox()) {
+        nativeRaiseKelas(vm.galatIzin, "soket_sambung() tidak diizinkan dalam mode --sandbox");
+        return KOSONG_VAL;
+    }
+    const char* host = AS_CSTRING(args[0]);
+    int64_t port = AS_INT(args[1]);
+    if (port < 1 || port > 65535) {
+        nativeRaiseKelas(vm.galatNilai, "soket_sambung(): port di luar jangkauan (1-65535)");
+        return KOSONG_VAL;
+    }
+
+    indkEnsureWinsock();
+
+    char portTeks[8];
+    snprintf(portTeks, sizeof(portTeks), "%d", (int)port);
+    struct addrinfo petunjuk;
+    memset(&petunjuk, 0, sizeof(petunjuk));
+    petunjuk.ai_family = AF_UNSPEC;
+    petunjuk.ai_socktype = SOCK_STREAM;
+    struct addrinfo* alamat = NULL;
+    if (getaddrinfo(host, portTeks, &petunjuk, &alamat) != 0 || alamat == NULL) {
+        nativeRaiseKelas(vm.galatOS, "soket_sambung(): host '%s' tidak ditemukan", host);
+        return KOSONG_VAL;
+    }
+    indk_socket_t s = INDK_INVALID_SOCKET;
+    for (struct addrinfo* a = alamat; a != NULL; a = a->ai_next) {
+        s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
+        if (s == INDK_INVALID_SOCKET) continue;
+        if (connect(s, a->ai_addr, (int)a->ai_addrlen) == 0) break;
+        INDK_CLOSESOCKET(s);
+        s = INDK_INVALID_SOCKET;
+    }
+    freeaddrinfo(alamat);
+    if (s == INDK_INVALID_SOCKET) {
+        nativeRaiseKelas(vm.galatOS, "soket_sambung(): tidak dapat tersambung ke %s:%d", host, (int)port);
+        return KOSONG_VAL;
+    }
     return OBJ_VAL(newSocket((long long)s));
 }
 

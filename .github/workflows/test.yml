@@ -99,6 +99,9 @@ jobs:
           chmod +x tests/test_todo_server.sh
           bash tests/test_todo_server.sh
 
+      - name: HTTP client integration test
+        run: bash tests/test_klien_http.sh
+
   sanitizers:
     name: ASan + UBSan (stress GC)
     runs-on: ubuntu-latest

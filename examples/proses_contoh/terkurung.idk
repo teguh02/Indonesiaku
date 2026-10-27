@@ -1,11 +1,13 @@
 # Program anak untuk examples/pustaka_proses.idk, dijalankan dengan
-# `indk --sandbox`: akses lingkungan, isi direktori, dan proses ditolak.
+# `indk --sandbox`: akses lingkungan, isi direktori, proses, dan koneksi
+# keluar ditolak.
 impor proses
 untuk coba_ini dalam [
     fungsi() { kembalikan lingkungan() },
     fungsi() { kembalikan ambil_lingkungan("PATH") },
     fungsi() { kembalikan isi_direktori(".") },
     fungsi() { kembalikan proses.jalankan([jalur_indk(), "-v"]) },
+    fungsi() { kembalikan soket_sambung("127.0.0.1", 80) },
 ] {
     coba {
         coba_ini()

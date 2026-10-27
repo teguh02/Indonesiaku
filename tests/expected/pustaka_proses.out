@@ -15,5 +15,6 @@ GalatIzin: lingkungan() tidak diizinkan dalam mode --sandbox
 GalatIzin: ambil_lingkungan() tidak diizinkan dalam mode --sandbox
 GalatIzin: isi_direktori() tidak diizinkan dalam mode --sandbox
 GalatIzin: proses.jalankan() tidak diizinkan dalam mode --sandbox
+GalatIzin: soket_sambung() tidak diizinkan dalam mode --sandbox
 direktori_kini() boleh: benar
 

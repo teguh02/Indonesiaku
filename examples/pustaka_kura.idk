@@ -1,0 +1,91 @@
+# Modul kura (turtle): gambar disimpan sebagai SVG.
+impor kura
+dari kura impor Kura, GalatKura, svg_dari
+
+fungsi persegi() {
+    cetak("== persegi dengan kura bawaan ==")
+    untuk i dalam rentang(4) {
+        kura.maju(100)
+        kura.kiri(90)
+    }
+    cetak(kura.posisi(), kura.arah())
+    cetak(kura.svg())
+}
+
+fungsi bintang() {
+    cetak("== bintang, warna, tebal ==")
+    k = Kura()
+    k.warna("#c0392b").tebal(2.5)
+    untuk i dalam rentang(5) {
+        k.maju(80).kanan(144)
+    }
+    cetak(k.posisi(), k.arah(), panjang(k.goresan))
+    cetak(k.svg())
+}
+
+fungsi lingkaran_cek() {
+    cetak("== lingkaran: titik-titiknya di busur, kembali ke awal ==")
+    k = Kura()
+    k.lingkaran(50)
+    titik = k.goresan[0]["titik"]
+    # Python: steps = 1 + int(min(11 + 50/6, 59)) = 20.
+    cetak("langkah:", panjang(titik) - 1, "posisi akhir:", k.posisi(), "arah:", k.arah())
+    jarak_maks = 0
+    untuk t dalam titik {
+        # Pusat di (0, 50): sebelah kiri kura yang menghadap timur.
+        d = akar(t[0] ** 2 + (t[1] - 50) ** 2)
+        jarak_maks = max(jarak_maks, abs(d - 50))
+    }
+    cetak("semua titik berjarak 50 dari pusat:", jarak_maks < 1e-9)
+    k2 = Kura()
+    k2.lingkaran(-30, 180, 6)
+    cetak("setengah lingkaran searah jarum jam:", k2.posisi(), k2.arah())
+}
+
+fungsi pena_dan_ke() {
+    cetak("== angkat_pena, ke, hadap, beberapa kura ==")
+    a = Kura()
+    a.maju(50)
+    a.angkat_pena()
+    a.maju(20)
+    a.turunkan_pena()
+    a.warna("blue")
+    a.maju(30)
+    a.ke(80, -40)
+    b = Kura()
+    b.warna("green").hadap(90).maju(60)
+    cetak(panjang(a.goresan), a.pena_turun(), b.posisi(), b.arah())
+    cetak(svg_dari([a, b], 5))
+}
+
+fungsi simpan_berkas() {
+    cetak("== selesai() menulis berkas ==")
+    kura.reset()
+    kura.maju(10)
+    nama = kura.selesai("kura_uji_golden.svg")
+    cetak(nama, baca_semua(nama) == kura.svg())
+    hapus_berkas(nama)
+    cetak("kecepatan:", kura.kecepatan(), kura.kura_bawaan().kecepatan(10).kecepatan())
+}
+
+fungsi galat() {
+    cetak("== galat ==")
+    k = Kura()
+    untuk uji dalam [fungsi() { k.maju("10") }, fungsi() { k.warna("") },
+                     fungsi() { k.warna("red\" onload=\"x") }, fungsi() { k.tebal(0) },
+                     fungsi() { k.kecepatan(11) }, fungsi() { k.lingkaran(10, 360, 0) },
+                     fungsi() { k.maju(1e308 * 10) }] {
+        coba {
+            uji()
+        } kecuali GalatKura sebagai e {
+            cetak("GalatKura:", e.pesan)
+        }
+    }
+}
+
+persegi()
+bintang()
+lingkaran_cek()
+pena_dan_ke()
+simpan_berkas()
+galat()

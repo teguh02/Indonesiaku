@@ -25,6 +25,15 @@ Value nativeFnAbs(int argCount, Value* args);
 
 // akar(x) - Akar kuadrat dari x
 Value nativeFnAkar(int argCount, Value* args);
+Value nativeFnSin(int argCount, Value* args);
+Value nativeFnCos(int argCount, Value* args);
+Value nativeFnTan(int argCount, Value* args);
+Value nativeFnAsin(int argCount, Value* args);
+Value nativeFnAcos(int argCount, Value* args);
+Value nativeFnAtan(int argCount, Value* args);
+Value nativeFnAtan2(int argCount, Value* args);
+Value nativeFnRadian(int argCount, Value* args);
+Value nativeFnDerajat(int argCount, Value* args);
 
 // pangkat(a, b) - a pangkat b
 Value nativeFnPangkat(int argCount, Value* args);
@@ -222,6 +231,8 @@ Value nativeFnMd5(int argCount, Value* args);      // md5(teks | daftar byte)
 Value nativeFnSha1(int argCount, Value* args);     // sha1(...)
 Value nativeFnSha256(int argCount, Value* args);   // sha256(...)
 Value nativeFnSha512(int argCount, Value* args);   // sha512(...)
+
+Value nativeFnSoketSambung(int argCount, Value* args);   // soket_sambung(host, port)
 
 // Atribut dinamis (Fase 6): setattr / getattr / hasattr.
 Value nativeFnAturAtribut(int argCount, Value* args);    // atur_atribut(objek, nama, nilai)
