@@ -376,7 +376,7 @@ coba {
 }
 ```
 
-Kelas bawaan mencakup `Galat`, `GalatAritmetika`, `GalatBagiNol`, `GalatPencarian`, `GalatIndeks`, `GalatKunci`, `GalatTipe`, `GalatNilai`, `GalatNama`, dan `GalatAtribut`.
+Kelas bawaan mencakup `Galat`, `GalatAritmetika`, `GalatBagiNol`, `GalatPencarian`, `GalatIndeks`, `GalatKunci`, `GalatTipe`, `GalatNilai`, `GalatNama`, `GalatAtribut`, `GalatOS` (sistem operasi), dan `GalatIzin` (turunan `GalatOS`, penolakan `--sandbox`).
 
 Klausa `kecuali` dicoba **berurutan dari atas**, dan yang pertama cocok
 menang — jadi tulis tipe yang paling khusus lebih dulu, baru yang umum.
@@ -2526,7 +2526,11 @@ cetak(matematika.mat_fpb(12, 18))      # 6
 
 Nama modul ditulis tanpa tanda kutip dan tanpa `.idk`. Berkas dicari
 berurutan di: direktori berkas yang mengimpor, lalu setiap direktori di
-variabel lingkungan `INDK_PATH`, lalu `pustaka/`.
+variabel lingkungan `INDK_PATH`, lalu `pustaka/` di direktori kerja, lalu
+**pustaka standar yang terpasang bersama interpreter** (`pustaka/` di sebelah
+`indk`, `../pustaka`, atau `../share/indonesiaku/pustaka`). Karena itu modul
+standar seperti `pola` atau `koleksi` bisa diimpor dari folder mana pun,
+dan modul Anda sendiri yang bernama sama tetap didahulukan.
 
 Modul yang diimpor **tidak** mencemari variabel Anda. Dua modul boleh memakai
 nama yang sama tanpa saling menimpa:

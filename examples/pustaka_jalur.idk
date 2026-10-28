@@ -1,0 +1,38 @@
+# Modul `jalur`: mengolah jalur berkas sebagai teks, persis `posixpath` Python.
+impor jalur
+dari jalur impor gabung, pisah_ekstensi
+
+cetak("== menggabung ==")
+cetak(gabung("data", "2026", "laporan.csv"))
+cetak(gabung("data/", "a.txt"))
+cetak(gabung("data", "/etc", "passwd"))          # bagian absolut membuang sebelumnya
+cetak(jalur.gabung_semua(["a", "b", "c", "d", "e", "f", "g"]))
+
+cetak("== memecah ==")
+cetak(jalur.pisah("/rumah/budi/catatan.txt"))
+cetak(jalur.nama_dasar("/rumah/budi/catatan.txt"))
+cetak(jalur.nama_direktori("/rumah/budi/catatan.txt"))
+cetak(repr(jalur.nama_dasar("/rumah/budi/")))     # garis miring di ujung -> ""
+
+cetak("== ekstensi ==")
+cetak(pisah_ekstensi("arsip.tar.gz"))
+cetak(pisah_ekstensi(".bashrc"))                  # titik di awal bukan ekstensi
+cetak(repr(jalur.ekstensi("Makefile")))
+cetak(jalur.ekstensi("foto.JPG"))
+
+cetak("== normalisasi ==")
+cetak(jalur.normalisasi("a/./b//c/../d"))
+cetak(jalur.normalisasi("/../a"))                  # tidak bisa naik melewati akar
+cetak(jalur.normalisasi("../../a"))                # jalur relatif boleh
+cetak(jalur.normalisasi(""))
+
+cetak("== lain-lain ==")
+cetak(jalur.adalah_absolut("/usr/bin"), jalur.adalah_absolut("usr/bin"))
+cetak(jalur.dari_windows("C:\\Users\\budi\\a.txt"))
+cetak(jalur.pemisah)
+
+# Contoh nyata: ganti ekstensi setiap berkas dalam daftar.
+untuk nama dalam ["foto/a.png", "foto/b.jpeg", "catatan"] {
+    akar, ekst = pisah_ekstensi(nama)
+    cetak(nama, "->", akar + ".webp")
+}

@@ -1,0 +1,17 @@
+== lipat ==
+10
+240
+100
+abc
+== parsial ==
+24
+== urutkan_dengan (stabil) ==
+[["Budi", 80], ["Cici", 80], ["Ani", 95]]
+[["Ani", 95], ["Budi", 80], ["Cici", 80]]
+[["Budi", 80], ["Ani", 95], ["Cici", 80]]
+== urutkan_dengan_banding ==
+[1, 2, 3]
+== banding_ke_kunci ==
+[1, 2, 3]
+== galat dapat ditangkap ==
+lipat: urutan kosong tanpa nilai awal

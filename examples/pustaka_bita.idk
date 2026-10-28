@@ -1,0 +1,42 @@
+# Modul `bita` (Fase 6): byte sebagai daftar bulat 0..255 + UTF-8 manual.
+
+impor bita
+dari bita impor ke_bita, ke_teks, ke_heksa, dari_heksa, GalatBita
+
+cetak("== ASCII ==")
+cetak(ke_bita("Halo"))
+cetak(ke_teks([72, 97, 108, 111]))
+
+cetak("== non-ASCII (2, 3, 4 byte) ==")
+cetak(ke_bita("café"))
+cetak(ke_bita("€"))
+cetak(ke_bita("😀"))
+cetak(ke_teks([240, 159, 152, 128]))
+
+cetak("== round-trip ==")
+untuk t dalam ["", "a", "héllo", "日本語", "😀🚀"] {
+    cetak(ke_teks(ke_bita(t)) == t)
+}
+
+cetak("== heksa ==")
+cetak(ke_heksa([72, 105]))
+cetak(ke_heksa(ke_bita("abc")))
+cetak(dari_heksa("4869"))
+cetak(ke_teks(dari_heksa("c3a9")))
+
+cetak("== galat dapat ditangkap ==")
+coba {
+    ke_teks([128])
+} kecuali GalatBita sebagai e {
+    cetak(e.pesan)
+}
+coba {
+    ke_teks([226, 130])
+} kecuali GalatBita sebagai e {
+    cetak(e.pesan)
+}
+coba {
+    dari_heksa("abc")
+} kecuali GalatBita sebagai e {
+    cetak(e.pesan)
+}

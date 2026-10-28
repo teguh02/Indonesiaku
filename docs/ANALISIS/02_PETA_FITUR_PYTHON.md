@@ -243,29 +243,29 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 
 | Python | Modul Indonesiaku | Status | Fase |
 |---|---|---|---|
-| `math` | `matematika` | 🟡 builtin + `pustaka/matematika.idk` | 3 |
+| `math` | `matematika` | 🟡 builtin (termasuk trigonometri) + `pustaka/matematika.idk` | 3 |
 | `random` | `acak` | 🟡 `acak`, `acak_bulat` | 3 |
 | `string` | `teks` | 🟡 | 3 |
 | `json` | `json` | ✅ | — |
 | `time` / `datetime` | `waktu` / `tanggal_waktu` | 🟡 | 3 |
-| `os` / `os.path` / `pathlib` / `shutil` / `glob` | `os` / `jalur` | 🟡 berkas dasar | 6 |
-| `sys` | `sistem` (`argumen`, `keluar`, `versi`) | 🟡 `argumen`, `henti` | 3 |
-| `re` | `pola` (regex) | ❌ | 6 |
-| `collections` | `koleksi` (`Penghitung`, `Antrian`, `KamusBawaan`) | ❌ | 6 |
-| `itertools` / `functools` | `iterasi` / `fungsional` | 🟡 `daftar_peta` dkk | 6 |
-| `csv` | `csv` | ❌ | 6 |
+| `os` / `os.path` / `pathlib` / `shutil` / `glob` | `os` / `jalur` | 🟡 `jalur` (persis `posixpath`, plus `ada`/`ukuran`/`absolut`), builtin `direktori_kini`/`isi_direktori`/`buat_direktori`/`lingkungan`; `pathlib`/`shutil`/`glob` belum | 6 |
+| `sys` | `sistem` (`argumen`, `keluar`, `versi`) | 🟡 `argumen`, `keluar`, `tulis_galat`, `jalur_indk` (builtin) | 3 |
+| `re` | `pola` (regex) | ✅ Pike VM linear; tanpa backreference/lookaround, kelas ASCII | 6 |
+| `collections` | `koleksi` (`Penghitung`, `Antrian`, `KamusBawaan`) | ✅ `pustaka/koleksi.idk` (gelombang A); `tupel_bernama` menunggu `*args` | 6 |
+| `itertools` / `functools` | `iterasi` / `fungsional` | ✅ eager (gelombang A); versi malas menunggu Fase 5 | 6 |
+| `csv` | `csv` | 🟨 kode + tes (gelombang B) | 6 |
 | `unittest` / `pytest` | `uji` (+ runner `indk uji`) | ❌ | 7 |
-| `logging` | `log` | ❌ | 6 |
-| `argparse` | `argparse` → `opsi` | ❌ | 6 |
-| `subprocess` | `proses` | ❌ | 6 |
+| `logging` | `log` | ✅ | 6 |
+| `argparse` | `argparse` → `opsi` | ✅ tanpa singkatan/nargs/sub-perintah | 6 |
+| `subprocess` | `proses` | ✅ `jalankan`/`keluaran`, tanpa shell, belum timeout | 6 |
 | `socket` | `soket` | ✅ (TCP, localhost) | — |
-| `http.server` / `urllib` | `http` | 🟡 parse/build | 6 |
-| `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | ❌ | 6 |
+| `http.server` / `urllib` | `http` | 🟡 server (parse/build) + klien `http_ambil` (`http://`); HTTPS belum | 6 |
+| `hashlib` / `base64` / `secrets` / `uuid` | `hash` / `base64` / `rahasia` / `uuid` | 🟡 `md5`/`sha*` builtin, `base64` ✅; `rahasia`/`uuid` belum | 6 |
 | `sqlite3` | `sqlite` (`db_*`) | ✅ | 3 — selesai; 10 fungsi, SQLite 3.50.4 vendored, parameter `?` wajib |
 | `threading` / `asyncio` | `utas` / `asinkron` | ❌ | 7 |
-| `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | ❌ | 6 |
-| `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | ❌ | 6 |
-| `tkinter` / `turtle` | `kura` (turtle — sangat cocok untuk pendidikan!) | ❌ | 8 |
+| `statistics` / `decimal` / `fractions` | `statistik` / `desimal` / `pecahan` | 🟡 `statistik` ✅ (gelombang A); `desimal`/`pecahan` ❌ | 6 |
+| `copy` / `pprint` / `textwrap` / `enum` / `dataclasses` | `salin` / … | 🟡 `salin` ✅ (gelombang A); sisanya ❌ | 6 |
+| `tkinter` / `turtle` | `kura` (turtle — sangat cocok untuk pendidikan!) | 🟡 `kura` ✅ (SVG); kanvas playground dan `tkinter` belum | 6 |
 
 > **Catatan pendidikan:** modul `turtle` adalah salah satu alasan Python
 > populer di sekolah. Modul `kura` (kura-kura) yang menggambar ke SVG/kanvas di

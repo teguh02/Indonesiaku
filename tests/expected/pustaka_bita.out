@@ -1,0 +1,23 @@
+== ASCII ==
+[72, 97, 108, 111]
+Halo
+== non-ASCII (2, 3, 4 byte) ==
+[99, 97, 102, 195, 169]
+[226, 130, 172]
+[240, 159, 152, 128]
+😀
+== round-trip ==
+benar
+benar
+benar
+benar
+benar
+== heksa ==
+4869
+616263
+[72, 105]
+é
+== galat dapat ditangkap ==
+ke_teks: byte 128..191 tanpa pemimpin
+ke_teks: urutan UTF-8 terpotong
+dari_heksa: panjang heksa harus genap

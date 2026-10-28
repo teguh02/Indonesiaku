@@ -112,6 +112,19 @@ if (Test-Path $errorDir) {
     }
 }
 
+# pustaka/ harus ditemukan dari lokasi interpreter, dari direktori kerja mana pun.
+$lokasi = Join-Path $PSScriptRoot "test_impor_lokasi.ps1"
+if (Test-Path $lokasi) {
+    Write-Host ""
+    $total++
+    & powershell -ExecutionPolicy Bypass -File $lokasi
+    if ($LASTEXITCODE -eq 0) {
+        $passed++
+    } else {
+        $failed++; $failures += "impor-lokasi"
+    }
+}
+
 Write-Host "=================================================" -ForegroundColor Cyan
 Write-Host "TOTAL: $passed/$total PASSED" -ForegroundColor Cyan
 if ($failed -eq 0) {

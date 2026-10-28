@@ -1,0 +1,48 @@
+# Klien HTTP di pustaka/http.idk: bagian yang tidak butuh jaringan.
+# Permintaan sungguhan ke server diuji tests/test_klien_http.sh.
+impor "pustaka/http.idk"
+
+cetak("== urai url ==")
+untuk u dalam ["http://example.com", "http://Example.com:8080/a/b?x=1#bagian",
+              "http://h?q=1", "http://127.0.0.1:8137/todos"] {
+    cetak(http_urai_url(u))
+}
+
+cetak("== url yang ditolak ==")
+untuk u dalam ["https://example.com", "ftp://x", "http://", "http://h:80x/", 5,
+              "http://h/a\r\nX-Sisip: 1", "http://h/a b", "http://u@h/", "http://[::1]:80/"] {
+    coba {
+        http_urai_url(u)
+    } kecuali GalatJaringan sebagai e {
+        cetak("GalatJaringan:", e.pesan)
+    }
+}
+
+cetak("== penyisipan header ditolak sebelum tersambung ==")
+untuk uji dalam [fungsi() { http_ambil("http://127.0.0.1:1/", "GET\r\nX: 1") },
+                 fungsi() { http_ambil("http://127.0.0.1:1/", "GET", {"X-A": "1\r\nX-B: 2"}) },
+                 fungsi() { http_ambil("http://127.0.0.1:1/", "GET", {"X A": "1"}) }] {
+    coba {
+        uji()
+    } kecuali GalatJaringan sebagai e {
+        cetak("GalatJaringan:", e.pesan)
+    }
+}
+
+cetak("== koneksi ditolak adalah GalatOS ==")
+coba {
+    http_ambil("http://127.0.0.1:1/")
+} kecuali GalatOS sebagai e {
+    cetak("GalatOS:", e.pesan)
+}
+
+cetak("== Respons ==")
+r = Respons("http://x/", 404, "Not Found", {"content-type": "text/plain"}, "tidak ada")
+cetak(r, r.ok(), r.kepala["content-type"])
+coba {
+    r.periksa()
+} kecuali GalatJaringan sebagai e {
+    cetak("GalatJaringan:", e.pesan)
+}
+cetak(Respons("http://x/", 204, "No Content", {}, "").periksa().ok())
+cetak(_http_panjang_byte("a€😀"))

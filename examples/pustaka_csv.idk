@@ -1,0 +1,30 @@
+# Modul `csv` (Fase 6): urai/bentuk CSV (RFC 4180), semantik seperti `csv` Python.
+
+impor csv
+dari csv impor urai, bentuk, urai_kamus, bentuk_kamus
+
+cetak("== urai dasar ==")
+cetak(urai("a,b,c\n1,2,3\n"))
+cetak(urai("a,\"b,c\",d\n"))
+cetak(urai("\"kata \"\"kutip\"\"\",x\n"))
+
+cetak("== baris kosong (seperti csv.reader) ==")
+cetak(urai("a\n\n"))
+cetak(urai(""))
+
+cetak("== kolom berisi baris baru ==")
+cetak(urai("a,\"baris\nbaru\"\n"))
+
+cetak("== bentuk ==")
+cetak(bentuk([["a", "b,c"], ["x\"y", "z"]]))
+cetak(bentuk([[1, 2, 3]]))
+
+cetak("== round-trip ==")
+baris = [["nama", "catatan"], ["Budi", "a,b\"c"], ["Ani", "baris\nbaru"]]
+cetak(urai(bentuk(baris)) == baris)
+
+cetak("== kamus ==")
+data = urai_kamus("nama,umur\nBudi,20\nAni,21\n")
+cetak(data)
+cetak(bentuk_kamus(data))
+cetak(bentuk_kamus(data, ["umur", "nama"]))

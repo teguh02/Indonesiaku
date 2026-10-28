@@ -160,6 +160,17 @@ if [ -f tests/test_format.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# pustaka/ harus ditemukan dari lokasi interpreter, dari direktori kerja mana pun.
+if [ -f tests/test_impor_lokasi.sh ]; then
+    echo ""
+    if bash tests/test_impor_lokasi.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES impor-lokasi"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 echo -e "${BLUE}=================================================${NC}"
 echo -e "TOTAL: ${GREEN}$PASSED/$TOTAL PASSED${NC}"
 if [ "$FAILED" -eq 0 ]; then

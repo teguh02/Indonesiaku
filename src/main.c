@@ -9,6 +9,7 @@
 #include "format.h"
 #include "object.h"
 #include "vm.h"
+#include "sistem.h"
 
 // Count net brace depth in a line, ignoring braces inside strings and after
 // a '#' comment. Used by the REPL to keep reading until a block is complete.
@@ -221,6 +222,18 @@ static int runFile(const char* path) {
 }
 
 int main(int argc, const char* argv[]) {
+    sistemAturArgv0(argv[0]);
+
+    // `indk --sandbox skrip.idk ...`: refuse environment, directory listing
+    // and running programs (the web playground runs every program this way).
+    // Only before the script path, so a script still receives its own
+    // "--sandbox" argument untouched.
+    if (argc >= 2 && strcmp(argv[1], "--sandbox") == 0) {
+        sistemAturSandbox(true);
+        argv++;
+        argc--;
+    }
+
     // Handle simple CLI flags only when they are the first argument, so a
     // script can receive its own "-v"/"-h" arguments without interception.
     if (argc >= 2) {
@@ -279,10 +292,11 @@ int main(int argc, const char* argv[]) {
         }
         if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Indonesiaku %s\n", INDK_VERSION);
-            printf("Penggunaan: indk [path] [argumen...]\n");
-                printf("Opsi:\n");
+            printf("Penggunaan: indk [--sandbox] [path] [argumen...]\n");
+            printf("Opsi:\n");
             printf("  -v, --version   Tampilkan versi\n");
             printf("  -h, --help      Tampilkan bantuan\n");
+            printf("  --sandbox       Tolak lingkungan, isi direktori, dan menjalankan program\n");
             printf("  --dis <skrip>   Tampilkan bytecode tanpa menjalankan\n");
             printf("Perintah:\n");
             printf("  periksa <skrip> Laporkan variabel lokal tidak terpakai\n");

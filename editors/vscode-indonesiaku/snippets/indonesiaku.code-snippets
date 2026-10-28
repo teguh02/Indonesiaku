@@ -62,6 +62,27 @@
     ],
     "description": "Buat perulangan untuk ... dalam"
   },
+  "Pola cari": {
+    "prefix": "polacari",
+    "body": [
+      "impor pola",
+      "m = pola.cari(\"${1:(\\\\\\\\d+)}\", ${2:teks})",
+      "jika m bukan adalah kosong {",
+      "    cetak(m.grup(${3:1}))",
+      "}"
+    ],
+    "description": "Cari dengan ekspresi reguler (modul pola)"
+  },
+  "Pola untuk setiap cocokan": {
+    "prefix": "polasemua",
+    "body": [
+      "impor pola",
+      "untuk m dalam pola.iter_cari(\"${1:\\\\\\\\w+}\", ${2:teks}) {",
+      "    cetak(m.grup(), m.rentang())",
+      "}"
+    ],
+    "description": "Ulangi setiap cocokan ekspresi reguler"
+  },
   "Kelas": {
     "prefix": "kelas",
     "body": [

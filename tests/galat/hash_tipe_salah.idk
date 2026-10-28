@@ -1,0 +1,2 @@
+# GalatTipe yang tidak tertangkap -> exit non-zero.
+cetak(md5(123))

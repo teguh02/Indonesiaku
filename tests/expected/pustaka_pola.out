@@ -1,0 +1,44 @@
+== mencari ==
+<pola.Cocokan rentang=(9, 20), cocok="021-5550123">
+021-5550123 021 5550123 5550123
+(9, 20) 9 12 ("021", "5550123")
+kosong
+<pola.Cocokan rentang=(0, 2), cocok="12"> kosong
+<pola.Cocokan rentang=(0, 4), cocok="halo"> kosong
+== grup bernama ==
+2026 10 {"tahun": "2026", "bulan": "10", "hari": "27"}
+(kosong, "b") ("-", "b")
+== cari_semua & iter_cari ==
+["makan", "jalan", "tujuan"]
+[("a", "1"), ("b", "22")]
+3 (0, 1)
+12 (8, 10)
+== ganti & pisah ==
+terlalu banyak spasi
+rumah (budi), kantor (ani)
+a[1]b22
+("-a-b--d-", 5)
+6 apel dan 24 jeruk
+["a", "b", "c", "d"]
+["1", "-", "2", "-", "3"] ["1", "2-3"]
+== bendera ==
+["s", "d", "t"]
+HALO
+kosong benar
+pola.kompilasi("[aiueo]", 1) ["I", "O", "E", "i", "a"]
+harga:\ 5\.000\ \(diskon\?\)
+(6, 9)
+(3, 4)
+== galat ==
+GalatPola: Tanda kurung '(' tidak ditutup (posisi 2): "(a"
+GalatPola: Tanda kurung ')' tanpa pasangan (posisi 1): "a)"
+GalatPola: Tidak ada yang diulang (posisi 0): "*a"
+GalatPola: Rentang kelas karakter terbalik (posisi 4): "[z-a]"
+GalatPola: Backreference (\1) tidak didukung: pola harus bisa dicocokkan tanpa backtracking (posisi 5): "(a)\\1"
+GalatPola: Lookaround (?=...) tidak didukung: pola harus bisa dicocokkan tanpa backtracking (posisi 2): "(?=a)"
+GalatPola: Batas pengulangan {m,n} terbalik (posisi 6): "a{3,1}"
+GalatPola: cari: teks yang dicari harus teks, bukan angka
+GalatPola: Cocokan: tidak ada grup 5
+== tanpa ReDoS ==
+kosong
+kosong

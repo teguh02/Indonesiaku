@@ -14,6 +14,8 @@
 #include "memory.h"
 #include "vm.h"
 #include "native.h"
+#include "pola.h"
+#include "sistem.h"
 
 VM vm;
 
@@ -338,7 +340,8 @@ void initVM() {
     vm.galatNama = defineErrorClass("GalatNama", vm.galat);
     vm.galatAtribut = defineErrorClass("GalatAtribut", vm.galat);
     defineErrorClass("GalatBerkas", vm.galat);
-    defineErrorClass("GalatOS", vm.galat);
+    vm.galatOS = defineErrorClass("GalatOS", vm.galat);
+    vm.galatIzin = defineErrorClass("GalatIzin", vm.galatOS);
     defineErrorClass("GalatImpor", vm.galat);
     vm.galatRekursi = defineErrorClass("GalatRekursi", vm.galat);
     vm.galatPenegasan = defineErrorClass("GalatPenegasan", vm.galat);
@@ -362,6 +365,15 @@ void initVM() {
     defineNative("abs", nativeFnAbs);
     defineNative("akar", nativeFnAkar);
     defineNative("pangkat", nativeFnPangkat);
+    defineNative("sin", nativeFnSin);
+    defineNative("cos", nativeFnCos);
+    defineNative("tan", nativeFnTan);
+    defineNative("asin", nativeFnAsin);
+    defineNative("acos", nativeFnAcos);
+    defineNative("atan", nativeFnAtan);
+    defineNative("atan2", nativeFnAtan2);
+    defineNative("radian", nativeFnRadian);
+    defineNative("derajat", nativeFnDerajat);
     defineNative("bulat", nativeFnBulat);
     defineNative("lantai", nativeFnLantai);
     defineNative("atap", nativeFnAtap);
@@ -449,6 +461,38 @@ void initVM() {
     defineNative("soket_baca", nativeFnSoketBaca);
     defineNative("soket_tulis", nativeFnSoketTulis);
     defineNative("soket_tutup", nativeFnSoketTutup);
+    defineNative("soket_sambung", nativeFnSoketSambung);   // klien; ditolak di --sandbox
+
+    // Hash kriptografis (Fase 6). Mengembalikan teks heksa huruf kecil.
+    defineNative("md5", nativeFnMd5);
+    defineNative("sha1", nativeFnSha1);
+    defineNative("sha256", nativeFnSha256);
+    defineNative("sha512", nativeFnSha512);
+
+    // Ekspresi reguler (Fase 6 gelombang C). Internal: dibungkus oleh
+    // pustaka/pola.idk, yang menambah kelas Pola/Cocokan dan GalatPola.
+    defineNative("_pola_kompilasi", nativeFnPolaKompilasi);
+    defineNative("_pola_cari", nativeFnPolaCari);
+    defineNative("_pola_semua", nativeFnPolaSemua);
+
+    // Sistem operasi (Fase 6 gelombang C2, src/sistem.c). lingkungan,
+    // isi_direktori, dan _jalankan_proses ditolak di `indk --sandbox`.
+    defineNative("keluar", nativeFnKeluar);
+    defineNative("tulis_galat", nativeFnTulisGalat);
+    defineNative("lingkungan", nativeFnLingkungan);
+    defineNative("ambil_lingkungan", nativeFnAmbilLingkungan);
+    defineNative("direktori_kini", nativeFnDirektoriKini);
+    defineNative("isi_direktori", nativeFnIsiDirektori);
+    defineNative("buat_direktori", nativeFnBuatDirektori);
+    defineNative("hapus_direktori", nativeFnHapusDirektori);
+    defineNative("jalur_indk", nativeFnJalurIndk);
+    defineNative("_info_jalur", nativeFnInfoJalur);
+    defineNative("_jalankan_proses", nativeFnJalankanProses);
+
+    // Atribut dinamis (setattr/getattr/hasattr).
+    defineNative("atur_atribut", nativeFnAturAtribut);
+    defineNative("ambil_atribut", nativeFnAmbilAtribut);
+    defineNative("punya_atribut", nativeFnPunyaAtribut);
 }
 
 void freeVM() {
@@ -1246,8 +1290,69 @@ static bool moduleNameToRelPath(const char* name, char* out, size_t outSize) {
     return true;
 }
 
+// `rel` inside each directory of INDK_PATH, in order.
+static bool findInSearchPath(const char* rel, char* out, size_t outSize) {
+    const char* search = getenv("INDK_PATH");
+    if (search == NULL) return false;
+    const char* start = search;
+    while (*start != '\0') {
+        const char* end = strchr(start, INDK_PATH_SEP);
+        size_t partLen = end != NULL ? (size_t)(end - start) : strlen(start);
+        if (partLen > 0 && partLen < 400) {
+            char dir[400];
+            memcpy(dir, start, partLen);
+            dir[partLen] = '\0';
+            if (snprintf(out, outSize, "%s%c%s", dir, INDK_DIR_SEP, rel) < (int)outSize &&
+                fileExists(out)) {
+                return true;
+            }
+        }
+        if (end == NULL) break;
+        start = end + 1;
+    }
+    return false;
+}
+
+// Standard-library directories located from the RUNNING INTERPRETER, so an
+// installed indk finds pustaka/ whatever the working directory is:
+//   <exe dir>/pustaka                        indk built in the repo root
+//   <exe dir>/../pustaka                     Windows installer: {app}\bin + {app}\pustaka
+//   <exe dir>/../share/indonesiaku/pustaka   Unix PREFIX/bin + PREFIX/share
+// Computed once; the interpreter does not move while it runs.
+#define INTERPRETER_ROOTS 3
+static int interpreterRootCount = -1;
+static char interpreterRoots[INTERPRETER_ROOTS][600];
+
+static bool findInInterpreterRoots(const char* rel, char* out, size_t outSize) {
+    if (interpreterRootCount < 0) {
+        interpreterRootCount = 0;
+        char exe[512];
+        char dir[512];
+        if (sistemJalurInterpreter(exe, sizeof exe)) {
+            dirNameOf(exe, dir, sizeof dir);
+            if (dir[0] != '\0') {
+                const char s = INDK_DIR_SEP;
+                snprintf(interpreterRoots[0], sizeof interpreterRoots[0], "%s%cpustaka", dir, s);
+                snprintf(interpreterRoots[1], sizeof interpreterRoots[1], "%s%c..%cpustaka", dir, s, s);
+                snprintf(interpreterRoots[2], sizeof interpreterRoots[2],
+                         "%s%c..%cshare%cindonesiaku%cpustaka", dir, s, s, s, s);
+                interpreterRootCount = INTERPRETER_ROOTS;
+            }
+        }
+    }
+    for (int i = 0; i < interpreterRootCount; i++) {
+        if (snprintf(out, outSize, "%s%c%s", interpreterRoots[i], INDK_DIR_SEP, rel) < (int)outSize &&
+            fileExists(out)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Search order: directory of the importing file, then INDK_PATH, then
-// "pustaka/" relative to the working directory.
+// "pustaka/" relative to the working directory, then the standard library
+// next to the interpreter (findInInterpreterRoots). The first three are the
+// original order, so only imports that used to FAIL can resolve differently.
 static bool resolveModulePath(const char* name, const char* importerDir,
                               char* out, size_t outSize) {
     char rel[512];
@@ -1262,31 +1367,13 @@ static bool resolveModulePath(const char* name, const char* importerDir,
         if (snprintf(out, outSize, "%s", rel) < (int)outSize) return true;
     }
 
-    const char* search = getenv("INDK_PATH");
-    if (search != NULL) {
-        const char* start = search;
-        while (*start != '\0') {
-            const char* end = strchr(start, INDK_PATH_SEP);
-            size_t partLen = end != NULL ? (size_t)(end - start) : strlen(start);
-            if (partLen > 0 && partLen < 400) {
-                char dir[400];
-                memcpy(dir, start, partLen);
-                dir[partLen] = '\0';
-                if (snprintf(out, outSize, "%s%c%s", dir, INDK_DIR_SEP, rel) < (int)outSize &&
-                    fileExists(out)) {
-                    return true;
-                }
-            }
-            if (end == NULL) break;
-            start = end + 1;
-        }
-    }
+    if (findInSearchPath(rel, out, outSize)) return true;
 
     if (snprintf(out, outSize, "pustaka%c%s", INDK_DIR_SEP, rel) < (int)outSize &&
         fileExists(out)) {
         return true;
     }
-    return false;
+    return findInInterpreterRoots(rel, out, outSize);
 }
 
 // Load `name` as a module and leave it on the stack. Cached by resolved path,
@@ -1376,7 +1463,20 @@ static bool importModule(ObjString* path) {
         return true;
     }
 
-    char* source = readModuleSource(path->chars);
+    // `impor "pustaka/x.idk"` from outside the repo: when the path does not
+    // exist as written, look for x.idk in INDK_PATH and next to the
+    // interpreter, like a named import. The cache key stays the path as
+    // written.
+    const char* file = path->chars;
+    char alternatif[600];
+    if (!fileExists(file) && (strncmp(file, "pustaka/", 8) == 0 || strncmp(file, "pustaka\\", 8) == 0)) {
+        if (findInSearchPath(file + 8, alternatif, sizeof alternatif) ||
+            findInInterpreterRoots(file + 8, alternatif, sizeof alternatif)) {
+            file = alternatif;
+        }
+    }
+
+    char* source = readModuleSource(file);
     if (source == NULL) {
         runtimeError("Tidak dapat mengimpor file '%s'.", path->chars);
         return false;

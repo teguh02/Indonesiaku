@@ -184,9 +184,10 @@ make
 
 ```powershell
 gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe `
-    src/main.c src/chunk.c src/compiler.c src/debug.c `
-    src/memory.c src/object.c src/scanner.c src/table.c `
-    src/value.c src/vm.c -lm
+    -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 `
+    src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c `
+    src/native.c src/db.c src/pola.c src/sistem.c src/sqlite3.c src/object.c `
+    src/scanner.c src/table.c src/value.c src/vm.c -lm -lws2_32
 ```
 
 **Output:**
@@ -420,6 +421,25 @@ docker run --rm teguh02/indonesiaku:latest apk list --installed
 
 ---
 
+## Lokasi Pustaka Standar
+
+Modul standar (`impor pola`, `dari koleksi impor Penghitung`, ...) ada di
+folder `pustaka/`. Interpreter mencarinya **relatif terhadap lokasinya
+sendiri**, jadi program bisa dijalankan dari folder mana pun tanpa
+pengaturan tambahan. Tata letak yang dikenali:
+
+| Pemasangan | `indk` | `pustaka/` |
+|---|---|---|
+| Build dari source | `Indonesiaku/indk` | `Indonesiaku/pustaka/` (di sebelahnya) |
+| Installer Windows | `{app}\bin\indonesiaku.exe` | `{app}\pustaka\` |
+| Docker / Linux | `/usr/local/bin/indk` | `/usr/local/share/indonesiaku/pustaka/` |
+
+Bila memasang sendiri di tempat lain, letakkan `pustaka/` mengikuti salah
+satu tata letak di atas, atau arahkan variabel lingkungan `INDK_PATH` ke
+foldernya.
+
+---
+
 ## Perbandingan Instalasi Methods
 
 | Method | Pros | Cons | Cocok untuk |
@@ -579,9 +599,10 @@ make
 
 ```bash
 gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
-    src/main.c src/chunk.c src/compiler.c src/debug.c \
-    src/memory.c src/object.c src/scanner.c src/table.c \
-    src/value.c src/vm.c -lm
+    -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 \
+    src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
+    src/native.c src/db.c src/pola.c src/sistem.c src/sqlite3.c src/object.c \
+    src/scanner.c src/table.c src/value.c src/vm.c -lm
 ```
 
 **Output:**
@@ -701,9 +722,10 @@ make
 
 ```bash
 gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
-    src/main.c src/chunk.c src/compiler.c src/debug.c \
-    src/memory.c src/object.c src/scanner.c src/table.c \
-    src/value.c src/vm.c -lm
+    -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 \
+    src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
+    src/native.c src/db.c src/pola.c src/sistem.c src/sqlite3.c src/object.c \
+    src/scanner.c src/table.c src/value.c src/vm.c -lm
 ```
 
 **Output:**
@@ -874,9 +896,10 @@ sudo apt install build-essential
 
 # Atau gunakan GCC langsung (tanpa make)
 gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
-    src/main.c src/chunk.c src/compiler.c src/debug.c \
-    src/memory.c src/object.c src/scanner.c src/table.c \
-    src/value.c src/vm.c -lm
+    -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 \
+    src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
+    src/native.c src/db.c src/pola.c src/sistem.c src/sqlite3.c src/object.c \
+    src/scanner.c src/table.c src/value.c src/vm.c -lm
 ```
 
 #### Error: "git: command not found"
@@ -991,9 +1014,10 @@ make
 # Windows
 del /Q src\*.o indk.exe
 gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe `
-    src/main.c src/chunk.c src/compiler.c src/debug.c `
-    src/memory.c src/object.c src/scanner.c src/table.c `
-    src/value.c src/vm.c -lm
+    -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 `
+    src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c `
+    src/native.c src/db.c src/pola.c src/sistem.c src/sqlite3.c src/object.c `
+    src/scanner.c src/table.c src/value.c src/vm.c -lm -lws2_32
 ```
 
 ### 4. Debug Build

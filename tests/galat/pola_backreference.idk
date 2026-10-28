@@ -1,0 +1,3 @@
+# Backreference sengaja tidak didukung (mesin Pike VM, tanpa backtracking).
+impor pola
+pola.cari("(a)\\1", "aa")

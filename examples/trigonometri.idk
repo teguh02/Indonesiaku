@@ -1,0 +1,36 @@
+# Trigonometri bawaan: sin cos tan asin acos atan atan2, radian, derajat.
+# Sudut dalam radian, seperti modul math Python; hasilnya selalu desimal.
+# Digit terakhir bisa berbeda 1 ulp antar-libm (glibc, CRT Windows, macOS),
+# jadi golden ini membulatkan ke 12 desimal.
+fungsi b(x) {
+    kembalikan bulatkan(x, 12)
+}
+
+untuk x dalam [0, 0.5, 1, -2, 3.141592653589793, 10] {
+    cetak(x, b(sin(x)), b(cos(x)), b(tan(x)), b(atan(x)))
+}
+untuk x dalam [-1, -0.5, 0, 0.25, 1] {
+    cetak(x, b(asin(x)), b(acos(x)))
+}
+untuk p dalam [[1, 1], [1, -1], [-1, -1], [0, -1], [0, 0]] {
+    cetak(p, b(atan2(p[0], p[1])))
+}
+untuk d dalam [0, 30, 45, 90, 180, 360, -45] {
+    cetak(d, b(radian(d)), b(derajat(radian(d))))
+}
+cetak(jenis(sin(0)), sin(0) adalah 0.0, ke_bulat(sin(0)) adalah sin(0))
+
+# Ranah yang ditolak sama seperti Python (ValueError -> GalatNilai).
+untuk uji dalam [fungsi() { kembalikan asin(1.5) }, fungsi() { kembalikan acos(-2) },
+                 fungsi() { kembalikan sin(1e308 * 10) }] {
+    coba {
+        uji()
+    } kecuali GalatNilai sebagai e {
+        cetak("GalatNilai:", e.pesan)
+    }
+}
+coba {
+    cos("0")
+} kecuali GalatTipe sebagai e {
+    cetak("GalatTipe:", e.pesan)
+}

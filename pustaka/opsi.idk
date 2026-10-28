@@ -1,0 +1,472 @@
+# pustaka/opsi.idk - Mengurai argumen baris perintah (modul `opsi`),
+# padanan `argparse` Python.
+# Pemakaian:
+#     dari opsi impor PenguraiArgumen
+#     p = PenguraiArgumen("hitung", "Menghitung baris berkas.")
+#     p.tambah_argumen("berkas", bantuan = "berkas yang dihitung")
+#     p.tambah_argumen("--jumlah", pendek = "-j", bawaan = 1, jenis_nilai = "bulat")
+#     a = p.urai()                 # dari `argumen`
+#     cetak(a.berkas, a.jumlah)
+#
+# Seperti argparse: `-h`/`--bantuan` mencetak bantuan lalu keluar dengan kode
+# 0; argumen yang salah mencetak pemakaian dan pesan galat ke stderr lalu
+# keluar dengan kode 2. Dengan keluar_saat_galat = salah (exit_on_error=False)
+# galat pemakaian menjadi GalatOpsi yang bisa ditangkap.
+#
+# Bendera pendek boleh digabung (-vq sama dengan -v -q). Belum didukung:
+# singkatan opsi panjang (--jum untuk --jumlah), nargs, grup argumen, dan
+# sub-perintah.
+
+kelas GalatOpsi < Galat {
+    init(pesan) {
+        diri.pesan = pesan
+    }
+}
+
+# Hasil penguraian (argparse.Namespace): satu atribut per argumen.
+kelas Hasil {
+    init(urutan) {
+        diri._urutan = urutan     # nama atribut sesuai urutan pendaftaran
+    }
+
+    _ambil_(nama) {
+        jika tidak punya_atribut(diri, nama) {
+            naikkan GalatOpsi(f"tidak ada argumen '{nama}'")
+        }
+        kembalikan ambil_atribut(diri, nama)
+    }
+
+    ke_kamus() {
+        variabel hasil = kamus()
+        untuk nama dalam diri._urutan {
+            hasil[nama] = ambil_atribut(diri, nama)
+        }
+        kembalikan hasil
+    }
+
+    _teks_() {
+        variabel bagian = []
+        untuk nama dalam diri._urutan {
+            bagian.tambah(f"{nama}={repr(ambil_atribut(diri, nama))}")
+        }
+        variabel isi = ""
+        untuk i dalam rentang(panjang(bagian)) {
+            isi = isi + (", " jika i > 0 selain "") + bagian[i]
+        }
+        kembalikan f"Hasil({isi})"
+    }
+
+    _repr_() {
+        kembalikan diri._teks_()
+    }
+}
+
+_AKSI = ["simpan", "benar", "salah", "hitung", "tambahkan"]
+
+# Satu argumen yang didaftarkan.
+kelas _Argumen {
+    init(nama, pendek, bawaan, jenis_nilai, bantuan, wajib, aksi, pilihan, metavar) {
+        diri.nama = nama
+        diri.pendek = pendek
+        diri.posisi = nama[0] != "-"
+        variabel tujuan = nama
+        selagi panjang(tujuan) > 0 dan tujuan[0] == "-" {
+            tujuan = tujuan[1:]
+        }
+        diri.tujuan = ganti(tujuan, "-", "_")
+        diri.jenis_nilai = jenis_nilai
+        diri.bantuan = bantuan
+        diri.wajib = wajib atau diri.posisi
+        diri.aksi = aksi
+        diri.pilihan = pilihan
+        # Seperti argparse: opsi berpilihan ditulis {a,b} di pemakaian/bantuan.
+        jika metavar adalah kosong dan pilihan bukan adalah kosong {
+            metavar = "{" + _gabung([ke_teks(p) untuk p dalam pilihan], ",") + "}"
+        }
+        diri.metavar = metavar jika metavar bukan adalah kosong selain huruf_besar(diri.tujuan)
+        jika bawaan adalah kosong dan aksi == "benar" {
+            bawaan = salah
+        } jika_lain bawaan adalah kosong dan aksi == "salah" {
+            bawaan = benar
+        }
+        diri.bawaan = bawaan
+    }
+
+    perlu_nilai() {
+        kembalikan diri.aksi == "simpan" atau diri.aksi == "tambahkan"
+    }
+
+    # Cara argumen ini ditulis di bantuan: "-j, --jumlah JUMLAH" (gaya
+    # argparse Python 3.13+: nama nilai hanya ditulis sekali).
+    tulisan() {
+        jika diri.posisi {
+            kembalikan diri.metavar jika diri.metavar != huruf_besar(diri.tujuan) selain diri.nama
+        }
+        variabel nilai = (" " + diri.metavar) jika diri.perlu_nilai() selain ""
+        jika diri.pendek bukan adalah kosong {
+            kembalikan f"{diri.pendek}, {diri.nama}{nilai}"
+        }
+        kembalikan diri.nama + nilai
+    }
+
+    # Bagian baris pemakaian: "[-j JUMLAH]" atau "berkas".
+    pemakaian() {
+        jika diri.posisi {
+            kembalikan diri.tulisan()
+        }
+        variabel bentuk = diri.pendek jika diri.pendek bukan adalah kosong selain diri.nama
+        jika diri.perlu_nilai() {
+            bentuk = bentuk + " " + diri.metavar
+        }
+        kembalikan bentuk jika diri.wajib selain "[" + bentuk + "]"
+    }
+}
+
+_LEBAR = 78   # argparse: lebar terminal - 2; kita tetapkan terminal 80 kolom
+
+# _baris_terbungkus(bagian, menjorok, awalan) -> argparse get_lines(): susun
+# bagian ke baris selebar _LEBAR; baris pertama tanpa jorokan bila ada awalan.
+fungsi _baris_terbungkus(bagian, menjorok, awalan) {
+    variabel hasil = []
+    variabel baris = []
+    variabel lebar = (panjang(awalan) - 1) jika awalan bukan adalah kosong selain (panjang(menjorok) - 1)
+    untuk b dalam bagian {
+        jika lebar + 1 + panjang(b) > _LEBAR dan panjang(baris) > 0 {
+            hasil.tambah(menjorok + _gabung(baris, " "))
+            baris = []
+            lebar = panjang(menjorok) - 1
+        }
+        baris.tambah(b)
+        lebar += panjang(b) + 1
+    }
+    jika panjang(baris) > 0 {
+        hasil.tambah(menjorok + _gabung(baris, " "))
+    }
+    jika awalan bukan adalah kosong {
+        hasil[0] = hasil[0][panjang(menjorok):]
+    }
+    kembalikan hasil
+}
+
+fungsi _gabung(bagian, perekat) {
+    variabel hasil = ""
+    untuk i dalam rentang(panjang(bagian)) {
+        jika i > 0 {
+            hasil = hasil + perekat
+        }
+        hasil = hasil + bagian[i]
+    }
+    kembalikan hasil
+}
+
+# _angka_negatif(t) -> benar untuk "-5", "-2.5": nilai, bukan nama opsi.
+fungsi _angka_negatif(t) {
+    jika panjang(t) < 2 atau t[0] != "-" {
+        kembalikan salah
+    }
+    variabel titik = 0
+    untuk c dalam t[1:] {
+        jika c == "." {
+            titik += 1
+        } jika_lain c < "0" atau c > "9" {
+            kembalikan salah
+        }
+    }
+    kembalikan titik <= 1
+}
+
+kelas PenguraiArgumen {
+    init(nama_program = "program", deskripsi = "", keluar_saat_galat = benar) {
+        diri.nama_program = nama_program
+        diri.deskripsi = deskripsi
+        diri.keluar_saat_galat = keluar_saat_galat
+        diri._argumen = []
+    }
+
+    # tambah_argumen(nama, pendek=, bawaan=, jenis_nilai=, bantuan=, wajib=,
+    # aksi=, pilihan=, metavar=). `nama` tanpa "-" = argumen posisi (wajib);
+    # "--nama" = opsi. aksi: "simpan" (bawaan), "benar"/"salah" (bendera),
+    # "hitung" (-v -v -> 2), "tambahkan" (boleh berulang, jadi daftar).
+    # jenis_nilai: "teks", "bulat", "desimal", atau fungsi pengubah.
+    tambah_argumen(nama, pendek = kosong, bawaan = kosong, jenis_nilai = "teks", bantuan = "",
+                   wajib = salah, aksi = "simpan", pilihan = kosong, metavar = kosong) {
+        jika jenis(nama) != "teks" atau nama == "" atau nama == "-" atau nama == "--" {
+            naikkan GalatOpsi(f"nama argumen tidak sah: {repr(nama)}")
+        }
+        jika nama[0] == "-" dan (panjang(nama) < 3 atau nama[1] != "-") {
+            naikkan GalatOpsi(f"opsi harus ditulis panjang ('--nama'); singkatan lewat pendek='-n': {repr(nama)}")
+        }
+        jika pendek bukan adalah kosong dan (jenis(pendek) != "teks" atau panjang(pendek) != 2 atau pendek[0] != "-" atau pendek[1] == "-") {
+            naikkan GalatOpsi(f"pendek harus seperti '-n': {repr(pendek)}")
+        }
+        jika aksi tidak dalam _AKSI {
+            naikkan GalatOpsi(f"aksi tidak dikenal: {repr(aksi)} (pilih dari {repr(_AKSI)})")
+        }
+        jika nama[0] != "-" dan aksi != "simpan" {
+            naikkan GalatOpsi(f"argumen posisi '{nama}' hanya mendukung aksi 'simpan'")
+        }
+        untuk lain dalam diri._argumen {
+            jika lain.nama == nama atau (pendek bukan adalah kosong dan lain.pendek == pendek) {
+                naikkan GalatOpsi(f"argumen didaftarkan dua kali: {nama}")
+            }
+        }
+        variabel arg = _Argumen(nama, pendek, bawaan, jenis_nilai, bantuan, wajib, aksi, pilihan, metavar)
+        diri._argumen.tambah(arg)
+        kembalikan arg
+    }
+
+    # pemakaian() -> baris "pemakaian: ...". Bila lebih dari 78 karakter,
+    # dibungkus persis seperti argparse (lebar 80 kolom tetap, bukan lebar
+    # terminal, supaya hasilnya sama di mana pun): opsi lebih dulu, lalu
+    # argumen posisi di baris sendiri, menjorok sejajar nama program.
+    pemakaian() {
+        variabel awalan = "pemakaian: "
+        variabel opsi = ["[-h]"]
+        variabel posisi = []
+        untuk arg dalam diri._argumen {
+            jika arg.posisi {
+                posisi.tambah(arg.pemakaian())
+            } selain {
+                opsi.tambah(arg.pemakaian())
+            }
+        }
+        variabel penuh = _gabung([diri.nama_program] + opsi + posisi, " ")
+        jika panjang(awalan) + panjang(penuh) <= _LEBAR {
+            kembalikan awalan + penuh
+        }
+        variabel menjorok = " " * (panjang(awalan) + panjang(diri.nama_program) + 1)
+        variabel baris = _baris_terbungkus([diri.nama_program] + opsi, menjorok, awalan)
+        jika panjang(posisi) > 0 {
+            baris = baris + _baris_terbungkus(posisi, menjorok, kosong)
+        }
+        kembalikan awalan + _gabung(baris, "
+")
+    }
+
+    # bantuan() -> teks bantuan lengkap (yang dicetak -h), kolom rata seperti
+    # argparse: keterangan mulai di kolom 24, atau di baris berikutnya bila
+    # tulisan argumennya terlalu panjang.
+    bantuan() {
+        variabel baris = [diri.pemakaian()]
+        jika diri.deskripsi != "" {
+            baris.tambah("")
+            baris.tambah(diri.deskripsi)
+        }
+        variabel posisi = [a untuk a dalam diri._argumen jika a.posisi]
+        jika panjang(posisi) > 0 {
+            baris.tambah("")
+            baris.tambah("argumen posisi:")
+            untuk arg dalam posisi {
+                diri._baris_bantuan(baris, arg.tulisan(), arg.bantuan)
+            }
+        }
+        baris.tambah("")
+        baris.tambah("opsi:")
+        diri._baris_bantuan(baris, "-h, --bantuan", "tampilkan bantuan ini lalu keluar")
+        untuk arg dalam diri._argumen {
+            jika tidak arg.posisi {
+                diri._baris_bantuan(baris, arg.tulisan(), arg.bantuan)
+            }
+        }
+        kembalikan _gabung(baris, "\n")
+    }
+
+    _baris_bantuan(baris, kiri, kanan) {
+        variabel awal = "  " + kiri
+        jika kanan == "" {
+            baris.tambah(awal)
+        } jika_lain panjang(awal) <= 21 {
+            baris.tambah(awal + " " * (24 - panjang(awal)) + kanan)
+        } selain {
+            baris.tambah(awal)
+            baris.tambah(" " * 24 + kanan)
+        }
+    }
+
+    _galat(pesan) {
+        jika diri.keluar_saat_galat {
+            tulis_galat(diri.pemakaian() + "\n" + f"{diri.nama_program}: galat: {pesan}\n")
+            keluar(2)
+        }
+        naikkan GalatOpsi(pesan)
+    }
+
+    _ubah(arg, mentah) {
+        variabel label = f"argumen {arg.nama}"
+        variabel nilai = mentah
+        variabel j = arg.jenis_nilai
+        jika j == "bulat" {
+            variabel t = mentah
+            jika panjang(t) > 0 dan (t[0] == "-" atau t[0] == "+") {
+                t = t[1:]
+            }
+            variabel sah = panjang(t) > 0
+            untuk c dalam t {
+                jika c < "0" atau c > "9" {
+                    sah = salah
+                }
+            }
+            jika tidak sah {
+                diri._galat(f"{label}: nilai bulat tidak sah: {repr(mentah)}")
+            }
+            nilai = ke_angka(mentah)
+        } jika_lain j == "desimal" {
+            coba {
+                nilai = ke_desimal(mentah)
+            } kecuali e {
+                diri._galat(f"{label}: nilai desimal tidak sah: {repr(mentah)}")
+            }
+        } jika_lain bisa_dipanggil(j) {
+            variabel gagal = salah
+            coba {
+                nilai = j(mentah)
+            } kecuali e {
+                gagal = benar
+            }
+            jika gagal {
+                diri._galat(f"{label}: nilai tidak sah: {repr(mentah)}")
+            }
+        } jika_lain j != "teks" {
+            naikkan GalatOpsi(f"jenis_nilai tidak dikenal: {repr(j)}")
+        }
+        jika arg.pilihan bukan adalah kosong dan nilai tidak dalam arg.pilihan {
+            variabel daftar_pilihan = _gabung([repr(p) untuk p dalam arg.pilihan], ", ")
+            diri._galat(f"{label}: pilihan tidak sah: {repr(nilai)} (pilih dari {daftar_pilihan})")
+        }
+        kembalikan nilai
+    }
+
+    _cari_opsi(token) {
+        untuk arg dalam diri._argumen {
+            jika tidak arg.posisi dan (arg.nama == token atau arg.pendek == token) {
+                kembalikan arg
+            }
+        }
+        kembalikan kosong
+    }
+
+    # urai(daftar = kosong) -> Hasil. Tanpa argumen: daftar global `argumen`.
+    urai(daftar = kosong) {
+        jika daftar adalah kosong {
+            daftar = argumen
+        }
+        variabel nilai = kamus()
+        variabel urutan = []
+        untuk arg dalam diri._argumen {
+            nilai[arg.tujuan] = arg.bawaan
+            urutan.tambah(arg.tujuan)
+        }
+        variabel terlihat = himpunan()
+        variabel posisi = [a untuk a dalam diri._argumen jika a.posisi]
+        variabel n_posisi = 0
+        variabel lebih = []
+        variabel hanya_posisi = salah
+        variabel i = 0
+        # Sisa dari bendera pendek gabungan: "-vq" diproses sebagai "-v",
+        # lalu "-q" menunggu di sini.
+        variabel tertunda = kosong
+        selagi tertunda bukan adalah kosong atau i < panjang(daftar) {
+            variabel token = kosong
+            jika tertunda bukan adalah kosong {
+                token = tertunda
+                tertunda = kosong
+            } selain {
+                token = daftar[i]
+                i += 1
+            }
+            variabel opsi = (tidak hanya_posisi dan panjang(token) > 1 dan token[0] == "-" dan
+                             tidak _angka_negatif(token))
+            jika token == "--" dan tidak hanya_posisi {
+                hanya_posisi = benar
+                lanjut
+            }
+            jika tidak opsi {
+                jika n_posisi < panjang(posisi) {
+                    variabel arg = posisi[n_posisi]
+                    nilai[arg.tujuan] = diri._ubah(arg, token)
+                    terlihat.tambah(arg.tujuan)
+                    n_posisi += 1
+                } selain {
+                    lebih.tambah(token)
+                }
+                lanjut
+            }
+            jika token == "-h" atau token == "--bantuan" {
+                cetak(diri.bantuan())
+                keluar(0)
+            }
+            # --nama=nilai dan -nNILAI
+            variabel melekat = kosong
+            variabel kunci = token
+            jika token[1] == "-" dan "=" dalam token {
+                variabel k = 0
+                selagi token[k] != "=" {
+                    k += 1
+                }
+                kunci = token[:k]
+                melekat = token[k + 1:]
+            } jika_lain token[1] != "-" dan panjang(token) > 2 {
+                kunci = token[:2]
+                melekat = token[2:]
+            }
+            variabel arg = diri._cari_opsi(kunci)
+            jika arg adalah kosong {
+                lebih.tambah(token)
+                lanjut
+            }
+            jika tidak arg.perlu_nilai() {
+                jika melekat bukan adalah kosong {
+                    jika token[1] == "-" {
+                        diri._galat(f"argumen {arg.nama}: tidak menerima nilai")
+                    }
+                    tertunda = "-" + melekat
+                }
+                jika arg.aksi == "benar" {
+                    nilai[arg.tujuan] = benar
+                } jika_lain arg.aksi == "salah" {
+                    nilai[arg.tujuan] = salah
+                } selain {
+                    nilai[arg.tujuan] = (0 jika nilai[arg.tujuan] adalah kosong selain nilai[arg.tujuan]) + 1
+                }
+                terlihat.tambah(arg.tujuan)
+                lanjut
+            }
+            variabel mentah = melekat
+            jika mentah adalah kosong {
+                jika i >= panjang(daftar) atau (panjang(daftar[i]) > 1 dan daftar[i][0] == "-" dan
+                                              tidak _angka_negatif(daftar[i])) {
+                    diri._galat(f"argumen {arg.nama}: memerlukan satu nilai")
+                }
+                mentah = daftar[i]
+                i += 1
+            }
+            variabel v = diri._ubah(arg, mentah)
+            jika arg.aksi == "tambahkan" {
+                jika nilai[arg.tujuan] adalah kosong {
+                    nilai[arg.tujuan] = []
+                }
+                nilai[arg.tujuan].tambah(v)
+            } selain {
+                nilai[arg.tujuan] = v
+            }
+            terlihat.tambah(arg.tujuan)
+        }
+        variabel kurang = []
+        untuk arg dalam diri._argumen {
+            jika arg.wajib dan arg.tujuan tidak dalam terlihat {
+                kurang.tambah(arg.nama)
+            }
+        }
+        jika panjang(kurang) > 0 {
+            diri._galat("argumen berikut wajib diisi: " + _gabung(kurang, ", "))
+        }
+        jika panjang(lebih) > 0 {
+            diri._galat("argumen tidak dikenal: " + _gabung(lebih, " "))
+        }
+        variabel hasil = Hasil(urutan)
+        untuk nama dalam urutan {
+            atur_atribut(hasil, nama, nilai[nama])
+        }
+        kembalikan hasil
+    }
+}

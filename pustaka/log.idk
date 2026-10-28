@@ -1,0 +1,169 @@
+# pustaka/log.idk - Pencatatan (modul `log`), padanan `logging` Python.
+# Pemakaian:
+#     impor log
+#     log.peringatan("disk hampir penuh")   # stderr: PERINGATAN:akar:disk hampir penuh
+#     log.atur(ambang = log.INFO, berkas = "aplikasi.log")
+#     p = log.ambil_pencatat("db")
+#     p.info("tersambung")
+#
+# Seperti Python: catatan ke stderr secara bawaan, ambang bawaan PERINGATAN
+# (debug dan info tidak muncul sampai ambangnya diturunkan), format bawaan
+# "{level}:{nama}:{pesan}". Pencatat bernama bertingkat dengan titik:
+# "app.db" mewarisi ambang "app" bila ambangnya sendiri belum diatur.
+
+DEBUG = 10
+INFO = 20
+PERINGATAN = 30
+GALAT = 40
+KRITIS = 50
+
+_NAMA_LEVEL = {10: "DEBUG", 20: "INFO", 30: "PERINGATAN", 40: "GALAT", 50: "KRITIS"}
+
+kelas GalatLog < Galat {
+    init(pesan) {
+        diri.pesan = pesan
+    }
+}
+
+# Pengaturan bersama semua pencatat (logging.basicConfig).
+_atur = {"format": "{level}:{nama}:{pesan}", "berkas": kosong}
+
+fungsi nama_level(level) {
+    jika punya(_NAMA_LEVEL, level) {
+        kembalikan _NAMA_LEVEL[level]
+    }
+    kembalikan f"Level {level}"
+}
+
+fungsi _tulis(level, nama, pesan) {
+    variabel baris = _atur["format"]
+    baris = ganti(baris, "{level}", nama_level(level))
+    baris = ganti(baris, "{nama}", nama)
+    baris = ganti(baris, "{waktu}", format_tanggal("%Y-%m-%d %H:%M:%S"))
+    # {pesan} terakhir: isi pesan sendiri boleh memuat "{level}" dst.
+    baris = ganti(baris, "{pesan}", ke_teks(pesan))
+    jika _atur["berkas"] adalah kosong {
+        tulis_galat(baris + "\n")
+    } selain {
+        tambah_berkas(_atur["berkas"], baris + "\n")
+    }
+}
+
+kelas Pencatat {
+    init(nama) {
+        diri.nama = nama
+        diri.ambang = kosong     # kosong: ikuti induk
+    }
+
+    atur_ambang(level) {
+        diri.ambang = level
+    }
+
+    # ambang_efektif() -> ambang sendiri, atau induk terdekat ("a.b" -> "a"),
+    # atau pencatat akar.
+    ambang_efektif() {
+        jika diri.ambang bukan adalah kosong {
+            kembalikan diri.ambang
+        }
+        variabel nama = diri.nama
+        selagi "." dalam nama {
+            variabel i = panjang(nama) - 1
+            selagi nama[i] != "." {
+                i -= 1
+            }
+            nama = nama[:i]
+            jika punya(_pencatat, nama) dan _pencatat[nama].ambang bukan adalah kosong {
+                kembalikan _pencatat[nama].ambang
+            }
+        }
+        kembalikan _akar.ambang
+    }
+
+    aktif_untuk(level) {
+        kembalikan level >= diri.ambang_efektif()
+    }
+
+    catat(level, pesan) {
+        jika diri.aktif_untuk(level) {
+            _tulis(level, diri.nama, pesan)
+        }
+    }
+
+    debug(pesan) {
+        diri.catat(DEBUG, pesan)
+    }
+
+    info(pesan) {
+        diri.catat(INFO, pesan)
+    }
+
+    peringatan(pesan) {
+        diri.catat(PERINGATAN, pesan)
+    }
+
+    galat(pesan) {
+        diri.catat(GALAT, pesan)
+    }
+
+    kritis(pesan) {
+        diri.catat(KRITIS, pesan)
+    }
+
+    _teks_() {
+        kembalikan f"<Pencatat {diri.nama} ({nama_level(diri.ambang_efektif())})>"
+    }
+}
+
+_akar = Pencatat("akar")
+_akar.ambang = PERINGATAN
+_pencatat = {"akar": _akar}
+
+# ambil_pencatat(nama = kosong) -> Pencatat bernama; nama yang sama selalu
+# memberi objek yang sama. Tanpa nama: pencatat akar.
+fungsi ambil_pencatat(nama = kosong) {
+    jika nama adalah kosong atau nama == "akar" {
+        kembalikan _akar
+    }
+    jika jenis(nama) != "teks" {
+        naikkan GalatLog(f"nama pencatat harus teks, bukan {jenis(nama)}")
+    }
+    jika tidak punya(_pencatat, nama) {
+        _pencatat[nama] = Pencatat(nama)
+    }
+    kembalikan _pencatat[nama]
+}
+
+# atur(ambang=, format=, berkas=) -> logging.basicConfig. Hanya argumen yang
+# diberikan yang diubah. `berkas` berupa jalur: catatan DITAMBAHKAN ke
+# berkas itu; berkas = "" kembali ke stderr.
+fungsi atur(ambang = kosong, format = kosong, berkas = kosong) {
+    jika ambang bukan adalah kosong {
+        _akar.ambang = ambang
+    }
+    jika format bukan adalah kosong {
+        _atur["format"] = format
+    }
+    jika berkas bukan adalah kosong {
+        _atur["berkas"] = kosong jika berkas == "" selain berkas
+    }
+}
+
+fungsi debug(pesan) {
+    _akar.debug(pesan)
+}
+
+fungsi info(pesan) {
+    _akar.info(pesan)
+}
+
+fungsi peringatan(pesan) {
+    _akar.peringatan(pesan)
+}
+
+fungsi galat(pesan) {
+    _akar.galat(pesan)
+}
+
+fungsi kritis(pesan) {
+    _akar.kritis(pesan)
+}

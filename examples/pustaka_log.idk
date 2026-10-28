@@ -1,0 +1,30 @@
+# Modul `log`: pencatatan, padanan `logging`. Bawaannya menulis ke stderr;
+# contoh ini menulis ke berkas sementara lalu membacanya kembali, karena
+# golden test menuntut stderr kosong.
+impor log
+
+berkas = "_contoh_log_sementara.txt"
+log.atur(berkas = berkas)
+
+log.debug("tidak tampil: ambang bawaan PERINGATAN")
+log.info("tidak tampil juga")
+log.peringatan("disk hampir penuh")
+log.galat("gagal menyimpan")
+
+# Pencatat bernama, bertingkat dengan titik.
+app = log.ambil_pencatat("app")
+db = log.ambil_pencatat("app.db")
+app.atur_ambang(log.DEBUG)
+db.debug("db mewarisi ambang DEBUG dari app")
+log.ambil_pencatat("lain").info("lain mengikuti akar: tidak tampil")
+
+# Format sendiri; {pesan} boleh berupa nilai apa pun.
+log.atur(format = "[{level}] {nama} - {pesan}")
+db.kritis({"kode": 500})
+
+cetak(baca_semua(berkas))
+hapus_berkas(berkas)
+
+cetak(db, db.ambang_efektif() == log.DEBUG)
+cetak(log.ambil_pencatat("app.db") adalah db, log.ambil_pencatat() adalah log.ambil_pencatat("akar"))
+cetak(log.nama_level(log.PERINGATAN), log.nama_level(25))

@@ -93,6 +93,8 @@ typedef struct {
     ObjClass* galatAtribut;
     ObjClass* galatRekursi;
     ObjClass* hentiIterasi;
+    ObjClass* galatOS;     // Python OSError
+    ObjClass* galatIzin;   // PermissionError: refused under --sandbox
 
     // Keyword argument names for the native call currently running, or NULL.
     // Only natives that opt in (see keywordNatives in vm.c) ever see these;

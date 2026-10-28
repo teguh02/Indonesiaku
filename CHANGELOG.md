@@ -67,6 +67,114 @@ selesai.
 `hasilkan`, `cocokkan`, `kasus`. Program yang memakai ketiganya sebagai nama
 variabel perlu diganti namanya.
 
+**Fase 6 — Pustaka standar luas (gelombang B & C).**
+
+### Added
+- ✨ **`opsi`** — padanan `argparse`: `PenguraiArgumen`, argumen posisi dan
+  opsi, `pendek`, `--x=nilai`, `-j3`, bendera digabung (`-vq`), aksi
+  `simpan`/`benar`/`salah`/`hitung`/`tambahkan`, `jenis_nilai`, `pilihan`,
+  bantuan otomatis bergaya argparse 3.13+. Galat pemakaian → stderr + kode
+  2, `-h` → kode 0; `keluar_saat_galat = salah` untuk `GalatOpsi`. Diuji
+  1.600 daftar argumen acak berbanding argparse (1 beda: `--` di ujung).
+- ✨ **`log`** — padanan `logging`: `debug`/`info`/`peringatan`/`galat`/
+  `kritis`, `atur` (basicConfig), `ambil_pencatat` bertingkat dengan titik;
+  bawaan ke stderr, ambang `PERINGATAN`, format `{level}:{nama}:{pesan}`.
+- ✨ **`proses`** — padanan `subprocess.run`: `jalankan`, `keluaran`,
+  `GalatProses`; perintah berupa daftar, tanpa shell.
+- ✨ Builtin sistem operasi (`src/sistem.c` baru): `keluar`, `tulis_galat`,
+  `lingkungan`, `ambil_lingkungan`, `direktori_kini`, `isi_direktori`,
+  `buat_direktori`, `hapus_direktori`, `jalur_indk`; serta `atur_atribut`,
+  `ambil_atribut`, `punya_atribut` (setattr/getattr/hasattr). Galat sistem
+  kini `GalatOS`; kelas baru `GalatIzin`.
+- ✨ **`indk --sandbox`** menolak lingkungan, isi direktori, dan menjalankan
+  program lain (`GalatIzin`). Playground web memakai mode ini.
+- ✨ `jalur` mendapat `ada`, `adalah_berkas`, `adalah_direktori`, `ukuran`,
+  `waktu_ubah`, `absolut`.
+- ✨ **`pola`** — ekspresi reguler, padanan `re`: `kompilasi`, `cari`,
+  `cocok`, `cocok_penuh`, `cari_semua`, `iter_cari`, `ganti` (templat `\1`,
+  `\g<nama>`, atau fungsi), `ganti_n`, `pisah`, `lolos`; objek `Cocokan`
+  dan grup bernama `(?P<nama>...)`; bendera `ABAIKAN_KAPITAL`, `MULTIBARIS`,
+  `TITIK_SEMUA`. Mesin Pike VM di C (`src/pola.c`) dengan waktu linear:
+  tidak ada pola ReDoS. Backreference, lookaround, dan kuantifier posesif
+  ditolak dengan `GalatPola`; `\d \w \s` bersifat ASCII. Diuji 240.000
+  kasus fuzz dan 9.000 keluaran API identik dengan `re` Python.
+  Contoh: `examples/pustaka_pola.idk`.
+- ✨ **`jalur`** — mengolah jalur berkas sebagai teks, persis `posixpath`:
+  `gabung`, `gabung_semua`, `pisah`, `nama_dasar`, `nama_direktori`,
+  `pisah_ekstensi`, `ekstensi`, `normalisasi`, `adalah_absolut`,
+  `dari_windows`. Contoh: `examples/pustaka_jalur.idk`.
+- ✨ Builtin **`md5`, `sha1`, `sha256`, `sha512`** (teks heksa) dan modul
+  **`bita`**, **`base64`**, **`csv`** (gelombang B), kini dengan panduan.
+- ✨ **Klien HTTP**: `http_ambil(url, metode, kepala, badan)` di
+  `pustaka/http.idk` mengembalikan `Respons` (`status`, `alasan`, `kepala`
+  huruf kecil, `badan`, `ok()`, `periksa()`), plus `http_urai_url` dan
+  `GalatJaringan`. Khusus `http://` (HTTPS butuh TLS, Fase 8). Diuji
+  melawan `examples/todo_server.idk` lewat `tests/test_klien_http.sh`.
+- ✨ Builtin **`soket_sambung(host, port)`** (koneksi TCP keluar, IPv4/IPv6
+  lewat `getaddrinfo`); ditolak di `--sandbox`.
+- ✨ Builtin trigonometri **`sin`, `cos`, `tan`, `asin`, `acos`, `atan`,
+  `atan2`, `radian`, `derajat`** — memanggil libm C seperti modul
+  `math` Python (digit terakhir bisa berbeda 1 ulp antar-platform, sama
+  seperti Python sendiri). Contoh: `examples/trigonometri.idk`.
+- ✨ **`kura`** — padanan `turtle` yang menyimpan gambar sebagai SVG:
+  `maju`, `mundur`, `kiri`, `kanan`, `ke`, `hadap`, `pulang`, `lingkaran`
+  (jumlah langkah sama dengan turtle), `angkat_pena`, `turunkan_pena`,
+  `warna`, `tebal`, `kecepatan`, `selesai`; kelas `Kura` untuk beberapa
+  kura dan `svg_dari`. Contoh: `examples/pustaka_kura.idk`.
+
+### Fixed
+- 🐛 **Modul standar tidak bisa diimpor setelah dipasang.** `pustaka/` hanya
+  dicari relatif terhadap direktori kerja, jadi `impor pola` gagal dari folder
+  lain; installer Windows bahkan tidak memasang `pustaka/`, dan image Docker
+  hanya jalan dari `WORKDIR`-nya. Kini `pustaka/` juga dicari relatif
+  terhadap interpreter (di sebelah `indk`, `../pustaka`,
+  `../share/indonesiaku/pustaka`), termasuk untuk `impor "pustaka/..."`;
+  installer memasang `{app}\pustaka`, dan image Docker menaruhnya di
+  `/usr/local/share/indonesiaku/pustaka`. Urutan pencarian lama tidak
+  berubah. Diuji `tests/test_impor_lokasi.{sh,ps1}` dan dengan membangun
+  kedua image Docker.
+- 🐛 **`http_response` mengirim `Content-Length` dalam karakter, bukan
+  byte**, sehingga badan non-ASCII (mis. `"☕"`) terpotong di curl dan
+  peramban. Kini dihitung dalam byte UTF-8.
+- 🐛 Perintah `gcc` manual di panduan instalasi tidak memuat `native.c`,
+  `db.c`, dan `sqlite3.c` (serta `-lws2_32` di Windows), jadi gagal di tahap
+  link. Kini lengkap dan sudah dijalankan di Windows dan Linux.
+
+**Fase 6 — Pustaka standar luas (gelombang A: modul murni Indonesiaku).**
+Lima modul baru di `pustaka/`, dipakai lewat `impor <nama>` bernamespace
+(mis. `dari koleksi impor Penghitung`). Tidak ada perubahan bahasa: kode
+1.1.0 tetap jalan apa adanya (K14). Semuanya ditulis dalam Indonesiaku di
+atas builtin dan metode ajaib K19 — nol perubahan `src/`.
+
+### Added
+- ✨ **`koleksi`** — `Penghitung` (Counter), `KamusBawaan` (defaultdict),
+  `KamusBerurut`, dan `Antrian` (deque dua ujung O(1) teramortisasi, dengan
+  `maks_panjang` dan `putar`). Contoh: `examples/pustaka_koleksi.idk`.
+- ✨ **`statistik`** — `rata_rata`, `median`, `modus`, `varians`,
+  `simpangan_baku` (sampel) beserta varian `_populasi`, dan `kuantil`.
+  Galat bertipe `GalatStatistik`. Contoh: `examples/pustaka_statistik.idk`.
+- ✨ **`iterasi`** — padanan `itertools` secara *eager* (mengembalikan
+  daftar): `hitung_naik`, `ulangi`, `putar_ulang`, `cabang`, `akumulasi`,
+  `rangkai`, `saring_dengan`, `ambil_selama`, `lewati_selama`,
+  `saring_salah`, `kelompokkan`, `iris`, `berpasangan`, `kelompok_per`,
+  `peta_bintang`, `pasangkan_terpanjang`, `produk`, `permutasi`,
+  `kombinasi`, `kombinasi_berulang`. Contoh: `examples/pustaka_iterasi.idk`.
+- ✨ **`fungsional`** — `lipat` (reduce), `parsial`, `urutkan_dengan`,
+  `urutkan_dengan_banding`, dan `banding_ke_kunci` (cmp_to_key).
+  Contoh: `examples/pustaka_fungsional.idk`.
+- ✨ **`salin`** — `salin` (dangkal) dan `salin_dalam` (rekursif, aman
+  siklus). Contoh: `examples/pustaka_salin.idk`.
+
+### Catatan keterbatasan (sengaja, dicatat di rencana)
+- `iterasi` mengembalikan **daftar**, bukan iterator malas, sampai generator
+  (Fase 5) ada. Karena bahasa belum punya `*args`, `rangkai`/`produk`
+  menerima satu daftar urutan dan `parsial` menerima daftar argumen depan.
+- `tupel_bernama`, `@cache_lru`, dan `urutan_lengkap` **ditunda** dengan
+  alasan yang sama (butuh fungsi variadik atau penyuntikan metode saat
+  runtime).
+- `daftar()`/`terurut()`/`jumlah()`/`semua()`/`tupel()` belum mengenali objek
+  ber-`_iter_`; kelas di modul ini menyediakan `ke_daftar()`/`daftar()`.
+
 ## [1.1.0] - 2026-10-27
 
 **Fase 4 — OOP lengkap.** Seluruh item Fase 4 di `docs/ROADMAP.md` selesai:

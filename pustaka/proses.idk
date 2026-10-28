@@ -1,0 +1,83 @@
+# pustaka/proses.idk - Menjalankan program lain (modul `proses`).
+# Pemakaian:
+#     impor proses
+#     h = proses.jalankan(["git", "--version"])
+#     cetak(h.kode_keluar, h.keluaran)
+#
+# Padanan `subprocess.run` Python dengan text=True. Perintah WAJIB berupa
+# daftar teks (["ls", "-l"]) dan dijalankan TANPA shell, jadi tidak ada
+# injeksi lewat ";" atau "|" dan tidak ada aturan kutip yang perlu diingat.
+# Keluaran baris baru dinormalkan ke "\n" di semua sistem operasi.
+# Ditolak (GalatIzin) bila interpreter dijalankan dengan `indk --sandbox`.
+
+kelas GalatProses < Galat {
+    init(pesan, hasil = kosong) {
+        diri.pesan = pesan
+        diri.hasil = hasil
+    }
+}
+
+# Hasil satu proses yang sudah selesai (subprocess.CompletedProcess).
+kelas Hasil {
+    init(perintah, kode_keluar, keluaran, galat) {
+        diri.perintah = perintah
+        diri.kode_keluar = kode_keluar
+        diri.keluaran = keluaran
+        diri.galat = galat
+    }
+
+    # periksa() -> naikkan GalatProses bila kode keluar bukan 0.
+    periksa() {
+        jika diri.kode_keluar != 0 {
+            naikkan GalatProses(f"perintah {repr(diri.perintah)} keluar dengan kode {diri.kode_keluar}", diri)
+        }
+        kembalikan diri
+    }
+
+    _teks_() {
+        kembalikan f"Hasil(perintah={repr(diri.perintah)}, kode_keluar={diri.kode_keluar})"
+    }
+
+    _repr_() {
+        kembalikan diri._teks_()
+    }
+}
+
+fungsi _periksa_perintah(perintah) {
+    jika jenis(perintah) == "teks" {
+        naikkan GalatProses("perintah harus daftar teks, misalnya [\"ls\", \"-l\"]: teks tunggal tidak dipecah karena tidak ada shell")
+    }
+    jika jenis(perintah) != "daftar" dan jenis(perintah) != "tupel" {
+        naikkan GalatProses(f"perintah harus daftar teks, bukan {jenis(perintah)}")
+    }
+    jika panjang(perintah) == 0 {
+        naikkan GalatProses("perintah tidak boleh kosong")
+    }
+    untuk bagian dalam perintah {
+        jika jenis(bagian) != "teks" {
+            naikkan GalatProses(f"setiap bagian perintah harus teks, bukan {jenis(bagian)}")
+        }
+    }
+}
+
+# jalankan(perintah, masukan = "", periksa = salah) -> Hasil.
+# `masukan` dikirim ke stdin program. Dengan periksa=benar, kode keluar
+# bukan 0 menjadi GalatProses (subprocess.run(check=True)).
+fungsi jalankan(perintah, masukan = "", periksa = salah) {
+    _periksa_perintah(perintah)
+    jika jenis(masukan) != "teks" {
+        naikkan GalatProses(f"masukan harus teks, bukan {jenis(masukan)}")
+    }
+    variabel mentah = _jalankan_proses(perintah, masukan)
+    variabel hasil = Hasil(daftar(perintah), mentah[0], mentah[1], mentah[2])
+    jika periksa {
+        hasil.periksa()
+    }
+    kembalikan hasil
+}
+
+# keluaran(perintah, masukan = "") -> stdout program; GalatProses bila gagal
+# (subprocess.check_output).
+fungsi keluaran(perintah, masukan = "") {
+    kembalikan jalankan(perintah, masukan, benar).keluaran
+}

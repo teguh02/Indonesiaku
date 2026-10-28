@@ -1,0 +1,18 @@
+== lingkungan ==
+kamus teks
+kosong bawaan
+== direktori ==
+["a.txt", "b.txt", "sub"]
+benar benar salah
+benar 3 salah
+GalatOS: hapus_direktori(): '_contoh_direktori_sementara' direktori tidak kosong
+GalatOS: buat_direktori(): '_contoh_direktori_sementara' sudah ada
+GalatOS: isi_direktori(): '_contoh_direktori_sementara/a.txt' bukan direktori
+GalatOS: ukuran(): '_contoh_direktori_sementara/zzz' tidak ada
+salah
+benar benar
+== atribut dinamis ==
+5 1 bawaan
+benar salah benar
+2
+GalatAtribut: Objek tidak punya atribut 'z'.

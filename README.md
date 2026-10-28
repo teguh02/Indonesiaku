@@ -107,7 +107,12 @@ merusak kompatibilitas sampai 2.0.
   jalur pencarian `INDK_PATH`, serta `__nama__`/`__utama__`
 - **Kemudahan menulis** — f-string, irisan & indeks negatif, *list
   comprehension*, penugasan berganda, operator bitwise, metode tipe bawaan
-- **Pustaka standar** — berkas I/O, JSON, HTTP, soket TCP, dan SQLite tertanam
+- **Pustaka standar** — berkas I/O, JSON, server dan klien HTTP, soket TCP,
+  SQLite tertanam, trigonometri, hash (`md5`/`sha*`), serta modul
+  bernamespace `koleksi`, `statistik`, `iterasi`, `fungsional`, `salin`,
+  `jalur`, `pola` (ekspresi reguler), `opsi` (argumen baris perintah), `log`,
+  `proses` (menjalankan program lain), `bita`, `base64`, `csv`, dan `kura`
+  (grafika kura-kura ke SVG) (Fase 6); mode `indk --sandbox`
 - **Mesin** — *garbage collector* mark-sweep dan REPL interaktif
 
 Daftar lengkap beserta contoh tiap fitur ada di
@@ -129,8 +134,9 @@ Selebihnya ada di folder [`examples/`](examples/) — sekaligus dipakai sebagai
 
 ## 🗺️ Rencana Selanjutnya
 
-Fase 0–3 sudah selesai di v1.0.0. Berikutnya: OOP lengkap (dekorator, manajer
-konteks, MRO), iterator & generator, lalu pustaka standar yang lebih luas.
+Fase 0–4 sudah selesai di v1.1.0. Berikutnya: iterator & generator (Fase 5),
+lalu pustaka standar yang lebih luas (Fase 6, sedang dikerjakan), dan perkakas
+& kinerja (Fase 7).
 
 Status per fitur ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** — itulah
 satu-satunya sumber status yang resmi.

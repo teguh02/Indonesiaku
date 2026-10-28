@@ -1,0 +1,7 @@
+# Program anak untuk examples/pustaka_proses.idk: membaca stdin, menulis ke
+# stdout dan stderr, lalu keluar dengan kode yang diminta lewat argumen.
+nama = input()
+cetak("halo,", nama)
+cetak("argumen:", argumen)
+tulis_galat("pesan ke stderr\n")
+keluar(ke_angka(argumen[0]) jika panjang(argumen) > 0 selain 0)

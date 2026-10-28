@@ -1,0 +1,27 @@
+== menggabung ==
+data/2026/laporan.csv
+data/a.txt
+/etc/passwd
+a/b/c/d/e/f/g
+== memecah ==
+("/rumah/budi", "catatan.txt")
+catatan.txt
+/rumah/budi
+""
+== ekstensi ==
+("arsip.tar", ".gz")
+(".bashrc", "")
+""
+.JPG
+== normalisasi ==
+a/b/d
+/a
+../../a
+.
+== lain-lain ==
+benar salah
+C:/Users/budi/a.txt
+/
+foto/a.png -> foto/a.webp
+foto/b.jpeg -> foto/b.webp
+catatan -> catatan.webp
