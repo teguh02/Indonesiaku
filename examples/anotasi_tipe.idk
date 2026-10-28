@@ -1,0 +1,35 @@
+# Anotasi tipe opsional.
+#
+# Anotasi dibaca lalu DIBUANG: ia tidak diperiksa saat program berjalan dan
+# tidak mengubah bytecode sama sekali. Gunanya murni sebagai dokumentasi
+# yang ikut terbaca editor.
+
+fungsi sapa(nama: teks, ulang: bilangan = 1) -> teks {
+    kembalikan nama * ulang
+}
+
+variabel pesan: teks = sapa("halo ", 2)
+cetak(pesan)
+
+# Sebagian parameter boleh beranotasi, sebagian tidak.
+fungsi jumlahkan(a, b: bilangan) -> bilangan {
+    kembalikan a + b
+}
+
+cetak(jumlahkan(3, 4))
+
+# Fungsi tanpa nilai kembali.
+fungsi umumkan(teks_pesan: teks) -> kosong {
+    cetak("[info] " + teks_pesan)
+}
+
+umumkan("selesai")
+
+# Anotasi tidak diperiksa saat runtime: ini tetap jalan walau 'nama'
+# dianotasi sebagai teks. Pemeriksaan statis adalah urusan perkakas
+# terpisah, bukan interpreter.
+cetak(sapa(5, 2))
+
+variabel angka: daftar = [1, 2, 3]
+variabel peta: kamus = {"a": 1}
+cetak(angka[0:2], peta["a"])

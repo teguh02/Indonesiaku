@@ -5,6 +5,36 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Belum dirilis]
+
+### Bahasa
+
+- **Anotasi tipe opsional** (Fase 8). `fungsi sapa(nama: teks) -> teks {}`
+  dan `variabel umur: bilangan = 30`. Anotasi **di-parse lalu dibuang**:
+  tidak diperiksa saat runtime, tidak ada opcode baru, tidak ada alokasi
+  baru. Bytecode berkas beranotasi identik dengan versi tanpa anotasi —
+  dijaga oleh `tests/test_anotasi_bytecode.sh`.
+- Nama tipe adalah identifier biasa, bukan kata kunci baru, jadi kode lama
+  yang memakai `teks`/`bilangan` sebagai nama variabel tetap jalan.
+  `kosong` diterima khusus agar `-> kosong` bisa ditulis.
+- Token baru `->` (`TOKEN_PANAH`).
+
+### Diperbaiki
+
+- **Binari rilis menuntut AVX2.** Paket Linux v1.1.0 dan v1.2.0 mati dengan
+  "CPU ISA level is lower than required" di CPU lawas dan banyak VPS/KVM,
+  karena runner GitHub mengompilasi ke `x86-64-v3`. Artefak Linux dan
+  Windows kini dibangun dengan `-march=x86-64`. macOS sengaja dikecualikan
+  (runner `macos-latest` arm64). `Makefile` menerima `EXTRA_CFLAGS` tanpa
+  menimpa `-O2`/`-Isrc`.
+- `prescanFunctionBody()` tidak lagi mengalokasikan slot lokal palsu untuk
+  nama tipe pada `variabel a: teks = ...` di dalam fungsi, pada semua
+  kedalaman blok.
+
+### Perkakas
+
+- Ekstensi VS Code: `->` diwarnai sebagai operator; snippet `fungsitipe`.
+
 ## [1.2.0] - 2026-10-28
 
 ### Perkakas (Fase 7)

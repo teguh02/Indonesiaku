@@ -19,10 +19,18 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: indk-linux
-            build_cmd: make clean && make
-            
+            # -march=x86-64 (baseline) WAJIB untuk artefak rilis: runner
+            # GitHub mengompilasi ke x86-64-v3 (butuh AVX2), sehingga binari
+            # v1.1.0 dan v1.2.0 mati dengan "CPU ISA level is lower than
+            # required" di CPU lawas dan banyak VPS/KVM. Dipakai lewat
+            # EXTRA_CFLAGS, bukan CFLAGS=, supaya -O2/-Isrc tidak tertimpa.
+            build_cmd: make clean && make EXTRA_CFLAGS=-march=x86-64
+
           - os: macos-latest
             artifact_name: indk-macos
+            # TANPA -march: runner macos-latest adalah arm64 (artefak v1.2.0
+            # terbukti "Mach-O 64-bit arm64"), dan -march=x86-64 bukan nilai
+            # sah untuk target ARM sehingga build gagal total.
             build_cmd: make clean && make
             
           - os: windows-latest
@@ -55,7 +63,9 @@ jobs:
           # pemisah perintah, jadi 'make clean && make' gagal parse sebelum
           # kompilasi dimulai. Dipisah jadi dua baris.
           make clean
-          make
+          # Lihat catatan -march pada matrix ubuntu: runner Windows juga x86_64
+          # dan tanpa ini .exe rilis menuntut AVX2.
+          make EXTRA_CFLAGS=-march=x86-64
 
       - name: Verify binary
         if: runner.os != 'Windows'

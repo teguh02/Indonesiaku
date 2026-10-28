@@ -21,6 +21,7 @@ typedef enum {
     TOKEN_SLASH_SLASH,  // Pembagian bulat
     TOKEN_SLASH_SLASH_EQUAL,
     TOKEN_PLUS_EQUAL, TOKEN_MINUS_EQUAL,
+    TOKEN_PANAH,      // '->' anotasi tipe kembali (di-parse lalu dibuang)
     TOKEN_STAR_EQUAL, TOKEN_SLASH_EQUAL,
     TOKEN_PERCENT_EQUAL, TOKEN_POWER_EQUAL,
 

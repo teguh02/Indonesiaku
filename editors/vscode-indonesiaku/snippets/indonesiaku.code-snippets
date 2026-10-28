@@ -455,5 +455,14 @@
       "${1:nama}() { }"
     ],
     "description": "Metode yang wajib diisi subkelas"
+  },
+  "Fungsi beranotasi tipe": {
+    "prefix": "fungsitipe",
+    "body": [
+      "fungsi ${1:nama}(${2:param}: ${3:teks}) -> ${4:teks} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Fungsi dengan anotasi tipe opsional (tidak diperiksa saat runtime)"
   }
 }
