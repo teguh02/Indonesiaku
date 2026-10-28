@@ -110,6 +110,12 @@ static Token errorToken(const char* message) {
     return token;
 }
 
+// See scannerKeepComments(). Static, process-wide, and deliberately not part
+// of ScannerState: nothing nests a scanner while it is on.
+static bool keepComments = false;
+
+void scannerKeepComments(bool enabled) { keepComments = enabled; }
+
 static void skipWhitespace() {
     for (;;) {
         char c = peek();
@@ -125,6 +131,9 @@ static void skipWhitespace() {
                 advance();
                 break;
             case '#':
+                // With keepComments on, stop here and let scanToken() emit a
+                // TOKEN_KOMENTAR covering the comment text.
+                if (keepComments) return;
                 // A comment goes until the end of the line.
                 while (peek() != '\n' && !isAtEnd()) advance();
                 break;
@@ -395,6 +404,12 @@ Token scanToken() {
     scanner.start = scanner.current;
 
     if (isAtEnd()) return makeToken(TOKEN_EOF);
+
+    // Comment as a token (formatter only; see scannerKeepComments).
+    if (keepComments && peek() == '#') {
+        while (peek() != '\n' && !isAtEnd()) advance();
+        return makeToken(TOKEN_KOMENTAR);
+    }
 
     char c = advance();
     // f"..." — must be checked before identifier(), which would swallow the f.

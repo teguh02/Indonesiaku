@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" font-family="Inter, Segoe UI, system-ui, sans-serif">
+  <title>Arsitektur Indonesiaku: dari kode sumber .idk ke eksekusi</title>
+  <desc>Kode sumber .idk dibaca Scanner menjadi token, dikompilasi Compiler single-pass menjadi bytecode dalam Chunk, lalu dieksekusi Virtual Machine berbasis stack yang didampingi garbage collector mark-sweep, fungsi bawaan native, dan pustaka standar.</desc>
+
+  <defs>
+    <marker id="panah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+    <marker id="panahTipis" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <!-- latar eksplisit: README GitHub punya mode gelap, tanpa ini teks hitam hilang -->
+  <rect width="900" height="560" fill="#F8FAFC"/>
+
+  <text x="450" y="38" text-anchor="middle" font-size="19" font-weight="700" fill="#0F172A">Arsitektur Indonesiaku</text>
+  <text x="450" y="60" text-anchor="middle" font-size="13" fill="#64748B">Satu lintasan: tanpa AST, langsung dari token ke bytecode</text>
+
+  <!-- 1. Kode sumber -->
+  <rect x="330" y="86" width="240" height="52" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="450" y="110" text-anchor="middle" font-size="14" font-weight="600" fill="#0F172A">Kode Sumber</text>
+  <text x="450" y="128" text-anchor="middle" font-size="12" fill="#64748B" font-family="ui-monospace, Consolas, monospace">program.idk</text>
+
+  <line x1="450" y1="138" x2="450" y2="168" stroke="#64748B" stroke-width="1.8" marker-end="url(#panah)"/>
+
+  <!-- 2. Scanner -->
+  <rect x="300" y="170" width="300" height="60" rx="12" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.8"/>
+  <text x="450" y="194" text-anchor="middle" font-size="14" font-weight="600" fill="#1E3A8A">Scanner</text>
+  <text x="450" y="214" text-anchor="middle" font-size="11.5" fill="#1D4ED8" font-family="ui-monospace, Consolas, monospace">src/scanner.c</text>
+  <text x="612" y="196" font-size="11.5" fill="#64748B">kata kunci Indonesia</text>
+  <text x="612" y="212" font-size="11.5" fill="#94A3B8">tanpa INDENT/DEDENT</text>
+
+  <line x1="450" y1="230" x2="450" y2="262" stroke="#64748B" stroke-width="1.8" marker-end="url(#panah)"/>
+  <text x="462" y="251" font-size="11.5" fill="#475569" font-style="italic">token</text>
+
+  <!-- 3. Compiler -->
+  <rect x="300" y="264" width="300" height="60" rx="12" fill="#ECFDF5" stroke="#10B981" stroke-width="1.8"/>
+  <text x="450" y="288" text-anchor="middle" font-size="14" font-weight="600" fill="#065F46">Compiler (Pratt, satu lintasan)</text>
+  <text x="450" y="308" text-anchor="middle" font-size="11.5" fill="#047857" font-family="ui-monospace, Consolas, monospace">src/compiler.c</text>
+
+  <line x1="450" y1="324" x2="450" y2="356" stroke="#64748B" stroke-width="1.8" marker-end="url(#panah)"/>
+  <text x="462" y="345" font-size="11.5" fill="#475569" font-style="italic">bytecode</text>
+
+  <!-- 4. Chunk -->
+  <rect x="300" y="358" width="300" height="52" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="450" y="382" text-anchor="middle" font-size="14" font-weight="600" fill="#0F172A">Chunk</text>
+  <text x="450" y="400" text-anchor="middle" font-size="11.5" fill="#64748B" font-family="ui-monospace, Consolas, monospace">src/chunk.c — bytecode + konstanta</text>
+
+  <line x1="450" y1="410" x2="450" y2="440" stroke="#64748B" stroke-width="1.8" marker-end="url(#panah)"/>
+
+  <!-- 5. VM -->
+  <rect x="300" y="442" width="300" height="62" rx="12" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="1.8"/>
+  <text x="450" y="467" text-anchor="middle" font-size="14" font-weight="600" fill="#4C1D95">Virtual Machine (berbasis stack)</text>
+  <text x="450" y="487" text-anchor="middle" font-size="11.5" fill="#6D28D9" font-family="ui-monospace, Consolas, monospace">src/vm.c</text>
+
+  <line x1="450" y1="504" x2="450" y2="528" stroke="#64748B" stroke-width="1.8" marker-end="url(#panah)"/>
+  <text x="450" y="545" text-anchor="middle" font-size="13" font-weight="600" fill="#0F172A">Keluaran program</text>
+
+  <!-- pendukung VM: kiri -->
+  <rect x="38" y="430" width="212" height="44" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="144" y="449" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0F172A">GC mark-sweep</text>
+  <text x="144" y="465" text-anchor="middle" font-size="11" fill="#64748B" font-family="ui-monospace, Consolas, monospace">src/memory.c</text>
+  <line x1="250" y1="458" x2="298" y2="466" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#panahTipis)"/>
+
+  <rect x="38" y="486" width="212" height="44" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="144" y="505" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0F172A">Fungsi bawaan</text>
+  <text x="144" y="521" text-anchor="middle" font-size="11" fill="#64748B" font-family="ui-monospace, Consolas, monospace">src/native.c</text>
+  <line x1="250" y1="508" x2="298" y2="492" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#panahTipis)"/>
+
+  <!-- pendukung VM: kanan -->
+  <rect x="650" y="430" width="212" height="44" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="756" y="449" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0F172A">Objek &amp; tabel hash</text>
+  <text x="756" y="465" text-anchor="middle" font-size="11" fill="#64748B" font-family="ui-monospace, Consolas, monospace">object.c · table.c · value.c</text>
+  <line x1="650" y1="458" x2="602" y2="466" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#panahTipis)"/>
+
+  <rect x="650" y="486" width="212" height="44" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="756" y="505" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0F172A">Pustaka standar</text>
+  <text x="756" y="521" text-anchor="middle" font-size="11" fill="#64748B" font-family="ui-monospace, Consolas, monospace">pustaka/*.idk</text>
+  <line x1="650" y1="508" x2="602" y2="492" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#panahTipis)"/>
+
+  <!-- perkakas yang membaca hasil kompilasi -->
+  <rect x="650" y="264" width="212" height="60" rx="10" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.4"/>
+  <text x="756" y="284" text-anchor="middle" font-size="12.5" font-weight="600" fill="#78350F">Perkakas</text>
+  <text x="756" y="301" text-anchor="middle" font-size="11" fill="#92400E" font-family="ui-monospace, Consolas, monospace">indk --dis · periksa</text>
+  <text x="756" y="316" text-anchor="middle" font-size="11" fill="#92400E" font-family="ui-monospace, Consolas, monospace">indk uji · rapikan</text>
+  <line x1="600" y1="294" x2="648" y2="294" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#panahTipis)"/>
+
+  <!-- REPL masuk lewat jalur yang sama -->
+  <rect x="38" y="170" width="212" height="60" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="144" y="190" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0F172A">REPL</text>
+  <text x="144" y="207" text-anchor="middle" font-size="11" fill="#64748B">masukan baris demi baris</text>
+  <text x="144" y="222" text-anchor="middle" font-size="11" fill="#94A3B8">lintasan yang sama</text>
+  <line x1="250" y1="200" x2="298" y2="200" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#panahTipis)"/>
+</svg>

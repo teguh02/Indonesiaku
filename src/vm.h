@@ -138,6 +138,9 @@ void defineArgs(int argc, const char* argv[], int start);
 // Directory of the entry script, used as the first import search path.
 void setScriptPath(const char* path);
 InterpretResult interpret(const char* source);
+
+// indk uji: run top-level uji_* functions. Returns failures, or -1 if none found.
+int runUnitTests(void);
 void push(Value value);
 Value pop();
 void runtimeError(const char* format, ...);

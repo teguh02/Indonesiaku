@@ -1,0 +1,3 @@
+variabel n=5
+cetak(f"nilai {n} dan {n * 2}")  # komentar
+cetak(f"tanda # di dalam {n}")

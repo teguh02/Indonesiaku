@@ -10,6 +10,7 @@ typedef enum {
     TOKEN_AT,
     TOKEN_COLON,      // dicadangkan: irisan a[1:3] & literal kamus (Fase 1)
     TOKEN_SEMICOLON, TOKEN_NEWLINE, TOKEN_SLASH, TOKEN_STAR,
+    TOKEN_KOMENTAR,
     TOKEN_PERCENT, TOKEN_POWER,
 
     // One or two character tokens.
@@ -83,5 +84,12 @@ const char* scannerSourceStart(void);
 const char* scannerSourceEnd(void);
 
 int scannerGroupingDepth(void);
+
+// Opt-in: when enabled, scanToken() returns TOKEN_KOMENTAR for each `#`
+// comment instead of skipping it. OFF by default -- the compiler must never
+// see comment tokens (prescanFunctionBody/skipBalancedBraces count raw
+// braces and would have to filter them). Only the formatter turns this on,
+// and turns it off again straight after.
+void scannerKeepComments(bool enabled);
 
 #endif

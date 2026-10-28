@@ -1,0 +1,22 @@
+# Fungsi bernama uji_* dijalankan otomatis oleh: indk uji berkas.idk
+# Dijalankan biasa (indk berkas.idk), fungsi uji_* TIDAK ikut berjalan.
+
+fungsi tambah(a, b) { kembalikan a + b }
+fungsi balik(teks) { kembalikan teks }
+
+fungsi uji_tambah() {
+    pastikan tambah(2, 3) == 5
+    pastikan tambah(-1, 1) == 0
+}
+
+fungsi uji_teks() {
+    pastikan balik("halo") == "halo", "teks harus sama"
+}
+
+fungsi uji_daftar() {
+    variabel d = [1, 2, 3]
+    pastikan panjang(d) == 3
+    pastikan d[0] == 1
+}
+
+cetak("skrip utama tetap jalan")

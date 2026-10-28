@@ -1,0 +1,3 @@
+variabel t = "bukan # komentar"
+variabel u = 'juga # bukan'
+cetak(t, u)  # ini komentar

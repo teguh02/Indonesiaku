@@ -1,0 +1,7 @@
+# atas
+fungsi f(x) {  # inline
+    # dalam blok
+    kembalikan x
+    # sebelum penutup
+}
+cetak(f(1))  # akhir

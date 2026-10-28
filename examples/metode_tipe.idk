@@ -61,7 +61,7 @@ coba {
 
 # Metode bawaan harus langsung dipanggil, tidak bisa disimpan dulu.
 coba {
-    variabel f = "abc".huruf_besar
+    variabel _f = "abc".huruf_besar
 } kecuali GalatAtribut sebagai e {
     cetak("galat:", e.pesan)
 }

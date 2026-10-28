@@ -274,12 +274,72 @@ penyuntikan metode saat runtime. Alasannya dicatat di
 
 ### Fase 7 — Perkakas & kinerja
 
-`indk uji`, `indk rapikan` (formatter), `indk periksa` (linter — lihat
-[`RENCANA_FITUR/deteksi_tidak_terpakai.md`](RENCANA_FITUR/deteksi_tidak_terpakai.md)
-untuk deteksi variabel/fungsi tidak terpakai), LSP +
-ekstensi VS Code, debugger, `indk --dis`, playground via **WebAssembly**,
-cache `.idkc`, computed goto, superinstruksi, inline cache, NaN-boxing, GC
-generasional, utas/asinkron. Ref: 04 §1, §8–10, §12.
+✅ `indk --dis` — tampilkan bytecode tanpa menjalankan, termasuk fungsi
+bersarang.
+
+✅ `indk periksa` (linter) — deteksi variabel lokal tidak terpakai
+([rencana](RENCANA_FITUR/deteksi_tidak_terpakai.md)). Hanya tingkat 2
+(perintah opt-in); tingkat 1 dibatalkan karena menulis ke stderr di setiap
+kali menjalankan program bentrok dengan syarat stderr kosong pada tes golden.
+
+✅ `indk uji` — jalankan setiap fungsi `uji_*` di sebuah berkas, laporkan
+lulus/gagal, exit 1 bila ada yang gagal. Asersi memakai `pastikan` yang sudah
+ada, jadi tidak ada sintaks tes baru.
+
+- [x] **`indk rapikan [--tulis|--periksa]`** — formatter berbasis token.
+      Indentasi 4 spasi, spasi operator, `{` kamus vs blok, komentar bertahan
+      utuh. Dijamin tidak mengubah arti program: 117/117 bytecode identik
+      sebelum/sesudah format, dan hasilnya idempoten.
+      Batas sadar: tidak memecah/menyambung baris — mengikuti baris asli
+      penulis. K4 tetap aman: `examples/tanpa_indentasi.idk` dirapikan dan
+      keluarannya tetap cocok golden.
+
+Belum: LSP + diagnostics editor, debugger,
+playground via **WebAssembly**, cache `.idkc`, computed goto, superinstruksi,
+inline cache, NaN-boxing, GC generasional, utas/asinkron.
+Ref: 04 §1, §8–10, §12.
+
+> **Catatan computed goto.** Diukur dulu, belum dikerjakan. `run()` punya 85
+> opcode dengan 93 `case`, dan **19 di antaranya mengandung `for`/`while`** —
+> di sana `break` berarti keluar loop, bukan keluar switch. Transformasi
+> mekanis ke tabel lompat akan salah kompilasi secara diam-diam di 19 titik
+> itu. Build sudah `-O2`. Kerjakan hanya dengan profil yang menunjukkan
+> dispatch benar-benar jadi hambatan, dan konversi satu per satu disertai
+> pemeriksaan tiap `break`.
+
+> **Catatan `indk rapikan`.** Terhalang, bukan sekadar belum dikerjakan.
+> `skipWhitespace()` di `src/scanner.c` **membuang komentar sepenuhnya** —
+> tidak ada `TOKEN_COMMENT`, jadi komentar tidak pernah sampai ke token
+> stream. Dibuktikan: dua berkas yang hanya berbeda komentar menghasilkan
+> bytecode identik. Formatter berbasis token akan **menghapus seluruh
+> komentar** pengguna, dan formatter yang memakan komentar lebih buruk
+> daripada tidak ada formatter. Prasyarat: mode scanner yang menyimpan
+> komentar beserta posisinya (atau CST), baru kemudian penulis ulangnya.
+> Rencananya sudah ada:
+> [`RENCANA_FITUR/komentar_dan_rapikan.md`](RENCANA_FITUR/komentar_dan_rapikan.md).
+
+> **Catatan cache `.idkc`.** Diukur, lalu ditunda sebagai YAGNI. Berkas
+> sumber terbesar di repo (`metode_ajaib.idk`, 8 KB) butuh **3,1 ms** total,
+> dan **1,3 ms** di antaranya adalah ongkos start proses — jadi kompilasi
+> sesungguhnya sekitar **1,8 ms**. Cache bytecode berarti menambah format
+> serialisasi, penomoran versi, invalidasi berdasarkan mtime/hash, dan
+> penulisan graf objek GC (`ObjString`, `ObjFunction` bersarang, `Chunk`
+> dengan `lines`/`columns`/`source`) demi menghemat < 2 ms. Kerjakan kalau
+> ada program yang kompilasinya benar-benar terasa, bukan sebelum itu.
+
+> **Catatan playground WebAssembly.** Terhalang perkakas: `emcc` tidak
+> terpasang di mesin ini (`which emcc` kosong, tidak ada
+> `/usr/lib/emscripten`). Playground yang ada sekarang berjalan lewat Docker
+> dan sudah berfungsi, jadi WASM adalah penggantian jalur eksekusi, bukan
+> fitur baru untuk pengguna. Butuh pemasangan Emscripten lebih dulu.
+
+> **Catatan LSP, debugger, inline cache, superinstruksi, NaN-boxing, GC
+> generasional, utas/asinkron.** Belum dikerjakan. Masing-masing berukuran
+> setara satu fase tersendiri — NaN-boxing menyentuh setiap `Value` di
+> seluruh basis kode, GC generasional menulis ulang `memory.c`, dan LSP
+> adalah program kedua di samping interpreter. Jangan dikerjakan sebagai
+> tambahan di sela pekerjaan lain; masing-masing butuh berkas rencana
+> sendiri di `docs/RENCANA_FITUR/` lebih dulu.
 
 ### Fase 8 — Ekosistem
 

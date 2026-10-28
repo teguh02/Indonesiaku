@@ -145,12 +145,15 @@ satu-satunya sumber status yang resmi.
 
 ## 🏗️ Arsitektur
 
-```
-Kode Sumber (.idk)
-    ↓  Scanner/Lexer        → token
-    ↓  Compiler single-pass → bytecode (Pratt parser, tanpa AST)
-    ↓  Virtual Machine      → eksekusi berbasis stack + GC mark-sweep
-```
+<p align="center">
+  <img src="website/assets/arsitektur.svg" alt="Alur Indonesiaku: kode sumber .idk → Scanner → Compiler single-pass → Chunk bytecode → Virtual Machine berbasis stack, didampingi GC mark-sweep, fungsi bawaan, objek/tabel hash, dan pustaka standar" width="100%">
+</p>
+
+Kode berjalan dalam satu lintasan: Scanner mengubah teks `.idk` menjadi token,
+Compiler (Pratt parser) langsung memancarkan bytecode **tanpa membangun AST**,
+lalu Virtual Machine berbasis stack mengeksekusinya dengan GC mark-sweep.
+REPL memakai lintasan yang sama, dan perkakas (`--dis`, `periksa`, `uji`,
+`rapikan`) membaca hasil tahap kompilasi.
 
 ```
 Indonesiaku/

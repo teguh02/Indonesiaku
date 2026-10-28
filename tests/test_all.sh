@@ -130,6 +130,36 @@ if [ -f tests/test_templat_playground.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+if [ -f tests/test_lint.sh ]; then
+    echo ""
+    if bash tests/test_lint.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES linter"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
+if [ -f tests/test_uji.sh ]; then
+    echo ""
+    if bash tests/test_uji.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES uji"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
+if [ -f tests/test_format.sh ]; then
+    echo ""
+    if bash tests/test_format.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES format"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # pustaka/ harus ditemukan dari lokasi interpreter, dari direktori kerja mana pun.
 if [ -f tests/test_impor_lokasi.sh ]; then
     echo ""

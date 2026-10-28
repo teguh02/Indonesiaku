@@ -1229,6 +1229,85 @@ cetak(daftar(Penghitung()))                             # [0, 1, 2]
 
 > Contoh: [`examples/oop/iterator_malas.idk`](../examples/oop/iterator_malas.idk)
 
+## Perkakas baris perintah
+
+Selain menjalankan berkas, `indk` punya beberapa subperintah.
+
+### `indk uji` — menjalankan tes
+
+Setiap fungsi tingkat atas yang namanya diawali `uji_` dijalankan sebagai tes.
+Asersinya memakai `pastikan` yang sudah ada:
+
+```indonesiaku
+fungsi tambah(a, b) { kembalikan a + b }
+
+fungsi uji_tambah() {
+    pastikan tambah(2, 3) == 5
+    pastikan tambah(-1, 1) == 0, "pesan opsional"
+}
+```
+
+```text
+$ indk uji berkas.idk
+  LULUS  uji_tambah
+
+1/1 uji lulus
+```
+
+Satu `pastikan` yang gagal menandai tes itu gagal, tetapi tes lain tetap
+berjalan. Exit code 0 bila semua lulus, 1 bila ada yang gagal. Menjalankan
+berkas secara biasa (`indk berkas.idk`) **tidak** menjalankan fungsi `uji_*`.
+
+> Contoh: [`examples/uji_contoh.idk`](../examples/uji_contoh.idk)
+
+### `indk periksa` — linter
+
+Melaporkan variabel lokal yang dideklarasikan dengan `variabel` tetapi tidak
+pernah dibaca:
+
+```text
+$ indk periksa berkas.idk
+berkas.idk:3  variabel lokal 'sementara' tidak pernah dipakai
+1 temuan
+```
+
+Exit code 0 bila bersih, 1 bila ada temuan. Nama berawalan garis bawah
+(`_sisa`) sengaja diabaikan — itu konvensi "memang tidak dipakai". Parameter
+fungsi dan variabel dari `untuk`/`kecuali ... sebagai` tidak diperiksa.
+
+### `indk rapikan` — merapikan format kode
+
+```bash
+$ indk rapikan berkas.idk            # cetak hasil ke layar
+$ indk rapikan --tulis berkas.idk    # tulis balik ke berkas
+$ indk rapikan --periksa berkas.idk  # exit 1 kalau belum rapi (untuk CI)
+```
+
+Formatter merapikan indentasi (4 spasi per tingkat) dan spasi di sekitar
+operator, lalu mempertahankan komentar beserta posisinya — komentar akhir
+baris tetap di baris yang sama dengan dua spasi sebelum `#`.
+
+Ingat K4: **tidak ada aturan indentasi** di Indonesiaku. `rapikan` hanya
+menata tampilan; kode yang ditulis rata kiri tetap sah dan tetap berjalan
+tanpa dirapikan.
+
+Formatter tidak memecah atau menyambung baris. Ia mengikuti baris yang kamu
+tulis, jadi tata letak daftar multi-baris milikmu tidak diacak.
+
+### `indk --dis` — melihat bytecode
+
+Menampilkan bytecode hasil kompilasi tanpa menjalankan programnya, berguna
+untuk memahami cara kerja VM:
+
+```text
+$ indk --dis berkas.idk
+== <skrip utama> ==
+0000    1 OP_CONSTANT         0 '1'
+...
+```
+
+---
+
 ### Pencocokan pola: `cocokkan` dan `kasus`
 
 Memilih satu cabang berdasarkan bentuk sebuah nilai. Kasus pertama yang
@@ -2315,7 +2394,7 @@ Contoh lengkap: [`examples/repr_koleksi.idk`](../examples/repr_koleksi.idk)
 Galat saat kompilasi menyebut baris **dan kolom**, lalu menunjuk bagian yang
 bermasalah:
 
-```
+```text
 [baris 2, kolom 11] Kesalahan di '+': Harapkan ekspresi.
     cetak(a + + 2)
               ^
@@ -2346,7 +2425,7 @@ Operand '+' harus dua angka, dua teks, atau dua daftar.
 Pada traceback berlapis, potongan baris hanya dicetak untuk tempat galat
 benar-benar terjadi; bingkai pemanggil di bawahnya cukup baris dan kolom:
 
-```
+```text
 Pembagian dengan nol.
 [baris 2, kolom 20] dalam bagi()
         kembalikan a / b

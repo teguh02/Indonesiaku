@@ -4041,6 +4041,80 @@ void setScriptPath(const char* path) {
     vm.scriptDir = dir[0] != '\0' ? copyString(dir, (int)strlen(dir)) : NULL;
 }
 
+// indk uji: run every top-level function named uji_* and report pass/fail.
+// Assertions reuse `pastikan`; a failing one raises a catchable error, which
+// callFromNative hands back here as nativeErrorPending.
+// Returns the number of FAILED tests (0 = all green), or -1 if there are none.
+int runUnitTests(void) {
+    if (vm.mainModule == NULL) return -1;
+
+    // Collect matching names first: calling a test can define new globals and
+    // grow the table, which would invalidate a live iteration over it.
+    ObjList* names = newList();
+    push(OBJ_VAL(names));
+    Table* globals = &vm.mainModule->globals;
+    for (int i = 0; i < globals->capacity; i++) {
+        Entry* e = &globals->entries[i];
+        if (e->key == NULL) continue;
+        if (strncmp(e->key->chars, "uji_", 4) != 0) continue;
+        if (!IS_CLOSURE(e->value) && !IS_FUNCTION(e->value)) continue;
+        writeValueArray(&names->items, OBJ_VAL(e->key));
+    }
+
+    int total = names->items.count;
+    if (total == 0) { pop(); return -1; }
+
+    // Table order is a hash order: it varies and makes output irreproducible.
+    // Sort by name so a test report is stable and diffable.
+    for (int i = 1; i < total; i++) {
+        Value key = names->items.values[i];
+        int j = i - 1;
+        while (j >= 0 && strcmp(AS_STRING(names->items.values[j])->chars,
+                                AS_STRING(key)->chars) > 0) {
+            names->items.values[j + 1] = names->items.values[j];
+            j--;
+        }
+        names->items.values[j + 1] = key;
+    }
+
+    int failed = 0;
+    for (int i = 0; i < total; i++) {
+        ObjString* name = AS_STRING(names->items.values[i]);
+        Value fn;
+        if (!tableGet(globals, name, &fn)) continue;
+
+        // Remember the stack top: on failure callFromNative unwinds to the
+        // callee slot, but a raised error can leave the stack deeper than we
+        // started. Restoring it explicitly keeps each test independent.
+        Value* stackBefore = vm.stackTop;
+        push(fn);                       // callee, no arguments
+        Value result;
+        bool ok = callFromNative(0, &result);
+        vm.stackTop = stackBefore;
+
+        if (ok) {
+            printf("  LULUS  %s\n", name->chars);
+        } else {
+            failed++;
+            const char* detail = "galat";
+            if (vm.nativeErrorPending && IS_INSTANCE(vm.nativeErrorValue)) {
+                ObjString* msg = errorMessage(AS_INSTANCE(vm.nativeErrorValue));
+                if (msg != NULL) detail = msg->chars;
+            }
+            printf("  GAGAL  %s: %s\n", name->chars, detail);
+            // Clear the error so the next test starts clean.
+            vm.nativeErrorPending = false;
+            vm.nativeErrorValue = KOSONG_VAL;
+            vm.hadError = false;
+            vm.runtimeErrorPending = false;
+        }
+    }
+
+    printf("\n%d/%d uji lulus\n", total - failed, total);
+    pop();                              // names
+    return failed;
+}
+
 InterpretResult interpret(const char* source) {
     vm.hadError = false;
     // Every execution runs inside a module; the entry script's is "__utama__",

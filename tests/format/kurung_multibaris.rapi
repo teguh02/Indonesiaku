@@ -1,0 +1,7 @@
+variabel d = [
+    1,  # satu
+    2,
+    # tiga
+    3,
+]
+cetak(d)

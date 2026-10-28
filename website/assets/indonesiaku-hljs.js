@@ -92,6 +92,9 @@
   function daftarkan() {
     if (!window.hljs || window.hljs.getLanguage("indonesiaku")) return;
     window.hljs.registerLanguage("indonesiaku", definisi);
+    // Panduan memakai ```indonesiaku-takjalan untuk contoh yang sengaja
+    // tidak bisa dijalankan; sorotannya sama.
+    window.hljs.registerAliases(["indonesiaku-takjalan", "idk"], { languageName: "indonesiaku" });
   }
 
   // Dipanggil langsung (hljs sudah ada) atau ditunda sampai hljs termuat.

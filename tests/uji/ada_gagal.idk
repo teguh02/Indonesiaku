@@ -1,0 +1,2 @@
+fungsi uji_benar() { pastikan 2 + 2 == 4 }
+fungsi uji_salah() { pastikan 2 + 2 == 5, "matematika rusak" }

@@ -1,0 +1,3 @@
+variabel d={"a":1}
+fungsi f(){kembalikan {"b":2}}
+cetak(d,f())
