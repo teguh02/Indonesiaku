@@ -130,7 +130,10 @@ def jalankan_kode(kode, masukan=""):
         try:
             with open(stdin_path, "rb") as masuk:
                 hasil = subprocess.run(
-                    [INDK, "main.idk"],
+                    # --sandbox: tolak lingkungan, isi direktori, dan
+                    # menjalankan program lain (src/sistem.c). Lapisan
+                    # tambahan di atas kontainer read-only tanpa jaringan.
+                    [INDK, "--sandbox", "main.idk"],
                     cwd=kerja,
                     env=env,
                     stdin=masuk,

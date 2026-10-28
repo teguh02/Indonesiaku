@@ -1,0 +1,18 @@
+== salin dangkal ==
+[1, 2, 3] [1, 2, 3, 4]
+== elemen bersarang masih dibagi (memang dangkal) ==
+[[1, 99], [2]]
+== kamus & himpunan ==
+["a", "b"] ["a", "b", "c"]
+[1, 2] [1, 2, 3]
+== nilai tak dapat diubah dikembalikan apa adanya ==
+5 halo benar kosong
+tupel
+== salin_dalam: bersarang ikut disalin ==
+[[1], [2]] [[1, 99], [2]]
+== salin_dalam kamus bersarang ==
+[1] [1, 2]
+== salin_dalam tupel ==
+[1] [1, 9]
+== struktur bersiklus tidak menggantung ==
+2 1 benar

@@ -1,0 +1,118 @@
+# pustaka/fungsional.idk - Alat pemrograman fungsional (modul `fungsional`).
+# Pemakaian:
+#     impor fungsional
+#     dari fungsional impor lipat, parsial, urutkan_dengan
+#
+# Padanan sebagian `functools` Python. Bahasa ini belum punya `*args`, jadi
+# `parsial` menerima argumen depan sebagai DAFTAR dan mengembalikan fungsi
+# satu argumen. Dekorator `@cache_lru`/`@bungkus` dan `urutan_lengkap` ditunda:
+# keduanya butuh fungsi variadik / penyuntikan metode saat runtime (lihat
+# docs/RENCANA_FITUR/pustaka_fase6_modul_dasar.md).
+
+kelas GalatFungsional < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+# _terapkan(f, args) -> panggil `f` dengan argumen dari daftar `args`.
+# Pengganti `f(*args)` yang belum ada di bahasa ini; dibatasi 5 argumen.
+fungsi _terapkan(f, args) {
+    variabel n = panjang(args)
+    jika n == 0 { kembalikan f() }
+    jika n == 1 { kembalikan f(args[0]) }
+    jika n == 2 { kembalikan f(args[0], args[1]) }
+    jika n == 3 { kembalikan f(args[0], args[1], args[2]) }
+    jika n == 4 { kembalikan f(args[0], args[1], args[2], args[3]) }
+    jika n == 5 { kembalikan f(args[0], args[1], args[2], args[3], args[4]) }
+    naikkan GalatFungsional("_terapkan: maksimal 5 argumen")
+}
+
+# lipat(f, urutan, awal = kosong) -> reduksi kiri (seperti functools.reduce).
+# Tanpa `awal`, elemen pertama jadi nilai awal; urutan kosong lalu jadi galat.
+fungsi lipat(f, urutan, awal = kosong) {
+    variabel data = daftar(urutan)
+    variabel mulai = 0
+    variabel total = awal
+    jika awal == kosong {
+        jika panjang(data) == 0 {
+            naikkan GalatFungsional("lipat: urutan kosong tanpa nilai awal")
+        }
+        total = data[0]
+        mulai = 1
+    }
+    selagi mulai < panjang(data) {
+        total = f(total, data[mulai])
+        mulai = mulai + 1
+    }
+    kembalikan total
+}
+
+# parsial(f, arg_depan) -> fungsi satu argumen: g(x) = f(arg_depan..., x).
+# `arg_depan` adalah DAFTAR (di Python argumennya tak terbatas).
+fungsi parsial(f, arg_depan) {
+    variabel depan = daftar(arg_depan)
+    fungsi dengan_satu(sisa) {
+        variabel semua = []
+        untuk a dalam depan {
+            tambah(semua, a)
+        }
+        tambah(semua, sisa)
+        kembalikan _terapkan(f, semua)
+    }
+    kembalikan dengan_satu
+}
+
+# _Berkunci: pembungkus agar `terurut` bisa mengurutkan berdasar kunci.
+kelas _Berkunci {
+    init(kunci, nilai) {
+        diri.kunci = kunci
+        diri.nilai = nilai
+    }
+    _kurang_dari_(lain) { kembalikan diri.kunci < lain.kunci }
+}
+
+# urutkan_dengan(urutan, kunci) -> daftar baru terurut berdasar kunci(nilai).
+# Stabil, seperti sorted(key=...) Python.
+fungsi urutkan_dengan(urutan, kunci) {
+    variabel dibungkus = []
+    untuk v dalam daftar(urutan) {
+        tambah(dibungkus, _Berkunci(kunci(v), v))
+    }
+    variabel hasil = []
+    untuk b dalam terurut(dibungkus) {
+        tambah(hasil, b.nilai)
+    }
+    kembalikan hasil
+}
+
+# _Berdanding: pembungkus untuk fungsi pembanding tiga arah (cmp).
+kelas _Berdanding {
+    init(banding, nilai) {
+        diri.banding = banding
+        diri.nilai = nilai
+    }
+    _kurang_dari_(lain) { kembalikan diri.banding(diri.nilai, lain.nilai) < 0 }
+}
+
+# urutkan_dengan_banding(urutan, banding) -> terurut memakai pembanding
+# banding(a, b) yang mengembalikan < 0, 0, atau > 0.
+fungsi urutkan_dengan_banding(urutan, banding) {
+    variabel dibungkus = []
+    untuk v dalam daftar(urutan) {
+        tambah(dibungkus, _Berdanding(banding, v))
+    }
+    variabel hasil = []
+    untuk b dalam terurut(dibungkus) {
+        tambah(hasil, b.nilai)
+    }
+    kembalikan hasil
+}
+
+# banding_ke_kunci(banding) -> kelas pembungkus; bungkus tiap nilai dengan
+# kelas ini lalu berikan ke terurut (seperti functools.cmp_to_key Python).
+fungsi banding_ke_kunci(banding) {
+    kelas Terbungkus {
+        init(nilai) { diri.nilai = nilai }
+        _kurang_dari_(lain) { kembalikan banding(diri.nilai, lain.nilai) < 0 }
+    }
+    kembalikan Terbungkus
+}

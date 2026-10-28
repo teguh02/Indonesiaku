@@ -29,9 +29,9 @@ opsional. Modul yang tidak masuk akal untuk bahasa pendidikan (mis.
 | Pembulatan | `ceil`, `floor`, `trunc`, `modf` | `atap`, `lantai`, `potong`, `pecah` | `atap`, `lantai` |
 | Akar & pangkat | `sqrt`, `isqrt`, `cbrt`, `pow`, `exp`, `exp2`, `expm1` | `akar`, `akar_bulat`, `akar_pangkat_tiga`, `pangkat`, `eksp`, `eksp2`, `eksp_kurang_satu` | `akar`, `pangkat` |
 | Logaritma | `log`, `log2`, `log10`, `log1p` | `log`, `log2`, `log10`, `log_satu_plus` | |
-| Trigonometri | `sin cos tan asin acos atan atan2` | sama (`sin`, `cos`, …) | |
+| Trigonometri | `sin cos tan asin acos atan atan2` | sama (`sin`, `cos`, …) | ✅ builtin C |
 | Hiperbolik | `sinh cosh tanh asinh acosh atanh` | sama | |
-| Sudut | `degrees`, `radians` | `derajat`, `radian` | |
+| Sudut | `degrees`, `radians` | `derajat`, `radian` | ✅ builtin C |
 | Teori bilangan | `gcd`, `lcm`, `factorial`, `comb`, `perm` | `fpb`, `kpk`, `faktorial`, `kombinasi`, `permutasi` | `mat_fpb`, `mat_kpk`, `mat_faktorial` |
 | Jumlah | `fsum`, `prod`, `sumprod`, `dist`, `hypot` | `jumlah_tepat`, `hasil_kali`, `jumlah_hasil_kali`, `jarak`, `hipotenusa` | |
 | Pemeriksaan | `isclose`, `isfinite`, `isinf`, `isnan` | `hampir_sama`, `adalah_hingga`, `adalah_takhingga`, `adalah_nan` | |
@@ -105,17 +105,17 @@ Nama hari/bulan dalam bahasa Indonesia secara bawaan (`Senin`, `Januari`).
 
 | Python | Usulan | Ada |
 |---|---|---|
-| `os.getcwd` / `chdir` | `direktori_kini` / `pindah_direktori` | |
-| `os.listdir` / `scandir` / `walk` | `isi_direktori` / `pindai_direktori` / `jelajahi` | |
-| `os.mkdir` / `makedirs` / `rmdir` | `buat_direktori` / `buat_direktori_bertingkat` / `hapus_direktori` | |
+| `os.getcwd` / `chdir` | `direktori_kini` / `pindah_direktori` | ✅ `direktori_kini` |
+| `os.listdir` / `scandir` / `walk` | `isi_direktori` / `pindai_direktori` / `jelajahi` | ✅ `isi_direktori` (terurut) |
+| `os.mkdir` / `makedirs` / `rmdir` | `buat_direktori` / `buat_direktori_bertingkat` / `hapus_direktori` | ✅ `buat_direktori`, `hapus_direktori` |
 | `os.remove` / `rename` | `hapus_berkas` / `ganti_nama` | `hapus_berkas` |
-| `os.environ` / `getenv` | `lingkungan` / `ambil_lingkungan` | |
+| `os.environ` / `getenv` | `lingkungan` / `ambil_lingkungan` | ✅ |
 | `os.system` | `jalankan_perintah` (dimatikan di `--sandbox`) | |
 | `os.getpid`, `cpu_count`, `sep`, `linesep`, `urandom` | `id_proses`, `jumlah_cpu`, `pemisah`, `pemisah_baris`, `bita_acak` | |
-| `os.path.join` / `split` / `splitext` | `jalur.gabung` / `jalur.pisah` / `jalur.pisah_ekstensi` | |
-| `os.path.exists` / `isfile` / `isdir` | `jalur.ada` / `jalur.adalah_berkas` / `jalur.adalah_direktori` | `ada_berkas` |
-| `os.path.basename` / `dirname` / `abspath` / `expanduser` | `jalur.nama_dasar` / `jalur.nama_direktori` / `jalur.absolut` / `jalur.rumah` | |
-| `os.path.getsize` / `getmtime` | `jalur.ukuran` / `jalur.waktu_ubah` | |
+| `os.path.join` / `split` / `splitext` | `jalur.gabung` / `jalur.pisah` / `jalur.pisah_ekstensi` | ✅ |
+| `os.path.exists` / `isfile` / `isdir` | `jalur.ada` / `jalur.adalah_berkas` / `jalur.adalah_direktori` | ✅ |
+| `os.path.basename` / `dirname` / `abspath` / `expanduser` | `jalur.nama_dasar` / `jalur.nama_direktori` / `jalur.absolut` / `jalur.rumah` | ✅ dua pertama; `absolut`/`rumah` butuh native |
+| `os.path.getsize` / `getmtime` | `jalur.ukuran` / `jalur.waktu_ubah` | ✅ |
 | `pathlib.Path` | kelas `Jalur` (`/` operator, `.baca_teks()`, `.tulis_teks()`, `.anak()`, `.induk`) | |
 | `shutil.copy` / `copytree` / `move` / `rmtree` / `which` | `salin_berkas` / `salin_pohon` / `pindahkan` / `hapus_pohon` / `cari_program` | |
 | `glob.glob` | `cocok_jalur("*.idk")` | |
@@ -156,6 +156,12 @@ Butuh iterator/generator (fase 5); versi awal boleh mengembalikan daftar.
 | `operator.add/mul/itemgetter/attrgetter` | `operator.tambah/kali/pengambil_item/pengambil_atribut` |
 
 ## 9. `re` → `pola` (P2, C)
+
+**Status: ✅ terlaksana** (`src/pola.c` + `pustaka/pola.idk`, Fase 6
+gelombang C). Gaya Pike VM, bukan PCRE2: waktu linear, sehingga
+backreference/lookaround/kuantifier posesif sengaja ditolak. Kelas karakter
+ASCII seperti `re.ASCII`. Fungsi dan objek di bawah semuanya ada, kecuali
+`ganti_n` mengembalikan tupel seperti `subn`.
 
 Implementasi: port mesin regex kecil (mis. gaya Pike VM / `re1` Russ Cox,
 atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
@@ -209,9 +215,9 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 
 | Python | Usulan | P |
 |---|---|---|
-| `subprocess.run` / `check_output` / `Popen` | `proses.jalankan` / `proses.keluaran` / `Proses` | P2 |
-| `argparse.ArgumentParser` | `opsi.PenguraiArgumen` (`tambah_argumen`, `urai`) | P2 |
-| `logging` (`debug`, `info`, `warning`, `error`, `critical`, `basicConfig`, `getLogger`) | `log` (`debug`, `info`, `peringatan`, `galat`, `kritis`, `atur`, `ambil_pencatat`) | P2 |
+| `subprocess.run` / `check_output` / `Popen` | `proses.jalankan` / `proses.keluaran` / `Proses` | ✅ dua pertama; `Proses` (Popen) belum |
+| `argparse.ArgumentParser` | `opsi.PenguraiArgumen` (`tambah_argumen`, `urai`) | ✅ |
+| `logging` (`debug`, `info`, `warning`, `error`, `critical`, `basicConfig`, `getLogger`) | `log` (`debug`, `info`, `peringatan`, `galat`, `kritis`, `atur`, `ambil_pencatat`) | ✅ |
 | `warnings.warn` | `peringatan.peringatkan` | P2 |
 | `platform.system` / `python_version` | `platform.sistem` / `platform.versi` | P2 |
 | `signal` | `sinyal` | P3 |
@@ -222,9 +228,9 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 
 | Python | Usulan | Ada | P |
 |---|---|---|---|
-| `socket` | `soket` | ✅ TCP localhost (`soket_dengar`, …) | P2: alamat selain 127.0.0.1, klien `soket_sambung`, UDP |
+| `socket` | `soket` | ✅ TCP localhost (`soket_dengar`, …) | klien `soket_sambung` ✅; P2: server di alamat selain 127.0.0.1, UDP |
 | `http.server` | `http.server` | 🟡 `pustaka/http.idk` + `todo_server.idk` | P2 |
-| `urllib.request.urlopen` / `http.client` | `http.ambil(url)` (klien) | | P2 — HTTPS butuh TLS (embed mbedTLS) → P3 |
+| `urllib.request.urlopen` / `http.client` | `http_ambil(url)` (klien) | ✅ `http://` saja, `Respons`, `GalatJaringan` | HTTPS butuh TLS (embed mbedTLS) → P3 |
 | `urllib.parse` (`quote`, `urlencode`, `urlparse`) | `url.kutip`, `url.enkode_kueri`, `url.urai` | | P2 |
 | `smtplib`, `email` | — | | P3 |
 
@@ -244,7 +250,7 @@ atau embed PCRE2 berlisensi BSD). Fungsi: `kompilasi`, `cari` (`search`),
 
 | Python | Usulan | P |
 |---|---|---|
-| `turtle` (`forward`, `backward`, `left`, `right`, `penup`, `pendown`, `goto`, `circle`, `color`, `speed`, `done`) | `kura` (`maju`, `mundur`, `kiri`, `kanan`, `angkat_pena`, `turunkan_pena`, `ke`, `lingkaran`, `warna`, `kecepatan`, `selesai`) | P2 — output SVG (CLI) dan kanvas (playground) |
+| `turtle` (`forward`, `backward`, `left`, `right`, `penup`, `pendown`, `goto`, `circle`, `color`, `speed`, `done`) | `kura` (`maju`, `mundur`, `kiri`, `kanan`, `angkat_pena`, `turunkan_pena`, `ke`, `lingkaran`, `warna`, `kecepatan`, `selesai`) | ✅ `pustaka/kura.idk` → SVG (plus `hadap`, `pulang`, `tebal`, `svg_dari`); kanvas playground → P3 |
 | `tkinter` | `jendela` | P3 — via FFI/binding |
 
 ---

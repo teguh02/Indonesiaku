@@ -50,7 +50,7 @@ docker build -f docker/images/Dockerfile -t teguh02/indonesiaku:latest .
 |-------|-------|
 | Base image | Alpine Linux 3.20 (multi-stage build) |
 | Ukuran | ~12.6 MB |
-| Isi | biner `indk` + `pustaka/` + `examples/` |
+| Isi | biner `indk` + `pustaka/` (di `/usr/local/share/indonesiaku/pustaka`, bisa diimpor dari direktori kerja mana pun) + `examples/` |
 | Versi bahasa | v1.0.0 |
 | Lisensi | MIT |
 

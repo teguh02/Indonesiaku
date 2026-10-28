@@ -1,0 +1,4 @@
+# keluar("pesan"): pesan ke stderr, kode keluar 1 (seperti sys.exit("pesan")).
+cetak("sebelum keluar")
+keluar("berhenti: data rusak")
+cetak("tidak tercapai")

@@ -1,0 +1,4 @@
+md5() memerlukan teks atau daftar byte
+[baris 2, kolom 14] dalam skrip
+    cetak(md5(123))
+                 ^

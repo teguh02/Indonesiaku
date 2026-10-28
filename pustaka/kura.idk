@@ -1,0 +1,301 @@
+# pustaka/kura.idk - Grafika kura-kura (modul `kura`), padanan `turtle` Python.
+# Pemakaian:
+#     impor kura
+#     untuk i dalam rentang(4) {
+#         kura.maju(100)
+#         kura.kiri(90)
+#     }
+#     kura.selesai("persegi.svg")      # tulis gambar sebagai SVG
+#
+# Tidak ada jendela: kura menggambar ke daftar garis dan hasilnya disimpan
+# sebagai SVG (dibuka di peramban mana pun). Koordinat dan arah mengikuti
+# turtle "standard": mulai di (0, 0) menghadap timur, sumbu y ke atas,
+# kiri() berputar berlawanan arah jarum jam, sudut dalam derajat.
+# Angka di SVG dibulatkan 2 desimal sehingga keluarannya tetap (golden).
+#
+# Fungsi tingkat modul menggerakkan satu kura bawaan; `kura.Kura()` membuat
+# kura sendiri, dan beberapa kura bisa digabung dengan `kura.svg_dari([...])`.
+
+kelas GalatKura < Galat {
+    init(pesan) {
+        diri.pesan = pesan
+    }
+}
+
+fungsi _angka(x, nama) {
+    jika jenis(x) != "angka" {
+        naikkan GalatKura(f"{nama} harus angka, bukan {jenis(x)}")
+    }
+    jika x != x atau x - x != 0 {
+        naikkan GalatKura(f"{nama} harus angka terhingga, bukan {x}")
+    }
+    kembalikan x
+}
+
+# Teks angka untuk SVG: 2 desimal, tanpa ".0" dan tanpa "-0".
+fungsi _fmt(x) {
+    variabel r = bulatkan(x, 2)
+    jika r == ke_bulat(r) {
+        kembalikan ke_teks(ke_bulat(r))
+    }
+    kembalikan ke_teks(r)
+}
+
+fungsi _gabung(bagian, perekat) {
+    variabel hasil = ""
+    untuk i dalam rentang(panjang(bagian)) {
+        jika i > 0 {
+            hasil = hasil + perekat
+        }
+        hasil = hasil + bagian[i]
+    }
+    kembalikan hasil
+}
+
+kelas Kura {
+    init() {
+        diri.x = 0.0
+        diri.y = 0.0
+        diri._arah = 0.0
+        diri._pena = benar
+        diri._warna = "black"
+        diri._tebal = 1
+        diri._kecepatan = 3
+        # Setiap goresan: {"warna", "tebal", "titik": [[x, y], ...]}.
+        diri.goresan = []
+        diri._aktif = kosong
+    }
+
+    # --- gerak -------------------------------------------------------------
+
+    maju(jarak) {
+        _angka(jarak, "jarak")
+        variabel sudut = radian(diri._arah)
+        diri._pindah(diri.x + jarak * cos(sudut), diri.y + jarak * sin(sudut))
+        kembalikan diri
+    }
+
+    mundur(jarak) {
+        kembalikan diri.maju(0 - _angka(jarak, "jarak"))
+    }
+
+    kiri(sudut) {
+        diri._arah = (diri._arah + _angka(sudut, "sudut")) % 360
+        kembalikan diri
+    }
+
+    kanan(sudut) {
+        kembalikan diri.kiri(0 - _angka(sudut, "sudut"))
+    }
+
+    # ke(x, y): pindah lurus ke titik (goto); arah tidak berubah.
+    ke(x, y) {
+        diri._pindah(_angka(x, "x"), _angka(y, "y"))
+        kembalikan diri
+    }
+
+    # hadap(sudut): atur arah mutlak (setheading); 0 = timur, 90 = utara.
+    hadap(sudut) {
+        diri._arah = _angka(sudut, "sudut") % 360
+        kembalikan diri
+    }
+
+    # pulang(): kembali ke (0, 0) menghadap timur (home).
+    pulang() {
+        diri.ke(0, 0)
+        diri._arah = 0.0
+        kembalikan diri
+    }
+
+    # lingkaran(jari, busur=360, langkah=kosong): pusatnya `jari` satuan di
+    # sebelah kiri kura; jari negatif berputar searah jarum jam. Dihampiri
+    # dengan poligon -- jumlah langkah bawaan sama dengan turtle Python.
+    lingkaran(jari, busur = 360, langkah = kosong) {
+        _angka(jari, "jari")
+        _angka(busur, "busur")
+        variabel bagian = abs(busur) / 360
+        jika langkah == kosong {
+            langkah = 1 + ke_bulat(min(11 + abs(jari) / 6.0, 59.0) * bagian)
+        }
+        jika jenis(langkah) != "angka" atau langkah < 1 {
+            naikkan GalatKura("langkah harus bulat positif")
+        }
+        variabel w = busur / langkah
+        variabel setengah = w / 2
+        variabel sisi = 2 * jari * sin(radian(setengah))
+        jika jari < 0 {
+            sisi = 0 - sisi
+            w = 0 - w
+            setengah = 0 - setengah
+        }
+        diri.kiri(setengah)
+        untuk i dalam rentang(langkah) {
+            diri.maju(sisi)
+            diri.kiri(w)
+        }
+        diri.kanan(setengah)
+        kembalikan diri
+    }
+
+    # --- pena --------------------------------------------------------------
+
+    angkat_pena() {
+        diri._pena = salah
+        diri._aktif = kosong
+        kembalikan diri
+    }
+
+    turunkan_pena() {
+        diri._pena = benar
+        kembalikan diri
+    }
+
+    # warna(w): nama warna atau "#rrggbb", apa pun yang dikenal SVG.
+    warna(w) {
+        jika jenis(w) != "teks" atau w == "" {
+            naikkan GalatKura("warna harus teks yang tidak kosong")
+        }
+        jika "\"" dalam w atau "<" dalam w atau "&" dalam w {
+            naikkan GalatKura(f"warna tidak sah: {repr(w)}")
+        }
+        diri._warna = w
+        diri._aktif = kosong
+        kembalikan diri
+    }
+
+    tebal(n) {
+        jika _angka(n, "tebal") <= 0 {
+            naikkan GalatKura("tebal harus lebih dari 0")
+        }
+        diri._tebal = n
+        diri._aktif = kosong
+        kembalikan diri
+    }
+
+    # kecepatan(n): 0..10, diterima demi kecocokan dengan turtle. Gambar SVG
+    # tidak beranimasi, jadi nilainya hanya disimpan.
+    kecepatan(n = kosong) {
+        jika n == kosong {
+            kembalikan diri._kecepatan
+        }
+        jika _angka(n, "kecepatan") < 0 atau n > 10 {
+            naikkan GalatKura("kecepatan harus 0 sampai 10")
+        }
+        diri._kecepatan = n
+        kembalikan diri
+    }
+
+    # --- keadaan -----------------------------------------------------------
+
+    posisi() {
+        kembalikan (bulatkan(diri.x, 2), bulatkan(diri.y, 2))
+    }
+
+    arah() {
+        kembalikan bulatkan(diri._arah, 2)
+    }
+
+    pena_turun() {
+        kembalikan diri._pena
+    }
+
+    _pindah(x, y) {
+        jika diri._pena {
+            jika diri._aktif == kosong {
+                diri._aktif = {"warna": diri._warna, "tebal": diri._tebal,
+                               "titik": [[diri.x, diri.y]]}
+                diri.goresan.tambah(diri._aktif)
+            }
+            diri._aktif["titik"].tambah([x, y])
+        }
+        diri.x = x
+        diri.y = y
+    }
+
+    # --- keluaran ----------------------------------------------------------
+
+    svg() {
+        kembalikan svg_dari([diri])
+    }
+
+    simpan(berkas) {
+        tulis_semua(berkas, diri.svg())
+        kembalikan berkas
+    }
+}
+
+# svg_dari(daftar_kura, tepi=10) -> teks SVG berisi goresan semua kura.
+fungsi svg_dari(daftar_kura, tepi = 10) {
+    variabel garis = []
+    variabel min_x = 0.0
+    variabel maks_x = 0.0
+    variabel min_y = 0.0
+    variabel maks_y = 0.0
+    untuk k dalam daftar_kura {
+        untuk g dalam k.goresan {
+            variabel teks_titik = []
+            untuk t dalam g["titik"] {
+                min_x = min(min_x, t[0])
+                maks_x = max(maks_x, t[0])
+                min_y = min(min_y, t[1])
+                maks_y = max(maks_y, t[1])
+                # Sumbu y SVG mengarah ke bawah: balik tandanya.
+                teks_titik.tambah(_fmt(t[0]) + "," + _fmt(0 - t[1]))
+            }
+            variabel titik = _gabung(teks_titik, " ")
+            variabel w = g["warna"]
+            variabel t_tebal = _fmt(g["tebal"])
+            garis.tambah(f"  <polyline points=\"{titik}\" stroke=\"{w}\" stroke-width=\"{t_tebal}\"/>")
+        }
+    }
+    variabel kiri_atas_x = min_x - tepi
+    variabel kiri_atas_y = 0 - maks_y - tepi
+    variabel lebar = maks_x - min_x + 2 * tepi
+    variabel tinggi = maks_y - min_y + 2 * tepi
+    variabel kotak = f"{_fmt(kiri_atas_x)} {_fmt(kiri_atas_y)} {_fmt(lebar)} {_fmt(tinggi)}"
+    variabel hasil = ["<svg xmlns=\"http://www.w3.org/2000/svg\" "
+                      + f"viewBox=\"{kotak}\" width=\"{_fmt(lebar)}\" height=\"{_fmt(tinggi)}\">",
+                      "<g fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\">"]
+    untuk g dalam garis {
+        hasil.tambah(g)
+    }
+    hasil.tambah("</g>")
+    hasil.tambah("</svg>")
+    kembalikan _gabung(hasil, "\n") + "\n"
+}
+
+# --- kura bawaan dan fungsi tingkat modul ------------------------------------
+
+_bawaan = Kura()
+
+fungsi kura_bawaan() {
+    kembalikan _bawaan
+}
+
+fungsi maju(jarak) { _bawaan.maju(jarak) }
+fungsi mundur(jarak) { _bawaan.mundur(jarak) }
+fungsi kiri(sudut) { _bawaan.kiri(sudut) }
+fungsi kanan(sudut) { _bawaan.kanan(sudut) }
+fungsi ke(x, y) { _bawaan.ke(x, y) }
+fungsi hadap(sudut) { _bawaan.hadap(sudut) }
+fungsi pulang() { _bawaan.pulang() }
+fungsi lingkaran(jari, busur = 360, langkah = kosong) { _bawaan.lingkaran(jari, busur, langkah) }
+fungsi angkat_pena() { _bawaan.angkat_pena() }
+fungsi turunkan_pena() { _bawaan.turunkan_pena() }
+fungsi warna(w) { _bawaan.warna(w) }
+fungsi tebal(n) { _bawaan.tebal(n) }
+fungsi kecepatan(n = kosong) { kembalikan _bawaan.kecepatan(n) }
+fungsi posisi() { kembalikan _bawaan.posisi() }
+fungsi arah() { kembalikan _bawaan.arah() }
+fungsi svg() { kembalikan _bawaan.svg() }
+
+# selesai(berkas="kura.svg"): simpan gambar kura bawaan (turtle.done()).
+fungsi selesai(berkas = "kura.svg") {
+    kembalikan _bawaan.simpan(berkas)
+}
+
+# reset(): kura bawaan baru, kanvas kosong.
+fungsi reset() {
+    global _bawaan
+    _bawaan = Kura()
+}

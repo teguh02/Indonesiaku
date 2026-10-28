@@ -1,0 +1,384 @@
+# pustaka/iterasi.idk - Alat iterasi (modul `iterasi`).
+# Pemakaian:
+#     impor iterasi
+#     dari iterasi impor akumulasi, berpasangan, kombinasi
+#
+# Padanan `itertools` Python. Karena bahasa ini belum punya generator (Fase 5),
+# SEMUA fungsi di sini EAGER: ia mengembalikan daftar biasa, bukan iterator
+# malas. Karena itu `hitung_naik`/`putar_ulang`/`ulangi` mewajibkan jumlah
+# elemen — tak ada tak hingga.
+#
+# Karena bahasa belum punya `*args`, fungsi yang di Python menerima argumen
+# sejumlah urutan (`chain`, `product`) di sini menerima SATU DAFTAR urutan;
+# `peta_bintang` meneruskan tupel argumen sebagai satu nilai (lihat panduan).
+
+kelas GalatIterasi < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+# --- pembangkit jumlah terbatas ------------------------------------------
+
+# hitung_naik(mulai = 0, langkah = 1, jumlah = kosong) -> jumlah elemen
+# berurutan. `jumlah` wajib karena hasilnya eager.
+fungsi hitung_naik(mulai = 0, langkah = 1, jumlah = kosong) {
+    jika jumlah == kosong {
+        naikkan GalatIterasi("hitung_naik: sebutkan `jumlah` (versi eager punya batas)")
+    }
+    variabel hasil = []
+    variabel nilai = mulai
+    variabel i = 0
+    selagi i < jumlah {
+        tambah(hasil, nilai)
+        nilai = nilai + langkah
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# ulangi(nilai, jumlah) -> nilai diulang jumlah kali.
+fungsi ulangi(nilai, jumlah) {
+    variabel hasil = []
+    variabel i = 0
+    selagi i < jumlah {
+        tambah(hasil, nilai)
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# putar_ulang(urutan, jumlah) -> urutan diulang sampai jumlah elemen.
+fungsi putar_ulang(urutan, jumlah) {
+    variabel data = daftar(urutan)
+    variabel n = panjang(data)
+    jika n == 0 {
+        naikkan GalatIterasi("putar_ulang: urutan kosong")
+    }
+    variabel hasil = []
+    variabel i = 0
+    selagi i < jumlah {
+        tambah(hasil, data[i % n])
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# cabang(urutan, n = 2) -> n salinan datar yang berdiri sendiri (untuk eager
+# ini setara `tee`).
+fungsi cabang(urutan, n = 2) {
+    variabel hasil = []
+    variabel i = 0
+    selagi i < n {
+        tambah(hasil, daftar(urutan))
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# --- transformasi ---------------------------------------------------------
+
+# akumulasi(urutan, f = kosong, awal = kosong) -> jumlah berjalan.
+# f kosong berarti penjumlahan (+). `awal` ikut muncul sebagai elemen pertama.
+fungsi akumulasi(urutan, f = kosong, awal = kosong) {
+    variabel data = daftar(urutan)
+    variabel hasil = []
+    variabel total = kosong
+    variabel mulai = 0
+    jika awal != kosong {
+        total = awal
+        tambah(hasil, total)
+    } selain {
+        jika panjang(data) == 0 {
+            kembalikan hasil
+        }
+        total = data[0]
+        mulai = 1
+        tambah(hasil, total)
+    }
+    selagi mulai < panjang(data) {
+        jika f == kosong {
+            total = total + data[mulai]
+        } selain {
+            total = f(total, data[mulai])
+        }
+        tambah(hasil, total)
+        mulai = mulai + 1
+    }
+    kembalikan hasil
+}
+
+# rangkai(daftar_urutan) -> semua urutan disambung jadi satu daftar.
+fungsi rangkai(daftar_urutan) {
+    variabel hasil = []
+    untuk u dalam daftar_urutan {
+        untuk v dalam u {
+            tambah(hasil, v)
+        }
+    }
+    kembalikan hasil
+}
+
+# saring_dengan(urutan, pemilih) -> elemen yang pemilihnya benar.
+fungsi saring_dengan(urutan, pemilih) {
+    variabel data = daftar(urutan)
+    variabel pil = daftar(pemilih)
+    variabel hasil = []
+    variabel i = 0
+    selagi i < panjang(data) dan i < panjang(pil) {
+        jika pil[i] {
+            tambah(hasil, data[i])
+        }
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# ambil_selama(urutan, syarat) -> elemen awal selama syarat benar.
+fungsi ambil_selama(urutan, syarat) {
+    variabel hasil = []
+    untuk v dalam daftar(urutan) {
+        jika tidak syarat(v) {
+            hentikan
+        }
+        tambah(hasil, v)
+    }
+    kembalikan hasil
+}
+
+# lewati_selama(urutan, syarat) -> sisa setelah syarat berhenti benar.
+fungsi lewati_selama(urutan, syarat) {
+    variabel hasil = []
+    variabel aktif = salah
+    untuk v dalam daftar(urutan) {
+        jika tidak aktif dan syarat(v) {
+            lanjut
+        }
+        aktif = benar
+        tambah(hasil, v)
+    }
+    kembalikan hasil
+}
+
+# saring_salah(urutan, syarat) -> elemen yang syaratnya salah.
+fungsi saring_salah(urutan, syarat) {
+    variabel hasil = []
+    untuk v dalam daftar(urutan) {
+        jika tidak syarat(v) {
+            tambah(hasil, v)
+        }
+    }
+    kembalikan hasil
+}
+
+# kelompokkan(urutan, kunci = kosong) -> daftar [kunci, daftar_anggota]
+# berurutan (hanya anggota yang bernaung/berdekatan yang dikelompokkan,
+# seperti itertools.groupby).
+fungsi kelompokkan(urutan, kunci = kosong) {
+    variabel data = daftar(urutan)
+    variabel hasil = []
+    variabel i = 0
+    selagi i < panjang(data) {
+        variabel k = data[i]
+        jika kunci != kosong {
+            k = kunci(data[i])
+        }
+        variabel grup = []
+        selagi i < panjang(data) {
+            variabel kk = data[i]
+            jika kunci != kosong {
+                kk = kunci(data[i])
+            }
+            jika kk != k {
+                hentikan
+            }
+            tambah(grup, data[i])
+            i = i + 1
+        }
+        tambah(hasil, [k, grup])
+    }
+    kembalikan hasil
+}
+
+# --- pemotongan -----------------------------------------------------------
+
+# iris(urutan, mulai = 0, akhir = kosong, langkah = 1) -> potongan seperti
+# islice. `akhir` kosong berarti sampai ujung.
+fungsi iris(urutan, mulai = 0, akhir = kosong, langkah = 1) {
+    jika langkah <= 0 {
+        naikkan GalatIterasi("iris: langkah harus positif")
+    }
+    variabel data = daftar(urutan)
+    variabel n = panjang(data)
+    variabel batas = akhir
+    jika batas == kosong atau batas > n {
+        batas = n
+    }
+    variabel hasil = []
+    variabel i = mulai
+    selagi i < batas {
+        jika i >= 0 {
+            tambah(hasil, data[i])
+        }
+        i = i + langkah
+    }
+    kembalikan hasil
+}
+
+# berpasangan(urutan) -> daftar pasangan berurutan [[a,b], [b,c], ...].
+fungsi berpasangan(urutan) {
+    variabel data = daftar(urutan)
+    variabel hasil = []
+    variabel i = 0
+    selagi i + 1 < panjang(data) {
+        tambah(hasil, [data[i], data[i + 1]])
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# kelompok_per(urutan, n) -> daftar kelompok berukuran n (kelompok terakhir
+# boleh lebih pendek).
+fungsi kelompok_per(urutan, n) {
+    jika n <= 0 {
+        naikkan GalatIterasi("kelompok_per: n harus positif")
+    }
+    variabel data = daftar(urutan)
+    variabel hasil = []
+    variabel i = 0
+    selagi i < panjang(data) {
+        variabel grup = []
+        variabel j = 0
+        selagi j < n dan i + j < panjang(data) {
+            tambah(grup, data[i + j])
+            j = j + 1
+        }
+        tambah(hasil, grup)
+        i = i + n
+    }
+    kembalikan hasil
+}
+
+# peta_bintang(f, urutan) -> f diterapkan pada TIAP elemen secara utuh.
+# Di Python `starmap` membongkar tupel jadi argumen; di sini (belum ada
+# `*args`) f menerima satu nilai: tupel/daftar itu sendiri.
+fungsi peta_bintang(f, urutan) {
+    variabel hasil = []
+    untuk arg dalam daftar(urutan) {
+        tambah(hasil, f(arg))
+    }
+    kembalikan hasil
+}
+
+# pasangkan_terpanjang(a, b, isi = kosong) -> seperti zip tetapi memakai
+# urutan terpanjang; yang kurang diisi `isi`.
+fungsi pasangkan_terpanjang(a, b, isi = kosong) {
+    variabel da = daftar(a)
+    variabel db = daftar(b)
+    variabel n = panjang(da)
+    jika panjang(db) > n {
+        n = panjang(db)
+    }
+    variabel hasil = []
+    variabel i = 0
+    selagi i < n {
+        variabel x = isi
+        variabel y = isi
+        jika i < panjang(da) {
+            x = da[i]
+        }
+        jika i < panjang(db) {
+            y = db[i]
+        }
+        tambah(hasil, [x, y])
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# --- kombinatorik ---------------------------------------------------------
+
+# produk(daftar_urutan) -> hasil kali kartesius dari semua urutan.
+fungsi produk(daftar_urutan) {
+    variabel hasil = [[]]
+    untuk u dalam daftar_urutan {
+        variabel baru = []
+        untuk kombinasi dalam hasil {
+            untuk v dalam daftar(u) {
+                tambah(baru, kombinasi + [v])
+            }
+        }
+        hasil = baru
+    }
+    kembalikan hasil
+}
+
+fungsi _permutasi(data, r) {
+    jika r == 0 {
+        kembalikan [[]]
+    }
+    variabel hasil = []
+    variabel i = 0
+    selagi i < panjang(data) {
+        variabel sisa = []
+        variabel j = 0
+        selagi j < panjang(data) {
+            jika j != i {
+                tambah(sisa, data[j])
+            }
+            j = j + 1
+        }
+        untuk lanjutan dalam _permutasi(sisa, r - 1) {
+            tambah(hasil, [data[i]] + lanjutan)
+        }
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# permutasi(urutan, r = kosong) -> r = kosong berarti sepanjang urutan.
+fungsi permutasi(urutan, r = kosong) {
+    variabel data = daftar(urutan)
+    variabel ambil = r
+    jika ambil == kosong {
+        ambil = panjang(data)
+    }
+    kembalikan _permutasi(data, ambil)
+}
+
+fungsi _kombinasi(data, mulai, r) {
+    jika r == 0 {
+        kembalikan [[]]
+    }
+    variabel hasil = []
+    variabel i = mulai
+    selagi i < panjang(data) {
+        untuk lanjutan dalam _kombinasi(data, i + 1, r - 1) {
+            tambah(hasil, [data[i]] + lanjutan)
+        }
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+fungsi kombinasi(urutan, r) {
+    kembalikan _kombinasi(daftar(urutan), 0, r)
+}
+
+fungsi _kombinasi_berulang(data, mulai, r) {
+    jika r == 0 {
+        kembalikan [[]]
+    }
+    variabel hasil = []
+    variabel i = mulai
+    selagi i < panjang(data) {
+        untuk lanjutan dalam _kombinasi_berulang(data, i, r - 1) {
+            tambah(hasil, [data[i]] + lanjutan)
+        }
+        i = i + 1
+    }
+    kembalikan hasil
+}
+
+# kombinasi_berulang(urutan, r) -> kombinasi yang boleh memakai elemen sama.
+fungsi kombinasi_berulang(urutan, r) {
+    kembalikan _kombinasi_berulang(daftar(urutan), 0, r)
+}

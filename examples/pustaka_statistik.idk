@@ -1,0 +1,45 @@
+# Modul `statistik` (Fase 6): rata-rata, median, modus, sebaran, kuantil.
+
+impor statistik
+dari statistik impor rata_rata, median, modus, GalatStatistik
+
+cetak("== rata_rata ==")
+cetak(rata_rata([1, 2, 3, 4]))
+cetak(rata_rata([1, 2, 3]))
+cetak(statistik.rata_rata(rentang(1, 5)))
+
+cetak("== median ==")
+cetak(median([3, 1, 2]))
+cetak(median([1, 2, 3, 4]))
+cetak(median([1, 3]))
+
+cetak("== modus ==")
+cetak(modus([1, 2, 2, 3]))
+cetak(modus(["a", "b", "a", "c", "a"]))
+cetak(modus([5, 5, 1, 1]))
+cetak(modus(["bulat", 2, 2.0]))
+
+cetak("== varians & simpangan baku (sampel) ==")
+cetak(statistik.varians([1, 2, 3]))
+cetak(statistik.varians([2, 4, 4, 4, 5, 5, 7, 9]))
+cetak(statistik.simpangan_baku([2, 4, 4, 4, 5, 5, 7, 9]))
+
+cetak("== populasi ==")
+cetak(statistik.varians_populasi([2, 4, 4, 4, 5, 5, 7, 9]))
+cetak(statistik.simpangan_baku_populasi([2, 4, 4, 4, 5, 5, 7, 9]))
+
+cetak("== kuantil ==")
+cetak(statistik.kuantil([1, 2, 3, 4]))
+cetak(statistik.kuantil(rentang(1, 9), 2))
+
+cetak("== galat bertipe dapat ditangkap ==")
+coba {
+    rata_rata([])
+} kecuali GalatStatistik sebagai e {
+    cetak(e.pesan)
+}
+coba {
+    statistik.varians([9])
+} kecuali GalatStatistik sebagai e {
+    cetak(e.pesan)
+}

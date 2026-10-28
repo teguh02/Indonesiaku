@@ -1,0 +1,71 @@
+# Modul `koleksi` (Fase 6): Penghitung, KamusBawaan, KamusBerurut, Antrian.
+
+impor koleksi
+dari koleksi impor Penghitung, KamusBawaan, Antrian, KamusBerurut, GalatKoleksi
+
+cetak("== Penghitung ==")
+c = Penghitung("abracadabra")
+cetak(panjang(c))
+cetak(c["a"], c["z"])
+cetak(c.paling_umum(2))
+cetak(c.paling_umum())
+cetak(c.total())
+cetak(c.punya("a"), c.punya("z"))
+cetak(terurut(c.ke_daftar()))
+
+cetak("== iterasi atas kunci (urutan penyisipan) ==")
+untuk k dalam c {
+    cetak(k, c[k])
+}
+
+cetak("== tambah/kurang & operator ==")
+c2 = Penghitung("banana")
+cetak((c + c2).paling_umum(3))
+cetak((c - c2).paling_umum(3))
+cetak(c == Penghitung("abracadabra"))
+cetak(c == c2)
+
+cetak("== teks & repr ==")
+cetak(c)
+cetak(repr(c))
+
+cetak("== KamusBawaan ==")
+kb = KamusBawaan(daftar)
+tambah(kb["buah"], "apel")
+tambah(kb["buah"], "jeruk")
+cetak(kb["buah"])
+cetak(kb["sayur"])
+cetak(panjang(kb), kb.punya("sayur"), kb.ambil("tidak_ada"))
+cetak(kb)
+
+cetak("== KamusBerurut (alias kamus) ==")
+ko = KamusBerurut()
+ko["b"] = 2
+ko["a"] = 1
+cetak(kunci(ko), ko["b"])
+
+cetak("== Antrian ==")
+q = Antrian([1, 2, 3])
+cetak(q.daftar())
+cetak(q.ambil_kiri(), q.ambil_kanan())
+cetak(q.daftar())
+q.tambah_kiri(0)
+q.tambah_kanan(9)
+cetak(q.daftar())
+q.putar(1)
+cetak(q.daftar())
+cetak(panjang(q), q[0])
+
+cetak("== Antrian dengan maks_panjang ==")
+qm = Antrian([1, 2, 3], 3)
+qm.tambah_kanan(4)
+cetak(qm.daftar())
+qm.tambah_kiri(0)
+cetak(qm.daftar())
+
+cetak("== galat dapat ditangkap ==")
+coba {
+    Antrian().ambil_kiri()
+} kecuali GalatKoleksi sebagai e {
+    cetak(e.pesan)
+}

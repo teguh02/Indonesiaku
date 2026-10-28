@@ -1,0 +1,6 @@
+# log menulis ke stderr secara bawaan; info tidak tampil (ambang PERINGATAN).
+impor log
+log.info("tidak tampil")
+log.peringatan("disk hampir penuh")
+log.ambil_pencatat("db").galat("koneksi putus")
+keluar(3)

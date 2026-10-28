@@ -1,0 +1,9 @@
+# Seperti argparse: argumen yang tidak dikenal -> pemakaian dan pesan galat
+# ke stderr, lalu keluar dengan kode 2.
+dari opsi impor PenguraiArgumen
+p = PenguraiArgumen("salin")
+p.tambah_argumen("sumber")
+p.tambah_argumen("--paksa", pendek = "-p", aksi = "benar")
+cetak("stdout ini diabaikan oleh penguji galat")
+p.urai(["a.txt", "--tidak-ada"])
+cetak("tidak tercapai")

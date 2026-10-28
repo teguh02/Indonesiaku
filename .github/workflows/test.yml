@@ -99,6 +99,9 @@ jobs:
           chmod +x tests/test_todo_server.sh
           bash tests/test_todo_server.sh
 
+      - name: HTTP client integration test
+        run: bash tests/test_klien_http.sh
+
   sanitizers:
     name: ASan + UBSan (stress GC)
     runs-on: ubuntu-latest
@@ -117,7 +120,7 @@ jobs:
             -DDEBUG_STRESS_GC \
             -o indk_asan \
             src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
-            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/pola.c src/sistem.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
 
       - name: Run every example under sanitizers
         env:
@@ -130,7 +133,10 @@ jobs:
           rc=0
           for f in examples/*.idk examples/oop/*.idk; do
             echo "== $f =="
-            out="$(./indk_asan "$f" 2>&1)" || true
+            # timeout: examples/todo_server.idk melayani request selamanya.
+            # Tanpa ini job menggantung sampai batas 6 jam GitHub lalu dibatalkan.
+            # Server diuji terpisah oleh tests/test_todo_server.sh.
+            out="$(timeout 120 ./indk_asan "$f" 2>&1)" || true
             if echo "$out" | grep -Eq "ERROR: (AddressSanitizer|LeakSanitizer)|runtime error:"; then
               echo "$out"
               echo "SANITIZER FAILURE in $f"
@@ -154,7 +160,7 @@ jobs:
         run: |
           gcc -std=c11 -g -O0 -Isrc -o indk_dbg \
             src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
-            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/pola.c src/sistem.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
 
       - name: Valgrind on representative examples
         run: |
@@ -184,12 +190,13 @@ jobs:
         run: |
           gcc -std=c11 -O0 -g --coverage -Isrc -o indk \
             src/main.c src/chunk.c src/compiler.c src/debug.c src/memory.c \
-            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
+            src/native.c src/object.c src/scanner.c src/table.c src/value.c src/vm.c src/db.c src/pola.c src/sistem.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm
 
       - name: Exercise every example
         run: |
           for f in examples/*.idk examples/oop/*.idk; do
-            ./indk "$f" > /dev/null 2>&1 || true
+            # timeout: lihat catatan di job sanitizers — todo_server.idk tidak berhenti sendiri.
+            timeout 120 ./indk "$f" > /dev/null 2>&1 || true
           done
 
       - name: Generate lcov report
@@ -220,7 +227,7 @@ jobs:
           clang -g -O1 -fsanitize=fuzzer,address,undefined -Isrc \
             tests/fuzz_compile.c src/chunk.c src/compiler.c src/debug.c \
             src/memory.c src/native.c src/object.c src/scanner.c src/table.c \
-            src/value.c src/vm.c src/db.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm -o fuzz_compile
+            src/value.c src/vm.c src/db.c src/pola.c src/sistem.c src/sqlite3.c -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -lm -o fuzz_compile
 
       - name: Seed corpus from examples
         run: |

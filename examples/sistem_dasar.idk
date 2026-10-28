@@ -1,0 +1,44 @@
+# Fungsi bawaan sistem operasi (Fase 6 gelombang C2): lingkungan, direktori,
+# atribut dinamis, dan jalur.ada/adalah_direktori. Keluaran dibuat sama di
+# semua sistem operasi.
+impor jalur
+
+cetak("== lingkungan ==")
+cetak(jenis(lingkungan()), jenis(ambil_lingkungan("PATH")))
+cetak(ambil_lingkungan("VARIABEL_YANG_TIDAK_ADA_123"), ambil_lingkungan("VARIABEL_YANG_TIDAK_ADA_123", "bawaan"))
+
+cetak("== direktori ==")
+d = "_contoh_direktori_sementara"
+buat_direktori(d)
+tulis_semua(d + "/b.txt", "bbb")
+tulis_semua(d + "/a.txt", "a")
+buat_direktori(d + "/sub")
+cetak(isi_direktori(d))                          # selalu terurut
+cetak(jalur.ada(d), jalur.adalah_direktori(d), jalur.adalah_berkas(d))
+cetak(jalur.adalah_berkas(d + "/b.txt"), jalur.ukuran(d + "/b.txt"), jalur.ada(d + "/zzz"))
+coba { hapus_direktori(d) } kecuali GalatOS sebagai e { cetak("GalatOS:", e.pesan) }
+coba { buat_direktori(d) } kecuali GalatOS sebagai e { cetak("GalatOS:", e.pesan) }
+coba { isi_direktori(d + "/a.txt") } kecuali GalatOS sebagai e { cetak("GalatOS:", e.pesan) }
+coba { jalur.ukuran(d + "/zzz") } kecuali GalatOS sebagai e { cetak("GalatOS:", e.pesan) }
+hapus_direktori(d + "/sub")
+hapus_berkas(d + "/a.txt")
+hapus_berkas(d + "/b.txt")
+hapus_direktori(d)
+cetak(jalur.ada(d))
+cetak(panjang(direktori_kini()) > 0, jalur.adalah_absolut(jalur.absolut("x")) atau jalur.absolut("x")[1] == ":")
+
+cetak("== atribut dinamis ==")
+kelas Titik {
+    init() {
+        diri.x = 1
+    }
+    jarak() {
+        kembalikan diri.x * 2
+    }
+}
+t = Titik()
+atur_atribut(t, "y", 5)
+cetak(t.y, ambil_atribut(t, "x"), ambil_atribut(t, "z", "bawaan"))
+cetak(punya_atribut(t, "y"), punya_atribut(t, "z"), punya_atribut(t, "jarak"))
+cetak(ambil_atribut(t, "jarak")())
+coba { ambil_atribut(t, "z") } kecuali GalatAtribut sebagai e { cetak("GalatAtribut:", e.pesan) }

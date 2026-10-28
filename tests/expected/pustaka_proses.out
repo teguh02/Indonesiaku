@@ -1,0 +1,20 @@
+== jalankan ==
+kode keluar: 7
+keluaran: "halo, Budi\nargumen: [\"7\"]\n"
+galat: "pesan ke stderr\n"
+== periksa ==
+GalatProses, kode 3
+halo, Sari
+argumen: []
+
+== perintah harus daftar ==
+GalatProses: perintah harus daftar teks, misalnya ["ls", "-l"]: teks tunggal tidak dipecah karena tidak ada shell
+GalatOS: program 'program-yang-pasti-tidak-ada-123' tidak ditemukan
+== indk --sandbox ==
+GalatIzin: lingkungan() tidak diizinkan dalam mode --sandbox
+GalatIzin: ambil_lingkungan() tidak diizinkan dalam mode --sandbox
+GalatIzin: isi_direktori() tidak diizinkan dalam mode --sandbox
+GalatIzin: proses.jalankan() tidak diizinkan dalam mode --sandbox
+GalatIzin: soket_sambung() tidak diizinkan dalam mode --sandbox
+direktori_kini() boleh: benar
+

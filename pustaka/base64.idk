@@ -1,0 +1,120 @@
+# pustaka/base64.idk - Encoding Base64 (modul `base64`).
+# Pemakaian:
+#     impor base64
+#     dari base64 impor enkode, dekode
+#
+# Karena belum ada tipe byte, "data biner" di sini adalah daftar bulat 0..255
+# (lihat `pustaka/bita.idk`). `enkode` menerima teks (dienkode UTF-8 dulu)
+# ATAU daftar byte; `dekode` mengembalikan daftar byte. Padding `=`
+# dipertahankan, sama seperti modul `base64` Python.
+
+impor bita
+dari bita impor ke_bita, ke_teks
+
+kelas GalatBase64 < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+_TABEL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+_TABEL_URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+# _masukan(data) -> daftar byte; teks diubah lewat UTF-8, daftar diteruskan.
+fungsi _masukan(data) {
+    variabel tipe = jenis(data)
+    jika tipe == "teks" {
+        kembalikan ke_bita(data)
+    }
+    jika tipe == "daftar" atau tipe == "tupel" {
+        kembalikan daftar(data)
+    }
+    naikkan GalatBase64("enkode: butuh teks atau daftar byte")
+}
+
+fungsi _enkode(data, tabel) {
+    variabel b = _masukan(data)
+    variabel n = panjang(b)
+    variabel hasil = ""
+    variabel i = 0
+    selagi i < n {
+        variabel sisa = n - i
+        variabel b1 = 0
+        variabel b2 = 0
+        jika sisa > 1 { b1 = b[i + 1] }
+        jika sisa > 2 { b2 = b[i + 2] }
+        variabel tiga = b[i] * 65536 + b1 * 256 + b2
+        hasil = hasil + tabel[(tiga // 262144) % 64]
+        hasil = hasil + tabel[(tiga // 4096) % 64]
+        jika sisa > 1 { hasil = hasil + tabel[(tiga // 64) % 64] } selain { hasil = hasil + "=" }
+        jika sisa > 2 { hasil = hasil + tabel[tiga % 64] } selain { hasil = hasil + "=" }
+        i = i + 3
+    }
+    kembalikan hasil
+}
+
+fungsi _nilai_sah(c, tabel) {
+    variabel i = 0
+    selagi i < 64 {
+        jika tabel[i] == c {
+            kembalikan i
+        }
+        i = i + 1
+    }
+    naikkan GalatBase64("dekode: karakter base64 tidak sah: " + c)
+}
+
+fungsi _dekode(teks, tabel) {
+    variabel bersih = ""
+    untuk c dalam teks {
+        jika c != "=" dan c != "\n" dan c != "\r" dan c != " " dan c != "\t" {
+            bersih = bersih + c
+        }
+    }
+    variabel n = panjang(bersih)
+    variabel hasil = []
+    variabel i = 0
+    selagi i < n {
+        variabel v0 = _nilai_sah(bersih[i], tabel)
+        jika i + 1 >= n {
+            naikkan GalatBase64("dekode: panjang base64 tidak sah")
+        }
+        variabel v1 = _nilai_sah(bersih[i + 1], tabel)
+        variabel v2 = 0
+        variabel v3 = 0
+        jika i + 2 < n { v2 = _nilai_sah(bersih[i + 2], tabel) }
+        jika i + 3 < n { v3 = _nilai_sah(bersih[i + 3], tabel) }
+        variabel tiga = v0 * 262144 + v1 * 4096 + v2 * 64 + v3
+        tambah(hasil, (tiga // 65536) % 256)
+        jika i + 2 < n { tambah(hasil, (tiga // 256) % 256) }
+        jika i + 3 < n { tambah(hasil, tiga % 256) }
+        i = i + 4
+    }
+    kembalikan hasil
+}
+
+# enkode(data) -> teks base64 standar.
+fungsi enkode(data) {
+    kembalikan _enkode(data, _TABEL)
+}
+
+# dekode(teks) -> daftar byte.
+fungsi dekode(teks) {
+    kembalikan _dekode(teks, _TABEL)
+}
+
+# dekode_teks(teks) -> teks hasil dekode (UTF-8).
+fungsi dekode_teks(teks) {
+    kembalikan ke_teks(dekode(teks))
+}
+
+# Varian URL-safe (alfabet `-` `_`), seperti base64.urlsafe_b64encode.
+fungsi enkode_url(data) {
+    kembalikan _enkode(data, _TABEL_URL)
+}
+
+fungsi dekode_url(teks) {
+    kembalikan _dekode(teks, _TABEL_URL)
+}
+
+fungsi dekode_url_teks(teks) {
+    kembalikan ke_teks(dekode_url(teks))
+}

@@ -1,0 +1,3 @@
+# GalatKoleksi yang tidak tertangkap -> exit non-zero.
+dari koleksi impor Antrian
+cetak(Antrian().ambil_kiri())

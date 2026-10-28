@@ -55,6 +55,11 @@ Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
 
+; Pustaka standar: {app}\pustaka di samping {app}\bin. Interpreter mencarinya
+; relatif terhadap lokasinya sendiri (<exe>\..\pustaka), jadi `impor pola`
+; berjalan dari folder mana pun tanpa INDK_PATH.
+Source: "..\pustaka\*"; DestDir: "{app}\pustaka"; Flags: recursesubdirs ignoreversion
+
 ; Examples
 Source: "..\examples\*"; DestDir: "{app}\examples"; Flags: recursesubdirs ignoreversion
 

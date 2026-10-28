@@ -29,8 +29,27 @@ luar jangkauan.
 | `biner(n)` | Teks representasi biner: `"0b1010"` |
 | `oktal(n)` | Teks representasi oktal: `"0o12"` |
 | `heksa(n)` | Teks representasi heksadesimal: `"0xff"` |
+| `sin(x)`, `cos(x)`, `tan(x)` | Trigonometri, sudut dalam **radian** (seperti `math`). Hasil `desimal` |
+| `asin(x)`, `acos(x)`, `atan(x)` | Kebalikan trigonometri → radian. `asin`/`acos` hanya menerima `[-1, 1]` (selain itu `GalatNilai`) |
+| `atan2(y, x)` | Sudut titik `(x, y)` dalam radian, `-π..π` — kuadrannya benar, tidak seperti `atan(y / x)` |
+| `radian(derajat)`, `derajat(radian)` | Konversi satuan sudut |
 | `acak()` | Angka acak `[0, 1)` |
 | `acak_bulat(min, maks)` | Bilangan bulat acak `[min, maks]` |
+
+#### Trigonometri — radian, bukan derajat
+
+```indonesiaku
+cetak(sin(radian(30)))            # 0.49999999999999994 (desimal, bukan 0.5 persis)
+cetak(bulatkan(cos(radian(60)), 10))   # 0.5
+cetak(derajat(atan2(1, -1)))      # 135.0 -- kuadran II
+coba {
+    asin(2)
+} kecuali GalatNilai sebagai e {
+    cetak(e.pesan)                # asin(): argumen di luar domain [-1, 1]
+}
+```
+
+`sin`/`cos`/`tan` menolak tak hingga dengan `GalatNilai`, sama seperti Python.
 
 #### `min` / `max` — dua bentuk pemanggilan
 
@@ -566,7 +585,8 @@ disimpan ke berkas.
 ### 1.9 Soket TCP
 
 Server mendengarkan di `127.0.0.1` saja (localhost). Semua kesalahan dapat
-ditangkap `coba/kecuali`. Untuk server HTTP, gunakan `pustaka/http.idk`.
+ditangkap `coba/kecuali`. Untuk server **dan klien** HTTP, gunakan
+`pustaka/http.idk`.
 
 | Fungsi | Deskripsi |
 |--------|-----------|
@@ -575,6 +595,7 @@ ditangkap `coba/kecuali`. Untuk server HTTP, gunakan `pustaka/http.idk`.
 | `soket_baca(klien)` | Baca data yang diterima (satu recv) → string |
 | `soket_tulis(klien, teks)` | Kirim teks → jumlah byte |
 | `soket_tutup(soket)` | Tutup soket (server atau klien) |
+| `soket_sambung(host, port)` | Klien: sambung ke `host:port` (nama host atau IP, IPv4/IPv6) → soket. Host tak dikenal atau koneksi ditolak → `GalatOS`. Ditolak (`GalatIzin`) di `indk --sandbox` |
 
 ### 1.10 Basis Data (SQLite)
 
@@ -627,6 +648,97 @@ Contoh lengkap, termasuk transaksi dan uji anti-injeksi:
 {{embed:examples/db_sqlite.idk}}
 
 ---
+
+### 1.11 Sistem Operasi
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `keluar(kode=0)` | Akhiri program sekarang dengan kode keluar `kode` (`sys.exit`). `keluar("pesan")` mencetak pesan ke stderr lalu keluar dengan kode 1 |
+| `tulis_galat(teks)` | Tulis teks apa adanya ke **stderr** (tanpa baris baru otomatis) |
+| `lingkungan()` | Kamus semua variabel lingkungan (`os.environ`) |
+| `ambil_lingkungan(nama, bawaan=kosong)` | Nilai satu variabel lingkungan, atau `bawaan` bila tidak ada (`os.getenv`) |
+| `direktori_kini()` | Direktori kerja saat ini (`os.getcwd`) |
+| `isi_direktori(jalur=".")` | Daftar nama isi direktori, **selalu terurut** (`os.listdir`) |
+| `buat_direktori(jalur)` / `hapus_direktori(jalur)` | Buat / hapus satu direktori (yang dihapus harus kosong) |
+| `jalur_indk()` | Jalur lengkap interpreter `indk` yang sedang berjalan (`sys.executable`) |
+| `atur_atribut(objek, nama, nilai)` | Isi atribut dengan nama berupa teks (`setattr`) |
+| `ambil_atribut(objek, nama, bawaan)` | Baca atribut dengan nama berupa teks; `bawaan` bila tidak ada, selain itu `GalatAtribut` (`getattr`) |
+| `punya_atribut(objek, nama)` | `benar` bila atribut itu ada (`hasattr`) |
+
+```indonesiaku
+cetak(ambil_lingkungan("VARIABEL_TIDAK_ADA", "bawaan"))   # bawaan
+
+d = "_panduan_direktori_sementara"
+buat_direktori(d)
+tulis_semua(d + "/b.txt", "isi")
+tulis_semua(d + "/a.txt", "isi")
+cetak(isi_direktori(d))            # ["a.txt", "b.txt"]
+hapus_berkas(d + "/a.txt")
+hapus_berkas(d + "/b.txt")
+hapus_direktori(d)
+
+kelas Kotak {
+}
+k = Kotak()
+atur_atribut(k, "lebar", 3)
+cetak(k.lebar, punya_atribut(k, "tinggi"), ambil_atribut(k, "tinggi", 0))   # 3 salah 0
+```
+
+Kesalahan sistem operasi (direktori tidak ada, sudah ada, tidak kosong, ...)
+adalah `GalatOS`, seperti `OSError` Python, dengan alasan yang sama di semua
+sistem operasi:
+
+```indonesiaku
+coba {
+    isi_direktori("direktori_yang_tidak_ada")
+} kecuali GalatOS sebagai e {
+    cetak(e.pesan)    # isi_direktori(): 'direktori_yang_tidak_ada' tidak ada
+}
+```
+
+`keluar` dan `tulis_galat` dipakai untuk program baris perintah:
+
+```indonesiaku-takjalan
+jika panjang(argumen) == 0 {
+    tulis_galat("pemakaian: program.idk BERKAS\n")
+    keluar(2)
+}
+```
+
+`keluar` mengakhiri program **saat itu juga**. Berbeda dengan `sys.exit`
+Python, blok `akhirnya` dan `dengan` yang sedang berjalan tidak dijalankan
+lagi.
+
+**Mode `--sandbox`.** `indk --sandbox program.idk` menolak `lingkungan`,
+`ambil_lingkungan`, `isi_direktori`, dan menjalankan program lain (modul
+`proses`) dengan `GalatIzin`, turunan `GalatOS`. Playground web menjalankan
+setiap program dengan mode ini.
+
+### 1.12 Hash Kriptografis
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `md5(data)` | Hash MD5, 32 karakter heksa |
+| `sha1(data)` | Hash SHA-1, 40 karakter heksa |
+| `sha256(data)` | Hash SHA-256, 64 karakter heksa |
+| `sha512(data)` | Hash SHA-512, 128 karakter heksa |
+
+Padanan `hashlib` Python, tetapi langsung mengembalikan **teks heksa huruf
+kecil** (seperti `.hexdigest()`). `data` berupa teks (di-hash sebagai UTF-8)
+atau daftar byte `0..255`; keduanya memberi hasil yang sama untuk isi yang
+sama.
+
+```indonesiaku
+cetak(sha256("abc"))
+# ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+cetak(md5(""))                                   # d41d8cd98f00b204e9800998ecf8427e
+cetak(sha256("Halo") == sha256([72, 97, 108, 111]))   # benar
+```
+
+Nama modulnya bukan `hash` karena nama itu sudah dipakai fungsi bawaan
+`hash(x)` (nilai hash untuk kunci kamus, bukan hash kriptografis).
+Untuk menyimpan kata sandi, jangan memakai MD5/SHA-1 polos: keduanya
+dipertahankan untuk kecocokan dengan sistem lama dan pemeriksaan isi berkas.
 
 ## 2. Pustaka Standar (`pustaka/`)
 
@@ -734,17 +846,632 @@ impor "pustaka/http.idk"
 | `http_urai_request(teks)` | Parse request HTTP mentah → kamus `{metode, path, versi, header, badan}` |
 | `http_response(kode, tipe_konten, badan)` | Bangun string response HTTP |
 | `http_response_json(kode, badan)` | Pintasan response JSON |
+| `http_ambil(url, metode="GET", kepala=kosong, badan="")` | **Klien**: kirim permintaan → objek `Respons` |
+| `http_urai_url(url)` | `[host, port, jalur]` dari url `http://` |
 
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
 di atas soket TCP.
 
+#### Klien: `http_ambil`
+
+Padanan `urllib.request.urlopen`/`requests.get`, khusus `http://`:
+
+```python
+impor "pustaka/http.idk"
+
+r = http_ambil("http://127.0.0.1:8080/todos")
+cetak(r.status, r.ok(), r.kepala["content-type"])   # 200 benar application/json
+cetak(r.badan)
+
+r = http_ambil("http://127.0.0.1:8080/todos", "POST",
+               {"Content-Type": "application/json"}, "{\"teks\":\"Beli kopi\"}")
+r.periksa()   # GalatJaringan bila status 4xx/5xx
+```
+
+`Respons` punya `url`, `status` (bulat), `alasan` (`"Not Found"`), `kepala`
+(kamus, **nama header huruf kecil**), dan `badan` (teks). Sama seperti
+`requests`, status 4xx/5xx **bukan** galat — `ok()` memberi `salah`, dan
+`periksa()` baru melempar `GalatJaringan`. Host yang tidak ditemukan atau
+koneksi yang ditolak menjadi `GalatOS` dari `soket_sambung`.
+
+```indonesiaku
+impor "pustaka/http.idk"
+
+cetak(http_urai_url("http://contoh.id:8080/a?b=1#c"))   # ["contoh.id", 8080, "/a?b=1"]
+coba {
+    http_ambil("https://contoh.id/")
+} kecuali GalatJaringan sebagai e {
+    cetak(e.pesan)    # HTTPS belum didukung (butuh TLS); pakai http://
+}
+```
+
+Batasan: **HTTPS belum didukung** (perlu TLS); permintaan dikirim sebagai
+HTTP/1.0, sehingga server tidak mengirim `chunked` dan badan dibaca sampai
+koneksi ditutup; tidak ada pengalihan (redirect) otomatis maupun **batas
+waktu** (server yang diam membuat program menunggu); url dengan nama pengguna
+(`user@host`) atau alamat IPv6 berkurung (`[::1]`) belum didukung. CR/LF di
+url, metode, atau header ditolak dengan `GalatJaringan` supaya tidak bisa
+menyisipkan header. Di playground (`--sandbox`) koneksi keluar ditolak.
+
+### 2.7 `pustaka/koleksi.idk` — wadah data
+
+Padanan `collections` Python. Di-`impor` sebagai **modul** bernamespace, jadi
+nama di dalamnya tidak perlu awalan:
+
+```indonesiaku
+impor koleksi
+dari koleksi impor Penghitung, KamusBawaan, Antrian
+
+c = Penghitung("abracadabra")
+cetak(c["a"], c["z"])            # 5 0  -- kunci absen = 0
+cetak(c.paling_umum(2))           # [["a", 5], ["b", 2]]
+cetak(terurut(c.ke_daftar()))     # ["a", "b", "c", "d", "r"]
+
+kb = KamusBawaan(daftar)          # nilainya daftar baru tiap kunci baru
+tambah(kb["buah"], "apel")
+cetak(kb["buah"], kb["sayur"])  # ["apel"] []
+
+q = Antrian([1, 2, 3])
+q.tambah_kiri(0)
+cetak(q.ambil_kanan(), q.daftar())  # 3 [0, 1, 2]
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `Penghitung(urutan=kosong)` | Pencacah ala `Counter`. `c[k]` = hitungan (0 bila absen), `paling_umum(n)`, `total()`, `kunci()`, `nilai()`, `tambah(v, n=1)`, `kurang(v, n=1)`, `tambah_banyak(urutan)`, `ke_daftar()`; operator `+` dan `-`; `==` mengabaikan urutan |
+| `KamusBawaan(pabrik)` | Kamus dengan nilai bawaan ala `defaultdict`. `kb[k]` memanggil `pabrik()` saat kunci absen lalu menyimpannya; `ambil(k, bawaan=kosong)` **tidak** membuat nilai baru |
+| `KamusBerurut` | Alias `kamus` biasa — kamus diIndonesiaku sudah berurut penyisipan |
+| `Antrian(urutan=kosong, maks_panjang=kosong)` | Antrian dua ujung ala `deque`: `tambah_kiri`, `tambah_kanan`, `ambil_kiri`, `ambil_kanan`, `putar(n=1)`, `daftar()`, `panjang()`. `maks_panjang` membuang ujung yang berlawanan saat penuh |
+
+`tupel_bernama` (namedtuple) belum ada: membuat konstruktor dengan jumlah
+bidang dinamis butuh fungsi variadik (`*args`), yang belum didukung bahasa.
+
+### 2.8 `pustaka/statistik.idk` — statistik dasar
+
+```indonesiaku
+impor statistik
+cetak(statistik.rata_rata([1, 2, 3, 4]))   # 2.5
+cetak(statistik.median([1, 2, 3, 4]))      # 2.5
+cetak(statistik.modus("aabbbc"))           # b
+cetak(statistik.kuantil([1, 2, 3, 4]))     # [1.25, 2.5, 3.75]
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `rata_rata(urutan)` | Rata-rata (`mean`) |
+| `median(urutan)` | Nilai tengah; rata-rata dua tengah bila genap |
+| `modus(urutan)` | Nilai paling sering; seri dimenangkan yang muncul lebih dulu |
+| `varians(urutan)` / `simpangan_baku(urutan)` | **Sampel** (bagi `n-1`), seperti `statistics.variance` |
+| `varians_populasi` / `simpangan_baku_populasi` | Populasi (bagi `n`) |
+| `kuantil(urutan, n=4)` | `n-1` titik potong, metode *exclusive* seperti `statistics.quantiles` |
+
+Urutan kosong (atau data kurang dari dua untuk sebaran) menaikkan
+`GalatStatistik` yang membawa `.pesan` dan bisa ditangkap:
+
+```indonesiaku
+impor statistik
+dari statistik impor GalatStatistik
+coba {
+    statistik.rata_rata([])
+} kecuali GalatStatistik sebagai e {
+    cetak(e.pesan)                 # rata_rata: urutan kosong
+}
+```
+
+### 2.9 `pustaka/iterasi.idk` — alat iterasi
+
+Padanan `itertools`. Karena bahasa belum punya generator (Fase 5), semuanya
+**eager**: mengembalikan daftar, bukan iterator malas. Karena itu fungsi yang
+di Python tak hingga (`hitung_naik`, `putar_ulang`, `ulangi`) mewajibkan
+jumlah elemennya.
+
+```indonesiaku
+impor iterasi
+cetak(iterasi.akumulasi([1, 2, 3, 4]))        # [1, 3, 6, 10]
+cetak(iterasi.berpasangan([1, 2, 3]))         # [[1, 2], [2, 3]]
+cetak(iterasi.rangkai([[1, 2], [3]]))         # [1, 2, 3]
+cetak(iterasi.kombinasi([1, 2, 3], 2))        # [[1, 2], [1, 3], [2, 3]]
+```
+
+Isi: `hitung_naik`, `ulangi`, `putar_ulang`, `cabang`, `akumulasi`, `rangkai`,
+`saring_dengan`, `ambil_selama`, `lewati_selama`, `saring_salah`,
+`kelompokkan`, `iris`, `berpasangan`, `kelompok_per`, `peta_bintang`,
+`pasangkan_terpanjang`, `produk`, `permutasi`, `kombinasi`,
+`kombinasi_berulang`.
+
+Dua penyesuaian karena bahasa belum punya `*args`: `rangkai` dan `produk`
+menerima **satu daftar urutan** (`rangkai([[1], [2]])`, bukan
+`rangkai([1], [2])`), dan `peta_bintang(f, urutan)` meneruskan tiap elemen
+utuh ke `f` (Python membongkarnya jadi beberapa argumen).
+
+### 2.10 `pustaka/fungsional.idk` — alat fungsional
+
+```indonesiaku
+impor fungsional
+cetak(fungsional.lipat(fungsi(a, b) { kembalikan a + b }, [1, 2, 3, 4]))  # 10
+orang = [["Budi", 80], ["Ani", 95]]
+cetak(fungsional.urutkan_dengan(orang, fungsi(o) { kembalikan o[1] }))
+# [["Budi", 80], ["Ani", 95]]
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `lipat(f, urutan, awal=kosong)` | Reduksi kiri (`functools.reduce`). Tanpa `awal`, elemen pertama jadi nilai awal; urutan kosong lalu menaikkan `GalatFungsional` |
+| `parsial(f, arg_depan)` | `arg_depan` adalah **daftar**; mengembalikan fungsi satu argumen `g(x) = f(arg_depan..., x)` |
+| `urutkan_dengan(urutan, kunci)` | Daftar baru terurut berdasar `kunci(nilai)`, stabil seperti `sorted(key=...)` |
+| `urutkan_dengan_banding(urutan, banding)` | Terurut memakai pembanding tiga arah `banding(a, b)` (`< 0`, `0`, `> 0`) |
+| `banding_ke_kunci(banding)` | Kelas pembungkus ala `cmp_to_key`; bungkus tiap nilai lalu serahkan ke `terurut` |
+
+`@cache_lru` dan `urutan_lengkap` belum ada: masing-masing butuh fungsi
+variadik dan penyuntikan metode ke kelas saat runtime.
+
+### 2.11 `pustaka/salin.idk` — penyalinan
+
+```indonesiaku
+impor salin
+asal = {"x": [1]}
+salinan = salin.salin_dalam(asal)
+tambah(salinan["x"], 2)
+cetak(asal["x"], salinan["x"])     # [1] [1, 2]
+```
+
+| Fungsi | Deskripsi |
+|--------|-----------|
+| `salin(x)` | Salinan **dangkal** untuk daftar/kamus/himpunan; nilai lain dikembalikan apa adanya. Elemen di dalamnya masih dibagi |
+| `salin_dalam(x)` | Salinan **rekursif** untuk daftar/kamus/himpunan/tupel; struktur bersiklus aman. Objek buatan sendiri dikembalikan apa adanya |
+
+> Hati-hati: `dari salin impor salin` menimpa nama modul dengan fungsinya,
+> persis seperti `from copy import copy` di Python. Pakai alias bila butuh
+> keduanya: `dari salin impor salin sebagai kopi`.
+
+### 2.12 Catatan: objek ber-`_iter_` dan fungsi urutan
+
+Objek dengan metode `_iter_` sudah bisa dipakai di `untuk ... dalam` dan
+`panjang()`, tetapi **belum** dikenali `daftar()`, `tupel()`, `terurut()`,
+`jumlah()`, dan `semua()`. Untuk itu, kelas di modul ini menyediakan
+`ke_daftar()`/`daftar()` sehingga Anda menulis:
+
+```indonesiaku
+dari koleksi impor Penghitung
+c = Penghitung("abracadabra")
+cetak(terurut(c.ke_daftar()))     # ["a", "b", "c", "d", "r"]
+cetak(jumlah(c.nilai()))          # 11
+```
+
 ---
 
 Lihat contoh lengkap di folder `examples/` (mis. `pustaka_teks.idk`,
-`pustaka_daftar.idk`, `berkas.idk`, `konversi.idk`, `json_pakai.idk`,
-`todo_demo.idk`, `todo_server.idk`, `http_pakai.idk`).
+`pustaka_daftar.idk`, `pustaka_koleksi.idk`, `pustaka_statistik.idk`,
+`pustaka_iterasi.idk`, `pustaka_fungsional.idk`, `pustaka_salin.idk`,
+`berkas.idk`, `konversi.idk`, `json_pakai.idk`, `todo_demo.idk`,
+`todo_server.idk`, `http_pakai.idk`).
 
 ---
+
+### 2.13 `pustaka/jalur.idk` — jalur berkas
+
+Padanan `os.path` Python untuk **mengolah jalur sebagai teks**: menggabung,
+memecah, mengambil ekstensi, dan merapikan jalur. Hasilnya persis
+`posixpath` Python. Hanya `/` yang memisahkan bagian jalur, di semua sistem
+operasi, sehingga program yang sama memberi hasil yang sama di Windows,
+Linux, dan macOS. Windows sendiri menerima `/`.
+
+```indonesiaku
+impor jalur
+dari jalur impor gabung, pisah_ekstensi
+
+cetak(gabung("data", "2026", "laporan.csv"))   # data/2026/laporan.csv
+cetak(gabung("data", "/etc", "passwd"))         # /etc/passwd
+cetak(jalur.nama_dasar("/rumah/budi/a.txt"))    # a.txt
+cetak(jalur.nama_direktori("/rumah/budi/a.txt"))  # /rumah/budi
+cetak(pisah_ekstensi("arsip.tar.gz"))           # ("arsip.tar", ".gz")
+cetak(pisah_ekstensi(".bashrc"))                # (".bashrc", "")
+cetak(jalur.normalisasi("a/./b//c/../d"))       # a/b/d
+cetak(jalur.dari_windows("C:\\data\\a.txt"))    # C:/data/a.txt
+
+# Ganti ekstensi setiap berkas:
+untuk nama dalam ["foto/a.png", "foto/b.jpeg"] {
+    akar, ekst = pisah_ekstensi(nama)
+    cetak(akar + ".webp")                      # foto/a.webp, lalu foto/b.webp
+}
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `gabung(a, b, ...)` | `os.path.join`: sampai enam bagian; bagian yang diawali `/` membuang bagian sebelumnya |
+| `gabung_semua(daftar)` | Seperti `gabung` untuk daftar bagian berapa pun panjangnya |
+| `pisah(j)` | Tupel `(kepala, ekor)`: semua kecuali bagian terakhir, dan bagian terakhir |
+| `nama_dasar(j)` / `nama_direktori(j)` | Bagian terakhir / semua kecuali bagian terakhir (`basename` / `dirname`) |
+| `pisah_ekstensi(j)` / `ekstensi(j)` | Tupel `(akar, ekstensi)` / ekstensi saja termasuk titiknya; titik di awal nama bukan ekstensi |
+| `normalisasi(j)` | Buang `.` dan `//`, selesaikan `..` (`os.path.normpath`) |
+| `adalah_absolut(j)` | `benar` bila diawali `/` |
+| `dari_windows(j)` | Ganti setiap `\` dengan `/` |
+| `pemisah` | Konstanta `"/"` |
+| `ada(j)` | `benar` bila ada berkas **atau** direktori di `j` (`os.path.exists`) |
+| `adalah_berkas(j)` / `adalah_direktori(j)` | Jenis isi jalur (`isfile` / `isdir`) |
+| `ukuran(j)` / `waktu_ubah(j)` | Ukuran dalam byte / waktu terakhir diubah dalam detik sejak 1970 (`getsize` / `getmtime`) |
+| `absolut(j)` | Jalur absolut yang dinormalkan, selalu dengan `/` (`abspath`) |
+
+`gabung` menerima paling banyak enam bagian karena bahasa ini belum punya
+fungsi variadik; untuk lebih banyak, pakai `gabung_semua([...])`.
+`ukuran`/`waktu_ubah` pada jalur yang tidak ada menghasilkan `GalatJalur`,
+turunan `GalatOS`. Isi direktori dan direktori kini ada di fungsi bawaan
+`isi_direktori` dan `direktori_kini` (bagian 1.11).
+
+### 2.14 `pustaka/pola.idk` — ekspresi reguler
+
+Padanan `re` Python: mencari, mengambil, mengganti, dan memecah teks
+berdasarkan pola.
+
+```indonesiaku
+impor pola
+dari pola impor GalatPola
+
+m = pola.cari("(\\d{3})-(\\d+)", "telepon: 021-5550123")
+cetak(m.grup(), m.grup(1), m.grup(2))      # 021-5550123 021 5550123
+cetak(m.rentang(), m[1])                   # (9, 20) 021
+
+cetak(pola.cari_semua("\\d+", "3 apel, 12 jeruk"))       # ["3", "12"]
+cetak(pola.cari_semua("(\\w+)=(\\d+)", "a=1, b=22"))      # [("a", "1"), ("b", "22")]
+cetak(pola.ganti("\\s+", " ", "terlalu    banyak   spasi"))  # terlalu banyak spasi
+cetak(pola.ganti("(\\w+)@(\\w+)", "\\2 (\\1)", "budi@rumah"))  # rumah (budi)
+cetak(pola.pisah("[,;]\\s*", "a, b;c;  d"))              # ["a", "b", "c", "d"]
+
+# Grup bernama:
+t = pola.cari("(?P<tahun>\\d{4})-(?P<bulan>\\d{2})", "2026-10")
+cetak(t.grup("tahun"), t.kamus_grup())    # 2026 {"tahun": "2026", "bulan": "10"}
+
+# Pengganti berupa fungsi:
+fungsi kali_dua(m) {
+    kembalikan ke_teks(ke_angka(m.grup()) * 2)
+}
+cetak(pola.ganti("\\d+", kali_dua, "3 apel dan 12 jeruk"))  # 6 apel dan 24 jeruk
+
+# Pola dipakai berulang? Kompilasi sekali.
+vokal = pola.kompilasi("[aiueo]", pola.ABAIKAN_KAPITAL)
+cetak(vokal.cari_semua("IndONEsia"))     # ["I", "O", "E", "i", "a"]
+
+coba {
+    pola.kompilasi("(a")
+} kecuali GalatPola sebagai e {
+    cetak("pola salah:", e.pesan)
+}
+```
+
+Di dalam teks Indonesiaku, `\` harus ditulis `\\`, jadi pola `\d+` ditulis
+`"\\d+"`.
+
+**Fungsi modul** (semuanya juga tersedia sebagai metode objek `Pola` hasil
+`kompilasi`, tanpa argumen pola):
+
+| Nama | Deskripsi |
+|------|-----------|
+| `kompilasi(pola, bendera=0)` | Objek `Pola` untuk dipakai berulang |
+| `cari(pola, teks, bendera=0)` | `Cocokan` pertama di mana pun, atau `kosong` (`re.search`) |
+| `cocok(pola, teks, bendera=0)` | Cocokan yang harus dimulai di awal teks (`re.match`) |
+| `cocok_penuh(pola, teks, bendera=0)` | Cocokan yang harus meliputi seluruh teks (`re.fullmatch`) |
+| `cari_semua(pola, teks, bendera=0)` | Daftar semua cocokan: teks bila tanpa grup, isi grup bila satu grup, tupel grup bila lebih (`re.findall`) |
+| `iter_cari(pola, teks, bendera=0)` | Daftar objek `Cocokan` (`re.finditer`) |
+| `ganti(pola, pengganti, teks, jumlah=0, bendera=0)` | Ganti cocokan; `pengganti` berupa teks (`\1`, `\g<nama>`, `\g<0>`) atau fungsi yang menerima `Cocokan` (`re.sub`) |
+| `ganti_n(...)` | Seperti `ganti`, tetapi mengembalikan tupel `(teks_baru, banyak_penggantian)` |
+| `pisah(pola, teks, maks=0, bendera=0)` | Pecah teks di setiap cocokan; isi grup ikut dimasukkan (`re.split`) |
+| `lolos(teks)` | Beri `\` pada karakter khusus agar teks dicari apa adanya (`re.escape`) |
+
+**Objek `Cocokan`:** `grup(g=0)` (nomor atau nama; `kosong` bila grup tidak
+ikut cocok), `m[g]`, `grup_semua(bawaan=kosong)`, `kamus_grup()`,
+`awal(g=0)`, `akhir(g=0)`, `rentang(g=0)`. Posisi dihitung **per karakter**,
+bukan per byte, sama seperti indeks teks di bahasa ini.
+
+**Bendera:** `pola.ABAIKAN_KAPITAL`, `pola.MULTIBARIS` (`^`/`$` di setiap
+baris), `pola.TITIK_SEMUA` (`.` juga cocok dengan baris baru). Gabungkan
+dengan `|`: `pola.ABAIKAN_KAPITAL | pola.MULTIBARIS`.
+
+**Sintaks pola** sama dengan Python: `.`, `[abc]`, `[^0-9]`, `\d \w \s` dan
+kebalikannya, `\b`, `^ $`, `* + ? {m,n}` beserta versi malasnya (`*?`),
+grup `( )`, `(?: )`, `(?P<nama> )`, dan alternatif `|`.
+
+Yang perlu diketahui:
+
+- **Tidak ada pola yang membuat program macet.** Mesinnya bekerja dalam
+  waktu linear terhadap panjang teks, jadi pola seperti `(a*)*b` yang
+  membuat banyak mesin regex lain berjalan bertahun-tahun di sini selesai
+  seketika.
+- Karena itu, fitur yang membutuhkan penelusuran mundur **tidak didukung**
+  dan ditolak dengan `GalatPola`: *backreference* (`\1` di dalam pola),
+  *lookaround* (`(?=...)`, `(?!...)`), dan kuantifier posesif (`a++`).
+  `\1` di dalam **teks pengganti** `ganti` tetap boleh.
+- `\d`, `\w`, `\s`, `\b`, dan `ABAIKAN_KAPITAL` hanya mengenal huruf dan angka
+  ASCII, seperti bendera `re.ASCII` di Python: `\w` tidak cocok dengan `é`.
+- Tangkap galatnya dengan `dari pola impor GalatPola` lalu
+  `kecuali GalatPola`; bentuk `kecuali pola.GalatPola` belum didukung.
+
+### 2.15 `pustaka/opsi.idk` — argumen baris perintah
+
+Padanan `argparse` Python. Daftarkan argumen yang diharapkan, lalu `urai()`
+membaca daftar global `argumen` dan mengembalikan objek dengan satu atribut
+per argumen.
+
+```indonesiaku-takjalan
+# hitung.idk
+dari opsi impor PenguraiArgumen
+
+p = PenguraiArgumen("hitung", "Menghitung baris berkas.")
+p.tambah_argumen("berkas", bantuan = "berkas yang dihitung")
+p.tambah_argumen("--jumlah", pendek = "-j", bawaan = 1, jenis_nilai = "bulat", bantuan = "berapa kali")
+p.tambah_argumen("--verbose", pendek = "-v", aksi = "hitung")
+a = p.urai()
+cetak(a.berkas, a.jumlah, a.verbose)
+```
+
+```text
+$ indk hitung.idk data.txt -j 3 -vv
+data.txt 3 2
+$ indk hitung.idk -h
+pemakaian: hitung [-h] [-j JUMLAH] [-v] berkas
+
+Menghitung baris berkas.
+
+argumen posisi:
+  berkas                berkas yang dihitung
+
+opsi:
+  -h, --bantuan         tampilkan bantuan ini lalu keluar
+  -j, --jumlah JUMLAH   berapa kali
+  -v, --verbose
+$ indk hitung.idk data.txt --jumlah x
+pemakaian: hitung [-h] [-j JUMLAH] [-v] berkas
+hitung: galat: argumen --jumlah: nilai bulat tidak sah: "x"
+```
+
+Seperti `argparse`, `-h`/`--bantuan` mencetak bantuan lalu keluar dengan
+kode 0, dan argumen yang salah mencetak pemakaian serta pesan galat ke
+stderr lalu keluar dengan kode 2. Dengan `keluar_saat_galat = salah`
+(`exit_on_error=False`), galat pemakaian menjadi `GalatOpsi` yang bisa
+ditangkap — berguna untuk menguji, dan daftar argumen boleh diberikan
+langsung ke `urai`:
+
+```indonesiaku
+dari opsi impor PenguraiArgumen, GalatOpsi
+
+p = PenguraiArgumen("salin", keluar_saat_galat = salah)
+p.tambah_argumen("sumber")
+p.tambah_argumen("--paksa", pendek = "-p", aksi = "benar")
+p.tambah_argumen("--mode", pilihan = ["cepat", "teliti"], bawaan = "cepat")
+p.tambah_argumen("--tag", aksi = "tambahkan")
+
+a = p.urai(["a.txt", "-p", "--tag", "x", "--tag", "y"])
+cetak(a)          # Hasil(sumber="a.txt", paksa=benar, mode="cepat", tag=["x", "y"])
+cetak(a["mode"], a.ke_kamus()["paksa"])   # cepat benar
+
+coba {
+    p.urai(["a.txt", "--mode", "lambat"])
+} kecuali GalatOpsi sebagai e {
+    cetak(e.pesan)  # argumen --mode: pilihan tidak sah: "lambat" (pilih dari "cepat", "teliti")
+}
+```
+
+`tambah_argumen(nama, pendek=, bawaan=, jenis_nilai=, bantuan=, wajib=,
+aksi=, pilihan=, metavar=)`:
+
+| Parameter | Arti |
+|---|---|
+| `nama` | `"berkas"` = argumen posisi (wajib); `"--nama"` = opsi. `-` di nama menjadi `_` di atribut (`--jumlah-baris` → `a.jumlah_baris`) |
+| `pendek` | Bentuk satu huruf, mis. `"-j"`. Bendera pendek boleh digabung: `-vq` sama dengan `-v -q` |
+| `jenis_nilai` | `"teks"` (bawaan), `"bulat"`, `"desimal"`, atau fungsi pengubah |
+| `aksi` | `"simpan"` (bawaan), `"benar"`/`"salah"` (bendera), `"hitung"` (`-vv` → 2), `"tambahkan"` (boleh berulang → daftar) |
+| `pilihan` | Daftar nilai yang diizinkan |
+| `wajib` | Jadikan opsi wajib diisi |
+
+Didukung juga `--nama=nilai`, `-j3`, angka negatif sebagai nilai (`-j -5`),
+dan `--` untuk mengakhiri opsi. Belum didukung: singkatan opsi panjang
+(`--jum` untuk `--jumlah`), `nargs`, grup argumen, dan sub-perintah.
+
+### 2.16 `pustaka/log.idk` — pencatatan
+
+Padanan `logging` Python. Bawaannya menulis ke **stderr** dengan format
+`LEVEL:nama:pesan`, dan hanya level `PERINGATAN` ke atas yang ditampilkan:
+
+```indonesiaku-takjalan
+impor log
+log.info("tidak tampil")             # di bawah ambang PERINGATAN
+log.peringatan("disk hampir penuh")  # stderr: PERINGATAN:akar:disk hampir penuh
+```
+
+`atur(ambang=, format=, berkas=)` (`basicConfig`) mengubah ambang, format,
+dan tujuan. Format memakai `{level}`, `{nama}`, `{pesan}`, dan `{waktu}`.
+
+```indonesiaku
+impor log
+
+log.atur(ambang = log.INFO, format = "[{level}] {nama}: {pesan}", berkas = "_panduan_log_sementara.txt")
+log.info("aplikasi mulai")
+db = log.ambil_pencatat("app.db")
+db.galat("koneksi putus")
+cetak(baca_semua("_panduan_log_sementara.txt"))
+# [INFO] akar: aplikasi mulai
+# [GALAT] app.db: koneksi putus
+hapus_berkas("_panduan_log_sementara.txt")
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `debug`, `info`, `peringatan`, `galat`, `kritis` | Catat pesan lewat pencatat akar |
+| `DEBUG`, `INFO`, `PERINGATAN`, `GALAT`, `KRITIS` | Level: 10, 20, 30, 40, 50 |
+| `ambil_pencatat(nama)` | `Pencatat` bernama; nama sama → objek sama. Bertingkat dengan titik: `"app.db"` mewarisi ambang `"app"` bila ambangnya sendiri belum diatur |
+| `Pencatat.atur_ambang(level)` | Ambang khusus pencatat itu |
+| `atur(ambang, format, berkas)` | Pengaturan bersama; `berkas = ""` kembali ke stderr |
+
+### 2.17 `pustaka/proses.idk` — menjalankan program lain
+
+Padanan `subprocess.run` Python. Perintah **wajib berupa daftar teks** dan
+dijalankan **tanpa shell**, jadi tidak ada injeksi lewat `;` atau `|` dan
+tidak ada aturan kutip yang perlu diingat.
+
+```indonesiaku
+impor proses
+
+# Program anak kecil: membaca satu baris, mencetaknya dalam huruf besar.
+tulis_semua("_panduan_anak_sementara.idk", "cetak(input().huruf_besar())\n")
+
+h = proses.jalankan([jalur_indk(), "_panduan_anak_sementara.idk"], masukan = "halo\n")
+cetak(h.kode_keluar, repr(h.keluaran), repr(h.galat))   # 0 "HALO\n" ""
+cetak(proses.keluaran([jalur_indk(), "_panduan_anak_sementara.idk"], masukan = "lagi\n"))
+# LAGI
+hapus_berkas("_panduan_anak_sementara.idk")
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `jalankan(perintah, masukan="", periksa=salah)` | Jalankan dan tunggu sampai selesai. Mengembalikan `Hasil` dengan `kode_keluar`, `keluaran` (stdout), `galat` (stderr), dan `perintah`. `masukan` dikirim ke stdin. `periksa=benar` → `GalatProses` bila kode keluar bukan 0 |
+| `keluaran(perintah, masukan="")` | Hanya stdout; `GalatProses` bila gagal (`check_output`) |
+| `GalatProses` | Punya `.pesan` dan `.hasil` |
+
+Baris baru di keluaran dinormalkan ke `\n` di semua sistem operasi.
+Program yang tidak ditemukan menghasilkan `GalatOS`. Belum ada
+`batas_waktu` (timeout). Ditolak dengan `GalatIzin` di `indk --sandbox`.
+
+### 2.18 `pustaka/bita.idk` — data biner
+
+Bahasa ini belum punya tipe byte tersendiri, jadi **data biner adalah daftar
+bulat `0..255`**. Modul `bita` mengubah teks ke byte UTF-8 dan sebaliknya,
+serta dari dan ke heksa (padanan `str.encode`/`bytes.decode`/`bytes.hex`).
+
+```indonesiaku
+dari bita impor ke_bita, ke_teks, ke_heksa, dari_heksa, GalatBita
+
+cetak(ke_bita("café"))            # [99, 97, 102, 195, 169]
+cetak(ke_teks([72, 97, 108, 111]))  # Halo
+cetak(ke_heksa(ke_bita("abc")))   # 616263
+cetak(ke_teks(dari_heksa("c3a9")))  # é
+
+coba {
+    ke_teks([226, 130])
+} kecuali GalatBita sebagai e {
+    cetak(e.pesan)                # ke_teks: urutan UTF-8 terpotong
+}
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `ke_bita(teks)` | Daftar byte UTF-8 dari teks |
+| `ke_teks(data)` | Teks dari daftar byte UTF-8; `GalatBita` bila urutannya tidak sah |
+| `ke_heksa(data)` | Teks heksa huruf kecil (`bytes.hex()`) |
+| `dari_heksa(teks)` | Daftar byte dari teks heksa (panjang harus genap; `bytes.fromhex`) |
+
+### 2.19 `pustaka/base64.idk` — Base64
+
+Padanan modul `base64` Python. `enkode` menerima teks (dienkode UTF-8 dulu)
+atau daftar byte; `dekode` mengembalikan daftar byte, dan `dekode_teks`
+langsung teks. Padding `=` dipertahankan.
+
+```indonesiaku
+impor base64
+
+cetak(base64.enkode("Halo"))            # SGFsbw==
+cetak(base64.dekode_teks("SGFsbw=="))   # Halo
+cetak(base64.dekode("SGFsbw=="))        # [72, 97, 108, 111]
+cetak(base64.enkode_url([251, 255]))    # -_8=
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `enkode(data)` / `dekode(teks)` / `dekode_teks(teks)` | Base64 standar (`b64encode`/`b64decode`) |
+| `enkode_url(data)` / `dekode_url(teks)` / `dekode_url_teks(teks)` | Alfabet aman-URL dengan `-` dan `_` (`urlsafe_b64encode`) |
+| `GalatBase64` | Panjang atau karakter base64 tidak sah |
+
+### 2.20 `pustaka/csv.idk` — CSV
+
+Mengurai dan membentuk CSV **sebagai teks** (bukan objek berkas), mengikuti
+RFC 4180 dan perilaku modul `csv` Python: kolom yang memuat pemisah, kutip,
+atau baris baru diapit kutip ganda, dan `""` berarti satu kutip.
+
+```indonesiaku
+impor csv
+
+cetak(csv.urai("nama,catatan\nBudi,\"a,b\"\n"))
+# [["nama", "catatan"], ["Budi", "a,b"]]
+
+data = csv.urai_kamus("nama,umur\nBudi,20\nAni,21\n")
+cetak(data)    # [{"nama": "Budi", "umur": "20"}, {"nama": "Ani", "umur": "21"}]
+cetak(csv.bentuk_kamus(data, ["umur", "nama"]))
+# umur,nama
+# 20,Budi
+# 21,Ani
+```
+
+| Nama | Deskripsi |
+|------|-----------|
+| `urai(teks, pemisah=",", kutip="\"")` | Daftar baris, tiap baris daftar kolom (teks). Baris kosong menjadi `[]`, seperti `csv.reader` |
+| `bentuk(baris, pemisah=",", kutip="\"")` | Teks CSV; kutip hanya bila perlu. Nilai bukan teks diubah dengan `ke_teks` |
+| `urai_kamus(teks, ...)` | Daftar kamus; baris pertama menjadi header (`csv.DictReader`) |
+| `bentuk_kamus(daftar, kolom=kosong, ...)` | CSV dengan header; tanpa `kolom`, urutan kunci kamus pertama (`csv.DictWriter`) |
+
+Untuk berkas, gabungkan dengan `baca_semua`/`tulis_semua`. Berbeda dengan
+`csv.writer` Python yang memakai `\r\n`, `bentuk` mengakhiri setiap baris
+dengan `\n`.
+
+### 2.21 `pustaka/kura.idk` — grafika kura-kura
+
+Padanan `turtle` Python, tanpa jendela: kura menggambar garis dan hasilnya
+disimpan sebagai **SVG** yang bisa dibuka di peramban mana pun. Arah dan
+koordinat mengikuti turtle: mulai di `(0, 0)` menghadap timur, sumbu y ke
+atas, `kiri()` berlawanan arah jarum jam, sudut dalam **derajat**.
+
+```indonesiaku
+impor kura
+
+untuk i dalam rentang(4) {
+    kura.maju(100)
+    kura.kiri(90)
+}
+cetak(kura.posisi(), kura.arah())   # (0.0, 0.0) 0.0
+# kura.selesai("persegi.svg")      # tulis gambar ke berkas
+cetak(kura.svg())
+# <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -110 120 120" ...>
+# ...
+#   <polyline points="0,0 100,0 100,-100 0,-100 0,0" stroke="black" stroke-width="1"/>
+# ...
+```
+
+Kura sendiri, dengan pemanggilan berantai:
+
+```indonesiaku
+dari kura impor Kura, svg_dari
+
+bintang = Kura()
+bintang.warna("#c0392b").tebal(2)
+untuk i dalam rentang(5) {
+    bintang.maju(80).kanan(144)
+}
+lingkar = Kura()
+lingkar.angkat_pena()
+lingkar.ke(40, -60)
+lingkar.turunkan_pena()
+lingkar.warna("teal").lingkaran(30)
+cetak(panjang(svg_dari([bintang, lingkar])) > 0)    # benar
+```
+
+| Nama (fungsi modul / metode `Kura`) | Padanan `turtle` | Deskripsi |
+|------|------|-----------|
+| `maju(n)`, `mundur(n)` | `forward`, `backward` | Bergerak `n` satuan |
+| `kiri(d)`, `kanan(d)` | `left`, `right` | Berputar `d` derajat |
+| `ke(x, y)` | `goto` | Pindah lurus ke titik; menggambar bila pena turun |
+| `hadap(d)` | `setheading` | Arah mutlak: 0 timur, 90 utara |
+| `pulang()` | `home` | Ke `(0, 0)` menghadap timur |
+| `lingkaran(jari, busur=360, langkah=kosong)` | `circle` | Pusat `jari` satuan di kiri kura; `jari` negatif = searah jarum jam. Poligon dengan jumlah langkah bawaan yang sama seperti turtle |
+| `angkat_pena()`, `turunkan_pena()` | `penup`, `pendown` | |
+| `warna(w)` | `pencolor` | Nama warna SVG atau `"#rrggbb"` |
+| `tebal(n)` | `pensize` | Tebal garis |
+| `kecepatan(n)` | `speed` | 0–10, disimpan saja (SVG tidak beranimasi) |
+| `posisi()`, `arah()` | `position`, `heading` | Dibulatkan 2 desimal |
+| `svg()` | — | Teks SVG |
+| `selesai(berkas="kura.svg")` / `k.simpan(berkas)` | `done` | Tulis SVG ke berkas |
+| `reset()` | `reset` | Kura bawaan baru, kanvas kosong (fungsi modul) |
+| `svg_dari(daftar_kura, tepi=10)` | — | Satu SVG dari beberapa kura |
+
+Angka di SVG dibulatkan 2 desimal, jadi gambar yang sama selalu menghasilkan
+teks yang sama persis. Kesalahan argumen menimbulkan `GalatKura`. Belum ada:
+isian bentuk (`begin_fill`), teks (`write`), dan kanvas animasi di playground.
 
 ## 3. Aplikasi Contoh: Todo-list JSON DB
 

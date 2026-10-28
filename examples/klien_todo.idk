@@ -1,0 +1,24 @@
+# Klien untuk examples/todo_server.idk lewat http_ambil (pustaka/http.idk).
+# Dijalankan oleh tests/test_klien_http.sh saat server sudah hidup:
+#     indk examples/klien_todo.idk PORT
+impor "pustaka/http.idk"
+
+basis = "http://127.0.0.1:" + argumen[0]
+
+r = http_ambil(basis + "/todos")
+cetak("GET /todos:", r.status, r.badan)
+
+r = http_ambil(basis + "/todos", "POST", {"Content-Type": "application/json"}, "{\"teks\":\"Beli kopi ☕\"}")
+cetak("POST /todos:", r.status, r.ok(), r.badan)
+cetak("tipe konten:", r.kepala["content-type"])
+
+r = http_ambil(basis + "/todos/1")
+cetak("GET /todos/1:", r.status, r.badan)
+
+r = http_ambil(basis + "/todos/99")
+cetak("GET /todos/99:", r.status, r.ok())
+coba {
+    r.periksa()
+} kecuali GalatJaringan sebagai e {
+    cetak("GalatJaringan:", e.pesan)
+}
