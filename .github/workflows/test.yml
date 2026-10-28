@@ -133,7 +133,10 @@ jobs:
           rc=0
           for f in examples/*.idk examples/oop/*.idk; do
             echo "== $f =="
-            out="$(./indk_asan "$f" 2>&1)" || true
+            # timeout: examples/todo_server.idk melayani request selamanya.
+            # Tanpa ini job menggantung sampai batas 6 jam GitHub lalu dibatalkan.
+            # Server diuji terpisah oleh tests/test_todo_server.sh.
+            out="$(timeout 120 ./indk_asan "$f" 2>&1)" || true
             if echo "$out" | grep -Eq "ERROR: (AddressSanitizer|LeakSanitizer)|runtime error:"; then
               echo "$out"
               echo "SANITIZER FAILURE in $f"
@@ -192,7 +195,8 @@ jobs:
       - name: Exercise every example
         run: |
           for f in examples/*.idk examples/oop/*.idk; do
-            ./indk "$f" > /dev/null 2>&1 || true
+            # timeout: lihat catatan di job sanitizers — todo_server.idk tidak berhenti sendiri.
+            timeout 120 ./indk "$f" > /dev/null 2>&1 || true
           done
 
       - name: Generate lcov report
