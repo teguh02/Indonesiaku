@@ -98,6 +98,38 @@ jobs:
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File tests/test_all.ps1
 
+      - name: Normalkan penanda ISA (Linux)
+        if: runner.os == 'Linux'
+        # Walau SETIAP perintah kompilasi memakai -march=x86-64, binari hasil
+        # link tetap bertanda 'x86 ISA needed: ...x86-64-v3' dan ditolak
+        # loader di CPU tanpa AVX2. Penandanya PALSU: objdump memastikan
+        # binari ini nol instruksi ymm/zmm. Penanda itu ikut dari objek
+        # startup glibc milik image runner, bukan dari kode kita.
+        #
+        # Membuang .note.gnu.property menghilangkan penanda tersebut. Ini
+        # JUGA membuang penanda CET (IBT/SHSTK) — trade-off yang diterima
+        # sadar: binari yang jalan di mesin pengguna lebih berharga daripada
+        # penanda hardening pada binari yang tidak bisa dijalankan.
+        #
+        # Guard di bawah membuat build GAGAL kalau penandanya masih menuntut
+        # v2/v3, supaya rilis cacat tidak terbit diam-diam untuk ketiga
+        # kalinya (v1.2.0 dan v1.3.0 sudah terbit rusak).
+        run: |
+          set -e
+          if objdump -d indk | grep -qE '%ymm|%zmm'; then
+            echo "GAGAL: binari benar-benar memakai AVX2; penanda ISA sah."
+            echo "Jangan buang penandanya — perbaiki flag kompilasi dulu."
+            exit 1
+          fi
+          objcopy --remove-section=.note.gnu.property indk
+          if readelf -n indk | grep -q 'x86-64-v[234]'; then
+            echo "GAGAL: penanda ISA masih menuntut di atas baseline:"
+            readelf -n indk | grep 'ISA needed'
+            exit 1
+          fi
+          echo "OK: penanda ISA baseline."
+          ./indk -v
+
       - name: Kemas rilis (Linux/macOS)
         if: runner.os != 'Windows'
         run: |

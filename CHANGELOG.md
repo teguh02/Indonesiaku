@@ -5,6 +5,24 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-10-28
+
+### Diperbaiki
+
+- **Penanda ISA palsu membuat binari rilis Linux ditolak loader.** Walau
+  SETIAP perintah kompilasi memakai `-march=x86-64` (diperiksa di log
+  runner: 32 dari 32), artefak v1.3.1 tetap bertanda
+  `x86 ISA needed: ...x86-64-v3` dan mati dengan "CPU ISA level is lower
+  than required". Penandanya **palsu**: `objdump` memastikan binari itu
+  nol instruksi `ymm`/`zmm`. Penanda ikut dari objek startup glibc milik
+  image runner, bukan dari kode Indonesiaku.
+- Workflow kini membuang `.note.gnu.property` pada artefak Linux, dengan
+  dua guard yang menggagalkan build: kalau binari benar-benar memakai
+  AVX2 (penandanya sah, jangan dibuang), dan kalau penanda masih menuntut
+  di atas baseline setelah dibuang. Rilis cacat tidak bisa terbit diam-diam
+  lagi.
+- Konsekuensi diterima sadar: penanda CET (IBT/SHSTK) ikut terbuang.
+
 ## [1.3.1] - 2026-10-28
 
 ### Diperbaiki
