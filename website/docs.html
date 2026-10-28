@@ -120,6 +120,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="assets/indonesiaku-hljs.js?v=1.1.0"></script>
   <script>
     (function () {
     "use strict";
@@ -224,7 +225,7 @@
             `<a href="${gh}" target="_blank" rel="noopener">${escapeHtml(job.path)}</a>` +
             `<a href="${RAW_BASE + job.path}" target="_blank" rel="noopener">lihat mentah ↗</a>`;
           const codeEl = box.querySelector("code");
-          codeEl.className = "language-python";
+          codeEl.className = "language-indonesiaku";
           codeEl.textContent = code;
           hljs.highlightElement(codeEl);
         } catch (err) {

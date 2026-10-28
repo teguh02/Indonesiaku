@@ -2394,7 +2394,7 @@ Contoh lengkap: [`examples/repr_koleksi.idk`](../examples/repr_koleksi.idk)
 Galat saat kompilasi menyebut baris **dan kolom**, lalu menunjuk bagian yang
 bermasalah:
 
-```
+```text
 [baris 2, kolom 11] Kesalahan di '+': Harapkan ekspresi.
     cetak(a + + 2)
               ^
@@ -2425,7 +2425,7 @@ Operand '+' harus dua angka, dua teks, atau dua daftar.
 Pada traceback berlapis, potongan baris hanya dicetak untuk tempat galat
 benar-benar terjadi; bingkai pemanggil di bawahnya cukup baris dan kolom:
 
-```
+```text
 Pembagian dengan nol.
 [baris 2, kolom 20] dalam bagi()
         kembalikan a / b
