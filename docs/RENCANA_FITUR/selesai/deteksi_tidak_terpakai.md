@@ -1,6 +1,6 @@
 # Rencana Fitur: Deteksi variabel dan fungsi tidak terpakai (`indk periksa`)
 
-- **Status:** dikerjakan (tingkat 2 selesai; tingkat 1 dan 3 tidak dikerjakan)
+- **Status:** selesai (tingkat 2 dirilis; tingkat 1 dan 3 sengaja tidak dikerjakan)
 - **Target versi:** Fase 7 (perkakas) — dikerjakan setelah Fase 1 tuntas
 - **Pengusul:** Teguh
 - **Keputusan terkait:** K3 (lingkup assignment), calon K15

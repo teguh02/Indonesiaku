@@ -278,7 +278,7 @@ penyuntikan metode saat runtime. Alasannya dicatat di
 bersarang.
 
 ✅ `indk periksa` (linter) — deteksi variabel lokal tidak terpakai
-([rencana](RENCANA_FITUR/deteksi_tidak_terpakai.md)). Hanya tingkat 2
+([rencana](RENCANA_FITUR/selesai/deteksi_tidak_terpakai.md)). Hanya tingkat 2
 (perintah opt-in); tingkat 1 dibatalkan karena menulis ke stderr di setiap
 kali menjalankan program bentrok dengan syarat stderr kosong pada tes golden.
 
@@ -294,6 +294,10 @@ ada, jadi tidak ada sintaks tes baru.
       penulis. K4 tetap aman: `examples/tanpa_indentasi.idk` dirapikan dan
       keluarannya tetap cocok golden.
 
+✅ **Formatter VS Code** — `Format Document` memanggil `indk rapikan`
+([`editors/vscode-indonesiaku/`](../editors/vscode-indonesiaku/)). Mendelegasikan
+ke interpreter, bukan mengimplementasi ulang aturan format di JavaScript.
+
 Belum: LSP + diagnostics editor, debugger,
 playground via **WebAssembly**, cache `.idkc`, computed goto, superinstruksi,
 inline cache, NaN-boxing, GC generasional, utas/asinkron.
@@ -307,16 +311,15 @@ Ref: 04 §1, §8–10, §12.
 > dispatch benar-benar jadi hambatan, dan konversi satu per satu disertai
 > pemeriksaan tiap `break`.
 
-> **Catatan `indk rapikan`.** Terhalang, bukan sekadar belum dikerjakan.
-> `skipWhitespace()` di `src/scanner.c` **membuang komentar sepenuhnya** —
-> tidak ada `TOKEN_COMMENT`, jadi komentar tidak pernah sampai ke token
-> stream. Dibuktikan: dua berkas yang hanya berbeda komentar menghasilkan
-> bytecode identik. Formatter berbasis token akan **menghapus seluruh
-> komentar** pengguna, dan formatter yang memakan komentar lebih buruk
-> daripada tidak ada formatter. Prasyarat: mode scanner yang menyimpan
-> komentar beserta posisinya (atau CST), baru kemudian penulis ulangnya.
-> Rencananya sudah ada:
-> [`RENCANA_FITUR/komentar_dan_rapikan.md`](RENCANA_FITUR/komentar_dan_rapikan.md).
+> **Catatan `indk rapikan`.** Penghalangnya sudah dibereskan, bukan dihindari.
+> Dulu `skipWhitespace()` di `src/scanner.c` membuang komentar sepenuhnya —
+> tidak ada `TOKEN_KOMENTAR`, jadi komentar tidak pernah sampai ke token
+> stream, dan formatter berbasis token akan **menghapus seluruh komentar**
+> pengguna. Sekarang scanner punya mode penyimpan komentar yang **opt-in**
+> (`scannerKeepComments()`, default mati) sehingga compiler tidak terpengaruh:
+> dibuktikan dengan 117/117 berkas menghasilkan bytecode identik saat flag
+> mati. Formatter memakai mode itu dan komentar bertahan utuh.
+> Rencana: [`RENCANA_FITUR/selesai/komentar_dan_rapikan.md`](RENCANA_FITUR/selesai/komentar_dan_rapikan.md).
 
 > **Catatan cache `.idkc`.** Diukur, lalu ditunda sebagai YAGNI. Berkas
 > sumber terbesar di repo (`metode_ajaib.idk`, 8 KB) butuh **3,1 ms** total,

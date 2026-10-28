@@ -60,7 +60,17 @@
         "language": "indonesiaku",
         "path": "./snippets/indonesiaku.code-snippets"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Indonesiaku",
+      "properties": {
+        "indonesiaku.jalurIndk": {
+          "type": "string",
+          "default": "indk",
+          "description": "Jalur ke interpreter indk yang dipakai untuk Format Document (indk rapikan)."
+        }
+      }
+    }
   },
   "scripts": {
     "package": "npx @vscode/vsce package"

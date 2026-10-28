@@ -7,7 +7,7 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Belum dirilis]
 
-### Perkakas (Fase 7, sebagian — branch `fase-7`)
+### Perkakas (Fase 7)
 
 - **`indk --dis <skrip>`**: tampilkan bytecode tanpa menjalankan program,
   rekursif ke fungsi bersarang.
@@ -31,6 +31,10 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   tidak, karena itu bukan deklarasi pilihan penulis.
   Menjalankan program secara normal **tidak berubah sama sekali**: tidak ada
   satu pun bytecode tambahan yang dipancarkan.
+- **Formatter VS Code**: `Format Document` pada berkas `.idk` menjalankan
+  `indk rapikan` dan menerapkan hasilnya sebagai edit editor (undo tetap
+  berfungsi). Interpreter dipanggil tanpa `--tulis`, jadi berkas di disk tidak
+  disentuh. Jalur interpreter diatur lewat `indonesiaku.jalurIndk`.
 
 **Fase 5 — Iterator & generator.** Seluruh item Fase 5 di `docs/ROADMAP.md`
 selesai.
