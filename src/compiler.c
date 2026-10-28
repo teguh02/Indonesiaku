@@ -1970,6 +1970,10 @@ ParseRule rules[] = {
   [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_DOT]           = {NULL,     dot,    PREC_CALL},
   [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
+  // '->' tidak pernah muncul sebagai ekspresi; hanya dikonsumsi oleh
+  // parseAnotasiTipe(). Entri eksplisit supaya pesan galatnya jelas
+  // ("Harapkan ekspresi") alih-alih bergantung pada nilai nol implisit.
+  [TOKEN_PANAH]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
   [TOKEN_COLON]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
@@ -2156,16 +2160,29 @@ static void prescanFunctionBody() {
                 token = scanToken();
             } while (token.type == TOKEN_COMMA);
             continue;
-        } else if (token.type == TOKEN_VARIABEL && depth == 1) {
+        } else if (token.type == TOKEN_VARIABEL) {
             // `variabel x` at the body's own depth owns that slot; a prescan
             // slot for the same name would collide in the same scope.
             Token next = scanToken();
-            if (next.type == TOKEN_IDENTIFIER && declaredCount < UINT8_COUNT) {
+            // Hanya kedalaman 1 yang memiliki slot fungsi ini; blok bersarang
+            // punya scope sendiri. Tapi anotasinya tetap WAJIB dilewati di
+            // SEMUA kedalaman (lihat di bawah).
+            if (depth == 1 && next.type == TOKEN_IDENTIFIER &&
+                declaredCount < UINT8_COUNT) {
                 declared[declaredCount++] = next;
             }
             prev2 = token;
             prev = next;
             token = scanToken();
+            // 'variabel a: teks = ...' — tanpa melewati anotasi, prescan
+            // melihat pasangan 'teks' lalu '=' dan menyimpulkan 'teks' adalah
+            // variabel yang di-assign, sehingga mengalokasikan slot lokal
+            // tambahan + OP_KOSONG. prev/prev2 sengaja TIDAK diubah supaya
+            // cabang '=' tetap melihat 'variabel a' dan mengabaikannya.
+            if (token.type == TOKEN_COLON) {
+                scanToken();            // nama tipe
+                token = scanToken();
+            }
             chainCount = 0;
             continue;
         } else if (token.type == TOKEN_EQUAL || isCompoundAssign(token.type)) {
@@ -2217,10 +2234,32 @@ static void prescanFunctionBody() {
     }
 }
 
-// Skip a parameter's default expression without compiling it. The expression
-// is compiled later, as part of the staged prologue, so here we only need to
-// find where it ends: the first ',' or ')' at nesting depth zero.
+// Konsumsi anotasi tipe lalu BUANG: ': <tipe>' atau '-> <tipe>'.
+//
+// Anotasi tidak memancarkan satu byte bytecode pun dan tidak mengalokasi
+// apa pun, jadi program dengan dan tanpa anotasi harus menghasilkan chunk
+// yang identik (dibuktikan oleh tests/test_anotasi_bytecode.sh).
+//
+// Nama tipe sengaja dibaca sebagai IDENTIFIER biasa, bukan kata kunci:
+// 'teks'/'bilangan'/'daftar' adalah nama variabel yang sah di kode lama,
+// dan menjadikannya kata kunci akan merusaknya.
+//
+// Bentuk majemuk (generik 'daftar[bilangan]', union 'a | b') sengaja TIDAK
+// diterima — lihat bagian "sengaja tidak dikerjakan" di rencana fiturnya.
+static void parseAnotasiTipe(bool kembali) {
+    if (!match(kembali ? TOKEN_PANAH : TOKEN_COLON)) return;
+    // 'kosong' adalah kata kunci (TOKEN_KOSONG), bukan identifier, tapi ia
+    // nama tipe yang wajar untuk fungsi tanpa nilai kembali ('-> kosong').
+    // Tanpa cabang ini bentuk itu mustahil ditulis.
+    if (match(TOKEN_KOSONG)) return;
+    consume(TOKEN_IDENTIFIER, kembali ? "Harapkan nama tipe setelah '->'."
+                                      : "Harapkan nama tipe setelah ':'.");
+}
+
 static void skipDefaultExpression() {
+    // Lewati ekspresi bawaan parameter tanpa mengompilasinya. Ekspresi itu
+    // dikompilasi belakangan sebagai prolog bersyarat, jadi di sini cukup
+    // mencari ujungnya: ',' atau ')' pertama pada kedalaman nol.
     int depth = 0;
     for (;;) {
         TokenType type = parser.current.type;
@@ -2274,6 +2313,9 @@ static void function(FunctionType type) {
             }
             defineVariable(constant);
 
+            // Anotasi berada SETELAH nama dan SEBELUM '=': 'a: teks = "x"'.
+            parseAnotasiTipe(false);
+
             if (match(TOKEN_EQUAL)) {
                 defaultStarts[defaultCount] = saveScanner();
                 defaultTokens[defaultCount] = parser.current;
@@ -2289,6 +2331,8 @@ static void function(FunctionType type) {
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_PAREN, "Harapkan ')' setelah parameter.");
+    // Tipe kembali: 'fungsi f() -> teks {'.
+    parseAnotasiTipe(true);
     current->function->requiredArity = current->function->arity - defaultCount;
 
     // Parameters are part of a signature, not a user decision to declare a
@@ -2546,6 +2590,9 @@ static void classDeclaration() {
 
 static void varDeclaration() {
     uint8_t global = parseVariable("Harapkan nama variabel.");
+
+    // 'variabel a: bilangan = 5'. Anotasi sebelum '=', seperti di parameter.
+    parseAnotasiTipe(false);
 
     if (match(TOKEN_EQUAL)) {
         bool saved = allowTupleRHS;

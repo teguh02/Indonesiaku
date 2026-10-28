@@ -348,8 +348,7 @@ Ref: 04 §1, §8–10, §12.
 
 Manajer paket + registri, API embedding C, FFI, MySQL/PostgreSQL (klien
 jaringan — `sqlite` sendiri sudah dimajukan ke Fase 3), TLS/HTTPS, GUI,
-AOT/bundel executable, anotasi tipe opsional
-([rencana](RENCANA_FITUR/anotasi_tipe.md) — usulan), mode sandbox untuk
+AOT/bundel executable, ~~anotasi tipe opsional~~ ✅ ([rencana](RENCANA_FITUR/selesai/anotasi_tipe.md)), mode sandbox untuk
 sekolah.
 Ref: 04 §11–13, 05.
 

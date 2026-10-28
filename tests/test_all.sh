@@ -171,6 +171,17 @@ if [ -f editors/vscode-indonesiaku/test-format.js ] && command -v node >/dev/nul
     TOTAL=$((TOTAL+1))
 fi
 
+# Anotasi tipe tidak boleh mengubah bytecode sedikit pun.
+if [ -f tests/test_anotasi_bytecode.sh ]; then
+    echo ""
+    if bash tests/test_anotasi_bytecode.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES anotasi-bytecode"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # pustaka/ harus ditemukan dari lokasi interpreter, dari direktori kerja mana pun.
 if [ -f tests/test_impor_lokasi.sh ]; then
     echo ""

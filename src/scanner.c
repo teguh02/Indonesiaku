@@ -434,6 +434,9 @@ Token scanToken() {
         case '.': return makeToken(TOKEN_DOT);
         case '@': return makeToken(TOKEN_AT);
         case '-':
+            // '->' (anotasi tipe kembali) dicek SEBELUM '-=' dan '-' tunggal.
+            // Keduanya saling eksklusif, tapi urutan ini membuat niatnya jelas.
+            if (match('>')) return makeToken(TOKEN_PANAH);
             return makeToken(
                 match('=') ? TOKEN_MINUS_EQUAL : TOKEN_MINUS);
         case '+':

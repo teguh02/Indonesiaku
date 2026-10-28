@@ -796,6 +796,66 @@ cetak(fibonacci(10))  # Output: 55
 
 ---
 
+## Anotasi Tipe (Opsional)
+
+Parameter, nilai kembali, dan variabel boleh diberi catatan tipe. Anotasi
+**tidak diperiksa saat program berjalan** — ia murni dokumentasi yang ikut
+terbaca editor, dan tidak mengubah hasil program sama sekali.
+
+```indonesiaku
+fungsi sapa(nama: teks, ulang: bilangan = 1) -> teks {
+    kembalikan nama * ulang
+}
+
+variabel pesan: teks = sapa("halo ", 2)
+cetak(pesan)
+```
+
+Keluaran:
+
+```text
+halo halo 
+```
+
+Bentuknya: `nama: tipe` untuk parameter dan variabel, `-> tipe` untuk nilai
+kembali. Nama tipe hanyalah sebuah nama — `bilangan`, `teks`, `daftar`,
+`kamus`, `logika`, `kosong`, atau nama kelas buatan sendiri.
+
+Sebagian parameter boleh beranotasi, sebagian tidak:
+
+```indonesiaku
+fungsi jumlahkan(a, b: bilangan) -> bilangan {
+    kembalikan a + b
+}
+
+cetak(jumlahkan(3, 4))
+```
+
+Keluaran:
+
+```text
+7
+```
+
+Karena tidak diperiksa saat berjalan, argumen bertipe lain **tetap diterima**:
+
+```indonesiaku
+fungsi sapa(nama: teks) -> teks {
+    kembalikan nama * 2
+}
+
+cetak(sapa(5))
+```
+
+Keluaran:
+
+```text
+10
+```
+
+Kalau Anda mengharapkan galat di situ, anotasi bukan alatnya. Memeriksa tipe
+sebelum program dijalankan adalah tugas perkakas terpisah, bukan interpreter.
+
 ## Operator Assignment Gabungan
 
 ```indonesiaku

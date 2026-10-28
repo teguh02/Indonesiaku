@@ -1,6 +1,6 @@
 # Rencana Fitur: Anotasi tipe opsional
 
-- **Status:** usulan
+- **Status:** selesai (dirilis sebagai anotasi yang di-parse lalu dibuang)
 - **Target versi:** 1.3.0
 - **Pemilik:** Teguh R
 
