@@ -160,6 +160,17 @@ if [ -f tests/test_format.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Formatter VS Code memanggil `indk rapikan`; butuh node, dilewati bila tidak ada.
+if [ -f editors/vscode-indonesiaku/test-format.js ] && command -v node >/dev/null 2>&1; then
+    echo ""
+    if node editors/vscode-indonesiaku/test-format.js; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES formatter-vscode"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # pustaka/ harus ditemukan dari lokasi interpreter, dari direktori kerja mana pun.
 if [ -f tests/test_impor_lokasi.sh ]; then
     echo ""

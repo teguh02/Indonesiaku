@@ -38,6 +38,17 @@ const MAGIC_METHODS = [
   "_tidak_sama_"
 ];
 
+// `indk rapikan <berkas>` menulis hasil ke stdout dan keluar 0; tanpa --tulis
+// berkas asli tidak disentuh, jadi aman dipanggil dari editor.
+// Dipisah dari VS Code supaya bisa diuji tanpa menjalankan editor
+// (lihat editors/vscode-indonesiaku/test-format.js).
+function rapikanLewatIndk(spawnSync, bin, berkas) {
+  const hasil = spawnSync(bin, ["rapikan", berkas], { encoding: "utf8" });
+  if (hasil.error) throw new Error(`gagal menjalankan '${bin}': ${hasil.error.message}`);
+  if (hasil.status !== 0) throw new Error(hasil.stderr.trim() || `indk rapikan keluar ${hasil.status}`);
+  return hasil.stdout;
+}
+
 function item(label, kind, detail, insertText) {
   const result = new vscode.CompletionItem(label, kind);
   result.detail = detail;
@@ -57,8 +68,31 @@ function activate(context) {
   });
 
   context.subscriptions.push(provider);
+
+  // Formatter: VS Code "Format Document" memanggil `indk rapikan`.
+  const { spawnSync } = require("child_process");
+  const formatter = vscode.languages.registerDocumentFormattingEditProvider("indonesiaku", {
+    provideDocumentFormattingEdits(document) {
+      if (document.isUntitled || document.isDirty) return [];  // rapikan membaca dari disk
+      const bin = vscode.workspace.getConfiguration("indonesiaku").get("jalurIndk") || "indk";
+      try {
+        const rapi = rapikanLewatIndk(spawnSync, bin, document.fileName);
+        if (rapi === document.getText()) return [];
+        const seluruh = new vscode.Range(
+          document.positionAt(0),
+          document.positionAt(document.getText().length)
+        );
+        return [vscode.TextEdit.replace(seluruh, rapi)];
+      } catch (e) {
+        vscode.window.showErrorMessage(`Indonesiaku: ${e.message}`);
+        return [];
+      }
+    }
+  });
+
+  context.subscriptions.push(formatter);
 }
 
 function deactivate() {}
 
-module.exports = { activate, deactivate };
+module.exports = { activate, deactivate, rapikanLewatIndk };
