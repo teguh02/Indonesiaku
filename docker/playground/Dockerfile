@@ -22,7 +22,7 @@ RUN apk add --no-cache nginx python3 \
 
 LABEL maintainer="Teguh Rijanandi <teguhrijanandi02@gmail.com>"
 LABEL description="Dokumentasi + playground bahasa pemrograman Indonesiaku"
-LABEL version="1.2.0"
+LABEL version="1.3.0"
 
 # Pustaka standar tidak boleh ditulisi oleh kode pengunjung.
 # Isinya ada di /usr/local/share/indonesiaku/pustaka (/opt/... hanya symlink).
