@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `1.1.0`).
+Indonesiaku: a Python-inspired language with Indonesian keywords, implemented as a bytecode VM in C11. Architecture follows *Crafting Interpreters* (clox): scanner → single-pass Pratt compiler → chunk (bytecode) → stack VM, with a mark-sweep garbage collector. Version constant: `INDK_VERSION` in `src/common.h` (currently `1.3.0`).
 
 ## Identity: Python semantics, PHP-style braces (NON-NEGOTIABLE)
 
@@ -155,7 +155,7 @@ Before committing:
 
 - `make` → produces `indk` (Linux/macOS) or `indk.exe` (Windows). C11, `-Isrc`, links `-lm`.
 - `make clean` removes objects + binary (Windows and POSIX both handled; the recipe uses backslash paths on Windows because `del` mis-parses forward slashes).
-- All 15 `src/*.c` are in the Makefile `SOURCES` (including `src/native.c` — it was historically missing, causing `undefined reference to nativeFn*` at link; do not remove it). A NEW `.c` file must also be added to the four explicit gcc/clang source lists in `.github/workflows/test.yml`, the comment in `tests/fuzz_compile.c`, and the manual build commands in `website/panduan/02_INSTALASI.md` — those commands were once silently missing three files.
+- All 16 `src/*.c` are in the Makefile `SOURCES` (including `src/native.c` — it was historically missing, causing `undefined reference to nativeFn*` at link; do not remove it). A NEW `.c` file must also be added to the four explicit gcc/clang source lists in `.github/workflows/test.yml`, the comment in `tests/fuzz_compile.c`, and the manual build commands in `website/panduan/02_INSTALASI.md` — those commands were once silently missing three files.
 - Objects depend on all headers (`%.o: %.c $(HEADERS)`). Editing a `.h` triggers a full recompile — important because this codebase is tightly header-coupled and stale partial builds silently miscompile. If behavior seems impossible, do a clean rebuild before debugging.
 - Local dev here: no `make` on PATH; use `mingw32-make` (MSYS2 UCRT64 at `C:\msys64\ucrt64\bin`). Raw gcc one-liner also works — see README.
 
