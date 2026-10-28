@@ -4,6 +4,11 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -O2 -Isrc
 LDFLAGS = -lm
 
+# Tambahan flag dari pemanggil, mis. EXTRA_CFLAGS=-march=x86-64 saat rilis.
+# Pakai ini, JANGAN 'make CFLAGS=...': variabel di baris perintah menimpa
+# seluruh CFLAGS di atas sehingga -O2/-Isrc ikut hilang.
+CFLAGS += $(EXTRA_CFLAGS)
+
 # Windows executable extension
 ifeq ($(OS),Windows_NT)
     EXE = .exe
