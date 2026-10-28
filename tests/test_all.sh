@@ -20,7 +20,11 @@ if [ ! -f Makefile ]; then
     echo -e "${RED}Error: Makefile not found!${NC}"; exit 1
 fi
 make clean
-make
+# EXTRA_CFLAGS diteruskan supaya rebuild di sini memakai flag yang SAMA
+# dengan build rilis. Tanpa ini 'make' polos menimpa binari ber-march
+# yang baru dibangun, dan artefak rilis v1.3.0 kembali menuntut AVX2
+# meski workflow-nya sudah benar.
+make EXTRA_CFLAGS="${EXTRA_CFLAGS:-}"
 if [ ! -f ./indk ]; then
     echo -e "${RED}Error: Binary 'indk' not found after build!${NC}"; exit 1
 fi

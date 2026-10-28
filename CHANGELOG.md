@@ -5,6 +5,18 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-10-28
+
+### Diperbaiki
+
+- **Perbaikan AVX2 di 1.3.0 tidak benar-benar sampai ke artefak.** Langkah
+  "Run test suite" menjalankan `tests/test_all.sh`, yang melakukan
+  `make clean && make` sendiri tanpa `EXTRA_CFLAGS` — rebuild itu menimpa
+  binari ber-`-march` yang baru saja dibangun. Artefak Linux v1.3.0 karena
+  itu TETAP menuntut `x86-64-v3` walau workflow-nya sudah benar.
+  `test_all.sh` kini meneruskan `EXTRA_CFLAGS`, dan workflow mengekspornya
+  lewat `matrix.extra_cflags`.
+
 ## [1.3.0] - 2026-10-28
 
 ### Bahasa

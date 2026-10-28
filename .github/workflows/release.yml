@@ -25,9 +25,11 @@ jobs:
             # required" di CPU lawas dan banyak VPS/KVM. Dipakai lewat
             # EXTRA_CFLAGS, bukan CFLAGS=, supaya -O2/-Isrc tidak tertimpa.
             build_cmd: make clean && make EXTRA_CFLAGS=-march=x86-64
+            extra_cflags: -march=x86-64
 
           - os: macos-latest
             artifact_name: indk-macos
+            extra_cflags: ''
             # TANPA -march: runner macos-latest adalah arm64 (artefak v1.2.0
             # terbukti "Mach-O 64-bit arm64"), dan -march=x86-64 bukan nilai
             # sah untuk target ARM sehingga build gagal total.
@@ -82,6 +84,11 @@ jobs:
 
       - name: Run test suite (Linux/macOS)
         if: runner.os != 'Windows'
+        # test_all.sh melakukan 'make clean && make' sendiri. Tanpa
+        # meneruskan EXTRA_CFLAGS, rebuild itu MENIMPA binari ber-march
+        # dan artefak rilis kembali menuntut AVX2.
+        env:
+          EXTRA_CFLAGS: ${{ matrix.extra_cflags }}
         run: |
           chmod +x tests/test_all.sh
           bash tests/test_all.sh
