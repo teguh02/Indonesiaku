@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="website/assets/logo-idk-lang.png" alt="Idk-Lang — Bahasa Pemrograman Indonesiaku" width="640">
+</p>
+
 # 🇮🇩 Bahasa Pemrograman Indonesiaku
 
 **Indonesiaku** adalah bahasa pemrograman dengan sintaks Bahasa Indonesia yang
