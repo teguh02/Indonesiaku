@@ -378,6 +378,9 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 | 20 — Async/concurrency | `v1.15.0-rc.1` | `v1.15.0` | Event loop/cancellation/GC dan regresi I/O lulus |
 | 21 — Realtime, cache dan jobs | `v1.16.0-rc.1` | `v1.16.0` | WebSocket, Redis, SMTP, queue dan scheduler diuji |
 | 22 — Observability dan kesiapan produksi | `v1.17.0-rc.1` | `v1.17.0` | Logging/metrics/profiler, keamanan dan release policy teruji |
+| 23 — Data biner/arsip | `v1.18.0-rc.1` | `v1.18.0` | Binary/streaming dan ekstraksi arsip aman teruji |
+| 24 — Unicode/i18n/konfigurasi | `v1.19.0-rc.1` | `v1.19.0` | Unicode/locale/serialisasi dan parser aman lulus |
+| 25 — CLI, API testing, broker | `v1.20.0-rc.1` | `v1.20.0` | CLI/test client dan protokol broker opsional teruji |
 
 **Tahapan rilis di dalam tiap fase:**
 
@@ -746,6 +749,90 @@ kalkulator-indonesiaku/
 - **Rilis pendamping:** pembaruan website/dokumentasi saja tidak memerlukan versi interpreter baru; modul/paket independen sebaiknya memiliki versi sendiri yang kompatibel dengan \`indk\` minimum, bukan memaksa setiap plugin menaikkan versi interpreter.
 - **Keputusan final tag:** maintainer mengevaluasi cakupan aktual dan \`CHANGELOG.md\`, membandingkan artefak CI dengan Git tag, menyamakan \`src/common.h\`, Docker image/tag, installer, checksum, situs serta release notes. Update minor/patch/major berdasarkan **perubahan nyata**, bukan sekadar milestone roadmap.
 
+### Fase 23 — Data biner, streaming, kompresi dan arsip
+
+**Status:** ⬜ belum. **Kandidat rilis rekomendasi:** \`v1.18.0-rc.1\`. **Rilis stabil rekomendasi:** \`v1.18.0\`. **Ketergantungan:** model nilai/GC, sistem berkas, HTTP Fase 11, SSH/SFTP Fase 17, dan kriptografi Fase 18.
+
+**Tujuan:** memiliki abstraksi \`byte\`, buffer dan stream yang benar (bukan memaksakan teks UTF-8 untuk semua data), supaya pustaka jaringan, database BLOB, file besar, enkripsi, serta arsip dapat digunakan secara andal.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat \`docs/RENCANA_FITUR/data_biner_stream_arsip.md\`. Audit tipe \`Value\`, \`ObjString\`, operasi file/soket, SQLite BLOB dan dukungan binary existing; tetapkan semantik bytes immutable/mutable buffer, slicing, equality, serta interoperabilitas native tanpa merusak kompatibilitas \`teks\`.
+2. [ ] Implementasikan representasi data biner dengan batas panjang, pengecekan overflow, lifecycle/GC roots, dan konversi eksplisit \`teks ↔ UTF-8 bytes\` yang menolak data tidak valid bila perlu.
+3. [ ] Tambahkan API stream untuk baca/tulis bertahap, seek/tell bila didukung, flush, close idempoten, context manager, cancellation/timeouts yang relevan, serta bounded buffering/backpressure.
+4. [ ] Implementasikan operasi buffer dan encode/decode: biner ↔ hex, Base64, endian integer packing/unpacking, serta checksum/hash streaming menggunakan fungsi/library yang telah diverifikasi; hindari duplikasi API yang sudah tersedia.
+5. [ ] Tambahkan kompresi gzip/zlib serta arsip ZIP/TAR melalui pustaka terawat, mode streaming saat memungkinkan, inspeksi entri sebelum ekstraksi, batas ukuran/rasio/jumlah berkas, perlindungan path traversal, symlink dan decompression bomb.
+6. [ ] Integrasikan dengan download/upload HTTP, SFTP, BLOB database, kriptografi dan contoh backup agar berkas besar tidak dibaca penuh ke RAM.
+7. [ ] Tambahkan tes roundtrip byte acak, NUL embedded, Unicode/invalid UTF-8, data besar, korupsi arsip, zip slip, symlink, rasio kompresi ekstrem, resource limits, stress GC, ASan/UBSan dan tiga OS.
+8. [ ] Perbarui pustaka, dokumentasi API, contoh, changelog, editor (bila sintaks baru), dan matriks platform/dependensi distribusi.
+
+**Contoh API ilustratif (belum tersedia):** \`bita.dari_teks("halo", "utf-8")\`, \`berkas.buka_biner("data.bin")\`, \`arsip.ekstrak_aman("backup.zip", "hasil/", batas)\`.
+
+**Gerbang rilis:** uji roundtrip dan resource safety lulus, ekstraksi aman secara default, benchmark memori streaming terbukti, serta kompatibilitas string dan aplikasi lama tidak berubah.
+
+### Fase 24 — Unicode, i18n, konfigurasi dan format pertukaran data
+
+**Status:** ⬜ belum. **Kandidat rilis rekomendasi:** \`v1.19.0-rc.1\`. **Rilis stabil rekomendasi:** \`v1.19.0\`. **Ketergantungan:** Fase 23 untuk encoding/binary, Fase 10–12 untuk aplikasi nyata, dan pustaka standar yang sudah ada.
+
+**Tujuan:** memudahkan pengembangan aplikasi lintas bahasa/locale serta konfigurasi dan pertukaran data dengan format yang umum, tanpa mengubah sintaks inti Indonesiaku.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat \`docs/RENCANA_FITUR/unicode_i18n_konfigurasi.md\`; audit fungsi \`teks\`, \`tanggal_waktu\`, \`jalur\`, JSON, CSV, XML (Fase 19), serta \`lingkungan\` yang sudah ada; identifikasi kesenjangan dengan tes, bukan asumsi.
+2. [ ] Definisikan operasi Unicode yang eksplisit: normalisasi NFC/NFD/NFKC/NFKD, case folding, kategori Unicode, whitespace, code point vs grapheme cluster; pertahankan semantik \`panjang()\` historis tanpa breaking change.
+3. [ ] Sediakan fasilitas locale/i18n yang teruji: format angka/mata uang/tanggal, pluralisasi, timezone data yang diperbarui, message catalog dan fallback; dokumentasikan dukungan locale OS yang berbeda.
+4. [ ] Tambahkan parser/serializer YAML dan TOML dengan batas ukuran/kedalaman, error lokasi, tipe yang terdefinisi dan keamanan; gunakan parser YAML **safe mode** secara default, tanpa konstruksi objek arbitrer.
+5. [ ] Tambahkan loader konfigurasi terstruktur: environment variables, \`.env\` (opsional sesuai kebutuhan), berkas TOML/YAML/INI serta prioritas sumber dan validasi skema; jangan menulis secrets ke log atau memaksa konfigurasi global yang mengejutkan.
+6. [ ] Evaluasi MessagePack dan serialisasi biner lain sebagai paket opsional; tetapkan kebijakan kompatibilitas format, tipe/precision, dan keamanan deserialisasi tanpa eksekusi kode.
+7. [ ] Uji input multilingual, emoji, combining marks, kasus Turkish locale, DST, file konfigurasi rusak, YAML bombs/tags, serialisasi roundtrip, resource limits serta lintas platform.
+8. [ ] Buat contoh aplikasi multibahasa dan konfigurasi lingkungan dev/test/production; lengkapi dokumentasi referensi dan migrasi.
+
+**Contoh API ilustratif (belum tersedia):** \`unicode.normalisasi("NFC", teks)\`, \`lokalisasi.format_tanggal(waktu, "id-ID")\`, \`konfigurasi.muat("aplikasi.toml")\`.
+
+**Gerbang rilis:** Unicode dan timezone teruji, parser aman untuk input tak tepercaya, tidak ada perubahan diam-diam pada perilaku teks lama, dan dokumentasi jelas membedakan fitur wajib vs opsional.
+
+### Fase 25 — CLI framework, pengujian HTTP dan integrasi message broker/IoT
+
+**Status:** ⬜ belum. **Kandidat rilis rekomendasi:** \`v1.20.0-rc.1\`. **Rilis stabil rekomendasi:** \`v1.20.0\`. **Ketergantungan:** Fase 11 (REST/HTTP), 14 (package manager), 17 (jaringan), 20–21 (async dan background jobs), serta Fase 23 untuk payload biner.
+
+**Tujuan:** developer dapat membuat aplikasi CLI dan menguji API tanpa menulis boilerplate berlebihan, sambil menyediakan konektor komunikasi terdistribusi sebagai paket independen bila diperlukan.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat \`docs/RENCANA_FITUR/cli_http_test_broker.md\`; audit \`pustaka/opsi.idk\`, \`indk uji\`, HTTP client/server, dan \`pustaka/\` lain agar tidak menduplikasi argparse/testing yang sudah ada.
+2. [ ] Bangun CLI framework di atas \`opsi\`: subcommand, bantuan otomatis, validasi opsi, default, exit codes, autocomplete shell (jika feasible), konfigurasi dan contoh \`indk buat ...\`; pertahankan akses ke CLI standar tanpa framework.
+3. [ ] Sediakan test client HTTP untuk pengujian aplikasi REST tanpa membuka port publik bila arsitektur memungkinkan; assertions status, headers, JSON, cookies, auth, upload, snapshot/golden output dan mock dependency.
+4. [ ] Tambahkan fixtures dan mock/fake untuk database, SMTP, waktu, filesystem dan request; uji isolasi dan determinisme agar \`indk uji\` tetap dapat dipakai pada CI.
+5. [ ] Rancang konektor **MQTT** untuk IoT dan **AMQP/RabbitMQ** untuk antrean sebagai **library/plugin opsional**, bukan dependensi wajib runtime; definisikan TLS/auth, QoS, reconnect/backoff, delivery semantics dan batas resource.
+6. [ ] Tambahkan contoh CLI pengelola data, integration test REST CRUD dan demo publish/subscribe MQTT pada broker uji lokal. Jangan memerlukan broker publik untuk menjalankan tes otomatis.
+7. [ ] Uji protokol rusak, timeout, kredensial salah, reconnect, sertifikat tidak valid, duplicate delivery, penanganan payload biner dan cleanup.
+8. [ ] Terbitkan panduan CLI/API testing/integrasi broker, contoh plugin, matriks kompatibilitas versi minimal Indonesiaku serta review dependency native.
+
+**Contoh API ilustratif (belum tersedia):** \`cli.Perintah("siswa")\`, \`uji_http.klien(app)\`, \`mqtt.sambung("localhost", 1883)\`.
+
+**Gerbang rilis:** CLI/test client dapat digunakan dari aplikasi contoh, fungsi konektor yang diumumkan lulus tes lokal, TLS dan autentikasi aman, dan library tambahan memiliki versi serta dokumentasi yang tidak mengunci semua pengguna ke broker tertentu.
+
+### Milestone lintas fase — Validasi aplikasi dunia nyata (wajib sebelum klaim production-ready)
+
+**Status:** ⬜ belum. **Bukan otomatis Fase 26 dan bukan tag rilis tersendiri.** Milestone ini harus dilakukan bertahap ketika dependensi masing-masing aplikasi siap, lalu dinilai lagi sebelum menyebut ekosistem siap dipakai produksi.
+
+1. [ ] **Sistem administrasi mahasiswa SSR:** login/logout, session dan CSRF, CRUD siswa, database SQL dengan query berparameter, validasi form, upload file, template auto-escaping, authorization serta tes browser/HTTP. Fokus dependensi Fase 10–13, 18, 23.
+2. [ ] **REST API server:** CRUD JSON, autentikasi, paging/filter, PostgreSQL/MySQL/SQLite sesuai skenario, logging terstruktur, validasi input, tes integrasi dan beban, graceful shutdown. Fokus dependensi Fase 10–11, 13, 20–22.
+3. [ ] **Otomasi server:** copy/backup arsip, download HTTPS dengan verifikasi hash, SSH/SFTP dengan host-key verification, scheduler, enkripsi data, retry/error recovery dan observability. Fokus Fase 17–18, 21–23.
+4. [ ] Tulis \`docs/RENCANA_FITUR/validasi_aplikasi_nyata.md\` dan matriks gap untuk setiap aplikasi: **tersedia**, **sebagian**, **belum**, **bug**, **tidak didukung**. Setiap gap harus mempunyai tes reproduksi dan owner/issue, bukan hanya uraian aspiratif.
+5. [ ] Tetapkan acceptance tests: semua alur penting selesai tanpa runtime Python/PHP/Node.js, kecuali browser asset/tooling opsional yang terdokumentasi; tidak ada bypass keamanan; deployment dilakukan pada lingkungan terisolasi dengan rollback dan backup; seluruh contoh dan CI lulus.
+6. [ ] Ukur resource CPU/RAM, latensi dan failure rate, error message, pengalaman onboarding developer, dokumentasi, packaging, observability dan kompatibilitas lintas platform. Publikasikan batas hasil serta faktor eksternal.
+7. [ ] Gunakan hasil validasi untuk **memperbaiki atau menunda fitur**; jangan menambah fase sekadar meniru semua API bahasa lain. Bila API/semantik perlu breaking change, rencanakan deprecation/migration guide dan pertimbangkan \`v2.0.0\` sesuai kebijakan SemVer.
+
+**Gate kualitas:** milestone dianggap selesai hanya bila ketiga aplikasi dapat dibangun, diuji, dan didemonstrasikan dengan source, instruksi reproduksi serta hasil terukur. Milestone ini bukan jaminan keamanan absolut maupun sertifikasi keamanan.
+
+### Pengendalian ruang lingkup setelah Fase 25
+
+- **Bekukan sementara penambahan fase baru** sampai ada bukti kebutuhan dari implementasi dan tiga aplikasi validasi. Prioritaskan menyelesaikan fase yang sudah ada, memperbaiki regresi, dokumentasi, keamanan dan kompatibilitas.
+- Fitur yang bisa dibuat sebagai library \`.idk\` tidak perlu diubah menjadi builtin/keyword, kecuali benar-benar memerlukan primitive VM/native. Dependensi eksternal seperti MQTT/RabbitMQ adalah **opsional**.
+- **Aturan rilis:** target \`v1.18.0\`, \`v1.19.0\`, \`v1.20.0\` hanyalah usulan minor per fase, bukan janji tanggal atau batas versi. Alpha/beta/RC dipakai sesuai kesiapan; patch keamanan boleh diterbitkan segera tanpa menunggu fase; major hanya untuk breaking change yang terencana.
+- **Jangan mengklaim fase selesai** bila sebagian subfitur/tes/doc tertunda. Jika scope dibagi menjadi beberapa rilis minor atau ada fitur yang lebih dulu selesai, sinkronkan status, target versi dan CHANGELOG sesuai kenyataan.
+
 ### Checklist wajib untuk setiap fase (panduan untuk AI coding agent)
 
 1. **Audit sebelum coding:** baca AGENTS.md, docs/SPESIFIKASI.md, docs/ANALISIS/, README, contoh dan source terkait; verifikasi fitur existing supaya tidak menduplikasi fungsi atau merusak kompatibilitas sejak 1.0.
@@ -774,6 +861,10 @@ kalkulator-indonesiaku/
 | 20 | Async I/O, concurrency dan cancellation | ⬜ belum |
 | 21 | Redis/cache, WebSocket, SMTP, scheduler dan background jobs | ⬜ belum |
 | 22 | Logging, profiling, observability, kompatibilitas dan keamanan rilis | ⬜ belum |
+| 23 | Byte/buffer, streaming, ZIP/TAR/gzip dan keamanan arsip | ⬜ belum |
+| 24 | Unicode, i18n, konfigurasi, YAML/TOML dan serialisasi | ⬜ belum |
+| 25 | CLI framework, HTTP test client, MQTT/RabbitMQ opsional | ⬜ belum |
+| Lintas fase | Validasi 3 aplikasi nyata (SSR, REST API, otomasi server) | ⬜ belum |
 
 ## Cara memakai berkas ini
 
