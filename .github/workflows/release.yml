@@ -142,6 +142,19 @@ jobs:
           cd dist && tar -czf "$PKG.tar.gz" "$PKG"
           ls -lh "$PKG.tar.gz"
 
+      - name: Bangun paket .deb (Linux saja)
+        if: matrix.artifact_name == 'indk-linux'
+        run: |
+          # Tag "v1.4.0" -> versi paket "1.4.0"; dpkg menolak awalan huruf.
+          VERSI="${GITHUB_REF#refs/tags/}"
+          VERSI="${VERSI#v}"
+          if [ -z "$VERSI" ]; then VERSI="$(./indk -v | tr -d '[:space:]')"; fi
+          bash packaging/deb/bangun.sh "$VERSI" amd64 indk "dist/indonesiaku_${VERSI}_amd64.deb"
+          # Paket harus benar-benar dapat dipasang, bukan sekadar terbentuk.
+          sudo dpkg -i "dist/indonesiaku_${VERSI}_amd64.deb"
+          cd /tmp && printf 'impor json\ncetak("stdlib ok")\n' > u.idk && indk u.idk
+          sudo dpkg -r indonesiaku
+
       - name: Kemas rilis (Windows)
         if: runner.os == 'Windows'
         shell: powershell
@@ -165,6 +178,19 @@ jobs:
           Pop-Location
           Get-Item "dist/$pkg.zip"
 
+      - name: Bangun installer Windows
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $versi = "$env:GITHUB_REF" -replace '^refs/tags/v?', ''
+          if (-not $versi) { $versi = (& ./indk.exe -v).Trim() }
+          # Inno Setup tidak terpasang di runner windows-latest.
+          choco install innosetup --no-progress -y | Out-Null
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $iscc "/DVersiApp=$versi" "packaging\windows\indonesiaku.iss"
+          if ($LASTEXITCODE -ne 0) { throw "ISCC gagal dengan kode $LASTEXITCODE" }
+          Get-Item "dist/Indonesiaku-Setup-$versi.exe"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -172,6 +198,8 @@ jobs:
           path: |
             dist/*.tar.gz
             dist/*.zip
+            dist/*.deb
+            dist/Indonesiaku-Setup-*.exe
           retention-days: 90
 
   docker-build-push:
@@ -266,13 +294,20 @@ jobs:
       - name: Kumpulkan berkas rilis
         run: |
           mkdir -p rilis
-          find artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} rilis/ \;
+          find artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb' -o -name 'Indonesiaku-Setup-*.exe' \) -exec cp {} rilis/ \;
           cd rilis
           sha256sum * > SHA256SUMS.txt
           ls -lh
           # Rilis tanpa binari adalah kegagalan diam-diam: hentikan di sini.
           test "$(ls *.tar.gz *.zip 2>/dev/null | wc -l)" -ge 3 \
             || { echo "::error::Kurang dari 3 paket OS; rilis dibatalkan."; exit 1; }
+          # Paket native dijanjikan di panduan instalasi dan disarankan oleh
+          # `indk --periksa-pembaruan`; bila hilang, pengguna diarahkan ke
+          # URL 404. Periksa keduanya secara terpisah.
+          ls indonesiaku_*_amd64.deb >/dev/null 2>&1 \
+            || { echo "::error::Paket .deb tidak ada; rilis dibatalkan."; exit 1; }
+          ls Indonesiaku-Setup-*.exe >/dev/null 2>&1 \
+            || { echo "::error::Installer Windows tidak ada; rilis dibatalkan."; exit 1; }
 
       - name: Create Release
         uses: ncipollo/release-action@v1

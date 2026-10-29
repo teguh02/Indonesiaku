@@ -1,0 +1,64 @@
+# Perbandingan versi dan saran pemutakhiran.
+#
+# Semuanya murni: tidak menyentuh jaringan sama sekali, sehingga aman
+# dijadikan golden test. Bagian yang menghubungi GitHub (ambil_rilis_terbaru)
+# sengaja tidak dipanggil di sini.
+
+impor pembaruan
+
+# --- perbandingan versi -----------------------------------------------------
+
+# Dibandingkan sebagai ANGKA per komponen. Sebagai teks, "1.9.0" > "1.10.0"
+# secara leksikografis -- salah, karena 1.10.0 yang lebih baru.
+cetak(pembaruan.banding_versi("1.9.0", "1.10.0"))
+cetak(pembaruan.banding_versi("1.10.0", "1.9.0"))
+cetak(pembaruan.banding_versi("1.3.2", "1.3.2"))
+cetak(pembaruan.banding_versi("2.0.0", "1.99.99"))
+
+# Awalan "v" pada tag rilis diabaikan.
+cetak(pembaruan.banding_versi("v1.0.0", "1.0.0"))
+
+# "1.4" dan "1.4.0" setara.
+cetak(pembaruan.banding_versi("1.4", "1.4.0"))
+
+# Penanda pra-rilis diabaikan saat membandingkan.
+cetak(pembaruan.banding_versi("1.4.0-beta.1", "1.4.0"))
+
+# --- ada_pembaruan ----------------------------------------------------------
+
+cetak(pembaruan.ada_pembaruan("1.0.0", "1.3.2"))
+cetak(pembaruan.ada_pembaruan("1.3.2", "1.3.2"))
+cetak(pembaruan.ada_pembaruan("1.4.0", "1.3.2"))
+
+# --- pesan untuk pengguna ---------------------------------------------------
+
+cetak("---")
+
+# Rilis yang MEMILIKI paket .deb: perintah dpkg disarankan.
+variabel aset_lengkap = ["indonesiaku_1.4.0_amd64.deb", "indk-linux.tar.gz", "Indonesiaku-Setup-1.4.0.exe"]
+cetak(pembaruan.pesan_pembaruan("linux", "1.0.0", "v1.4.0", aset_lengkap))
+
+cetak("---")
+
+# Rilis LAMA tanpa .deb: menyarankan .deb akan mengirim pengguna ke URL 404,
+# jadi hanya arsip yang ditawarkan.
+variabel aset_lama = ["indk-linux.tar.gz", "indk-macos.tar.gz", "indk-windows.zip"]
+cetak(pembaruan.pesan_pembaruan("linux", "1.0.0", "v1.3.2", aset_lama))
+
+cetak("---")
+
+cetak(pembaruan.pesan_pembaruan("windows", "1.0.0", "v1.4.0", aset_lengkap))
+
+cetak("---")
+
+cetak(pembaruan.pesan_pembaruan("macos", "1.0.0", "v1.4.0", aset_lengkap))
+
+cetak("---")
+
+# Sudah terbaru: tidak ada perintah yang dicetak.
+cetak(pembaruan.pesan_pembaruan("linux", "1.4.0", "v1.4.0", aset_lengkap))
+
+cetak("---")
+
+# Versi pengembangan lebih baru daripada rilis terakhir.
+cetak(pembaruan.pesan_pembaruan("linux", "1.5.0", "v1.4.0", aset_lengkap))

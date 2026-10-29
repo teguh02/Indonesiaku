@@ -123,6 +123,17 @@ if [ -f tests/test_baca_sumber.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Paket .deb: klaim "tidak perlu uninstall versi lama" harus terbukti.
+if [ -f tests/paket_deb.sh ]; then
+    echo ""
+    if bash tests/paket_deb.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES paket-deb"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Modul web harus terbukti melayani HTTP sungguhan, bukan hanya lulus uji teks.
 if [ -f tests/web_router_server.sh ]; then
     echo ""
