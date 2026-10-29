@@ -158,7 +158,7 @@ Pilih folder tempat Anda ingin menyimpan project:
 cd C:\Users\YourName\Documents
 
 # Clone repository
-git clone https://github.com/teguh02/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku-Lang.git
 cd Indonesiaku
 ```
 
@@ -568,7 +568,7 @@ git --version
 cd ~/
 
 # Clone repository
-git clone https://github.com/teguh02/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku-Lang.git
 cd Indonesiaku
 ```
 
@@ -688,7 +688,7 @@ brew install git
 cd ~/
 
 # Clone repository
-git clone https://github.com/teguh02/Indonesiaku.git
+git clone https://github.com/teguh02/Indonesiaku-Lang.git
 cd Indonesiaku
 ```
 
