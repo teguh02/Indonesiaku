@@ -1,0 +1,57 @@
+title: "[Ide] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usulkan ide pengembangan Indonesiaku di sini. Silakan cek docs/ROADMAP.md dan diskusi terdahulu terlebih dahulu.
+        Ide yang disetujui belum otomatis masuk rilis; keputusan implementasi mengikuti roadmap dan review maintainer.
+  - type: input
+    id: judul
+    attributes:
+      label: Nama ide atau fitur
+      placeholder: Contoh - Dukungan fungsi unduh berkas dengan progress
+    validations:
+      required: true
+  - type: textarea
+    id: masalah
+    attributes:
+      label: Masalah yang ingin diselesaikan
+      description: Jelaskan kebutuhan nyata pengguna, bukan hanya nama fitur.
+    validations:
+      required: true
+  - type: textarea
+    id: usulan
+    attributes:
+      label: Solusi atau perilaku yang diusulkan
+      description: Sertakan contoh sintaks .idk jika ada; jelaskan bahwa contoh merupakan usulan.
+      value: |
+        **Deskripsi solusi:**
+
+        **Contoh API/sintaks yang diusulkan:**
+
+        **Hasil yang diharapkan:**
+    validations:
+      required: true
+  - type: textarea
+    id: alternatif
+    attributes:
+      label: Alternatif atau pendekatan lain
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area pengembangan
+      options:
+        - Sintaks dan bahasa inti
+        - Pustaka standar
+        - Database
+        - Web server / REST API
+        - SSR / HTML template
+        - Jaringan / SSH / FTP
+        - Keamanan / kriptografi
+        - Editor / LSP / tooling
+        - Dokumentasi / website
+        - Lainnya
+    validations:
+      required: true
