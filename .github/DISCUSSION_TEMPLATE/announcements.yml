@@ -1,0 +1,47 @@
+title: "[Pengumuman] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Khusus pengumuman resmi dari maintainer Indonesiaku: rilis, perubahan penting, kegiatan komunitas, dan pemberitahuan keamanan.
+        Gunakan sumber yang telah diverifikasi. Jangan menandai fitur sebagai rilis stabil jika masih dalam roadmap.
+  - type: dropdown
+    id: jenis
+    attributes:
+      label: Jenis pengumuman
+      options:
+        - Rilis stabil
+        - Alpha / Release Candidate
+        - Pembaruan dokumentasi
+        - Kegiatan komunitas
+        - Keamanan
+        - Informasi proyek lainnya
+    validations:
+      required: true
+  - type: input
+    id: judul
+    attributes:
+      label: Judul
+      placeholder: Contoh - Indonesiaku v1.3.2 telah dirilis
+    validations:
+      required: true
+  - type: textarea
+    id: ringkasan
+    attributes:
+      label: Ringkasan perubahan atau informasi
+    validations:
+      required: true
+  - type: textarea
+    id: dampak
+    attributes:
+      label: Dampak dan langkah yang perlu dilakukan pengguna
+      description: Jika tidak ada tindakan yang diperlukan, tulis Tidak ada.
+    validations:
+      required: true
+  - type: input
+    id: referensi
+    attributes:
+      label: Link rilis, dokumentasi, atau referensi resmi
+      placeholder: https://github.com/teguh02/Indonesiaku-Lang/releases
+    validations:
+      required: true
