@@ -610,6 +610,7 @@ Semua kesalahan dapat ditangkap `coba/kecuali`.
 | `db_ambil_satu(db, sql, params)` | Baris pertama saja → kamus, atau `kosong` bila tidak ada |
 | `db_baris_terpengaruh(db)` | Jumlah baris yang diubah pernyataan terakhir |
 | `db_id_terakhir(db)` | `id` baris hasil INSERT terakhir |
+| `db_batas_tunggu(db, ms)` | Lama menunggu (milidetik) bila basis data sedang dikunci koneksi lain. Bawaan `0` = langsung gagal |
 | `db_mulai(db)` | Mulai transaksi |
 | `db_komit(db)` | Simpan transaksi |
 | `db_batal(db)` | Batalkan transaksi |

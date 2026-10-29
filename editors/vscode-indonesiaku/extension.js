@@ -13,7 +13,7 @@ const BUILTINS = [
   "ambil_atribut", "ambil_lingkungan", "asin", "atan", "atan2", "atap", "atur_atribut", "baca",
   "baca_baris", "baca_semua", "bagi_sisa", "biner", "bisa_dipanggil", "buat_direktori",
   "buka_berkas", "bulat", "bulatkan", "cetak", "chr", "cos", "daftar", "db_ambil_satu",
-  "db_ambil_semua", "db_baris_terpengaruh", "db_batal", "db_buka", "db_eksekusi", "db_id_terakhir",
+  "db_ambil_semua", "db_baris_terpengaruh", "db_batal", "db_batas_tunggu", "db_buka", "db_eksekusi", "db_id_terakhir",
   "db_komit", "db_mulai", "db_tutup", "derajat", "direktori_kini", "enumerasi", "format",
   "format_tanggal", "ganti", "hapus", "hapus_berkas", "hapus_direktori", "hapus_kunci",
   "hapus_pada", "hash", "heksa", "henti", "himpunan", "himpunan_beku", "huruf_besar",

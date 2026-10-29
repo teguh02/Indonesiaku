@@ -421,6 +421,7 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 
 1. [ ] Buat docs/RENCANA_FITUR/database_multi_driver.md; tetapkan API, semantik transaksi, tipe nilai/NULL/BLOB, error, koneksi dan lifecycle GC. Jangan mengubah builtin db_* tanpa kebijakan kompatibilitas.
 2. [ ] Audit src/db.c, src/object.c/h, src/native.c/h, dan examples/db_sqlite.idk. Lengkapi SQLite: dukungan data biner/BLOB masuk-keluar, busy timeout, pengujian transaksi dan penutupan handle idempoten (**WDB-01**).
+   - Sebagian: `db_batas_tunggu()` sudah ada (1.4.0). BLOB **terblokir** sampai tipe byte Fase 23 — memetakan BLOB ke `teks` rusak untuk data non-UTF-8.
 3. [ ] Buat driver MySQL/MariaDB (**WDB-02**) menggunakan client library teruji dan prepared statements; dukung host/port, opsi TLS dengan verifikasi, timeout, penanganan koneksi terputus, query satu/banyak baris, perubahan baris dan ID terakhir sesuai dialek.
 4. [ ] Buat driver PostgreSQL (**WDB-03**) memakai libpq atau pustaka kompatibel yang terawat; pastikan parameter binding, hasil data bertipe, transaksi, timeout dan validasi TLS/hostname.
 5. [ ] Rancang API abstraksi bersama (**WDB-04**), misalnya db.koneksi(konfigurasi), koneksi.eksekusi(sql, parameter), koneksi.ambil_satu, koneksi.ambil_semua, koneksi.mulai/komit/batal/tutup. Nama final diputuskan lewat dokumen rencana; API SQLite lama tetap berjalan.

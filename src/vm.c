@@ -350,6 +350,7 @@ void initVM() {
 
     defineNative("db_buka", nativeFnDbBuka);
     defineNative("db_tutup", nativeFnDbTutup);
+    defineNative("db_batas_tunggu", nativeFnDbBatasTunggu);
     defineNative("db_eksekusi", nativeFnDbEksekusi);
     defineNative("db_ambil_semua", nativeFnDbAmbilSemua);
     defineNative("db_ambil_satu", nativeFnDbAmbilSatu);

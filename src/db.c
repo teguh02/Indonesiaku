@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 #include "native.h"
@@ -69,6 +70,29 @@ Value nativeFnDbTutup(int count, Value* args) {
         if (rc != SQLITE_OK) return dbError(db->db);
         db->db = NULL;
     }
+    return KOSONG_VAL;
+}
+
+// SQLite's default busy timeout is 0: a lock held by another connection for
+// even a millisecond fails the write immediately. Let callers opt into
+// waiting. Deliberately a separate builtin, not an extra db_buka() argument,
+// so the existing argument-count error message stays unchanged.
+Value nativeFnDbBatasTunggu(int count, Value* args) {
+    ObjDb* db = dbHandle(count, args, 2, 2);
+    if (db == NULL) return KOSONG_VAL;
+    if (!IS_INT(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "db_batas_tunggu(): milidetik harus bulat");
+        return KOSONG_VAL;
+    }
+    int64_t ms = AS_INT(args[1]);
+    // sqlite3_busy_timeout takes a C int; narrowing silently would install a
+    // different timeout than the caller asked for.
+    if (ms < 0 || ms > INT_MAX) {
+        nativeRaiseKelas(vm.galatNilai,
+                         "db_batas_tunggu(): milidetik harus antara 0 dan %d", INT_MAX);
+        return KOSONG_VAL;
+    }
+    if (sqlite3_busy_timeout(db->db, (int)ms) != SQLITE_OK) return dbError(db->db);
     return KOSONG_VAL;
 }
 

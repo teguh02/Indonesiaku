@@ -206,6 +206,7 @@ Value nativeFnPeta(int argCount, Value* args);       // peta(f, d)
 Value nativeFnSaring(int argCount, Value* args);     // saring(f, d)
 Value nativeFnDbBuka(int argCount, Value* args);
 Value nativeFnDbTutup(int argCount, Value* args);
+Value nativeFnDbBatasTunggu(int argCount, Value* args);
 Value nativeFnDbEksekusi(int argCount, Value* args);
 Value nativeFnDbAmbilSemua(int argCount, Value* args);
 Value nativeFnDbAmbilSatu(int argCount, Value* args);

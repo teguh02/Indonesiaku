@@ -5,6 +5,16 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Belum dirilis]
+
+### Ditambahkan
+
+- `db_batas_tunggu(db, milidetik)` — mengatur lama koneksi SQLite menunggu
+  ketika basis data sedang dikunci koneksi lain. Bawaan SQLite adalah `0`,
+  artinya penulisan langsung gagal begitu ada kunci; kini pemanggil bisa
+  memilih menunggu. Milidetik di luar jangkauan `int` C ditolak alih-alih
+  dipersempit diam-diam menjadi batas yang keliru. (Fase 10)
+
 ## [1.3.2] - 2026-10-28
 
 ### Diperbaiki
