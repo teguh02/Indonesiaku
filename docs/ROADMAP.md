@@ -380,6 +380,53 @@ Bagian ini mengurutkan pekerjaan yang **belum selesai**, bukan mengubah status f
 - Threading/asynchronous runtime, GUI, dan AOT/bundel executable: **belum dijadwalkan**; masing-masing memerlukan rencana arsitektur tersendiri.
 - Penguatan sandbox untuk menjalankan kode tak tepercaya tetap harus dievaluasi terpisah; `indk --sandbox` bukan pengganti isolasi proses/container.
 
+## Jalur pengembangan aplikasi web & database (tanpa HTML)
+
+**Tujuan:** memungkinkan Indonesiaku membangun backend aplikasi web, layanan API, dan aplikasi bisnis berbasis database secara aman dan portabel. Jalur ini melengkapi P2 (HTTPS/TLS), P3 (manajer paket), dan P6 (konektor database) di tabel prioritas di atas, **bukan** klaim fitur telah tersedia.
+
+**Di luar lingkup bagian ini:** render HTML, template engine, sintaks templating, dan desain tampilan. Hal-hal tersebut akan direncanakan secara terpisah.
+
+### Kondisi awal yang sudah tersedia
+
+- ✅ **SQLite tertanam** melalui `src/db.c`: `db_buka`, `db_tutup`, `db_eksekusi`, `db_ambil_satu`, `db_ambil_semua`, transaksi (`db_mulai`, `db_komit`, `db_batal`), metadata hasil operasi. Query memiliki placeholder parameter `?`; contoh nyata `examples/db_sqlite.idk`.
+- ✅ **HTTP dasar**: `pustaka/http.idk` menyediakan penguraian permintaan dan respons; `examples/todo_server.idk` menunjukkan server REST dengan soket TCP. Ini server demo **single-threaded, blocking**, bukan server produksi.
+- ✅ **JSON, soket dan sistem berkas** sebagai fondasi backend.
+- ⚠️ **Batas SQLite saat ini**: pembacaan kolom BLOB belum didukung di `src/db.c`. Koneksi MySQL/MariaDB dan PostgreSQL belum tersedia. Klien `http_ambil` belum mendukung HTTPS.
+
+### Backlog bertahap
+
+| ID | Pekerjaan | Target hasil | Status |
+|---|---|---|---|
+| WDB-01 | Sempurnakan driver SQLite | BLOB/binary yang aman, pengaturan timeout/busy, penanganan galat bertipe, verifikasi transaksi dan pelepasan resource; pertahankan API lama | ⬜ belum |
+| WDB-02 | Driver MySQL dan MariaDB | Koneksi dengan host/port/user/database, prepared statements dan parameter, query/ambil baris, transaksi, timeout, TLS, penanganan galat, reconnect eksplisit | ⬜ belum |
+| WDB-03 | Driver PostgreSQL | Koneksi aman, parameterized query, transaksi, hasil bertipe, timeout, TLS dan error yang dapat ditangkap | ⬜ belum |
+| WDB-04 | Abstraksi database bersama | Antarmuka API konsisten untuk SQLite/MySQL/MariaDB/PostgreSQL tanpa mengubah perilaku fungsi SQLite yang telah ada; kesetaraan fitur dan batas driver terdokumentasi | ⬜ belum |
+| WDB-05 | Migrasi skema dan query builder ringan | Migrasi berurutan dengan pencatatan versi, rollback bila memungkinkan, query berparameter dan dukungan dialek; ORM penuh opsional | ⬜ belum |
+| WEB-01 | Pustaka HTTP server modular | Router metode/path, parameter rute, request/response terstruktur, kode status, header, middleware dan penanganan error | ⬜ belum |
+| WEB-02 | Parsing request dan upload | Batas ukuran/body, JSON, urlencoded, multipart/form-data, upload berkas yang aman, timeout dan penolakan request rusak | ⬜ belum |
+| WEB-03 | Berkas statis | Penyajian CSS/JS/gambar dan aset lain dengan MIME, cache header, pencegahan path traversal; bukan rendering/template HTML | ⬜ belum |
+| WEB-04 | Cookie dan session | Cookie HttpOnly/Secure/SameSite, session expiry, rotasi ID, penyimpanan session terpisah serta proteksi session fixation | ⬜ belum |
+| WEB-05 | Keamanan aplikasi | Escaping output sesuai konteks, validasi input, CSRF untuk form berbasis cookie, pengamanan CORS, trusted proxy, header keamanan, batas request dan rate limiting | ⬜ belum |
+| WEB-06 | Authentication dan authorization | Password hashing adaptif ber-salt (Argon2id atau alternatif teruji), login/logout, pengelolaan kredensial dan peran/izin tanpa menyimpan rahasia di source/log | ⬜ belum |
+| WEB-07 | Ketahanan server | Model concurrency terukur, batas koneksi, graceful shutdown, timeout, backpressure, logging terstruktur; produksi dipasang di belakang reverse proxy/TLS | ⬜ belum |
+| DX-01 | Perkakas pengembangan backend | CLI inisialisasi proyek, tata letak modul, konfigurasi berdasarkan environment, runner tes integrasi dan contoh CRUD API/database | ⬜ belum |
+| DX-02 | Pengelolaan dependensi | Integrasikan modul backend dengan manajer paket/lockfile saat P3 tersedia, tanpa mewajibkan paket eksternal untuk contoh inti | ⬜ belum |
+
+### Urutan pelaksanaan yang disarankan
+
+1. **Fondasi database:** WDB-01 → WDB-02/WDB-03 (dapat paralel) → WDB-04 → WDB-05.
+2. **Fondasi backend HTTP:** WEB-01 → WEB-02 dan WEB-03 → WEB-04/WEB-05 → WEB-06 → WEB-07.
+3. **Pengalaman pengembang:** DX-01 dan DX-02, mengikuti kesiapan P3. **P2 TLS/HTTPS** menjadi ketergantungan keamanan untuk koneksi eksternal dan harus diuji pada masing-masing driver.
+4. **Validasi end-to-end:** minimal satu contoh REST CRUD dengan SQLite serta tes integrasi untuk MySQL/MariaDB dan PostgreSQL pada layanan terisolasi (misalnya container CI). Contoh API harus berjalan tanpa komponen HTML.
+
+### Standar penerimaan dan keamanan
+
+- Setiap pekerjaan mengikuti alur rencana fitur di `docs/RENCANA_FITUR/`, tes positif/negatif, panduan pengguna, changelog, dan integrasi editor jika terkait.
+- Semua query menerima parameter terikat; **jangan** merangkai nilai input pengguna menjadi SQL. Uji injeksi SQL, NULL, Unicode, data biner, rollback, koneksi terputus, timeout, dan resource cleanup.
+- TLS memverifikasi sertifikat/hostname secara default. Kredensial berasal dari konfigurasi atau variabel lingkungan, tidak ditulis ke log. Konfigurasi dan koneksi tidak boleh memungkinkan kebocoran rahasia melalui pesan galat.
+- Server demo yang ada tetap berfungsi; penguatan server baru tidak boleh dianggap jaminan aman untuk internet publik tanpa audit, pengujian beban, dan deployment dengan isolasi yang sesuai.
+- Tidak boleh mengubah status menjadi ✅ sebelum bukti implementasi, pengujian lintas platform yang relevan, dan dokumentasi tersedia.
+
 ## Cara memakai berkas ini
 
 1. Untuk mengusulkan fitur: salin `RENCANA_FITUR/TEMPLATE.md`, isi, lalu
