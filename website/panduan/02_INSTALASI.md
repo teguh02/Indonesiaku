@@ -12,9 +12,9 @@ Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem oper
 4. [Instalasi di Linux](#instalasi-di-linux)
 5. [Instalasi di macOS](#instalasi-di-macos)
 6. [Verifikasi Instalasi](#verifikasi-instalasi)
-7. [Troubleshooting](#troubleshooting)
-8. [Build dari Source](#build-dari-source)
-9. [Perbandingan Instalasi Methods](#perbandingan-instalasi-methods)
+7. [Troubleshooting](#pemecahan-masalah)
+8. [Build dari Source](#bangun-dari-kode-sumber)
+9. [Perbandingan Instalasi Methods](#perbandingan-metode-instalasi)
 
 ---
 
@@ -74,12 +74,10 @@ Pastikan komputer Anda terhubung ke internet untuk:
 
 ---
 
-### 🔧 CARA MANUAL - Build dari Source
-
+### 🔧 CARA MANUAL — Bangun dari Kode Sumber
 **Untuk developer atau yang ingin build dari source code:**
 
-#### Langkah 1: Install Git
-
+#### Langkah 1: Pasang Git
 **Opsi A - Menggunakan Official Installer:**
 
 1. Buka https://git-scm.com/download/win
@@ -101,8 +99,7 @@ git --version
 # Output: git version 2.x.x...
 ```
 
-#### Langkah 2: Install GCC (MinGW)
-
+#### Langkah 2: Pasang GCC (MinGW)
 **Opsi A - Menggunakan MinGW-w64 Installer:**
 
 1. Buka https://www.mingw-w64.org/
@@ -196,8 +193,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe `
 indk.exe  # Executable yang berhasil dibuild
 ```
 
-#### Langkah 5: Test Installation
-
+#### Langkah 5: Uji Hasil Pemasangan
 ```powershell
 # Run REPL
 ./indk.exe
@@ -396,8 +392,7 @@ docker stop indonesiaku-bg
 docker rm indonesiaku-bg
 ```
 
-### Langkah 6: Verifikasi Installation dalam Docker
-
+### Langkah 6: Verifikasi Pemasangan dalam Docker
 **Check binary version:**
 
 ```bash
@@ -440,8 +435,7 @@ foldernya.
 
 ---
 
-## Perbandingan Instalasi Methods
-
+## Perbandingan Metode Instalasi
 | Method | Pros | Cons | Cocok untuk |
 |--------|------|------|-------------|
 | **Installer (Windows)** | Mudah, auto PATH, 1-click | Windows only | Pengguna casual |
@@ -450,8 +444,7 @@ foldernya.
 
 ---
 
-## Helpful Docker Commands
-
+## Perintah Docker yang Berguna
 ```bash
 # List running containers
 docker ps
@@ -486,9 +479,8 @@ docker commit <container_id> my-indonesiaku:snapshot
 
 ---
 
-## Docker Troubleshooting
-
-### Image Tidak Ketemu
+## Pemecahan Masalah Docker
+### Image Tidak Ditemukan
 
 ```bash
 # Search image
@@ -501,7 +493,7 @@ docker pull teguh02/indonesiaku:v1.0.0
 docker images
 ```
 
-### Permission Denied (Linux)
+### Izin Ditolak (Linux)
 
 ```bash
 # Option 1: Use sudo
@@ -513,7 +505,7 @@ newgrp docker
 docker run -it teguh02/indonesiaku:latest  # Sekarang bisa tanpa sudo
 ```
 
-### Container Cannot Access Host Files
+### Kontainer Tidak Bisa Mengakses Berkas Host
 
 ```bash
 # Pastikan volume mounting syntax benar
@@ -523,7 +515,7 @@ docker run -it -v /host/path:/container/path teguh02/indonesiaku:latest
 docker run -it -v C:\Users\YourName\projects:/app teguh02/indonesiaku:latest
 ```
 
-### Image Too Large / Slow Download
+### Image Terlalu Besar / Unduhan Lambat
 
 ```bash
 # Check image size
@@ -538,9 +530,9 @@ docker pull --no-parallel teguh02/indonesiaku:latest
 
 ---
 
+## Instalasi di Linux
 
-
-### Langkah 1: Install Build Tools
+### Langkah 1: Pasang Perkakas Pembangun
 
 **Ubuntu/Debian:**
 
@@ -611,8 +603,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
 indk  # Executable yang berhasil dibuild
 ```
 
-### Langkah 4: Test Installation
-
+### Langkah 4: Uji Hasil Pemasangan
 ```bash
 # Run REPL
 ./indk
@@ -656,8 +647,7 @@ indk --help
 
 ## Instalasi di macOS
 
-### Langkah 1: Install Xcode Command Line Tools
-
+### Langkah 1: Pasang Xcode Command Line Tools
 ```bash
 xcode-select --install
 ```
@@ -671,8 +661,7 @@ gcc --version
 make --version
 ```
 
-### Langkah 2: Install Git
-
+### Langkah 2: Pasang Git
 Git sudah included di Xcode Command Line Tools.
 
 **Verifikasi:**
@@ -734,8 +723,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
 indk  # Executable yang berhasil dibuild
 ```
 
-### Langkah 5: Test Installation
-
+### Langkah 5: Uji Hasil Pemasangan
 ```bash
 # Run REPL
 ./indk
@@ -828,8 +816,7 @@ Expected output:
 Hasil: 15
 ```
 
-### Test 6: Run Example File
-
+### Uji 6: Jalankan Berkas Contoh
 **Windows:**
 ```powershell
 .\indk.exe examples/hello.idk
@@ -847,11 +834,9 @@ Halo, dunia!
 
 ---
 
-## Troubleshooting
-
-### Windows Issues
-
-#### Error: "gcc: command not found"
+## Pemecahan Masalah
+### Kendala di Windows
+#### Galat: "gcc: command not found"
 
 **Solusi:**
 - Verifikasi MinGW sudah installed (Run `gcc --version`)
@@ -859,7 +844,7 @@ Halo, dunia!
 - Restart terminal setelah mengubah PATH
 - Reinstall MinGW jika perlu
 
-#### Error: "cannot open source file"
+#### Galat: "cannot open source file"
 
 **Solusi:**
 ```powershell
@@ -885,9 +870,8 @@ ls indk.exe
 indk.exe
 ```
 
-### Linux/macOS Issues
-
-#### Error: "make: command not found"
+### Kendala di Linux/macOS
+#### Galat: "make: command not found"
 
 **Solusi:**
 ```bash
@@ -902,7 +886,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
     src/scanner.c src/table.c src/value.c src/vm.c -lm
 ```
 
-#### Error: "git: command not found"
+#### Galat: "git: command not found"
 
 **Solusi:**
 ```bash
@@ -913,7 +897,7 @@ sudo apt install git
 xcode-select --install
 ```
 
-#### Permission denied when running ./indk
+#### Izin ditolak saat menjalankan ./indk
 
 **Solusi:**
 ```bash
@@ -924,7 +908,7 @@ chmod +x indk
 ./indk
 ```
 
-#### Error: "libm.so.6: cannot open shared object file"
+#### Galat: "libm.so.6: cannot open shared object file"
 
 **Solusi:**
 ```bash
@@ -939,8 +923,7 @@ gcc -static -Wall -Wextra -std=c11 -O2 -Isrc -o indk \
     src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
 ```
 
-### Universal Issues
-
+### Kendala Umum
 #### REPL opens tapi tidak bisa input
 
 **Solusi:**
@@ -973,8 +956,7 @@ ls examples/
 
 ---
 
-## Build dari Source
-
+## Bangun dari Kode Sumber
 Jika ingin build manual atau customize:
 
 ### 1. Compile Individual Files
@@ -1033,8 +1015,7 @@ gcc -Wall -Wextra -std=c11 -g -Isrc -o indk \
     src/object.c src/scanner.c src/table.c src/value.c src/vm.c -lm
 ```
 
-### 5. Release Build
-
+### 5. Build Rilis
 Dengan optimization untuk performance:
 
 ```bash
@@ -1047,13 +1028,12 @@ gcc -Wall -Wextra -std=c11 -O3 -Isrc -o indk \
 
 ---
 
-## Next Steps Setelah Install
-
+## Langkah Berikutnya Setelah Pemasangan
 1. **Read Documentation**
    - Baca `website/panduan/01_PERKENALAN.md` untuk overview
-   - Baca `website/panduan/03_PANDUAN_SINTAKS.md` untuk learn syntax
+   - Baca `website/panduan/03_PANDUAN_SINTAKS.md` untuk learn sintaks
 
-2. **Run Examples**
+2. **Run Contoh**
    ```bash
    ./indk examples/hello.idk
    ./indk examples/fibonacci.idk
@@ -1068,16 +1048,15 @@ gcc -Wall -Wextra -std=c11 -O3 -Isrc -o indk \
 4. **Join Community**
    - Star repository di GitHub
    - Follow project updates
-   - Share feedback
+   - Share masukan
 
 5. **Consider Contributing**
    - Read `website/panduan/04_KONTRIBUSI.md`
-   - Submit improvements
+   - Submit perbaikan
 
 ---
 
-## Quick Reference - OS Comparison
-
+## Rujukan Ringkas — Perbandingan Sistem Operasi
 | Aspek | Windows | Linux | macOS |
 |-------|---------|-------|-------|
 | **Compiler** | MinGW-w64 | GCC (apt) | Xcode CLT |
@@ -1086,12 +1065,11 @@ gcc -Wall -Wextra -std=c11 -O3 -Isrc -o indk \
 | **Run REPL** | `.\indk.exe` | `./indk` | `./indk` |
 | **Run File** | `.\indk.exe file.idk` | `./indk file.idk` | `./indk file.idk` |
 | **Add to PATH** | Environment Vars | ~/.bashrc | ~/.zprofile |
-| **Make** | MinGW make or choco | apt install make | Xcode CLT |
+| **Make** | MinGW make atau choco | apt install make | Xcode CLT |
 
 ---
 
-## Support
-
+## Dukungan
 Jika mengalami masalah:
 
 1. **Check Dokumentasi**

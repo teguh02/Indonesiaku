@@ -1,6 +1,6 @@
 # Dokumentasi Bahasa Pemrograman Indonesiaku
 
-Selamat datang di dokumentasi lengkap **Bahasa Pemrograman Indonesiaku** - Bahasa pemrograman yang menggunakan syntax dan keyword dalam bahasa Indonesia.
+Selamat datang di dokumentasi lengkap **Bahasa Pemrograman Indonesiaku** - Bahasa pemrograman yang menggunakan sintaks dan keyword dalam bahasa Indonesia.
 
 ---
 
@@ -22,7 +22,7 @@ Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem oper
 - Build dari source
 
 ### 3. [Panduan Sintaks](03_PANDUAN_SINTAKS.md)
-Panduan lengkap penggunaan syntax dan grammar Bahasa Pemrograman Indonesiaku dengan contoh-contoh praktis.
+Panduan lengkap penggunaan sintaks dan grammar Bahasa Pemrograman Indonesiaku dengan contoh-contoh praktis.
 - Tipe data (angka, string, boolean, kosong, list, kamus)
 - Variabel & scope, operator, assignment gabungan
 - Percabangan (`jika`/`jika_lain`/`selain`)
@@ -49,14 +49,14 @@ Informasi tentang pembuat dan maintainer Bahasa Pemrograman Indonesiaku.
 - Philosophy on contribution
 - Kontak & social media
 
-### 6. [Penutup & Resources](06_PENUTUP.md)
+### 6. [Penutup & Sumber Daya](06_PENUTUP.md)
 Kesimpulan, tips, dan informasi tambahan.
 - Key takeaways untuk berbagai level
 - FAQ komprehensif
 - Troubleshooting guide
-- Resources & external links
+- Sumber daya & external links
 - Next steps
-- Support & feedback channels
+- Support & masukan channels
 
 ### 7. [Referensi Pustaka Standar](07_PUSTAKA_STANDAR.md)
 Daftar lengkap fungsi bawaan dan pustaka standar.
@@ -134,15 +134,14 @@ cetak("Hasil penjumlahan:", jumlah)
 
 ---
 
-## 📄 License
-
+## 📄 Lisensi
 Bahasa Pemrograman Indonesiaku dirilis di bawah **MIT License**. Silakan lihat file [LICENSE](../LICENSE) untuk detail lengkap.
 
 ---
 
 ## 🙏 Terima Kasih
 
-Terima kasih telah menggunakan Bahasa Pemrograman Indonesiaku. Kami sangat menghargai feedback, saran, dan kontribusi Anda!
+Terima kasih telah menggunakan Bahasa Pemrograman Indonesiaku. Kami sangat menghargai masukan, saran, dan kontribusi Anda!
 
 ---
 

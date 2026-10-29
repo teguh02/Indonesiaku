@@ -2,7 +2,7 @@
 
 ## Apa itu Bahasa Pemrograman Indonesiaku?
 
-**Bahasa Pemrograman Indonesiaku** adalah bahasa pemrograman yang dirancang khusus untuk memberikan pengalaman pemrograman dalam bahasa Indonesia. Dengan menggunakan keywords dan syntax yang familiar dalam bahasa Indonesia, bahasa ini memudahkan pemula lokal untuk belajar pemrograman tanpa hambatan bahasa.
+**Bahasa Pemrograman Indonesiaku** adalah bahasa pemrograman yang dirancang khusus untuk memberikan pengalaman pemrograman dalam bahasa Indonesia. Dengan menggunakan keywords dan sintaks yang familiar dalam bahasa Indonesia, bahasa ini memudahkan pemula lokal untuk belajar pemrograman tanpa hambatan bahasa.
 
 ---
 
@@ -58,8 +58,7 @@ Menjadi bahasa pemrograman pertama yang fully mendukung pemrograman dalam Bahasa
 
 ---
 
-## Roadmap Pengembangan
-
+## Peta Jalan Pengembangan
 Semua fitur inti (list, kamus, kelas/OOP, exception, modul, GC, File I/O, soket)
 sudah **terimplementasi** di v1.0.0, dan tahap stabilisasi (`akhirnya`,
 `lewati`, kesalahan yang bisa ditangkap, teks Unicode) sudah selesai.
@@ -96,7 +95,7 @@ Source Code (.idk)
 - **Architecture**: Stack-based bytecode VM
 - **Optimization**: -O2 flag
 
-### Performance
+### Kinerja
 - Lightning fast compilation
 - Efficient bytecode execution
 - Memory safe (no buffer overflows)
@@ -217,12 +216,11 @@ Bahasa Pemrograman Indonesiaku dirilis di bawah **MIT License**, yang berarti:
 
 ---
 
-## Kontribusi & Support
-
+## Kontribusi & Dukungan
 Kami sangat menerima:
 - 🐛 Bug reports
 - 💡 Feature suggestions
-- 📝 Documentation improvements
+- 📝 Documentation perbaikan
 - 🔧 Code contributions
 - 📢 Word of mouth support
 
@@ -230,12 +228,12 @@ Lihat file **KONTRIBUSI.md** untuk detail lengkap.
 
 ---
 
-## Resources
+## Sumber Daya
 
 - **GitHub Repository**: https://github.com/teguh02/Indonesiaku
 - **Issue Tracker**: https://github.com/teguh02/Indonesiaku/issues
 - **Documentation**: `website/panduan/` folder
-- **Examples**: `/examples` folder
+- **Contoh**: `/examples` folder
 
 ---
 

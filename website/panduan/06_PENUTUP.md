@@ -1,6 +1,6 @@
-# 6. Penutup - Kesimpulan & Resources
+# 6. Penutup - Kesimpulan & Sumber Daya
 
-Terima kasih telah membaca dokumentasi Bahasa Pemrograman Indonesiaku! Bagian ini menyimpulkan key points dan memberikan resources tambahan.
+Terima kasih telah membaca dokumentasi Bahasa Pemrograman Indonesiaku! Bagian ini merangkum pokok-pokok penting dan menyediakan sumber daya tambahan.
 
 ---
 
@@ -9,10 +9,10 @@ Terima kasih telah membaca dokumentasi Bahasa Pemrograman Indonesiaku! Bagian in
 1. [Kesimpulan](#kesimpulan)
 2. [Key Takeaways](#key-takeaways)
 3. [FAQ - Pertanyaan Umum](#faq---pertanyaan-umum)
-4. [Troubleshooting](#troubleshooting)
-5. [Resources](#resources)
-6. [Next Steps](#next-steps)
-7. [Support & Feedback](#support--feedback)
+4. [Troubleshooting](#pemecahan-masalah)
+5. [Sumber Daya](#sumber-daya)
+6. [Next Steps](#langkah-berikutnya)
+7. [Dukungan & Masukan](#dukungan--masukan)
 
 ---
 
@@ -67,18 +67,17 @@ Documentation:  Lengkap & komprehensif
 
 ### Untuk Intermediate Users
 
-1. **Explore patterns** - Lihat bagaimana implement advanced patterns
+1. **Telusuri patterns** - Lihat bagaimana implement advanced patterns
 2. **Optimize code** - Think tentang efficiency dan performance
 3. **Debug skills** - Learn to use REPL untuk test ideas
 4. **Read tests** - Test cases adalah great examples
-5. **Contribute** - Submit improvements dan share knowledge
+5. **Contribute** - Submit perbaikan dan share knowledge
 
-### Untuk Advanced Users
-
-1. **Compiler internals** - Pahami bagaimana VM works
-2. **Optimization** - Explore performance improvements
-3. **Language design** - Participate dalam planning v0.2+
-4. **Mentoring** - Help others dalam community
+### Untuk Pengguna Mahir
+1. **Internal kompilator** — pahami cara kerja VM
+2. **Optimasi** — telusuri peluang peningkatan kinerja
+3. **Perancangan bahasa** — ikut serta merencanakan fitur berikutnya
+4. **Mentoring** - Help others dalam komunitas
 5. **Innovation** - Propose dan implement new features
 
 ### Universal Lessons
@@ -134,8 +133,7 @@ cetak(teks)
 函数 test() { }
 ```
 
-### Pertanyaan tentang Performance
-
+### Pertanyaan tentang Kinerja
 **Q: Seberapa cepat Indonesiaku?**
 
 A: Bergantung pada algoritma. Untuk simple operations:
@@ -147,10 +145,10 @@ A: Bergantung pada algoritma. Untuk simple operations:
 
 A: Tips untuk optimize code:
 
-1. **Minimize allocations** - Reuse strings where possible
-2. **Avoid deep recursion** - Use loops for performance
+1. **Kurangi alokasi** — pakai ulang teks bila memungkinkan
+2. **Hindari rekursi terlalu dalam** — pakai perulangan demi kinerja
 3. **Cache calculations** - Don't recalculate same values
-4. **Profile code** - Understand where time is spent
+4. **Profil kode** — pahami di mana waktu eksekusi dihabiskan
 
 ```indonesiaku-takjalan
 # ❌ Slow - Rekursi dalam loop
@@ -175,7 +173,7 @@ selagi i < 1000 {
 
 A: Ya! Contributions welcome. Process:
 1. Discuss idea di GitHub issues
-2. Get feedback dari maintainers
+2. Get masukan dari maintainers
 3. Implement dengan tests
 4. Submit PR dengan documentation
 
@@ -212,12 +210,9 @@ A: Program yang valid umumnya tetap valid di versi berikutnya. Lihat
 
 ---
 
-## Troubleshooting
-
-### Common Issues
-
-#### Build Issues
-
+## Pemecahan Masalah
+### Kendala Umum
+#### Kendala Pembangunan
 **Error: `gcc: command not found`**
 
 ```bash
@@ -234,7 +229,7 @@ xcode-select --install
 **Error: `cannot open source file "common.h"`**
 
 ```bash
-# Make sure you're in correct directory
+# Pastikan Anda berada di direktori yang benar
 cd c:\Users\teguh\Works\myself\Indonesiaku
 
 # Cara termudah: gunakan Makefile
@@ -245,8 +240,7 @@ gcc -Wall -Wextra -std=c11 -O2 -Isrc -o indk.exe src/*.c -lm
 # (di Windows tambahkan -lws2_32 untuk soket)
 ```
 
-#### Runtime Issues
-
+#### Kendala Saat Dijalankan
 **Error: `ERROR at 'cetak': Undefined variable.`**
 
 Solution: Variable tidak dideklarasikan sebelum digunakan.
@@ -281,7 +275,7 @@ fungsi factorial(n) {
 
 **Error: `Unexpected token`**
 
-Check syntax - mungkin ada typo atau missing punctuation:
+Check sintaks - mungkin ada typo atau missing punctuation:
 
 ```indonesiaku-takjalan
 # ❌ ERROR - Missing {
@@ -294,8 +288,7 @@ jika x > 0 {
 }
 ```
 
-#### Test Issues
-
+#### Kendala Pengujian
 **Test output tidak sesuai ekspektasi**
 
 ```bash
@@ -312,7 +305,7 @@ cat examples/test_file.idk   # Linux/Mac
 
 ---
 
-## Resources
+## Sumber Daya
 
 ### Official Documentation
 
@@ -321,14 +314,14 @@ cat examples/test_file.idk   # Linux/Mac
 | **README** | `/README.md` | Project overview |
 | **Perkenalan** | `website/panduan/01_PERKENALAN.md` | Vision & features |
 | **Instalasi** | `website/panduan/02_INSTALASI.md` | Installation guide (Windows, Linux, macOS) |
-| **Syntax Guide** | `website/panduan/03_PANDUAN_SINTAKS.md` | Complete syntax reference |
+| **Syntax Guide** | `website/panduan/03_PANDUAN_SINTAKS.md` | Complete sintaks reference |
 | **Contributing** | `website/panduan/04_KONTRIBUSI.md` | How to contribute |
 | **Creator** | `website/panduan/05_CREATOR.md` | About Teguh Rijanandi |
-| **Resources** | `website/panduan/06_PENUTUP.md` | FAQ, troubleshooting, resources |
+| **Sumber Daya** | `website/panduan/06_PENUTUP.md` | FAQ, pemecahan masalah, sumber daya |
 | **Pustaka Standar** | `website/panduan/07_PUSTAKA_STANDAR.md` | Referensi fungsi bawaan & pustaka |
 | **Changelog** | `/CHANGELOG.md` | Version history |
 
-### Examples & Tests
+### Contoh & Tests
 
 Semua contoh program ada di folder `examples/`. Sebagian:
 
@@ -357,7 +350,7 @@ examples/
 
 Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
-### External Resources
+### Sumber Daya Eksternal
 
 #### Programming Language Design
 
@@ -377,7 +370,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 - **Pro Git** - https://git-scm.com/book/en/v2/
 - **GitHub Guides** - https://guides.github.com/
 
-### Community Resources
+### Community Sumber daya
 
 - **GitHub Repository** - https://github.com/teguh02/Indonesiaku
 - **Issue Tracker** - Report bugs & request features
@@ -386,8 +379,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
 ---
 
-## Next Steps
-
+## Langkah Berikutnya
 ### Untuk Beginners
 
 1. **Install & Setup**
@@ -405,7 +397,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
    ./indk examples/hello.idk
    ```
 
-4. **Explore Examples**
+4. **Telusuri Contoh**
    - Baca `examples/variabel.idk`
    - Baca `examples/fungsi.idk`
    - Baca `examples/fibonacci.idk`
@@ -418,7 +410,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 6. **Join Community**
    - Star repository
    - Follow project updates
-   - Share feedback
+   - Share masukan
 
 ### Untuk Intermediate Users
 
@@ -431,7 +423,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
    - Practice semua examples
    - Modify examples to experiment
 
-3. **Explore Advanced Examples**
+3. **Telusuri Advanced Contoh**
    - Study `examples/advanced/` programs
    - Understand complex algorithms
    - Rewrite algorithms dengan own approach
@@ -446,8 +438,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
    - Understand lexer, parser, VM
    - Debug programs dengan REPL
 
-### Untuk Advanced Users
-
+### Untuk Pengguna Mahir
 1. **Plan Next Version**
    - Participate dalam v0.2 planning
    - Discuss feature proposals
@@ -456,7 +447,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 2. **Optimize Performance**
    - Profile existing code
    - Propose optimizations
-   - Implement improvements
+   - Implement perbaikan
 
 3. **Expand Language**
    - Add new features
@@ -472,18 +463,17 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
 1. Start: `website/panduan/01_PERKENALAN.md` - Understand vision
 2. Install: `website/panduan/02_INSTALASI.md` - Setup pada OS Anda
-3. Learn: `website/panduan/03_PANDUAN_SINTAKS.md` - Master syntax
+3. Learn: `website/panduan/03_PANDUAN_SINTAKS.md` - Master sintaks
 4. Practice: Run examples dan create programs
 5. Understand: Read source code dari `src/`
-6. Contribute: `website/panduan/04_KONTRIBUSI.md` - Make improvements
+6. Contribute: `website/panduan/04_KONTRIBUSI.md` - Make perbaikan
 7. Share: Tell others about Indonesiaku!
 
 ---
 
-## Support & Feedback
+## Dukungan & Masukan
 
-### Reporting Issues
-
+### Melaporkan Kendala
 Temukan bug? Report di GitHub Issues:
 
 ```
@@ -495,22 +485,20 @@ Body:
 - Environment info
 ```
 
-### Suggesting Features
-
+### Mengusulkan Fitur
 Ada ide fitur? Buat issue:
 
 ```
 Title: [FEATURE] Deskripsi
 Body:
-- Why is this useful?
+- Mengapa ini bermanfaat?
 - How would it work?
 - Examples of usage
 ```
 
-### Getting Help
-
+### Mendapatkan Bantuan
 - **Documentation** - Check `website/panduan/` folder first
-- **Examples** - Run related examples untuk solutions
+- **Contoh** - Run related examples untuk solutions
 - **REPL** - Test ideas interactively
 - **Community** - Ask di GitHub Discussions
 - **Email** - teguhrijanandi02@gmail.com untuk urgent questions
@@ -519,18 +507,16 @@ Body:
 
 Feedback sangat valuable untuk improvement!
 
-- **Positive feedback** - What worked well?
-- **Critical feedback** - What can be improved?
-- **Suggestions** - Ideas untuk future
+- **Positive masukan** - What worked well?
+- **Masukan kritis** — apa yang masih bisa diperbaiki?
+- **Saran** — gagasan untuk pengembangan berikutnya
 - **Bug reports** - Issues yang ditemukan
-- **Use cases** - How are you using Indonesiaku?
+- **Kasus pemakaian** — bagaimana Anda memakai Indonesiaku?
 
 ---
 
-## License & Attribution
-
-### Open Source License
-
+## Lisensi & Atribusi
+### Lisensi Sumber Terbuka
 Bahasa Pemrograman Indonesiaku dirilis di bawah lisensi MIT. Anda bebas:
 
 - ✅ Use commercially
@@ -553,51 +539,58 @@ Repository: https://github.com/teguh02/Indonesiaku
 Version: 1.0.0
 ```
 
-### Credits
-
+### Penghargaan
 Terima kasih kepada:
 
-- **Contributors** - Semua yang submit improvements
+- **Contributors** - Semua yang submit perbaikan
 - **Testers** - Yang help find dan fix bugs
-- **Community** - Support dan feedback
+- **Community** - Support dan masukan
 - **Educators** - Menggunakan untuk teaching
 - **Inspirations** - Authors dari language lain
 
 ---
 
-## Inspirational Quotes
+## Kutipan Inspiratif
 
-### About Programming
+### Tentang Pemrograman
 
 > "The best way to learn programming is by reading good code and writing a lot of code."
-> — Unknown
+> — Anonim
+>
+> *Cara terbaik belajar memrogram adalah dengan membaca kode yang baik dan menulis banyak kode.*
 
 > "Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
 > — Martin Fowler
+>
+> *Siapa pun bisa menulis kode yang dimengerti komputer. Pemrogram yang baik menulis kode yang dimengerti manusia.*
 
-### About Language Design
+### Tentang Perancangan Bahasa
 
 > "A programming language is a tool for expressing ideas. The better the tool, the better the ideas we can express."
-> — Unknown
+> — Anonim
+>
+> *Bahasa pemrograman adalah alat untuk mengungkapkan gagasan. Makin baik alatnya, makin baik gagasan yang bisa kita ungkapkan.*
 
 > "Language shapes thought, and thought shapes language."
 > — Benjamin Whorf
+>
+> *Bahasa membentuk pikiran, dan pikiran membentuk bahasa.*
 
-### From the Creator
+### Dari Sang Pembuat
 
-> "Indonesiaku dimulai dengan pertanyaan sederhana: bisakah programming lebih accessible dalam bahasa ibu kita? Dari pertanyaan itu lahir journey untuk membuktikan bahwa Indonesia bisa create teknologi, bukan hanya menggunakannya."
+> "Indonesiaku berawal dari satu pertanyaan sederhana: bisakah pemrograman lebih terjangkau dalam bahasa ibu kita? Dari pertanyaan itu lahir perjalanan untuk membuktikan bahwa Indonesia mampu menciptakan teknologi, bukan sekadar memakainya."
 > — Teguh Rijanandi
 
 ---
 
-## Final Words
+## Kata Penutup
 
 ### Terima Kasih
 
 Terima kasih telah:
 - Membaca dokumentasi ini
 - Menggunakan Bahasa Pemrograman Indonesiaku
-- Memberikan feedback & bug reports
+- Memberikan masukan & bug reports
 - Berkontribusi ke proyek
 - Mendukung visi Indonesiaku
 
@@ -606,10 +599,10 @@ Terima kasih telah:
 Kami mengundang Anda untuk:
 
 1. **Try Indonesiaku** - Download dan experiment
-2. **Share feedback** - Tell us what you think
+2. **Beri masukan** — sampaikan pendapat Anda
 3. **Contribute** - Help make it better
 4. **Spread the word** - Tell friends & colleagues
-5. **Use in education** - Teach programming with Indonesiaku
+5. **Pakai untuk mengajar** — ajarkan pemrograman dengan Indonesiaku
 
 ### Keep Learning & Creating
 
@@ -617,7 +610,7 @@ Tidak peduli apakah Anda pemula atau advanced:
 
 ```
 "Keep learning. Keep creating. Keep pushing boundaries.
-The next great programming language might be created by YOU!"
+Bahasa pemrograman hebat berikutnya bisa jadi lahir dari TANGAN ANDA!"
 ```
 
 ---
@@ -626,14 +619,13 @@ The next great programming language might be created by YOU!"
 
 Sekarang Anda siap untuk memulai journey dengan Bahasa Pemrograman Indonesiaku!
 
-### Quick Start Checklist
-
+### Daftar Periksa Mulai Cepat
 - [ ] Download/clone repository
 - [ ] Build project
 - [ ] Run hello world example
-- [ ] Read syntax guide
+- [ ] Read sintaks guide
 - [ ] Write your first program
-- [ ] Join community
+- [ ] Join komunitas
 - [ ] Consider contributing
 - [ ] Share with others!
 
