@@ -16,7 +16,7 @@
 #define UINT8_COUNT (UINT8_MAX + 1)
 
 // Application version
-#define INDK_VERSION "1.3.2"
+#define INDK_VERSION "1.4.0"
 
 // Universal newlines, like Python reading a source file: "\r\n" and a lone
 // "\r" become "\n", in place; returns the new length. Without this a file

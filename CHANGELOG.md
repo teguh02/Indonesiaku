@@ -7,6 +7,8 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Belum dirilis]
 
+## [1.4.0] - 2026-10-29
+
 ### Ditambahkan
 
 - **Parsing badan request** di `pustaka/web.idk` — `application/json`,
@@ -59,6 +61,14 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   mengembalikan perilaku lama. `303` dilanjutkan dengan `GET`, `307`/`308`
   mempertahankan metode dan badan. Rantai berputar terdeteksi tanpa menunggu
   batas lompatan habis. (Fase 11)
+
+### Diperbaiki
+
+- **Server HTTP menggantung pada badan ber-UTF-8.** `web.baca_permintaan()`
+  menunggu `panjang(badan) >= Content-Length`, padahal `panjang()` menghitung
+  **karakter** sedangkan `Content-Length` menghitung **byte**. Setiap badan
+  dengan karakter non-ASCII (mis. `"kopi ☕"`) membuat server menunggu byte
+  yang tidak akan pernah datang. Kini dihitung dalam byte.
 
 ### Berubah
 
