@@ -9,6 +9,11 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Ditambahkan
 
+- **BLOB (data biner) SQLite** kini didukung masuk-keluar, memakai konvensi
+  `pustaka/bita.idk`: daftar bulat 0..255. Daftar kosong `[]` menjadi BLOB
+  berukuran nol, berbeda dari `kosong` yang menjadi `NULL`. Elemen tidak sah
+  ditolak dengan galat yang menyebut posisinya. Melengkapi langkah 2
+  Fase 10. (Fase 10)
 - `db_batas_tunggu(db, milidetik)` — mengatur lama koneksi SQLite menunggu
   ketika basis data sedang dikunci koneksi lain. Bawaan SQLite adalah `0`,
   artinya penulisan langsung gagal begitu ada kunci; kini pemanggil bisa

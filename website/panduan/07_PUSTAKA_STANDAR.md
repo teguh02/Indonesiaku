@@ -616,6 +616,23 @@ Semua kesalahan dapat ditangkap `coba/kecuali`.
 | `db_batal(db)` | Batalkan transaksi |
 | `db_tutup(db)` | Tutup handle; aman dipanggil dua kali |
 
+**Data biner (BLOB).** Bahasa ini belum punya tipe byte tersendiri, jadi BLOB
+memakai konvensi yang sama dengan modul `bita`: **daftar bulat 0..255**.
+
+```indonesiaku-takjalan
+impor bita
+
+db_eksekusi(db, "INSERT INTO berkas VALUES (?)", [[137, 80, 78, 71]])
+
+# Teks <-> biner lewat modul bita:
+db_eksekusi(db, "INSERT INTO berkas VALUES (?)", [bita.ke_bita("halo")])
+```
+
+Daftar kosong `[]` menjadi BLOB berukuran nol — itu **berbeda** dari `kosong`
+yang menjadi `NULL`. Elemen di luar `0..255` ditolak dengan `GalatNilai` yang
+menyebut posisinya.
+
+
 `params` boleh dikosongkan bila SQL tidak memakai `?`.
 
 **Selalu pakai `?`, jangan pernah merangkai SQL dengan `+`.** Nilai yang

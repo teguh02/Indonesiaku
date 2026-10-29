@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include "native.h"
@@ -134,6 +135,19 @@ static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
                 nativeRaiseKelas(vm.galatNilai, "db: angka parameter di luar rentang tepat");
                 return NULL;
             }
+        } else if (IS_LIST(v)) {
+            // BLOB: daftar bulat 0..255, mengikuti konvensi pustaka/bita.idk.
+            ObjList* blob = AS_LIST(v);
+            for (int j = 0; j < blob->items.count; j++) {
+                Value b = blob->items.values[j];
+                if (!IS_INT(b) || AS_INT(b) < 0 || AS_INT(b) > 255) {
+                    // Sebut posisinya: mencari satu byte salah dalam daftar
+                    // panjang tanpa indeks adalah tebak-tebakan.
+                    nativeRaiseKelas(vm.galatNilai,
+                                     "db: elemen bita ke-%d harus bulat 0..255", j);
+                    return NULL;
+                }
+            }
         } else if (!IS_STRING(v) && !IS_BOOL(v) && !IS_KOSONG(v)) {
             nativeRaiseKelas(vm.galatTipe, "db: tipe parameter tidak didukung");
             return NULL;
@@ -199,6 +213,27 @@ static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
             double n = AS_NUMBER(v);
             rc = floor(n) == n ? sqlite3_bind_int64(stmt, i + 1, (sqlite3_int64)n)
                               : sqlite3_bind_double(stmt, i + 1, n);
+        } else if (IS_LIST(v)) {
+            ObjList* blob = AS_LIST(v);
+            // SQLITE_TRANSIENT: SQLite menyalin sendiri, karena buffer di
+            // bawah ini hidup hanya sampai akhir iterasi dan daftar sumbernya
+            // bisa dikumpulkan GC setelah bind.
+            if (blob->items.count == 0) {
+                rc = sqlite3_bind_zeroblob(stmt, i + 1, 0);
+            } else {
+                // ponytail: satu Value per byte boros untuk BLOB besar;
+                // ganti dengan tipe byte asli saat Fase 23 menyediakannya.
+                unsigned char* buf = (unsigned char*)malloc((size_t)blob->items.count);
+                if (buf == NULL) {
+                    nativeRaiseKelas(vm.galatNilai, "db: memori habis untuk bita");
+                    goto fail;
+                }
+                for (int j = 0; j < blob->items.count; j++) {
+                    buf[j] = (unsigned char)AS_INT(blob->items.values[j]);
+                }
+                rc = sqlite3_bind_blob(stmt, i + 1, buf, blob->items.count, SQLITE_TRANSIENT);
+                free(buf);
+            }
         } else {
             ObjString* s = AS_STRING(v);
             rc = sqlite3_bind_text(stmt, i + 1, s->chars, s->length, SQLITE_TRANSIENT);
@@ -231,8 +266,23 @@ static Value dbColumn(sqlite3_stmt* stmt, int i) {
             if (text == NULL) return dbError(sqlite3_db_handle(stmt));
             return OBJ_VAL(copyString(text, length));
         }
+        case SQLITE_BLOB: {
+            const unsigned char* data = (const unsigned char*)sqlite3_column_blob(stmt, i);
+            int length = sqlite3_column_bytes(stmt, i);
+            // BLOB nol byte: sqlite3_column_blob() boleh mengembalikan NULL,
+            // dan itu BUKAN galat -- bedakan dari NULL kolom (ditangani di atas).
+            ObjList* list = newList();
+            // K19: daftar ini belum terjangkau akar mana pun, sedangkan
+            // writeValueArray() di bawah mengalokasikan dan bisa memicu GC.
+            push(OBJ_VAL(list));
+            for (int j = 0; j < length; j++) {
+                writeValueArray(&list->items, INT_VAL((int64_t)data[j]));
+            }
+            pop();
+            return OBJ_VAL(list);
+        }
         default:
-            nativeRaiseKelas(vm.galatTipe, "db: BLOB belum didukung");
+            nativeRaiseKelas(vm.galatTipe, "db: tipe kolom tidak dikenal");
             return KOSONG_VAL;
     }
 }
