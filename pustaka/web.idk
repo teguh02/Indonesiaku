@@ -1,0 +1,251 @@
+# pustaka/web.idk - Modul server HTTP (routing + middleware).
+#
+# Pemakaian:
+#     impor web
+#     variabel app = web.Aplikasi()
+#     app.rute("GET", "/todos/:id", fungsi(req) { ... })
+#     variabel respons = app.tangani(mentah)
+#
+# app.tangani() bekerja pada TEKS request dan mengembalikan TEKS respons,
+# tidak menyentuh soket. Dengan begitu server dapat diuji tanpa jaringan,
+# dan gelung soket yang sudah ada tetap dipakai apa adanya.
+
+impor "pustaka/teks.idk"
+impor "pustaka/http.idk"
+
+kelas GalatWeb < Galat {
+    init(pesan) { diri.pesan = pesan }
+}
+
+# _web_nilai_heks(c) -> 0..15, atau -1 bila bukan digit heksadesimal.
+fungsi _web_nilai_heks(c) {
+    jika c >= "0" dan c <= "9" { kembalikan ord(c) - 48 }
+    jika c >= "a" dan c <= "f" { kembalikan ord(c) - 87 }
+    jika c >= "A" dan c <= "F" { kembalikan ord(c) - 55 }
+    kembalikan 0 - 1
+}
+
+# _web_dekode_persen(t) -> teks dengan %XX dan + didekode.
+# Urutan % yang tidak sah dibiarkan apa adanya: menolak seluruh permintaan
+# karena satu karakter aneh lebih merugikan daripada meneruskannya.
+fungsi _web_dekode_persen(t) {
+    variabel hasil = ""
+    variabel i = 0
+    variabel n = panjang(t)
+    selagi i < n {
+        variabel c = t[i]
+        jika c == "+" {
+            hasil = hasil + " "
+            i = i + 1
+        } jika_lain c == "%" dan i + 2 < n {
+            variabel tinggi = _web_nilai_heks(t[i + 1])
+            variabel rendah = _web_nilai_heks(t[i + 2])
+            jika tinggi == 0 - 1 atau rendah == 0 - 1 {
+                hasil = hasil + c
+                i = i + 1
+            } selain {
+                hasil = hasil + chr(tinggi * 16 + rendah)
+                i = i + 3
+            }
+        } selain {
+            hasil = hasil + c
+            i = i + 1
+        }
+    }
+    kembalikan hasil
+}
+
+# _web_urai_query(q) -> kamus. Kunci berulang: yang terakhir menang.
+fungsi _web_urai_query(q) {
+    variabel hasil = kamus()
+    jika q == "" {
+        kembalikan hasil
+    }
+    untuk bagian dalam teks_pisah(q, "&") {
+        jika bagian != "" {
+            variabel sama = teks_cari(bagian, "=")
+            jika sama == 0 - 1 {
+                hasil[_web_dekode_persen(bagian)] = ""
+            } selain {
+                variabel nama = potong(bagian, 0, sama)
+                variabel nilai = potong(bagian, sama + 1, panjang(bagian) - sama - 1)
+                hasil[_web_dekode_persen(nama)] = _web_dekode_persen(nilai)
+            }
+        }
+    }
+    kembalikan hasil
+}
+
+# _web_segmen(path) -> daftar segmen tanpa yang kosong.
+fungsi _web_segmen(path) {
+    variabel hasil = []
+    untuk s dalam teks_pisah(path, "/") {
+        jika s != "" {
+            tambah(hasil, s)
+        }
+    }
+    kembalikan hasil
+}
+
+# _web_cocok(pola, path) -> kamus params bila cocok, atau kosong.
+# Segmen :nama cocok dengan SATU segmen. Jumlah segmen harus sama persis,
+# jadi /a/:b tidak cocok dengan /a/b/c.
+fungsi _web_cocok(pola, path) {
+    variabel p = _web_segmen(pola)
+    variabel j = _web_segmen(path)
+    jika panjang(p) != panjang(j) {
+        kembalikan kosong
+    }
+    variabel params = kamus()
+    variabel i = 0
+    selagi i < panjang(p) {
+        variabel seg = p[i]
+        jika panjang(seg) > 1 dan seg[0] == ":" {
+            params[potong(seg, 1, panjang(seg) - 1)] = _web_dekode_persen(j[i])
+        } jika_lain seg != j[i] {
+            kembalikan kosong
+        }
+        i = i + 1
+    }
+    kembalikan params
+}
+
+# json(kode, teks_json) -> teks respons HTTP.
+fungsi json(kode, badan) {
+    kembalikan http_response_json(kode, badan)
+}
+
+# teks(kode, isi) -> teks respons HTTP text/plain.
+fungsi teks(kode, isi) {
+    kembalikan http_response(kode, "text/plain; charset=utf-8", isi)
+}
+
+# html(kode, isi) -> teks respons HTTP text/html.
+fungsi html(kode, isi) {
+    kembalikan http_response(kode, "text/html; charset=utf-8", isi)
+}
+
+kelas Aplikasi {
+    init() {
+        diri.rute_daftar = []        # [metode, pola, penangan]
+        diri.middleware = []
+        diri.penangan_galat = kosong
+    }
+
+    # rute(metode, pola, penangan) -> diri (bisa dirantai).
+    # penangan(req) harus mengembalikan teks respons HTTP.
+    rute(metode, pola, penangan) {
+        jika jenis(pola) != "teks" atau pola == "" atau pola[0] != "/" {
+            naikkan GalatWeb("pola rute harus teks yang diawali '/'")
+        }
+        jika tidak bisa_dipanggil(penangan) {
+            naikkan GalatWeb("penangan rute harus bisa dipanggil")
+        }
+        tambah(diri.rute_daftar, [huruf_besar(metode), pola, penangan])
+        kembalikan diri
+    }
+
+    # gunakan(mw) -> diri. mw(req, teruskan); panggil teruskan(req) untuk
+    # meneruskan, atau kembalikan respons untuk menghentikan rantai.
+    gunakan(mw) {
+        jika tidak bisa_dipanggil(mw) {
+            naikkan GalatWeb("middleware harus bisa dipanggil")
+        }
+        tambah(diri.middleware, mw)
+        kembalikan diri
+    }
+
+    # galat(penangan) -> diri. penangan(req, e) menimpa respons 500 bawaan.
+    galat(penangan) {
+        jika tidak bisa_dipanggil(penangan) {
+            naikkan GalatWeb("penangan galat harus bisa dipanggil")
+        }
+        diri.penangan_galat = penangan
+        kembalikan diri
+    }
+
+    # _cari(req) -> teks respons.
+    _cari(req) {
+        variabel metode = req["metode"]
+        variabel path = req["path"]
+        variabel metode_lain = []
+        untuk r dalam diri.rute_daftar {
+            variabel params = _web_cocok(r[1], path)
+            jika params bukan adalah kosong {
+                jika r[0] == metode {
+                    req["params"] = params
+                    kembalikan r[2](req)
+                }
+                jika tidak r[0] dalam metode_lain {
+                    tambah(metode_lain, r[0])
+                }
+            }
+        }
+        # Path cocok tapi metode tidak: 405, bukan 404. Membedakan
+        # "tidak ada" dari "metode salah" sangat membantu saat debug.
+        jika panjang(metode_lain) > 0 {
+            variabel izin = teks_gabung(metode_lain, ", ")
+            variabel badan = "Metode tidak boleh"
+            variabel kepala = "HTTP/1.1 405 Method Not Allowed\r\nAllow: " + izin
+            kepala = kepala + "\r\nContent-Type: text/plain; charset=utf-8"
+            kepala = kepala + "\r\nContent-Length: " + ke_teks(_http_panjang_byte(badan))
+            kepala = kepala + "\r\nConnection: close\r\n\r\n"
+            kembalikan kepala + badan
+        }
+        kembalikan teks(404, "Tidak ditemukan")
+    }
+
+    # tangani(mentah) -> teks respons HTTP untuk satu request mentah.
+    tangani(mentah) {
+        variabel req = kosong
+        coba {
+            req = http_urai_request(mentah)
+        } kecuali Galat sebagai e {
+            kembalikan teks(400, "Permintaan tidak sah")
+        }
+        jika req["metode"] == "" {
+            kembalikan teks(400, "Permintaan tidak sah")
+        }
+        # Parser hanya memisah baris pertama per spasi, jadi "bukan http sama
+        # sekali" lolos sebagai metode/path/versi. Path HTTP yang sah selalu
+        # diawali "/" (bentuk absolut dan CONNECT tidak didukung di sini).
+        jika panjang(req["path"]) == 0 atau req["path"][0] != "/" {
+            kembalikan teks(400, "Permintaan tidak sah")
+        }
+
+        # Pisahkan query dari path.
+        variabel path = req["path"]
+        variabel tanya = teks_cari(path, "?")
+        jika tanya == 0 - 1 {
+            req["query"] = kamus()
+        } selain {
+            req["query"] = _web_urai_query(potong(path, tanya + 1, panjang(path) - tanya - 1))
+            req["path"] = potong(path, 0, tanya)
+        }
+        req["params"] = kamus()
+
+        coba {
+            kembalikan diri._jalankan(req, 0)
+        } kecuali Galat sebagai e {
+            jika diri.penangan_galat bukan adalah kosong {
+                kembalikan diri.penangan_galat(req, e)
+            }
+            # Detail galat TIDAK bocor ke klien; operator melihatnya di stderr.
+            tulis_galat("web: galat menangani " + req["metode"] + " "
+                        + req["path"] + ": " + ke_teks(e))
+            kembalikan teks(500, "Galat internal")
+        }
+    }
+
+    # _jalankan(req, i) -> jalankan middleware ke-i lalu seterusnya.
+    _jalankan(req, i) {
+        jika i >= panjang(diri.middleware) {
+            kembalikan diri._cari(req)
+        }
+        variabel app = diri
+        variabel berikut = i + 1
+        kembalikan diri.middleware[i](req, fungsi(r) {
+            kembalikan app._jalankan(r, berikut)
+        })
+    }
+}
