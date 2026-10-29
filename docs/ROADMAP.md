@@ -427,6 +427,42 @@ Bagian ini mengurutkan pekerjaan yang **belum selesai**, bukan mengubah status f
 - Server demo yang ada tetap berfungsi; penguatan server baru tidak boleh dianggap jaminan aman untuk internet publik tanpa audit, pengujian beban, dan deployment dengan isolasi yang sesuai.
 - Tidak boleh mengubah status menjadi ✅ sebelum bukti implementasi, pengujian lintas platform yang relevan, dan dokumentasi tersedia.
 
+## Jalur Server-Side Rendering (SSR) dan Template HTML
+
+**Tujuan:** memungkinkan aplikasi web Indonesiaku menghasilkan halaman HTML dinamis di sisi server, dengan berkas `.idk` untuk logika aplikasi dan berkas `.html` untuk tampilan. HTML/CSS/JavaScript mengikuti standar browser. **Tidak mencakup frontend SPA, virtual DOM, atau framework seperti React.** Ini pengembangan yang direncanakan, belum fitur yang dapat digunakan pada rilis saat ini.
+
+**Batas arsitektur:** `pustaka/templat.idk` (atau modul template yang setara berdasarkan evaluasi implementasi) harus dapat digunakan secara independen dari HTTP server. Integrasi dengan routing/response mengikuti backlog WEB-01 dalam bagian **Jalur pengembangan aplikasi web & database** di atas. `http_response(..., "text/html; charset=utf-8", ...)` sudah dapat mengirim HTML mentah; hal itu **bukan** template engine.
+
+### Backlog SSR
+
+| ID | Fitur | Hasil yang ditargetkan | Status |
+|---|---|---|---|
+| SSR-01 | Desain sintaks dan API template | Spesifikasi `render(nama, data)`, `render_teks(sumber, data)`, direktori pencarian, format galat, dan ekstensi `.html`; dokumentasikan perbedaan nilai `kosong`, daftar, kamus, dan objek | ⬜ belum |
+| SSR-02 | Pemuat dan parser template | Membaca template, mengenali teks literal, `{{ ekspresi }}`, dan tag `{% ... %}` dengan lokasi baris/kolom; batas ukuran dan kedalaman parsing | ⬜ belum |
+| SSR-03 | Interpolasi variabel | `{{ nama }}`, akses properti/kunci secara terkontrol, nilai hilang menghasilkan galat yang jelas; tanpa evaluasi kode Indonesiaku arbitrer | ⬜ belum |
+| SSR-04 | Percabangan dan perulangan | `{% jika kondisi %}...{% selain %}...{% akhirjika %}` serta `{% untuk item dalam daftar %}...{% akhiruntuk %}`, lengkap dengan scoping dan nested block | ⬜ belum |
+| SSR-05 | Include dan inheritance | `include` parsial, layout dasar, block/override, serta deteksi siklus include dan path traversal | ⬜ belum |
+| SSR-06 | HTML auto-escaping | Escape otomatis `& < > " '` pada konteks teks/atribut yang didukung; kebijakan nilai HTML tepercaya eksplisit dan aman, tanpa bypass default | ⬜ belum |
+| SSR-07 | Integrasi HTTP SSR | Router/controller menghasilkan respons `text/html; charset=utf-8` menggunakan engine; status, header, dan error page terstruktur; tidak mewajibkan web framework besar | ⬜ belum |
+| SSR-08 | Cache template | Cache hasil parsing berdasarkan identitas sumber dan kebijakan invalidasi (mode pengembangan vs produksi), batas memori, serta tes kesetaraan output | ⬜ belum |
+| SSR-09 | Diagnostics dan pengujian | Galat template dengan path/baris/kolom; golden tests untuk nested control flow, Unicode, escaping, include, cache, galat sintaks, dan input berbahaya | ⬜ belum |
+| SSR-10 | Dokumentasi dan contoh aplikasi | Contoh halaman dinamis SSR menggunakan data lokal/SQLite, petunjuk deployment dengan reverse proxy, dan panduan pemisahan controller dari tampilan | ⬜ belum |
+
+### Urutan dan keputusan implementasi
+
+1. **Tahap inti:** SSR-01 → SSR-02 → SSR-03 → SSR-04 → SSR-06. Prioritaskan keamanan escaping sejak awal; jangan merilis interpolasi variabel tanpa escaping bawaan.
+2. **Tahap komposisi:** SSR-05, termasuk aturan root direktori template dan pembatasan akses jalur berkas.
+3. **Tahap integrasi:** SSR-07 bergantung pada WEB-01 (router dan request/response); SSR tetap dapat dipakai untuk merender teks secara mandiri.
+4. **Tahap pematangan:** SSR-08 → SSR-09 → SSR-10, dilengkapi stress/negative tests dan dokumentasi pengguna.
+
+### Kriteria penerimaan
+
+- Template tidak mengeksekusi kode sumber `.idk` atau memanggil fungsi native secara bebas; ekspresi dan tag harus dibatasi secara eksplisit dalam spesifikasi.
+- Default aman terhadap XSS untuk nilai dari pengguna pada konteks yang didukung. Konteks seperti JavaScript inline, CSS inline, dan URL dinamis membutuhkan aturan escaping/validasi tersendiri; dokumentasikan atau tolak bila belum aman.
+- Include/inheritance hanya mencari berkas di root yang diizinkan, mencegah traversal maupun pembacaan berkas di luar root. Uji template salah format, nilai hilang, siklus include, serta ukuran/kedalaman ekstrem.
+- Pastikan pemuatan/rendering tidak membocorkan handle atau objek GC. Uji multi-platform dan jalankan sanitizer saat menyentuh lapisan runtime.
+- Sintaks dan API pada tabel merupakan **usulan**, bukan janji kompatibilitas; finalisasi lewat `docs/RENCANA_FITUR/` sebelum implementasi. Setelah selesai, perbarui `examples/`, `tests/`, `website/panduan/`, `CHANGELOG.md`, dan ekstensi VS Code sesuai checklist roadmap.
+
 ## Cara memakai berkas ini
 
 1. Untuk mengusulkan fitur: salin `RENCANA_FITUR/TEMPLATE.md`, isi, lalu
