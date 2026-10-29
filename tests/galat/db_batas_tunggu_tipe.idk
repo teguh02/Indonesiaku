@@ -1,0 +1,2 @@
+variabel db = db_buka(":memory:")
+db_batas_tunggu(db, "selamanya")

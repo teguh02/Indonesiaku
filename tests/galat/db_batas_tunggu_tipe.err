@@ -1,0 +1,4 @@
+db_batas_tunggu(): milidetik harus bulat
+[baris 2, kolom 32] dalam skrip
+    db_batas_tunggu(db, "selamanya")
+                                   ^

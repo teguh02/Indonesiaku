@@ -218,12 +218,14 @@ Rebuild dan jalankan untuk melihat debug output.
    git clone https://github.com/yourusername/Indonesiaku.git
    ```
 
-2. **Buat Branch Baru**
+2. **Buat Branch Baru** sesuai [standar penamaan branch, commit, dan PR](docs/ATURAN_BRANCH_DAN_PR.md) yang berlaku bagi manusia maupun AI coding agent:
    ```bash
-   git checkout -b fitur-baru
+   git switch -c fitur/123-nama-fitur
    # atau
-   git checkout -b fix-bug-123
+   git switch -c perbaikan/123-deskripsi-bug
+   # dokumentasi: docs/topik; keamanan: keamanan/topik; rilis: rilis/1.4.0
    ```
+   Nomor issue hanya dicantumkan bila benar-benar ada; gunakan deskripsi tanpa nomor jika tidak ada.
 
 3. **Tulis Kode**
    - Ikuti panduan coding style

@@ -1,0 +1,12 @@
+http://b.id/q
+http://a.id/z
+http://a.id/x/z
+http://a.id:8080/x/z
+http://a.id/x/z
+http://a.id/z
+Location kosong ditolak
+https://a.id/aman
+https ditolak: butuh TLS
+maks_pengalihan negatif ditolak
+maks_pengalihan pecahan ditolak
+maks_pengalihan teks ditolak

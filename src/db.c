@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include "native.h"
@@ -72,6 +74,29 @@ Value nativeFnDbTutup(int count, Value* args) {
     return KOSONG_VAL;
 }
 
+// SQLite's default busy timeout is 0: a lock held by another connection for
+// even a millisecond fails the write immediately. Let callers opt into
+// waiting. Deliberately a separate builtin, not an extra db_buka() argument,
+// so the existing argument-count error message stays unchanged.
+Value nativeFnDbBatasTunggu(int count, Value* args) {
+    ObjDb* db = dbHandle(count, args, 2, 2);
+    if (db == NULL) return KOSONG_VAL;
+    if (!IS_INT(args[1])) {
+        nativeRaiseKelas(vm.galatTipe, "db_batas_tunggu(): milidetik harus bulat");
+        return KOSONG_VAL;
+    }
+    int64_t ms = AS_INT(args[1]);
+    // sqlite3_busy_timeout takes a C int; narrowing silently would install a
+    // different timeout than the caller asked for.
+    if (ms < 0 || ms > INT_MAX) {
+        nativeRaiseKelas(vm.galatNilai,
+                         "db_batas_tunggu(): milidetik harus antara 0 dan %d", INT_MAX);
+        return KOSONG_VAL;
+    }
+    if (sqlite3_busy_timeout(db->db, (int)ms) != SQLITE_OK) return dbError(db->db);
+    return KOSONG_VAL;
+}
+
 // Do not prepare the tail: some PRAGMAs take effect at prepare time.
 static bool dbTailEmpty(const char* tail) {
     while (*tail) {
@@ -109,6 +134,19 @@ static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
             if (!isfinite(n) || (floor(n) == n && fabs(n) > DB_EXACT_INT)) {
                 nativeRaiseKelas(vm.galatNilai, "db: angka parameter di luar rentang tepat");
                 return NULL;
+            }
+        } else if (IS_LIST(v)) {
+            // BLOB: daftar bulat 0..255, mengikuti konvensi pustaka/bita.idk.
+            ObjList* blob = AS_LIST(v);
+            for (int j = 0; j < blob->items.count; j++) {
+                Value b = blob->items.values[j];
+                if (!IS_INT(b) || AS_INT(b) < 0 || AS_INT(b) > 255) {
+                    // Sebut posisinya: mencari satu byte salah dalam daftar
+                    // panjang tanpa indeks adalah tebak-tebakan.
+                    nativeRaiseKelas(vm.galatNilai,
+                                     "db: elemen bita ke-%d harus bulat 0..255", j);
+                    return NULL;
+                }
             }
         } else if (!IS_STRING(v) && !IS_BOOL(v) && !IS_KOSONG(v)) {
             nativeRaiseKelas(vm.galatTipe, "db: tipe parameter tidak didukung");
@@ -175,6 +213,27 @@ static sqlite3_stmt* dbPrepare(sqlite3* db, Value sql, Value params) {
             double n = AS_NUMBER(v);
             rc = floor(n) == n ? sqlite3_bind_int64(stmt, i + 1, (sqlite3_int64)n)
                               : sqlite3_bind_double(stmt, i + 1, n);
+        } else if (IS_LIST(v)) {
+            ObjList* blob = AS_LIST(v);
+            // SQLITE_TRANSIENT: SQLite menyalin sendiri, karena buffer di
+            // bawah ini hidup hanya sampai akhir iterasi dan daftar sumbernya
+            // bisa dikumpulkan GC setelah bind.
+            if (blob->items.count == 0) {
+                rc = sqlite3_bind_zeroblob(stmt, i + 1, 0);
+            } else {
+                // ponytail: satu Value per byte boros untuk BLOB besar;
+                // ganti dengan tipe byte asli saat Fase 23 menyediakannya.
+                unsigned char* buf = (unsigned char*)malloc((size_t)blob->items.count);
+                if (buf == NULL) {
+                    nativeRaiseKelas(vm.galatNilai, "db: memori habis untuk bita");
+                    goto fail;
+                }
+                for (int j = 0; j < blob->items.count; j++) {
+                    buf[j] = (unsigned char)AS_INT(blob->items.values[j]);
+                }
+                rc = sqlite3_bind_blob(stmt, i + 1, buf, blob->items.count, SQLITE_TRANSIENT);
+                free(buf);
+            }
         } else {
             ObjString* s = AS_STRING(v);
             rc = sqlite3_bind_text(stmt, i + 1, s->chars, s->length, SQLITE_TRANSIENT);
@@ -207,8 +266,23 @@ static Value dbColumn(sqlite3_stmt* stmt, int i) {
             if (text == NULL) return dbError(sqlite3_db_handle(stmt));
             return OBJ_VAL(copyString(text, length));
         }
+        case SQLITE_BLOB: {
+            const unsigned char* data = (const unsigned char*)sqlite3_column_blob(stmt, i);
+            int length = sqlite3_column_bytes(stmt, i);
+            // BLOB nol byte: sqlite3_column_blob() boleh mengembalikan NULL,
+            // dan itu BUKAN galat -- bedakan dari NULL kolom (ditangani di atas).
+            ObjList* list = newList();
+            // K19: daftar ini belum terjangkau akar mana pun, sedangkan
+            // writeValueArray() di bawah mengalokasikan dan bisa memicu GC.
+            push(OBJ_VAL(list));
+            for (int j = 0; j < length; j++) {
+                writeValueArray(&list->items, INT_VAL((int64_t)data[j]));
+            }
+            pop();
+            return OBJ_VAL(list);
+        }
         default:
-            nativeRaiseKelas(vm.galatTipe, "db: BLOB belum didukung");
+            nativeRaiseKelas(vm.galatTipe, "db: tipe kolom tidak dikenal");
             return KOSONG_VAL;
     }
 }

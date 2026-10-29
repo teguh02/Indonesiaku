@@ -1,0 +1,55 @@
+# Batas tunggu (busy timeout) SQLite.
+# SQLite mengunci seluruh berkas saat menulis. Bawaannya 0: kunci yang dipegang
+# proses lain langsung membuat penulisan gagal. db_batas_tunggu() membuat
+# koneksi bersedia menunggu dulu.
+
+variabel db = db_buka(":memory:")
+
+# Menyetel batas tunggu tidak mengembalikan apa pun.
+cetak(db_batas_tunggu(db, 3000))
+
+# 0 mengembalikan perilaku bawaan: langsung menyerah.
+db_batas_tunggu(db, 0)
+cetak("bawaan dipulihkan")
+
+# Batas tunggu tidak mengubah operasi biasa.
+db_batas_tunggu(db, 2000)
+db_eksekusi(db, "CREATE TABLE catatan (id INTEGER PRIMARY KEY, isi TEXT)")
+db_eksekusi(db, "INSERT INTO catatan (isi) VALUES (?)", ["halo"])
+cetak(db_ambil_satu(db, "SELECT isi FROM catatan"))
+
+# Argumen salah menimbulkan galat yang bisa ditangkap.
+coba {
+    db_batas_tunggu(db, -1)
+} kecuali GalatNilai {
+    cetak("negatif ditolak")
+}
+
+coba {
+    db_batas_tunggu(db, 1.5)
+} kecuali GalatTipe {
+    cetak("desimal ditolak")
+}
+
+coba {
+    db_batas_tunggu(db, "lama")
+} kecuali GalatTipe {
+    cetak("teks ditolak")
+}
+
+# sqlite3_busy_timeout memakai int C, jadi nilai raksasa ditolak
+# alih-alih dipersempit diam-diam menjadi batas yang keliru.
+coba {
+    db_batas_tunggu(db, 99999999999)
+} kecuali GalatNilai {
+    cetak("di luar jangkauan ditolak")
+}
+
+db_tutup(db)
+
+# Handle yang sudah ditutup juga ditolak.
+coba {
+    db_batas_tunggu(db, 10)
+} kecuali GalatNilai {
+    cetak("handle tertutup ditolak")
+}

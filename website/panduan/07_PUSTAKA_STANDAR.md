@@ -610,10 +610,28 @@ Semua kesalahan dapat ditangkap `coba/kecuali`.
 | `db_ambil_satu(db, sql, params)` | Baris pertama saja → kamus, atau `kosong` bila tidak ada |
 | `db_baris_terpengaruh(db)` | Jumlah baris yang diubah pernyataan terakhir |
 | `db_id_terakhir(db)` | `id` baris hasil INSERT terakhir |
+| `db_batas_tunggu(db, ms)` | Lama menunggu (milidetik) bila basis data sedang dikunci koneksi lain. Bawaan `0` = langsung gagal |
 | `db_mulai(db)` | Mulai transaksi |
 | `db_komit(db)` | Simpan transaksi |
 | `db_batal(db)` | Batalkan transaksi |
 | `db_tutup(db)` | Tutup handle; aman dipanggil dua kali |
+
+**Data biner (BLOB).** Bahasa ini belum punya tipe byte tersendiri, jadi BLOB
+memakai konvensi yang sama dengan modul `bita`: **daftar bulat 0..255**.
+
+```indonesiaku-takjalan
+impor bita
+
+db_eksekusi(db, "INSERT INTO berkas VALUES (?)", [[137, 80, 78, 71]])
+
+# Teks <-> biner lewat modul bita:
+db_eksekusi(db, "INSERT INTO berkas VALUES (?)", [bita.ke_bita("halo")])
+```
+
+Daftar kosong `[]` menjadi BLOB berukuran nol — itu **berbeda** dari `kosong`
+yang menjadi `NULL`. Elemen di luar `0..255` ditolak dengan `GalatNilai` yang
+menyebut posisinya.
+
 
 `params` boleh dikosongkan bila SQL tidak memakai `?`.
 
@@ -846,7 +864,7 @@ impor "pustaka/http.idk"
 | `http_urai_request(teks)` | Parse request HTTP mentah → kamus `{metode, path, versi, header, badan}` |
 | `http_response(kode, tipe_konten, badan)` | Bangun string response HTTP |
 | `http_response_json(kode, badan)` | Pintasan response JSON |
-| `http_ambil(url, metode="GET", kepala=kosong, badan="")` | **Klien**: kirim permintaan → objek `Respons` |
+| `http_ambil(url, metode="GET", kepala=kosong, badan="", maks_pengalihan=5)` | **Klien**: kirim permintaan → objek `Respons`. Pengalihan 301/302/303/307/308 diikuti sampai `maks_pengalihan` lompatan; beri `0` untuk menerima respons pengalihan apa adanya |
 | `http_urai_url(url)` | `[host, port, jalur]` dari url `http://` |
 
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
@@ -892,6 +910,28 @@ waktu** (server yang diam membuat program menunggu); url dengan nama pengguna
 (`user@host`) atau alamat IPv6 berkurung (`[::1]`) belum didukung. CR/LF di
 url, metode, atau header ditolak dengan `GalatJaringan` supaya tidak bisa
 menyisipkan header. Di playground (`--sandbox`) koneksi keluar ditolak.
+
+**Pengalihan.** `http_ambil()` mengikuti `301`, `302`, `303`, `307`, dan `308`
+sampai lima lompatan. `303` selalu dilanjutkan dengan `GET` tanpa badan;
+`307`/`308` mempertahankan metode dan badan. `301`/`302` juga mempertahankan
+metode — peramban mengubahnya menjadi `GET`, tetapi itu kekeliruan historis
+yang justru melahirkan `307`/`308`.
+
+`.url` pada hasil berisi URL **terakhir**, bukan yang diminta:
+
+```indonesiaku-takjalan
+variabel r = http_ambil("http://contoh.id/lama")
+cetak(r.status)   # 200, bukan 301
+cetak(r.url)      # alamat setelah pengalihan
+
+# Jangan ikuti, lihat respons aslinya:
+cetak(http_ambil("http://contoh.id/lama", "GET", kosong, "", 0).status)   # 301
+```
+
+Rantai yang berputar atau melewati batas lompatan menimbulkan
+`GalatJaringan` yang menyebutkan rantai URL-nya. Pengalihan tanpa header
+`Location` dikembalikan apa adanya — itu server yang melanggar spesifikasi,
+dan Anda berhak melihatnya.
 
 ### 2.7 `pustaka/koleksi.idk` — wadah data
 

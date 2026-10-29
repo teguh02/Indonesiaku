@@ -419,7 +419,8 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 **Langkah pengembangan:**
 
 1. [ ] Buat docs/RENCANA_FITUR/database_multi_driver.md; tetapkan API, semantik transaksi, tipe nilai/NULL/BLOB, error, koneksi dan lifecycle GC. Jangan mengubah builtin db_* tanpa kebijakan kompatibilitas.
-2. [ ] Audit src/db.c, src/object.c/h, src/native.c/h, dan examples/db_sqlite.idk. Lengkapi SQLite: dukungan data biner/BLOB masuk-keluar, busy timeout, pengujian transaksi dan penutupan handle idempoten (**WDB-01**).
+2. [x] Audit src/db.c, src/object.c/h, src/native.c/h, dan examples/db_sqlite.idk. Lengkapi SQLite: dukungan data biner/BLOB masuk-keluar, busy timeout, pengujian transaksi dan penutupan handle idempoten (**WDB-01**).
+   - Selesai 1.4.0: BLOB masuk-keluar sebagai daftar bulat 0..255 (konvensi `pustaka/bita.idk`), `db_batas_tunggu()`, transaksi diuji di `examples/db_sqlite.idk`, dan `db_tutup()` idempoten (diverifikasi). Diuji dengan ASan/UBSan dan `-DDEBUG_STRESS_GC`.
 3. [ ] Buat driver MySQL/MariaDB (**WDB-02**) menggunakan client library teruji dan prepared statements; dukung host/port, opsi TLS dengan verifikasi, timeout, penanganan koneksi terputus, query satu/banyak baris, perubahan baris dan ID terakhir sesuai dialek.
 4. [ ] Buat driver PostgreSQL (**WDB-03**) memakai libpq atau pustaka kompatibel yang terawat; pastikan parameter binding, hasil data bertipe, transaksi, timeout dan validasi TLS/hostname.
 5. [ ] Rancang API abstraksi bersama (**WDB-04**), misalnya db.koneksi(konfigurasi), koneksi.eksekusi(sql, parameter), koneksi.ambil_satu, koneksi.ambil_semua, koneksi.mulai/komit/batal/tutup. Nama final diputuskan lewat dokumen rencana; API SQLite lama tetap berjalan.
@@ -440,6 +441,7 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 
 1. [ ] Buat docs/RENCANA_FITUR/http_web_server.md dan https_tls.md. Tentukan kontrak Request/Response, router, middleware, batas request, model konkurensi dan pemakaian reverse proxy.
 2. [ ] Perluas klien pustaka/http.idk sehingga http_ambil dapat menerima https:// (**P2**). Pilih TLS library yang terawat; aktifkan verifikasi CA dan hostname secara default; timeout dan redirect dibatasi; insecure-by-default dilarang.
+   - Sebagian: mengikuti pengalihan 301/302/303/307/308 sudah ada (1.4.0). **HTTPS/TLS masih terblokir** — biner rilis saat ini hanya menaut libc/libm (`LDFLAGS = -lm`), jadi menaut OpenSSL mengakhiri sifat mandiri itu. Keputusan arsitektur, bukan detail implementasi.
 3. [ ] Rancang modul server HTTP dengan routing metode/path, parameter URL, query string, header, status, error handler dan middleware (**WEB-01**). Hindari ekspose detail socket mentah pada API yang digunakan pemula.
 4. [ ] Tambahkan parsing application/json, application/x-www-form-urlencoded, multipart/form-data, file upload streaming dan batas ukuran/bentuk input (**WEB-02**).
 5. [ ] Implementasikan static file handler untuk CSS, JavaScript, gambar dan aset lain, MIME yang benar, cache header, penolakan traversal serta symlink berbahaya (**WEB-03**). Ini **bukan** template HTML.
@@ -864,6 +866,10 @@ kalkulator-indonesiaku/
 | 24 | Unicode, i18n, konfigurasi, YAML/TOML dan serialisasi | ⬜ belum |
 | 25 | CLI framework, HTTP test client, MQTT/RabbitMQ opsional | ⬜ belum |
 | Lintas fase | Validasi 3 aplikasi nyata (SSR, REST API, otomasi server) | ⬜ belum |
+
+## Standar branch dan kontribusi
+
+Semua pekerjaan roadmap, baik oleh manusia maupun AI coding agent, mengikuti [Aturan Branch, Commit, dan Pull Request](ATURAN_BRANCH_DAN_PR.md). Pilih nama branch berdasarkan jenis pekerjaan (`fitur/`, `perbaikan/`, `docs/`, `keamanan/`, `test/`, `rilis/` dan lain-lain), bukan berdasarkan siapa yang mengerjakannya. Fase/target rilis tidak otomatis mengubah branch menjadi `rilis/`; gunakan `rilis/` hanya untuk persiapan publikasi versi. Merge membutuhkan review, pengujian dan pemenuhan kriteria fase.
 
 ## Cara memakai berkas ini
 
