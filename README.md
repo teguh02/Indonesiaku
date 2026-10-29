@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="website/assets/logo-idk-lang.png" alt="Idk-Lang — Bahasa Pemrograman Indonesiaku" width="640">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="website/assets/logo-idk-lang-transparan.png">
+    <img src="website/assets/logo-idk-lang.png" alt="Idk-Lang — Bahasa Pemrograman Indonesiaku" width="640">
+  </picture>
 </p>
 
 # 🇮🇩 Bahasa Pemrograman Indonesiaku
