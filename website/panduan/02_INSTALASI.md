@@ -18,6 +18,48 @@ Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem oper
 
 ---
 
+## Cara Tercepat: Paket Siap Pasang
+
+Sejak 1.4.0 setiap rilis menyertakan paket yang bisa langsung dipasang, tanpa
+perlu kompilasi atau mengatur PATH manual.
+
+| Sistem | Berkas | Perintah |
+|---|---|---|
+| Debian/Ubuntu | `indonesiaku_<versi>_amd64.deb` | `sudo dpkg -i indonesiaku_<versi>_amd64.deb` |
+| Windows | `Indonesiaku-Setup-<versi>.exe` | klik dua kali |
+| Linux lain, macOS | `indk-<os>.tar.gz` | ekstrak lalu salin `indk` |
+
+Unduh di [halaman rilis](https://github.com/teguh02/Indonesiaku-Lang/releases/latest).
+
+### Memperbarui tanpa menghapus versi lama
+
+**Tidak perlu meng-uninstall versi lama.** Paket baru menimpa yang lama:
+
+- `.deb` — `sudo dpkg -i` versi baru; dpkg melaporkan `Unpacking ... over (versi lama)`
+- Windows — installer memakai AppId yang sama, jadi memasang di tempat yang sama
+- `.tar.gz` — salin `indk` yang baru menimpa yang lama
+
+Cek apakah ada versi lebih baru:
+
+```bash
+indk --periksa-pembaruan
+```
+
+Perintah itu menampilkan versi terpasang, versi terbaru, dan perintah
+pemutakhiran yang sesuai sistem operasi Anda. Perintah ini **hanya berjalan
+saat Anda memintanya** — menjalankan skrip biasa tidak pernah menghubungi
+jaringan.
+
+> Versi sebelum 1.4.0 belum memiliki `--periksa-pembaruan`. Pengguna versi
+> lama perlu memeriksa halaman rilis secara manual satu kali; setelah
+> diperbarui, perintah di atas tersedia.
+
+**Catatan:** `--periksa-pembaruan` memerlukan `curl` (sudah tersedia di
+Windows 10+, macOS, dan hampir semua distribusi Linux). Bila `curl` tidak ada
+atau jaringan mati, perintah ini menampilkan URL halaman rilis, bukan gagal.
+
+---
+
 ## Persiapan Umum
 
 Sebelum melakukan instalasi, siapkan beberapa tools yang diperlukan:

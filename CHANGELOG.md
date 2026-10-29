@@ -20,6 +20,23 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   sampai `Content-Length` terpenuhi. `soket_baca()` hanya mengembalikan apa
   yang sudah tiba (maks ~64 KB per panggilan), sehingga gelung soket yang
   memanggilnya sekali **memotong badan besar diam-diam**. (Fase 11)
+- **Paket siap pasang per sistem operasi.** Rilis kini menyertakan
+  `indonesiaku_<versi>_amd64.deb` (Debian/Ubuntu) dan
+  `Indonesiaku-Setup-<versi>.exe` (Windows) selain arsip `.tar.gz`/`.zip`
+  yang sudah ada. Arsip **tidak dihapus**: distribusi non-Debian dan macOS
+  tetap memakainya.
+- **`indk --periksa-pembaruan`** — membandingkan versi terpasang dengan rilis
+  terbaru di GitHub, lalu mencetak perintah pemutakhiran yang sesuai sistem
+  operasi yang sedang berjalan. Hanya berjalan bila diminta; menjalankan
+  skrip biasa tidak pernah menghubungi jaringan. Tidak ada pembaruan
+  otomatis: mengganti biner yang sedang berjalan butuh hak root, verifikasi
+  tanda tangan, dan berisiko meninggalkan pasangan setengah jadi.
+- **`pustaka/pembaruan.idk`** — perbandingan versi numerik per komponen
+  (`1.9.0 < 1.10.0`, yang salah bila dibandingkan sebagai teks) dan penyusun
+  pesan pemutakhiran per OS. Hanya menyarankan berkas yang benar-benar ada
+  pada rilis tersebut, sehingga pengguna versi lama tidak diarahkan ke
+  URL 404.
+
 - **Modul server HTTP `pustaka/web.idk`** — routing metode/path, parameter
   URL (`/siswa/:id`), query string yang diurai beserta dekode persen,
   middleware berantai, dan penangan galat. Path cocok tetapi metode tidak

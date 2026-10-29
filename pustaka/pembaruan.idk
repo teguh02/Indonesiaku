@@ -1,0 +1,211 @@
+# pustaka/pembaruan.idk - Membandingkan versi dan menyusun saran pemutakhiran.
+#
+# Tidak mengunduh apa pun dan tidak mengganti berkas apa pun. Tugasnya hanya
+# memberi tahu bahwa versi baru ada, lalu mencetak perintah yang tepat untuk
+# sistem operasi yang sedang berjalan.
+#
+# Pembaruan otomatis sengaja TIDAK dibuat: mengganti biner yang sedang
+# berjalan butuh hak root, perlu verifikasi tanda tangan, dan bisa
+# meninggalkan pasangan setengah jadi bila terputus di tengah jalan.
+
+impor "pustaka/teks.idk"
+impor "pustaka/json.idk"
+impor proses
+
+variabel REPO = "teguh02/Indonesiaku-Lang"
+
+# urai_versi(v) -> daftar bulat. Awalan "v" dan akhiran pra-rilis diabaikan.
+# "v1.10.2" -> [1, 10, 2] ; "1.4" -> [1, 4, 0] ; "1.4.0-beta.1" -> [1, 4, 0]
+fungsi urai_versi(v) {
+    variabel t = teks_pangkas(v)
+    jika panjang(t) > 0 dan (t[0] == "v" atau t[0] == "V") {
+        t = potong(t, 1, panjang(t) - 1)
+    }
+    # Buang penanda pra-rilis/build: 1.4.0-beta.1 dan 1.4.0+abc.
+    untuk pemisah dalam ["-", "+"] {
+        variabel p = teks_cari(t, pemisah)
+        jika p != 0 - 1 {
+            t = potong(t, 0, p)
+        }
+    }
+    variabel hasil = []
+    untuk b dalam teks_pisah(t, ".") {
+        variabel n = 0
+        coba {
+            n = ke_bulat(teks_pangkas(b))
+        } kecuali e {
+            # Komponen non-angka dianggap 0; lebih baik daripada menggagalkan
+            # seluruh pengecekan hanya karena format tak terduga.
+            n = 0
+        }
+        tambah(hasil, n)
+    }
+    # Samakan panjang jadi 3 supaya "1.4" dan "1.4.0" setara.
+    selagi panjang(hasil) < 3 {
+        tambah(hasil, 0)
+    }
+    kembalikan hasil
+}
+
+# banding_versi(a, b) -> -1 bila a < b, 0 bila sama, 1 bila a > b.
+#
+# Dibandingkan per komponen SEBAGAI ANGKA. Membandingkan sebagai teks salah:
+# "1.9.0" > "1.10.0" secara leksikografis, padahal 1.10.0 lebih baru.
+fungsi banding_versi(a, b) {
+    variabel va = urai_versi(a)
+    variabel vb = urai_versi(b)
+    variabel n = panjang(va)
+    jika panjang(vb) > n {
+        n = panjang(vb)
+    }
+    variabel i = 0
+    selagi i < n {
+        variabel x = 0
+        variabel y = 0
+        jika i < panjang(va) {
+            x = va[i]
+        }
+        jika i < panjang(vb) {
+            y = vb[i]
+        }
+        jika x < y {
+            kembalikan 0 - 1
+        }
+        jika x > y {
+            kembalikan 1
+        }
+        i = i + 1
+    }
+    kembalikan 0
+}
+
+# ada_pembaruan(terpasang, terbaru) -> benar bila terbaru lebih baru.
+fungsi ada_pembaruan(terpasang, terbaru) {
+    kembalikan banding_versi(terpasang, terbaru) < 0
+}
+
+# saran_pemutakhiran(os, versi, aset) -> teks perintah untuk OS tersebut.
+#
+# os mengikuti nilai sistem_nama(): "linux", "windows", "macos".
+# aset adalah daftar nama berkas yang BENAR-BENAR ada pada rilis itu. Rilis
+# lama tidak punya .deb/.exe, jadi menyarankannya akan mengirim pengguna ke
+# URL 404. Daftar kosong berarti "tidak tahu" -> sarankan bentuk terlengkap.
+fungsi saran_pemutakhiran(os, versi, aset = []) {
+    # Tag rilis berawalan "v" tetapi nama berkas tidak. Menerima kedua bentuk
+    # ("1.4.0" atau "v1.4.0") mencegah URL "vv1.4.0" yang 404.
+    variabel polos = versi
+    jika panjang(polos) > 0 dan (polos[0] == "v" atau polos[0] == "V") {
+        polos = potong(polos, 1, panjang(polos) - 1)
+    }
+    variabel dasar = "https://github.com/" + REPO + "/releases/download/v" + polos
+    variabel tahu = panjang(aset) > 0
+
+    jika os == "linux" {
+        variabel berkas = "indonesiaku_" + polos + "_amd64.deb"
+        variabel l = ""
+        jika tidak tahu atau berkas dalam aset {
+            l = l + "Cara memperbarui (Debian/Ubuntu, paket .deb):\n"
+            l = l + "  curl -LO " + dasar + "/" + berkas + "\n"
+            l = l + "  sudo dpkg -i " + berkas + "\n\n"
+            l = l + "Distribusi lain (tanpa dpkg):\n"
+        } selain {
+            l = l + "Cara memperbarui (Linux):\n"
+        }
+        l = l + "  curl -LO " + dasar + "/indk-linux.tar.gz\n"
+        l = l + "  tar -xzf indk-linux.tar.gz\n\n"
+        l = l + "Tidak perlu menghapus versi lama; paket baru menimpa yang lama."
+        kembalikan l
+    }
+
+    jika os == "windows" {
+        variabel pemasang = "Indonesiaku-Setup-" + polos + ".exe"
+        variabel w = "Cara memperbarui (Windows):\n"
+        jika tidak tahu atau pemasang dalam aset {
+            w = w + "  Unduh dan jalankan:\n"
+            w = w + "  " + dasar + "/" + pemasang + "\n\n"
+            w = w + "Installer menimpa pasangan lama di tempat yang sama.\n"
+            w = w + "Tidak perlu meng-uninstall versi lama lebih dulu."
+            kembalikan w
+        }
+        w = w + "  " + dasar + "/indk-windows.zip\n\n"
+        w = w + "Ekstrak lalu timpa berkas lama Anda."
+        kembalikan w
+    }
+
+    jika os == "macos" {
+        variabel m = "Cara memperbarui (macOS):\n"
+        m = m + "  curl -LO " + dasar + "/indk-macos.tar.gz\n"
+        m = m + "  tar -xzf indk-macos.tar.gz\n\n"
+        m = m + "Salin berkas indk ke lokasi lama Anda untuk menimpanya;\n"
+        m = m + "tidak perlu menghapus versi lama lebih dulu."
+        kembalikan m
+    }
+
+    kembalikan "Unduh rilis terbaru di https://github.com/" + REPO + "/releases/latest"
+}
+
+# pesan_pembaruan(os, terpasang, terbaru, aset) -> laporan siap cetak.
+# Murni: tidak menyentuh jaringan, sehingga dapat diuji sebagai golden.
+fungsi pesan_pembaruan(os, terpasang, terbaru, aset = []) {
+    variabel p = "Versi terpasang : " + terpasang + "\n"
+    p = p + "Versi terbaru   : " + terbaru + "\n\n"
+    jika ada_pembaruan(terpasang, terbaru) {
+        kembalikan p + "Pembaruan tersedia.\n\n" + saran_pemutakhiran(os, terbaru, aset)
+    }
+    jika banding_versi(terpasang, terbaru) > 0 {
+        kembalikan p + "Versi Anda lebih baru daripada rilis terakhir (versi pengembangan)."
+    }
+    kembalikan p + "Versi Anda sudah yang terbaru."
+}
+
+# ambil_rilis_terbaru() -> kamus {tag, aset}, atau kosong bila gagal.
+#
+# pustaka/http.idk menolak HTTPS (biner ini tidak menaut TLS), jadi curl
+# dipakai sebagai pengangkut. curl tersedia di Windows 10+, macOS, dan
+# hampir semua Linux. Bila tidak ada, kosong dikembalikan dan pemanggil
+# menampilkan URL manual.
+fungsi ambil_rilis_terbaru() {
+    variabel url = "https://api.github.com/repos/" + REPO + "/releases/latest"
+    variabel hasil = kosong
+    coba {
+        hasil = proses.jalankan(["curl", "-sS", "-L", "-m", "15", "-H", "Accept: application/vnd.github+json", url])
+    } kecuali e {
+        kembalikan kosong
+    }
+    jika hasil.kode_keluar != 0 {
+        kembalikan kosong
+    }
+    variabel data = kosong
+    coba {
+        data = json_urai(hasil.keluaran)
+    } kecuali e {
+        kembalikan kosong
+    }
+    jika "tag_name" tidak dalam data {
+        kembalikan kosong
+    }
+    variabel nama_aset = []
+    jika "assets" dalam data {
+        untuk a dalam data["assets"] {
+            jika "name" dalam a {
+                tambah(nama_aset, a["name"])
+            }
+        }
+    }
+    variabel r = kamus()
+    r["tag"] = data["tag_name"]
+    r["aset"] = nama_aset
+    kembalikan r
+}
+
+# periksa(os, terpasang) -> teks laporan siap cetak (menyentuh jaringan).
+fungsi periksa(os, terpasang) {
+    variabel rilis = ambil_rilis_terbaru()
+    jika rilis == kosong {
+        variabel g = "Tidak dapat memeriksa pembaruan (jaringan atau curl tidak tersedia).\n\n"
+        g = g + "Periksa manual di:\n"
+        g = g + "  https://github.com/" + REPO + "/releases/latest"
+        kembalikan g
+    }
+    kembalikan pesan_pembaruan(os, terpasang, rilis["tag"], rilis["aset"])
+}

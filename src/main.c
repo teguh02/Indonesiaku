@@ -290,6 +290,30 @@ int main(int argc, const char* argv[]) {
             freeVM();
             return code;
         }
+        if (strcmp(argv[1], "--periksa-pembaruan") == 0) {
+            // Logikanya ada di pustaka/pembaruan.idk, bukan di C: perbandingan
+            // versi dan penyusunan pesan jauh lebih mudah ditulis dan diuji
+            // sebagai Indonesiaku, dan skripnya ikut terpasang bersama biner.
+            //
+            // Nama OS dan versi disisipkan dari sini supaya tidak perlu
+            // menambah native baru hanya untuk dua konstanta.
+#if defined(_WIN32)
+            const char* osNama = "windows";
+#elif defined(__APPLE__)
+            const char* osNama = "macos";
+#else
+            const char* osNama = "linux";
+#endif
+            char sumber[256];
+            snprintf(sumber, sizeof sumber,
+                     "impor pembaruan\n"
+                     "cetak(pembaruan.periksa(\"%s\", \"%s\"))\n",
+                     osNama, INDK_VERSION);
+            initVM();
+            InterpretResult hasil = interpret(sumber);
+            freeVM();
+            return hasil == INTERPRET_OK ? 0 : 70;
+        }
         if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
             printf("Indonesiaku %s\n", INDK_VERSION);
             printf("Penggunaan: indk [--sandbox] [path] [argumen...]\n");
@@ -298,6 +322,7 @@ int main(int argc, const char* argv[]) {
             printf("  -h, --help      Tampilkan bantuan\n");
             printf("  --sandbox       Tolak lingkungan, isi direktori, dan menjalankan program\n");
             printf("  --dis <skrip>   Tampilkan bytecode tanpa menjalankan\n");
+            printf("  --periksa-pembaruan  Periksa apakah ada versi lebih baru\n");
             printf("Perintah:\n");
             printf("  periksa <skrip> Laporkan variabel lokal tidak terpakai\n");
             printf("  uji <skrip>     Jalankan fungsi uji_* dalam skrip\n");
