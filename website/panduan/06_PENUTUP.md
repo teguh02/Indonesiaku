@@ -372,7 +372,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
 ### Community Sumber daya
 
-- **GitHub Repository** - https://github.com/teguh02/Indonesiaku
+- **GitHub Repository** - https://github.com/teguh02/Indonesiaku-Lang
 - **Issue Tracker** - Report bugs & request features
 - **Discussions** - Ask questions & share ideas
 - **Email** - teguhrijanandi02@gmail.com
@@ -384,7 +384,7 @@ Golden test-nya ada di `tests/expected/*.out` dan dijalankan otomatis di CI.
 
 1. **Install & Setup**
    ```bash
-   git clone https://github.com/teguh02/Indonesiaku.git
+   git clone https://github.com/teguh02/Indonesiaku-Lang.git
    cd Indonesiaku
    make  # atau gcc command
    ```
@@ -535,7 +535,7 @@ Jika menggunakan Indonesiaku untuk research atau projects:
 ```
 Author: Teguh Rijanandi
 Project: Bahasa Pemrograman Indonesiaku
-Repository: https://github.com/teguh02/Indonesiaku
+Repository: https://github.com/teguh02/Indonesiaku-Lang
 Version: 1.0.0
 ```
 
@@ -651,5 +651,5 @@ Mari bersama-sama membangun masa depan programming yang lebih accessible, innova
 
 Versi: 1.0  
 Terakhir diperbarui: 28 Oktober 2025  
-Repository: https://github.com/teguh02/Indonesiaku  
+Repository: https://github.com/teguh02/Indonesiaku-Lang  
 Creator: Teguh Rijanandi

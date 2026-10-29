@@ -121,7 +121,7 @@ cetak("Hasil penjumlahan:", jumlah)
 
 ## 🔗 Links Penting
 
-- **Repository**: https://github.com/teguh02/Indonesiaku
+- **Repository**: https://github.com/teguh02/Indonesiaku-Lang
 - **Issues**: Laporkan bug melalui GitHub Issues
 - **Discussions**: Tanya jawab di GitHub Discussions
 

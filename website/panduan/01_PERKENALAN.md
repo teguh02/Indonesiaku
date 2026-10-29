@@ -70,7 +70,7 @@ Kandidat pekerjaan berikutnya:
 - 🔮 Standard library yang lebih luas & package manager
 
 Rencana lengkapnya ada di
-[ROADMAP](https://github.com/teguh02/Indonesiaku/blob/main/docs/ROADMAP.md).
+[ROADMAP](https://github.com/teguh02/Indonesiaku-Lang/blob/main/docs/ROADMAP.md).
 
 ---
 
@@ -230,8 +230,8 @@ Lihat file **KONTRIBUSI.md** untuk detail lengkap.
 
 ## Sumber Daya
 
-- **GitHub Repository**: https://github.com/teguh02/Indonesiaku
-- **Issue Tracker**: https://github.com/teguh02/Indonesiaku/issues
+- **GitHub Repository**: https://github.com/teguh02/Indonesiaku-Lang
+- **Issue Tracker**: https://github.com/teguh02/Indonesiaku-Lang/issues
 - **Documentation**: `website/panduan/` folder
 - **Contoh**: `/examples` folder
 
