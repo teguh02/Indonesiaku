@@ -1,6 +1,6 @@
 # Roadmap — Bahasa Indonesiaku
 
-**Satu-satunya sumber kebenaran untuk roadmap.** Versi saat ini: `1.1.0`
+**Satu-satunya sumber kebenaran untuk roadmap.** Versi rilis terbaru: `1.3.2`
 (`INDK_VERSION` di `src/common.h`). Riwayat detail per rilis ada di
 [`CHANGELOG.md`](../CHANGELOG.md).
 
@@ -351,6 +351,34 @@ jaringan — `sqlite` sendiri sudah dimajukan ke Fase 3), TLS/HTTPS, GUI,
 AOT/bundel executable, ~~anotasi tipe opsional~~ ✅ ([rencana](RENCANA_FITUR/selesai/anotasi_tipe.md)), mode sandbox untuk
 sekolah.
 Ref: 04 §11–13, 05.
+
+## Prioritas pengembangan berikutnya (setelah v1.3.2)
+
+Bagian ini mengurutkan pekerjaan yang **belum selesai**, bukan mengubah status fase yang telah dituntaskan. Prioritas didasarkan pada manfaat langsung untuk pemakai dan pengembang; sebelum implementasi, setiap fitur wajib memiliki berkas rencana di `docs/RENCANA_FITUR/` dan mengikuti checklist pengujian/dokumentasi/editor pada bagian **Definisi "selesai"**.
+
+| Urutan | Fitur | Target hasil yang dapat diverifikasi | Ketergantungan/catatan | Status |
+|---|---|---|---|---|
+| P1 | **Language Server Protocol (LSP)** | Diagnostics saat mengetik, completion keyword/builtin, hover informasi, go-to-definition pada simbol lokal dan workspace; integrasi VS Code | Pisahkan analisis kode tanpa eksekusi dari VM; jangan mengganti semantik compiler | ⬜ belum |
+| P2 | **TLS/HTTPS untuk klien HTTP** | `http_ambil("https://...")` dengan validasi sertifikat dan nama host aktif secara default, timeout serta penanganan galat TLS yang dapat ditangkap | Pilih pustaka TLS dan strategi distribusi lintas Windows/Linux/macOS; uji sertifikat salah dan redirect dengan aman | ⬜ belum |
+| P3 | **Manajer paket + registri** | Pasang/hapus/daftar paket, manifest proyek, resolusi versi, lockfile reproducible, verifikasi integritas unduhan, instalasi pada lokasi non-root | Tetapkan format paket, kebijakan namespace dan sumber registry; jangan mengeksekusi skrip paket tak tepercaya secara diam-diam | ⬜ belum |
+| P4 | Debugger | Breakpoint, step, inspect frame/variabel, traceback yang terhubung ke baris-kolom sumber | Memerlukan desain hook debug dan metadata bytecode yang stabil | ⬜ belum |
+| P5 | API embedding C + FFI | Host C dapat membuat VM, menjalankan kode, mendaftarkan fungsi dan menangani galat; FFI melalui API yang didefinisikan | Dokumentasikan kepemilikan memori dan GC root; audit batas kepercayaan | ⬜ belum |
+| P6 | Konektor PostgreSQL/MySQL | Koneksi, query berparameter, transaksi, hasil query, error dan timeout yang dapat ditangkap | Rencanakan dependensi klien dan kredensial tanpa tertulis di log | ⬜ belum |
+| P7 | Playground WebAssembly | Menjalankan program .idk di browser tanpa service eksekusi backend untuk mode lokal | Emscripten belum tersedia pada audit roadmap; sandbox Docker saat ini tetap dipertahankan | ⬜ belum |
+
+### Kriteria penerimaan prioritas utama
+
+**LSP (P1).** Tentukan protokol dan proses server terpisah, uji dokumen yang belum lengkap atau salah sintaks tanpa crash, serta pastikan diagnostics tidak mengeksekusi kode pengguna. Tambahkan uji protokol dan integrasi editor. Untuk tahap awal, fokus pada diagnostics, completion, hover, dan definisi; fitur lanjutan seperti rename/refactor dapat menjadi tahap berikutnya.
+
+**HTTPS/TLS (P2).** Pertahankan dukungan `http://`, tambahkan `https://` dengan verifikasi sertifikat dan hostname secara default, uji kegagalan handshake, sertifikat kedaluwarsa, ketidakcocokan hostname, timeout, serta perilaku lintas platform. Tidak boleh ada mode `insecure` sebagai pengaturan bawaan. Jelaskan implikasi ukuran binari dan dependensi native pada paket rilis.
+
+**Manajer paket (P3).** Putuskan lebih dulu spesifikasi manifest/lockfile dan desain registry; sediakan alur instal, update, hapus, dan inspeksi dependensi yang dapat diuji dari direktori proyek bersih. Perhatikan integritas artefak, version pinning, konflik dependensi, dan dokumentasi untuk pembuat paket. Registri publik tidak dianggap siap sebelum tersedia kebijakan publikasi dan mitigasi penyalahgunaan.
+
+### Optimasi dan fitur lanjutan (tidak masuk P1–P3)
+
+- Cache `.idkc`, computed goto, superinstruksi, inline cache, NaN-boxing, GC generasional: **ditunda hingga ada benchmark/profil yang membuktikan kebutuhan**, sesuai keputusan Fase 7.
+- Threading/asynchronous runtime, GUI, dan AOT/bundel executable: **belum dijadwalkan**; masing-masing memerlukan rencana arsitektur tersendiri.
+- Penguatan sandbox untuk menjalankan kode tak tepercaya tetap harus dievaluasi terpisah; `indk --sandbox` bukan pengganti isolasi proses/container.
 
 ## Cara memakai berkas ini
 
