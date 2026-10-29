@@ -66,6 +66,15 @@ periksa "melebihi batas -> 413" "413" \
          -H 'Content-Type: text/plain' \
          --data-binary "@$TMP/kelewat.bin" "http://127.0.0.1:$PORT/besar")"
 
+# Badan ber-UTF-8: Content-Length menghitung BYTE, panjang() menghitung
+# KARAKTER. Saat keduanya tertukar, server menunggu byte yang tak pernah
+# datang dan menggantung selamanya -- regresi yang pernah terjadi.
+periksa "badan UTF-8 tidak menggantung" "judul=kopi ☕ dan emoji 👨‍👩‍👧" \
+    "$(curl -s --max-time 20 \
+         -H 'Content-Type: application/json' \
+         --data-binary '{"judul":"kopi ☕ dan emoji 👨‍👩‍👧"}' \
+         "http://127.0.0.1:$PORT/api")"
+
 periksa "JSON rusak -> 400" "400" \
     "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
          -H 'Content-Type: application/json' -d '{rusak' "http://127.0.0.1:$PORT/api")"

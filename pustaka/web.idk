@@ -159,6 +159,30 @@ fungsi _web_urai_multipart(badan, boundary) {
 #
 # maks_badan membatasi badan yang dikumpulkan; "" dikembalikan bila klien
 # menutup koneksi sebelum apa pun tiba.
+
+# _web_panjang_bita(t) -> jumlah byte UTF-8 dari teks t.
+#
+# panjang() menghitung KARAKTER, sedangkan Content-Length menghitung BYTE.
+# Untuk badan ber-UTF-8 keduanya berbeda ("☕" = 1 karakter, 3 byte), dan
+# gelung yang menunggu `panjang(badan) >= Content-Length` akan menunggu byte
+# yang tidak akan pernah datang -- server menggantung selamanya.
+fungsi _web_panjang_bita(t) {
+    variabel n = 0
+    untuk c dalam t {
+        variabel k = ord(c)
+        jika k < 128 {
+            n = n + 1
+        } jika_lain k < 2048 {
+            n = n + 2
+        } jika_lain k < 65536 {
+            n = n + 3
+        } selain {
+            n = n + 4
+        }
+    }
+    kembalikan n
+}
+
 fungsi baca_permintaan(klien, maks_badan = 1048576) {
     variabel buf = soket_baca(klien)
     jika buf == "" {
@@ -192,12 +216,16 @@ fungsi baca_permintaan(klien, maks_badan = 1048576) {
     jika cl > maks_badan {
         kembalikan buf
     }
-    selagi panjang(buf) - (batas + 4) < cl {
+    # Dibandingkan dalam BYTE. Dihitung inkremental: menghitung ulang seluruh
+    # badan tiap putaran membuat unggahan besar jadi O(n^2).
+    variabel terkumpul = _web_panjang_bita(potong(buf, batas + 4, panjang(buf) - (batas + 4)))
+    selagi terkumpul < cl {
         variabel sisa = soket_baca(klien)
         jika sisa == "" {
             kembalikan buf
         }
         buf = buf + sisa
+        terkumpul = terkumpul + _web_panjang_bita(sisa)
     }
     kembalikan buf
 }

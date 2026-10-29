@@ -134,6 +134,18 @@ if [ -f tests/web_badan_server.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Klien HTTP melawan server HTTP sendiri. Ada di CI tetapi dulu tidak di
+# sini, sehingga regresi UTF-8 (server menggantung) lolos dari suite lokal.
+if [ -f tests/test_klien_http.sh ]; then
+    echo ""
+    if timeout 120 bash tests/test_klien_http.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES klien-http"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Paket .deb: klaim "tidak perlu uninstall versi lama" harus terbukti.
 if [ -f tests/paket_deb.sh ]; then
     echo ""
