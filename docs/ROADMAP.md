@@ -496,6 +496,47 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 3. [ ] Rancang format paket yang dapat dipublikasikan dan registry/API dengan otorisasi, integritas artefak, kebijakan takedown dan mitigasi package-name squatting. **Registri publik belum perlu diluncurkan sebelum desain keamanan selesai.**
 4. [ ] Tambahkan scaffolding aplikasi backend (**DX-01**): direktori modul, file konfigurasi, contoh HTTP dan database, tes awal, penggunaan environment serta perintah menjalankan/menguji.
 5. [ ] Integrasikan paket backend dan SSR dengan manajer paket serta lockfile (**DX-02**) tanpa menghilangkan opsi memakai standard library bawaan.
+
+#### Boilerplate library dan plugin untuk komunitas (bagian Fase 14)
+
+**Prinsip:** developer pada umumnya menulis library/plugin langsung dalam bahasa Indonesiaku (\`.idk\`), seperti modul yang sudah ada di \`pustaka/\`. Implementasi C **tidak wajib**; C digunakan untuk ekstensi native atau integrasi rendah yang tidak disediakan API publik saat itu. Istilah "plugin" di sini berarti paket/modul tambahan yang diimpor pengguna; **jangan mengklaim dynamic native plugin loader/ABI C sudah tersedia**, sebab API embedding dan FFI baru direncanakan dalam Fase 15.
+
+**Langkah implementasi (semuanya belum dikerjakan):**
+
+1. [ ] Buat rencana \`docs/RENCANA_FITUR/boilerplate_library_plugin.md\` beserta spesifikasi manifest, nama paket, namespace, entry point, dependensi, lisensi, serta kompatibilitas versi interpreter. Audit dahulu aturan \`impor\` dan mekanisme paket yang **sudah** ada agar template menghasilkan kode valid.
+2. [ ] Siapkan **template library murni Indonesiaku** dengan struktur minimal \`pustaka/<nama>.idk\`, \`tests/\`, \`examples/\`, \`README.md\`, \`LICENSE\`, \`.gitignore\`, manifest paket yang nanti disepakati, dan workflow GitHub Actions sederhana.
+3. [ ] Tambahkan **generator CLI interaktif maupun non-interaktif**, misalnya \`indk buat pustaka nama-paket\` dan \`indk buat plugin nama-plugin\` (nama final ditetapkan lewat spesifikasi). Validasi nama dan path, dukung opsi nama penulis/lisensi, serta aman terhadap overwrite dan path traversal.
+4. [ ] Sediakan **template plugin integrasi aplikasi** yang menjelaskan kontrak fungsi publik, konfigurasi, hook/callback hanya bila didukung framework host, serta contoh penggunaan dengan \`impor\`; bedakan plugin pengguna dari plugin native.
+5. [ ] Sediakan **template ekstensi native C (opsional)** setelah API embedding dan FFI Fase 15 benar-benar stabil; dokumentasikan build lintas OS, ABI, ownership objek/GC, error handling dan audit dependency. Bila Fase 15 belum selesai, tandai template native sebagai *planned* dan jangan memunculkannya sebagai opsi siap pakai.
+6. [ ] Kembangkan template test runner \`indk uji\` dengan contoh \`uji_*\`, assertion, tes negatif, golden output dan CI Linux/Windows/macOS yang sesuai; contoh harus dapat berjalan pada versi interpreter minimum yang disebutkan.
+7. [ ] Tambahkan generator dokumentasi awal: README dengan instalasi/pemakaian, referensi API, contoh import, changelog, panduan kontribusi dan metadata paket; tautkan ke portal referensi API pada Fase 19.
+8. [ ] Integrasikan dengan **Package Manager Fase 14**: validasi manifest, build/paket, pemeriksaan dependensi, lockfile, pemasangan lokal, publikasi registri (hanya ketika infrastruktur dan keamanan siap), checksum/signature dan pencegahan paket berbahaya.
+9. [ ] Dokumentasikan **panduan end-to-end**: membuat paket dari template → menulis fungsi dalam \`.idk\` → menjalankan tes → memanggilnya dari proyek lain → memublikasikan kode ke GitHub → mendistribusikan paket setelah registri tersedia.
+10. [ ] Uji generator pada direktori kosong dan lintas OS: nama tidak valid, path traversal, file sudah ada, lisensi kosong, boilerplate yang bisa langsung dijalankan, linting, import lintas direktori, packaging reproducible, dan keamanan dependency; ukur waktu onboarding developer.
+
+**Contoh struktur target library (rancangan, bukan struktur wajib yang sudah diimplementasikan):**
+
+\`\`\`text
+kalkulator-indonesiaku/
+├── indonesiaku.toml        # nama/format manifest masih perlu disepakati
+├── README.md
+├── LICENSE
+├── .gitignore
+├── pustaka/
+│   └── kalkulator.idk
+├── examples/
+│   └── penggunaan.idk
+├── tests/
+│   └── uji_kalkulator.idk
+└── .github/
+    └── workflows/
+        └── test.yml
+\`\`\`
+
+**Target pengalaman pengguna:** perintah generator menyiapkan proyek library yang sudah memuat contoh \`fungsi tambah(a,b)\` dan dapat diuji dengan \`indk uji\` tanpa menulis C. Ekstensi C adalah jalur lanjut **opsional** setelah tooling Fase 15 tersedia.
+
+**Kriteria selesai:** template dari nol bisa dihasilkan dan dijalankan di Windows/Linux/macOS, import berfungsi, tes bawaan hijau, dokumentasi akurat, publish/install lokal reproducible, serta fungsi yang masih direncanakan tidak ditampilkan sebagai tersedia.
+
 6. [ ] Tambahkan tes konflik dependensi, paket berbahaya, checksum tidak cocok, install offline/cache, downgrade, path traversal arsip, reproducible install, serta Windows/Linux/macOS.
 7. [ ] Dokumentasikan cara membuat, mempublikasikan, menginstal dan mengaudit dependensi paket serta lisensi pihak ketiga.
 
