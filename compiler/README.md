@@ -1,5 +1,12 @@
 # 🧩 Compiler Setup & Installer Builder
 
+> **Usang sejak 1.4.0.** Installer rilis resmi kini dibangun otomatis oleh
+> `.github/workflows/release.yml` memakai `packaging/windows/indonesiaku.iss`.
+> Berkas `compiler/indonesiaku_installer.iss` masih menyebut versi 0.1.4,
+> biner `indonesiaku.exe` (sekarang `indk.exe`), dan URL repo lama — jangan
+> dipakai untuk rilis baru. Dokumen ini dipertahankan sebagai catatan manual
+> untuk pembuatan installer secara lokal.
+
 Folder ini berisi semua yang diperlukan untuk membangun dan mendistribusikan Windows installer untuk Bahasa Pemrograman Indonesiaku.
 
 ---

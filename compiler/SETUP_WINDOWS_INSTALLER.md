@@ -1,5 +1,12 @@
 # 🧩 Panduan Setup Installer Windows - Bahasa Pemrograman Indonesiaku
 
+> **Usang sejak 1.4.0.** Installer rilis resmi kini dibangun otomatis oleh
+> `.github/workflows/release.yml` memakai `packaging/windows/indonesiaku.iss`.
+> Berkas `compiler/indonesiaku_installer.iss` masih menyebut versi 0.1.4,
+> biner `indonesiaku.exe` (sekarang `indk.exe`), dan URL repo lama — jangan
+> dipakai untuk rilis baru. Dokumen ini dipertahankan sebagai catatan manual
+> untuk pembuatan installer secara lokal.
+
 Panduan lengkap untuk membuat dan menggunakan Windows Installer (.exe) untuk Bahasa Pemrograman Indonesiaku menggunakan Inno Setup.
 
 ---
