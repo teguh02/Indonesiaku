@@ -1,6 +1,6 @@
 # Roadmap — Bahasa Indonesiaku
 
-**Satu-satunya sumber kebenaran untuk roadmap.** Versi rilis terbaru: `1.3.2`
+**Satu-satunya sumber kebenaran untuk roadmap.** Versi rilis terbaru: `1.4.0`
 (`INDK_VERSION` di `src/common.h`). Riwayat detail per rilis ada di
 [`CHANGELOG.md`](../CHANGELOG.md).
 
@@ -367,15 +367,34 @@ AOT/bundel executable, ~~anotasi tipe opsional~~ ✅ ([rencana](RENCANA_FITUR/se
 sekolah.
 Ref: 04 §11–13, 05.
 
-## Roadmap implementasi per fase — setelah v1.3.2
+- [x] **Distribusi paket native per sistem operasi** (v1.4.0,
+      [rencana](RENCANA_FITUR/selesai/paket_native_dan_pembaruan.md)) —
+      rilis menyertakan `indonesiaku_<versi>_amd64.deb` dan
+      `Indonesiaku-Setup-<versi>.exe` selain arsip `.tar.gz`/`.zip`. Paket
+      memasang biner **beserta** `pustaka/`, karena `indk` telanjang gagal
+      pada `impor web`. Memasang versi baru menimpa yang lama tanpa perlu
+      uninstall; `tests/paket_deb.sh` membuktikannya terhadap `dpkg` nyata.
+      Belum: `.dmg` bertanda tangan untuk macOS (butuh akun Apple Developer;
+      DMG tak bertanda tangan ditolak Gatekeeper) dan paket `.rpm`.
 
-Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR-01–10, serta kebutuhan transfer berkas dan keamanan runtime yang sebelumnya tersebar dalam beberapa tabel. **Fase 0–6 sudah selesai, Fase 7 baru sebagian, dan Fase 8 baru sebagian (anotasi tipe opsional).** Fase 9 dan seterusnya adalah urutan kerja yang **diusulkan**, bukan penanda implementasi saat ini. Nomor ID lama tetap dipakai sebagai jejak rencana.
+- [x] **`indk --periksa-pembaruan`** (v1.4.0) — membandingkan versi terpasang
+      dengan rilis terbaru di GitHub, lalu mencetak perintah pemutakhiran
+      sesuai sistem operasi. Hanya berjalan bila diminta; menjalankan skrip
+      biasa tidak pernah menghubungi jaringan.
+      Batas sadar: **tidak ada pembaruan otomatis** — mengganti biner yang
+      sedang berjalan butuh hak root dan verifikasi tanda tangan. Pengguna
+      versi sebelum 1.4.0 belum memiliki perintah ini sehingga perlu memeriksa
+      halaman rilis manual satu kali.
+
+## Roadmap implementasi per fase — setelah v1.4.0
+
+Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR-01–10, serta kebutuhan transfer berkas dan keamanan runtime yang sebelumnya tersebar dalam beberapa tabel. **Fase 0–6 sudah selesai, Fase 7 baru sebagian, dan Fase 8 baru sebagian (anotasi tipe, distribusi paket native, pemberitahuan pembaruan). Fase 9 selesai di v1.4.0; Fase 10 dan 11 baru sebagian.** Fase 12 dan seterusnya adalah urutan kerja yang **diusulkan**, bukan penanda implementasi saat ini. Nomor ID lama tetap dipakai sebagai jejak rencana.
 
 **Cara membaca:** setiap fase memiliki tujuan, kebutuhan awal, langkah implementasi berurutan, contoh API target, pengujian wajib, serta definisi selesai. Tanda [ ] berarti belum. Implementasi dapat dibuat dalam pull request kecil; jangan memaksa seluruh fase dalam satu PR. Semua perubahan tetap tunduk pada "Definisi selesai" dan "Feature workflow" di AGENTS.md, termasuk rencana detail sebelum kode, golden test, negative test, dokumentasi dan editor.
 
 ### Strategi penomoran dan kapan menerbitkan rilis
 
-**Baseline:** tag publik terakhir saat perencanaan ini dibuat ialah `v1.3.2`. Nomor berikut bersifat **rekomendasi** yang dapat digeser jika pekerjaan sebenarnya berubah. Jangan membuat tag hanya karena nomor fase berganti. Versi mengikuti SemVer (`MAJOR.MINOR.PATCH`): perubahan kompatibel dan fitur baru = minor, perbaikan tanpa penambahan fitur = patch, dan perubahan yang memutus API/sintaks atau format eksternal = major (mis. `v2.0.0`). Sejak v1.0.0, kebijakan proyek menghindari breaking change sampai v2.0.0; bila tidak dapat dihindari, pisahkan ke rencana v2.0, jangan memasukkannya diam-diam ke seri v1.x.
+**Baseline:** tag publik terakhir ialah `v1.4.0`. Nomor berikut bersifat **rekomendasi** yang dapat digeser jika pekerjaan sebenarnya berubah. Jangan membuat tag hanya karena nomor fase berganti. Versi mengikuti SemVer (`MAJOR.MINOR.PATCH`): perubahan kompatibel dan fitur baru = minor, perbaikan tanpa penambahan fitur = patch, dan perubahan yang memutus API/sintaks atau format eksternal = major (mis. `v2.0.0`). Sejak v1.0.0, kebijakan proyek menghindari breaking change sampai v2.0.0; bila tidak dapat dihindari, pisahkan ke rencana v2.0, jangan memasukkannya diam-diam ke seri v1.x.
 
 | Fase | Kandidat pengujian | Rilis stabil rekomendasi | Dipublikasikan setelah |
 |---|---|---|---|
@@ -867,9 +886,9 @@ kalkulator-indonesiaku/
 
 | Fase | Fokus | Status |
 |---|---|---|
-| 9 | LSP dan dukungan editor | ⬜ belum |
-| 10 | SQLite, MySQL/MariaDB, PostgreSQL | ⬜ belum |
-| 11 | HTTP/HTTPS dan backend server | ⬜ belum |
+| 9 | LSP dan dukungan editor | ✅ selesai (v1.4.0) |
+| 10 | SQLite, MySQL/MariaDB, PostgreSQL | 🟨 sebagian — SQLite lengkap (BLOB, batas tunggu); MySQL/PostgreSQL terblokir pustaka klien eksternal |
+| 11 | HTTP/HTTPS dan backend server | 🟨 sebagian — modul `web` (routing, middleware, parsing badan) jalan; HTTPS/TLS belum |
 | 12 | Server-Side Rendering / HTML template | ⬜ belum |
 | 13 | Session, keamanan, login dan otorisasi | ⬜ belum |
 | 14 | Package manager dan developer tooling | ⬜ belum |

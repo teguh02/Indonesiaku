@@ -142,9 +142,11 @@ Selebihnya ada di folder [`examples/`](examples/) — sekaligus dipakai sebagai
 
 ## 🗺️ Rencana Selanjutnya
 
-Rilis terbaru adalah v1.3.2. Fase 0–8 telah dikerjakan dan implementasi Fase 9
-(LSP untuk ekstensi VS Code) tersedia di branch pengembangan. Fase selanjutnya
-dan status detail tiap fitur tercatat di roadmap resmi.
+Rilis terbaru adalah v1.4.0. Fase 0–8 telah dikerjakan dan Fase 9 (LSP untuk
+ekstensi VS Code) selesai. Fase 10 dan 11 baru sebagian: SQLite lengkap serta
+modul server `web` sudah jalan, sedangkan driver MySQL/PostgreSQL dan
+HTTPS/TLS belum. Fase selanjutnya dan status detail tiap fitur tercatat di
+roadmap resmi.
 
 Status per fitur ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** — itulah
 satu-satunya sumber status yang resmi.
