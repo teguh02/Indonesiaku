@@ -43,7 +43,14 @@ function respondError(id, code, message) {
 function parseFrames() {
   for (;;) {
     const headerEnd = input.indexOf("\r\n\r\n");
-    if (headerEnd < 0) return;
+    if (headerEnd < 0) {
+      if (input.length > 8192) {
+        log("discarding oversized LSP header");
+        process.exitCode = 1;
+        process.stdin.pause();
+      }
+      return;
+    }
     const headers = input.subarray(0, headerEnd).toString("ascii");
     const match = headers.match(/(?:^|\r\n)Content-Length:\s*(\d+)/i);
     if (!match) {
@@ -292,9 +299,9 @@ function runIndk(args, cwd, state) {
   });
 }
 
-function diagnostic(line, character, message, severity = 1) {
+function diagnostic(line, character, message, severity = 1, endCharacter = character + 1) {
   return {
-    range: { start: { line, character }, end: { line, character: character + 1 } },
+    range: { start: { line, character }, end: { line, character: Math.max(character, endCharacter) } },
     severity,
     source: "indk",
     message
@@ -310,7 +317,8 @@ function parseCompilerDiagnostics(stderr, source) {
     const sourceLine = Math.max(0, Math.min(lines.length - 1, Number(match[1]) - 1));
     const byteColumn = Math.max(0, Number(match[2] || 1) - 1);
     const character = byteColumnToUtf16(lines[sourceLine], byteColumn);
-    result.push(diagnostic(sourceLine, character, match[3]));
+    result.push(diagnostic(sourceLine, character, match[3], 1,
+      Math.min(lines[sourceLine].length, character + 1)));
   }
   // Keep the error actionable if compiler output format changes unexpectedly.
   if (!result.length && stderr.trim()) result.push(diagnostic(0, 0, stderr.trim().split(/\r?\n/)[0]));
@@ -325,8 +333,10 @@ function parseLintDiagnostics(stderr, source) {
     if (!match) continue;
     const sourceLine = Math.max(0, Math.min(lines.length - 1, Number(match[1]) - 1));
     const found = lines[sourceLine].indexOf(match[2]);
-    diagnostics.push(diagnostic(sourceLine, Math.max(0, found),
-      `Variabel lokal '${match[2]}' tidak pernah dipakai.`, 2));
+    const start = Math.max(0, found);
+    diagnostics.push(diagnostic(sourceLine, start,
+      `Variabel lokal '${match[2]}' tidak pernah dipakai.`, 2,
+      Math.min(lines[sourceLine].length, start + match[2].length)));
   }
   return diagnostics;
 }
@@ -429,8 +439,8 @@ function collectDefinitions(text) {
     const previous = tokens[i - 1];
     let declaration = previous && keywordDefs.has(previous.name);
     if (!declaration) {
-      const tail = masked.slice(token.end).match(/^\s*(\+=|-=|\*=|\/=|%=|\*\*=|=)/);
-      declaration = Boolean(tail && tail[1] === "=");
+      const tail = masked.slice(token.end).match(/^\s*(?:\*\*=|\/\/=|<<=|>>=|[+\-*/%&|^]=|=(?!=))/);
+      declaration = Boolean(tail);
     }
     if (declaration) defs.push(token);
   }

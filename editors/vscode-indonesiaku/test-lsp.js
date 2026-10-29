@@ -111,6 +111,11 @@ async function run() {
   const broken = await nextMessage(notification("textDocument/publishDiagnostics", uri));
   assert(broken.params.diagnostics.length > 0, "expected a diagnostic for missing closing brace");
   assert(Number.isInteger(broken.params.diagnostics[0].range.start.line), "diagnostic line must be integer");
+  for (const item of broken.params.diagnostics) {
+    const line = 'fungsi salam() {\n  cetak("halo")\n'.split("\n")[item.range.start.line] || "";
+    assert(item.range.start.character <= line.length, "diagnostic start must be within the document line");
+    assert(item.range.end.character <= line.length, "diagnostic end must be within the document line");
+  }
 
   // Compiler columns count UTF-8 bytes; LSP positions count UTF-16 code units.
   const unicodeUri = pathToFileURL(path.join(temp, "unicode.idk")).toString();
@@ -163,10 +168,11 @@ async function run() {
 
   // Go-to-definition resolves a local function declaration in the same file.
   const definitionUri = pathToFileURL(path.join(temp, "def.idk")).toString();
-  fs.writeFileSync(path.join(temp, "def.idk"), "fungsi sapa() { }\nsapa()\n", "utf8");
+  const definitionSource = "fungsi sapa() { }\nsapa()\nvariabel nilai = 1\ncetak(nilai == 1)\n";
+  fs.writeFileSync(path.join(temp, "def.idk"), definitionSource, "utf8");
   send({ jsonrpc: "2.0", method: "textDocument/didOpen", params: {
     textDocument: { uri: definitionUri, languageId: "indonesiaku", version: 1,
-      text: "fungsi sapa() { }\nsapa()\n" }
+      text: definitionSource }
   }});
   await nextMessage(notification("textDocument/publishDiagnostics", definitionUri));
   const definition = await request(4, "textDocument/definition", {
@@ -174,6 +180,11 @@ async function run() {
   });
   assert(definition && definition.uri === definitionUri, "definition URI should match source document");
   assert(definition.range.start.line === 0, "definition should point to declaration line");
+  const variableDefinition = await request(5, "textDocument/definition", {
+    textDocument: { uri: definitionUri }, position: { line: 3, character: 9 }
+  });
+  assert(variableDefinition && variableDefinition.range.start.line === 2,
+    "comparison usage must resolve to the variable declaration, not be mistaken for an assignment");
 
   // Compile-only diagnostics must never execute user code (keluar would
   // terminate the interpreter if the server accidentally used normal run).
@@ -183,7 +194,7 @@ async function run() {
   }});
   const noExecutionDiagnostics = await nextMessage(notification("textDocument/publishDiagnostics", noExecutionUri));
   assert.strictEqual(noExecutionDiagnostics.params.diagnostics.length, 0, "valid call to keluar should compile cleanly");
-  const afterNoExecution = await request(5, "textDocument/completion", {
+  const afterNoExecution = await request(6, "textDocument/completion", {
     textDocument: { uri }, position: { line: 0, character: 0 }
   });
   assert(afterNoExecution.items.length > 0, "LSP process must remain alive and must not execute document code");
@@ -216,7 +227,7 @@ async function run() {
   const closed = await nextMessage(notification("textDocument/publishDiagnostics", uri));
   assert.strictEqual(closed.params.diagnostics.length, 0, "closing a document must clear its diagnostics");
 
-  await request(6, "shutdown", null);
+  await request(7, "shutdown", null);
   send({ jsonrpc: "2.0", method: "exit" });
   await new Promise(resolve => child.once("exit", resolve));
   assert.strictEqual(child.exitCode, 0, `LSP server exit ${child.exitCode}; stderr:\n${stderr}`);
