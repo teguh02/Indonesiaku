@@ -375,6 +375,9 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 | 17 — Transfer file & SSH/SFTP/FTP | `v1.12.0-rc.1` | `v1.12.0` | Protokol aman, uji transfer, host key dan TLS lulus |
 | 18 — Kriptografi & keamanan runtime | `v1.13.0-rc.1` | `v1.13.0` | Crypto KAT, fuzz/sanitizer, sandbox dan audit keamanan lulus |
 | 19 — Paritas kemampuan & referensi API | `v1.14.0-rc.1` | `v1.14.0` | Katalog terverifikasi, XML/validasi aman, dokumentasi dan tes kategori lulus |
+| 20 — Async/concurrency | `v1.15.0-rc.1` | `v1.15.0` | Event loop/cancellation/GC dan regresi I/O lulus |
+| 21 — Realtime, cache dan jobs | `v1.16.0-rc.1` | `v1.16.0` | WebSocket, Redis, SMTP, queue dan scheduler diuji |
+| 22 — Observability dan kesiapan produksi | `v1.17.0-rc.1` | `v1.17.0` | Logging/metrics/profiler, keamanan dan release policy teruji |
 
 **Tahapan rilis di dalam tiap fase:**
 
@@ -679,6 +682,70 @@ kalkulator-indonesiaku/
 
 **Contoh format satu entri referensi:** \`panjang(nilai)\` → kategori Fungsi Bawaan, deskripsi, argumen \`nilai\`, hasil bilangan, satu atau lebih contoh .idk, output aktual dari tes, versi mulai tersedia yang telah diverifikasi, dan link ke implementasi. Gunakan data repository untuk menulis fakta; jangan menebak.
 
+### Fase 20 — Asynchronous I/O dan concurrency yang terukur
+
+**Status:** ⬜ belum. **Target RC rekomendasi:** \`v1.15.0-rc.1\`. **Target stabil rekomendasi:** \`v1.15.0\`. **Ketergantungan:** VM/GC (fase awal), networking Fase 11, keamanan runtime Fase 18.
+
+**Tujuan:** mendukung tugas I/O yang berjalan bersamaan tanpa memblokir seluruh layanan, terutama REST API, koneksi jaringan dan operasi file. Jangan menganggap kemampuan async yang baru otomatis aman untuk beban produksi atau setara multithreading.
+
+1. [ ] Buat \`docs/RENCANA_FITUR/async_concurrency.md\`. Audit \`src/vm.c\`, frame stack, closure/upvalue, GC roots, \`src/sistem.c\`, socket serta generator \`hasilkan\`; uraikan state suspension/resumption dan semantik error.
+2. [ ] Bandingkan event loop + coroutine, cooperative task scheduler dan worker process/thread. Pilih model paling sederhana yang kompatibel lintas platform; tentukan interaksi fungsi blocking yang sudah ada.
+3. [ ] Spesifikasikan API \`tugas\`, \`tunggu\` atau padanan Indonesiaku, timeouts, cancellation, task groups, propagation exception dan cleanup resource. **Nama sintaks hanya usulan**: jangan menambah keyword sebelum kajian kompatibilitas.
+4. [ ] Implementasikan nonblocking TCP/HTTP I/O atau adapter event-loop, timer serta penjadwalan adil (fairness). Tetapkan apakah file I/O, DNS dan database memerlukan worker atau adapter tersendiri.
+5. [ ] Tetapkan batas concurrency, backpressure, error propagation, orderly shutdown, penutupan koneksi, dan disiplin kepemilikan/GC root pada tugas tertunda.
+6. [ ] Tambahkan tes interleaving, timeout, cancel berulang, starvation, resource leak, stress GC, ASan/UBSan, Windows/Linux/macOS dan benchmark latency/throughput sebelum-sesudah untuk kasus I/O.
+7. [ ] Perbarui panduan, contoh server concurrent, dokumentasi API serta petunjuk kapan menggunakan async vs program sinkron.
+
+**Gerbang rilis:** API tidak membocorkan resource/GC roots, cancellation teruji, server tidak hang pada klien lambat, mode sinkron lama tetap kompatibel dan benchmark diumumkan tanpa klaim performa yang tidak terbukti.
+
+### Fase 21 — Real-time, cache, komunikasi dan background processing
+
+**Status:** ⬜ belum. **Target RC rekomendasi:** \`v1.16.0-rc.1\`. **Target stabil rekomendasi:** \`v1.16.0\`. **Ketergantungan:** Fase 10–11, 13, 18 dan 20.
+
+**Tujuan:** aplikasi nyata memiliki WebSocket, Redis/cache, email, antrean tugas dan scheduler. Utamakan library \`.idk\` di atas primitive native yang sudah teruji; **tidak semua fitur harus dibuat di C atau menjadi keyword compiler**.
+
+1. [ ] Buat rencana terpisah: \`docs/RENCANA_FITUR/websocket.md\`, \`redis_cache.md\`, \`email_smtp.md\`, \`background_jobs_scheduler.md\` dan matriks dependensi native vs \`.idk\`.
+2. [ ] Implementasikan **WebSocket** untuk server dan klien: handshake, frame text/binary, ping/pong, close, batas ukuran pesan, autentikasi/origin yang aman, backpressure dan integrasi async. Uji malformed frame serta klien terputus.
+3. [ ] Implementasikan **Redis** client beserta pooling yang terukur, timeout/TLS/auth, TTL, namespace key, cache-aside dan opsi session store. Hindari cache secrets sembarangan; uji gagal koneksi dan invalidasi.
+4. [ ] Implementasikan **email SMTP** dengan STARTTLS/SMTP TLS, validasi sertifikat, auth aman, MIME/multipart, lampiran, batas ukuran, dan pencegahan header injection. Sediakan contoh notifikasi dan reset password tanpa menyimpan rahasia di kode.
+5. [ ] Implementasikan **background job queue**: enqueue, worker, retry dengan exponential backoff, idempotency key, dead-letter/error handling, concurrency limit dan shutdown. Bedakan pengiriman *at least once* dari klaim *exactly once*; gunakan Redis/DB sebagai backend sesuai kebutuhan.
+6. [ ] Implementasikan **scheduler** untuk tugas sekali jalan/berulang, timezone dan DST, locking bila lebih dari satu worker, kebijakan misfire, retry serta graceful shutdown.
+7. [ ] Buat contoh teruji: chat WebSocket minimal, cache CRUD, email notifikasi, import data dalam job, dan backup terjadwal. Masukkan tes integrasi container terisolasi untuk Redis/SMTP serta negative/security tests.
+8. [ ] Dokumentasikan batas dukungan produksi, konfigurasi environment, deployment worker terpisah dari web server, monitoring antrean dan batas resource.
+
+**Gerbang rilis:** contoh WebSocket/cache/email/worker/scheduler berjalan sesuai scope yang dinyatakan; tes timeout, retry/idempotensi, keamanan transport, dan kegagalan layanan eksternal lulus lintas platform. Jika ada komponen belum siap, pisahkan rilis minor atau tandai tahap eksplisit; jangan mengklaim seluruh fase selesai.
+
+### Fase 22 — Observability, profiling, kompatibilitas dan kesiapan produksi
+
+**Status:** ⬜ belum. **Target RC rekomendasi:** \`v1.17.0-rc.1\`. **Target stabil rekomendasi:** \`v1.17.0\`. **Ketergantungan:** semua fase runtime, jaringan, database, web dan package manager yang relevan.
+
+**Tujuan:** aplikasi Indonesiaku mudah didiagnosis, diperbarui, diaudit dan dipelihara. Kualitas, keamanan dan kompatibilitas adalah kegiatan **lintas fase sejak sekarang**, bukan alasan untuk menunggu Fase 22.
+
+1. [ ] Buat \`docs/RENCANA_FITUR/observability_production.md\` serta kebijakan tertulis support matrix, compatibility policy, deprecation, security disclosure dan release lifecycle.
+2. [ ] Sediakan **structured logging**: timestamp, level, module, request/task correlation ID, format dapat dibaca mesin, masking rahasia secara default, rotasi atau integrasi collector.
+3. [ ] Sediakan **metrics dan tracing** dasar: latensi request, error rate, durasi query, queue depth, memori/GC, task/connections; tentukan pilihan interoperabilitas misalnya OpenTelemetry/Prometheus tanpa mengunci satu vendor.
+4. [ ] Implementasikan **profiler** CPU/wall time, alokasi memori, GC pause, hot functions dan diagnostik kebocoran; jaga overhead profiling opt-in dan dokumentasikan akurasi pengukuran.
+5. [ ] Susun pedoman deployment **production readiness**: konfigurasi environment/secrets, health/readiness endpoint, graceful shutdown, reverse proxy, TLS, batas resource, backup/restore, observability, container isolation dan prosedur recovery.
+6. [ ] Tetapkan kompatibilitas API dan versioning: SemVer, stabil/eksperimental, minimum supported runtime, deprecation warning, jendela dukungan patch/LTS bila sumber daya tersedia, kebijakan minor vs major dan perubahan format paket.
+7. [ ] Tegakkan proses keamanan: \`SECURITY.md\`, pelaporan kerentanan privat, threat-model update, CI security scan/dependency audit, SBOM bila relevan, release provenance/checksums, penanganan CVE dan komunikasi advisory.
+8. [ ] Lakukan pengujian beban/stress, chaos/network failure, CPU/memory profiling, regresi lintas OS/arsitektur, canary RC, dan verifikasi installer/Docker/artefak sebelum rilis; publikasikan metodologi dan hasil.
+9. [ ] Tambahkan dokumentasi operasional dan referensi API untuk log/profiler/metrics; contoh dashboard/monitoring hanya jika sumber data yang mendasarinya telah diimplementasi.
+10. [ ] Audit *production readiness* secara jujur: tandai fitur yang masih eksperimen, tidak didukung, atau membutuhkan reverse proxy/isolasi; jangan menyebut runtime aman produksi tanpa bukti.
+
+**Gerbang rilis:** logging/metrics/profiler dapat digunakan dan diuji; compatibility/security policies tersedia; CI dan pengujian integrasi lulus; perubahan breaking teridentifikasi; panduan operasional dan troubleshooting dapat diikuti dari instalasi bersih.
+
+### Penekanan keputusan rilis Fase 20–22 dan sesudahnya
+
+- **v1.15.0, v1.16.0, v1.17.0 hanyalah contoh milestone minor** bila scope masing-masing fase matang. Tidak ada target tanggal; kualitas dan keamanan lebih penting daripada mengejar nomor versi.
+- **Minor (\`1.x.0\`):** fitur baru yang kompatibel dengan program lama, dengan dokumentasi, tes, paket rilis dan changelog. Pecah fase besar menjadi beberapa minor tambahan bila diperlukan, lalu **perbarui tabel target** agar tidak memberikan gambaran palsu.
+- **Patch (\`1.x.y\`, y≥1):** perbaikan bug/keamanan/kompatibilitas tanpa breaking change; rilis secepat layak berdasarkan risiko, tidak harus menunggu selesainya fase atau fitur baru.
+- **Prerelease:** \`-alpha.1\` untuk eksperimen komunitas, \`-beta.1\` untuk API yang mendekati final, dan \`-rc.1\` untuk kandidat stabil; semua prerelease harus jelas diberi label dan tidak mengganti channel \`latest\` stabil.
+- **Major (\`v2.0.0\`):** hanya ketika benar-benar memerlukan perubahan yang memutus API publik, sintaks, model objek, ABI native, format bytecode yang dipublikasikan, atau kontrak paket. Sebelum major: sediakan migration guide, deprecation path jika memungkinkan dan compatibility tests. **Tidak wajib** naik major hanya karena jumlah fase besar.
+- **Bila fase bergantung pada fitur yang belum selesai:** jangan terbitkan versi stabil dengan klaim paritas penuh. Rilis komponen independen boleh jika scope rilis transparan, dependency/security gates terpenuhi, dan status fase tetap sebagian.
+- **Checklist release blocker:** CI gagal, tes sanitizer/fuzz kritis gagal, regresi terhadap contoh lama, kehilangan data, sertifikat tidak diverifikasi, kredensial bocor, tidak ada tes untuk API baru atau installer gagal pada mesin bersih → tunda rilis.
+- **Rilis pendamping:** pembaruan website/dokumentasi saja tidak memerlukan versi interpreter baru; modul/paket independen sebaiknya memiliki versi sendiri yang kompatibel dengan \`indk\` minimum, bukan memaksa setiap plugin menaikkan versi interpreter.
+- **Keputusan final tag:** maintainer mengevaluasi cakupan aktual dan \`CHANGELOG.md\`, membandingkan artefak CI dengan Git tag, menyamakan \`src/common.h\`, Docker image/tag, installer, checksum, situs serta release notes. Update minor/patch/major berdasarkan **perubahan nyata**, bukan sekadar milestone roadmap.
+
 ### Checklist wajib untuk setiap fase (panduan untuk AI coding agent)
 
 1. **Audit sebelum coding:** baca AGENTS.md, docs/SPESIFIKASI.md, docs/ANALISIS/, README, contoh dan source terkait; verifikasi fitur existing supaya tidak menduplikasi fungsi atau merusak kompatibilitas sejak 1.0.
@@ -704,6 +771,9 @@ kalkulator-indonesiaku/
 | 17 | cp/file, FTP/FTPS, SSH/SFTP dan download HTTP(S) | ⬜ belum |
 | 18 | Enkripsi/kriptografi dan keamanan interpreter/VM | ⬜ belum |
 | 19 | Kelengkapan pustaka, XML, validasi, dokumentasi ala kategori W3Schools | ⬜ belum |
+| 20 | Async I/O, concurrency dan cancellation | ⬜ belum |
+| 21 | Redis/cache, WebSocket, SMTP, scheduler dan background jobs | ⬜ belum |
+| 22 | Logging, profiling, observability, kompatibilitas dan keamanan rilis | ⬜ belum |
 
 ## Cara memakai berkas ini
 
