@@ -123,6 +123,38 @@ if [ -f tests/test_baca_sumber.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Parsing badan (WEB-02): upload >64KB membuktikan gelung baca, bukan satu recv.
+if [ -f tests/web_badan_server.sh ]; then
+    echo ""
+    if bash tests/web_badan_server.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES web-badan"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
+# Klien HTTP melawan server HTTP sendiri. Ada di CI tetapi dulu tidak di
+# sini, sehingga regresi UTF-8 (server menggantung) lolos dari suite lokal.
+#
+# timeout(1) adalah perintah GNU; macOS tidak memilikinya. Dipakai bila ada
+# supaya kemacetan gagal cepat, dan dilewati bila tidak -- lebih baik
+# daripada seluruh tes gagal dengan "command not found".
+if [ -f tests/test_klien_http.sh ]; then
+    echo ""
+    if command -v timeout >/dev/null 2>&1; then
+        BATAS_WAKTU="timeout 120"
+    else
+        BATAS_WAKTU=""
+    fi
+    if $BATAS_WAKTU bash tests/test_klien_http.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES klien-http"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Paket .deb: klaim "tidak perlu uninstall versi lama" harus terbukti.
 if [ -f tests/paket_deb.sh ]; then
     echo ""

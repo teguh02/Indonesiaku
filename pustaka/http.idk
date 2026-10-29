@@ -71,10 +71,21 @@ fungsi _http_frasa(kode) {
     jika kode == 201 { kembalikan "Created" }
     jika kode == 204 { kembalikan "No Content" }
     jika kode == 400 { kembalikan "Bad Request" }
+    jika kode == 401 { kembalikan "Unauthorized" }
+    jika kode == 403 { kembalikan "Forbidden" }
     jika kode == 404 { kembalikan "Not Found" }
     jika kode == 405 { kembalikan "Method Not Allowed" }
+    jika kode == 411 { kembalikan "Length Required" }
+    jika kode == 413 { kembalikan "Content Too Large" }
+    jika kode == 415 { kembalikan "Unsupported Media Type" }
     jika kode == 500 { kembalikan "Internal Server Error" }
-    kembalikan "OK"
+    # Kode tak dikenal: frasa generik per kelas, JANGAN "OK" -- "413 OK"
+    # membingungkan manusia maupun alat yang membaca baris status.
+    jika kode >= 500 { kembalikan "Server Error" }
+    jika kode >= 400 { kembalikan "Client Error" }
+    jika kode >= 300 { kembalikan "Redirection" }
+    jika kode >= 200 { kembalikan "OK" }
+    kembalikan "Unknown"
 }
 
 # Bangun response HTTP lengkap sebagai string.
