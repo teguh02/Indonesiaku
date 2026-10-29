@@ -1,0 +1,73 @@
+# Data biner (BLOB) di SQLite.
+#
+# Bahasa ini belum punya tipe byte tersendiri, jadi BLOB memakai konvensi
+# yang sama dengan pustaka/bita.idk: **daftar bulat 0..255**.
+
+impor bita
+
+variabel db = db_buka(":memory:")
+db_eksekusi(db, "CREATE TABLE berkas (nama TEXT, isi BLOB)")
+
+# --- Pulang-pergi data biner sungguhan ---
+# Delapan byte pertama berkas PNG: mengandung byte NUL dan byte > 127,
+# jadi tidak mungkin disimpan sebagai teks UTF-8.
+variabel tanda_png = [137, 80, 78, 71, 13, 10, 26, 10]
+db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["gambar.png", tanda_png])
+
+variabel dibaca = db_ambil_satu(db, "SELECT isi FROM berkas WHERE nama = ?",
+                                ["gambar.png"])["isi"]
+cetak(dibaca)
+cetak(dibaca == tanda_png)
+
+# --- BLOB nol byte berbeda dari NULL ---
+db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["kosong", []])
+variabel baris = db_ambil_satu(db,
+    "SELECT isi, typeof(isi) AS tipe FROM berkas WHERE nama = ?", ["kosong"])
+cetak(baris["isi"])
+cetak(baris["tipe"])
+
+db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["tanpa isi", kosong])
+cetak(db_ambil_satu(db, "SELECT isi FROM berkas WHERE nama = ?",
+                    ["tanpa isi"])["isi"])
+
+# --- Nilai batas ---
+db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["batas", [0, 255, 0, 128]])
+cetak(db_ambil_satu(db, "SELECT isi FROM berkas WHERE nama = ?",
+                    ["batas"])["isi"])
+
+# --- BLOB yang dibuat SQL juga terbaca ---
+cetak(db_ambil_satu(db, "SELECT x'00FF10' AS b")["b"])
+
+# --- Jembatan teks <-> biner lewat modul bita ---
+variabel pesan = "Halo dunia"
+db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["pesan", bita.ke_bita(pesan)])
+variabel kembali = db_ambil_satu(db, "SELECT isi FROM berkas WHERE nama = ?",
+                                 ["pesan"])["isi"]
+cetak(bita.ke_teks(kembali) == pesan)
+
+# --- Elemen yang tidak sah ditolak, lengkap dengan posisinya ---
+coba {
+    db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["buruk", [1, 2, 3, 999, 5]])
+} kecuali GalatNilai sebagai e {
+    cetak(ke_teks(e))
+}
+
+coba {
+    db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["buruk", [0 - 1]])
+} kecuali GalatNilai {
+    cetak("byte negatif ditolak")
+}
+
+coba {
+    db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["buruk", [1.5]])
+} kecuali GalatNilai {
+    cetak("byte pecahan ditolak")
+}
+
+coba {
+    db_eksekusi(db, "INSERT INTO berkas VALUES (?, ?)", ["buruk", ["a"]])
+} kecuali GalatNilai {
+    cetak("byte berupa teks ditolak")
+}
+
+db_tutup(db)

@@ -1,0 +1,12 @@
+[137, 80, 78, 71, 13, 10, 26, 10]
+benar
+[]
+blob
+kosong
+[0, 255, 0, 128]
+[0, 255, 16]
+benar
+db: elemen bita ke-3 harus bulat 0..255
+byte negatif ditolak
+byte pecahan ditolak
+byte berupa teks ditolak
