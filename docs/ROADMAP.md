@@ -354,7 +354,7 @@ Ref: 04 §11–13, 05.
 
 ## Roadmap implementasi per fase — setelah v1.3.2
 
-Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, dan SSR-01–10 yang sebelumnya tersebar dalam beberapa tabel. **Fase 0–6 sudah selesai, Fase 7 baru sebagian, dan Fase 8 baru sebagian (anotasi tipe opsional).** Fase 9 dan seterusnya adalah urutan kerja yang **diusulkan**, bukan penanda implementasi saat ini. Nomor ID lama tetap dipakai sebagai jejak rencana.
+Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR-01–10, serta kebutuhan transfer berkas dan keamanan runtime yang sebelumnya tersebar dalam beberapa tabel. **Fase 0–6 sudah selesai, Fase 7 baru sebagian, dan Fase 8 baru sebagian (anotasi tipe opsional).** Fase 9 dan seterusnya adalah urutan kerja yang **diusulkan**, bukan penanda implementasi saat ini. Nomor ID lama tetap dipakai sebagai jejak rencana.
 
 **Cara membaca:** setiap fase memiliki tujuan, kebutuhan awal, langkah implementasi berurutan, contoh API target, pengujian wajib, serta definisi selesai. Tanda [ ] berarti belum. Implementasi dapat dibuat dalam pull request kecil; jangan memaksa seluruh fase dalam satu PR. Semua perubahan tetap tunduk pada "Definisi selesai" dan "Feature workflow" di AGENTS.md, termasuk rencana detail sebelum kode, golden test, negative test, dokumentasi dan editor.
 
@@ -372,6 +372,8 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, dan
 | 14 — Package manager | `v1.9.0-rc.1` | `v1.9.0` | Resolusi dependensi dan supply-chain checks lulus |
 | 15 — Debugger & FFI | `v1.10.0-rc.1` | `v1.10.0` | API native/GC dan debug tests lulus |
 | 16 — WASM & performa | `v1.11.0-rc.1` | `v1.11.0` | Uji browser/WASM dan benchmark yang relevan lulus |
+| 17 — Transfer file & SSH/SFTP/FTP | `v1.12.0-rc.1` | `v1.12.0` | Protokol aman, uji transfer, host key dan TLS lulus |
+| 18 — Kriptografi & keamanan runtime | `v1.13.0-rc.1` | `v1.13.0` | Crypto KAT, fuzz/sanitizer, sandbox dan audit keamanan lulus |
 
 **Tahapan rilis di dalam tiap fase:**
 
@@ -528,6 +530,51 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, dan
 
 **Selesai jika:** playground WASM bekerja pada contoh yang didukung, perbedaan fitur terdokumentasi, serta optimasi hanya digabung setelah benchmark dan regresi membuktikan manfaat.
 
+### Fase 17 — Pustaka transfer berkas, SSH/SFTP, FTP dan unduhan
+
+**Target kandidat:** \`v1.12.0-rc.1\`. **Rilis stabil rekomendasi:** \`v1.12.0\`, hanya bila seluruh acceptance tests fase ini lulus. **Status:** ⬜ belum.
+
+**Tujuan:** menjadikan Indonesiaku berguna untuk otomasi server, manajemen file dan integrasi jaringan. Berikan API yang mudah dipakai layaknya \`shutil\`, \`pathlib\`, \`urllib\`, \`ftplib\` dan \`paramiko\` di ekosistem Python, tetapi tetap punya perilaku keamanan yang tegas. **Jangan menyatakan protokol tersedia hanya karena socket TCP sudah ada.**
+
+**Langkah pengembangan:**
+
+1. [ ] Tulis rencana \`docs/RENCANA_FITUR/file_transfer_remote.md\` dan inventarisasi fungsi \`src/sistem.c\`, \`pustaka/jalur.idk\`, \`pustaka/http.idk\`, serta builtin file I/O. Pilih konvensi error, path dan pengembalian nilai yang konsisten; hindari duplikasi fungsi yang sudah ada.
+2. [ ] Tambahkan operasi file lokal: \`salin_berkas\` (cp), \`salin_direktori\` (cp -r), \`pindahkan\`, \`ganti_nama\`, \`hapus_berkas\`, \`hapus_direktori_bertingkat\`, \`jelajahi_direktori\`, \`berkas_sementara\`, dan pemeriksaan metadata/izin sesuai OS. Sediakan pilihan overwrite eksplisit, perlindungan symlink, dan error jelas.
+3. [ ] Sediakan **download berkas HTTP/HTTPS**: fungsi target \`unduh(url, tujuan, opsi)\` dengan streaming (tanpa menampung semua data ke RAM), timeout, batas ukuran, progress callback jika aman, cancel, resume \`Range\` jika didukung server, redirect terkontrol, verifikasi TLS, checksum SHA-256 opsional, serta file sementara + atomic rename untuk mencegah file parsial. Bergantung pada HTTPS aman Fase 11.
+4. [ ] Implementasikan **FTP/FTPS client** dengan daftar direktori, upload/download, rename/hapus, passive mode dan timeout. FTP plaintext hanya untuk kompatibilitas dan harus diberi peringatan nyata; **FTPS dengan sertifikat terverifikasi** menjadi pilihan aman. FTP/FTPS **bukan** SFTP.
+5. [ ] Implementasikan **SSH client** memakai pustaka SSH terawat (mis. libssh2/libssh dengan review lisensi): koneksi, eksekusi perintah jarak jauh, exit status/stdout/stderr terpisah, autentikasi kunci dan password secara aman, timeout serta batas output; **validasi host key wajib secara default** (known_hosts/pinning), bukan auto-accept host tak dikenal.
+6. [ ] Tambahkan **SFTP** di atas SSH untuk list/upload/download/rename/hapus, streaming file besar, operasi path aman, transfer atomik jika server mendukung; sediakan utilitas **SCP hanya bila dibutuhkan** dan jangan menyamakannya dengan perintah cp lokal.
+7. [ ] Batasi fitur jaringan/file pada mode sandbox dan dokumentasikan kemampuan/profil izin secara eksplisit. Jangan eksekusi perintah shell otomatis untuk mengimplementasikan protokol; gunakan library native yang teruji.
+8. [ ] Uji server dummy lokal dan container terisolasi untuk FTP, FTPS, SSH dan SFTP: auth salah, host key berubah, sertifikat kedaluwarsa, file besar, putus di tengah transfer, path traversal, symlink, kuota, timeout, penggunaan memori dan clean-up lintas platform. Pastikan tidak ada secret di log/error.
+9. [ ] Tambahkan contoh \`.idk\` untuk salin direktori, unduh file dengan checksum, remote command dan backup lewat SFTP; perbarui panduan API, CHANGELOG, Docker/installer serta matriks dependensi Windows/Linux/macOS.
+
+**API target ilustratif (belum tersedia):** \`berkas.salin("a.txt", "cadangan/a.txt")\`; \`jaringan.unduh("https://contoh.invalid/arsip.zip", "arsip.zip")\`; \`ssh.sambung(host, pengguna, kunci_privat)\`; \`sftp.unggah("lokal.txt", "/aman/lokal.txt")\`. Nama dan desain final diputuskan pada dokumen rencana.
+
+**Selesai jika:** cp/file lokal, unduhan HTTPS, FTP/FTPS, SSH dan SFTP bekerja, sertifikat/host key diverifikasi, error ditangani, tanpa bocor secret, dan suite tes negatif + keamanan + lintas OS lulus.
+
+### Fase 18 — Kriptografi modern dan penguatan keamanan runtime
+
+**Target kandidat:** \`v1.13.0-rc.1\`. **Rilis stabil rekomendasi:** \`v1.13.0\` setelah audit dan semua security gates lulus. **Status:** ⬜ belum.
+
+**Tujuan:** menyediakan primitif keamanan yang benar untuk pengembang *dan* mencegah program tidak tepercaya menyalahgunakan interpreter. Ini **berbeda** dengan fitur login/CSRF di Fase 13 dan fitur TLS/SSH di Fase 11/17; fase ini memperkuat fondasi bersama. Hash \`md5\`, \`sha1\`, \`sha256\` dan \`sha512\` yang sudah ada **bukan** berarti enkripsi modern telah tersedia.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat \`docs/RENCANA_FITUR/kriptografi_keamanan_runtime.md\` dan threat model terpisah untuk (a) kode aplikasi tepercaya, (b) kode \`.idk\` dari pengguna tak tepercaya, (c) paket pihak ketiga, (d) input jaringan/berkas. Audit batas C↔VM, GC, parser, soket, sandbox, dan modul proses/sistem berkas.
+2. [ ] Pilih library kriptografi yang terawat dan teraudit beserta strategi build/lisensi lintas platform. **Jangan membangun algoritme kriptografi produksi sendiri**. Buat modul dengan nama dan tipe yang jelas antara hashing, password hashing, key derivation, MAC, signing dan encryption.
+3. [ ] Tambahkan **CSPRNG** untuk token/salt/key (mis. \`acak_aman(n)\`), dibedakan tegas dari PRNG \`acak()\` biasa. Test entropi/failure behavior sesuai penyedia OS dan hindari fallback ke rand().
+4. [ ] Tambahkan **enkripsi terautentikasi (AEAD)** dengan primitive teruji seperti AES-256-GCM atau ChaCha20-Poly1305, API encrypt/decrypt yang menyertakan nonce, associated data, auth tag, dan **menolak reuse nonce** dalam contoh/panduan. Kunci jangan dicetak/di-log; kesalahan verifikasi wajib gagal tertutup.
+5. [ ] Sediakan **HMAC-SHA-256, HKDF** dan password hashing adaptif (**Argon2id** atau alternatif yang dipilih berdasarkan dukungan library); jika dibutuhkan, tanda tangan Ed25519 dan verifikasi publik. Jelaskan bahwa MD5/SHA-1 tidak cocok untuk password atau tanda tangan keamanan baru.
+6. [ ] Audit serta perkuat **memory safety** compiler/VM/native bindings: validasi panjang buffer, overflow bilangan, lifetime/GC roots, use-after-free, double free, unbounded recursion/allocations dan perlakuan input Unicode/binary. Fuzz scanner, parser, bytecode loader/disassembler dan parser protokol; uji ASan/UBSan/Valgrind.
+7. [ ] Perjelas **sandbox/capability model**: tolak akses file/network/process/FFI bila tidak diizinkan; gunakan allowlist eksplisit untuk profil eksekusi tidak tepercaya. \`--sandbox\` sendiri **bukan batas keamanan setara container/OS sandbox**; gunakan isolasi proses, user tanpa privilege, limit CPU/memori/waktu, seccomp/AppArmor/OS primitives bila tersedia.
+8. [ ] Terapkan **resource limits** dan cancellation: batas instruksi/runtime, memori, ukuran stack/rekursi, ukuran string/array/input dan jumlah koneksi; error harus dapat didiagnosis tanpa crash host. Tambahkan proteksi DoS pada fitur yang memproses input eksternal.
+9. [ ] Perkuat **supply-chain security**: dependency pinning, scanning library C dan paket, pengujian instalasi biner, checksums/penandatanganan artefak sesuai kebijakan, disclosure kerentanan, review rilis dan panduan pembaruan dependency. Periksa interaksi dengan Fase 14.
+10. [ ] Buat tes KAT (known-answer tests) kriptografi, tamper detection, wrong key/nonce, failure RNG, tes fuzz/sanitizer, serangan traversal, sandbox breakout, resource exhaustion dan regresi pada tiga OS. Dokumentasikan konfigurasi aman dan batas jaminan keamanan.
+
+**API target ilustratif (belum tersedia):** \`kripto.acak_aman(32)\`; \`kripto.hmac_sha256(kunci, pesan)\`; \`kripto.enkripsi_aead(kunci, pesan, nonce, aad)\`; \`kripto.verifikasi_kata_sandi(kata_sandi, hash_simpan)\`. Spesifikasi final wajib mendefinisikan tipe byte, format output, penanganan secret, dan kompatibilitas.
+
+**Selesai jika:** tes kripto/keamanan terpenuhi, semua API baru aman secara default, jalur eksekusi tak tepercaya memiliki batas isolasi yang terdokumentasi dan diaudit, serta tidak ada temuan kritis terbuka yang diketahui. **Jangan menjanjikan keamanan absolut.**
+
 ### Checklist wajib untuk setiap fase (panduan untuk AI coding agent)
 
 1. **Audit sebelum coding:** baca AGENTS.md, docs/SPESIFIKASI.md, docs/ANALISIS/, README, contoh dan source terkait; verifikasi fitur existing supaya tidak menduplikasi fungsi atau merusak kompatibilitas sejak 1.0.
@@ -550,6 +597,8 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, dan
 | 14 | Package manager dan developer tooling | ⬜ belum |
 | 15 | Debugger, embedding C, FFI | ⬜ belum |
 | 16 | WASM playground dan optimasi lanjut | ⬜ belum |
+| 17 | cp/file, FTP/FTPS, SSH/SFTP dan download HTTP(S) | ⬜ belum |
+| 18 | Enkripsi/kriptografi dan keamanan interpreter/VM | ⬜ belum |
 
 ## Cara memakai berkas ini
 
