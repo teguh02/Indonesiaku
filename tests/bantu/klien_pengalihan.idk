@@ -1,0 +1,40 @@
+# Klien untuk tests/http_pengalihan_server.sh — dijalankan setelah
+# tests/bantu/server_pengalihan.idk siap menerima koneksi.
+
+impor "pustaka/http.idk"
+
+variabel ASAL = "http://127.0.0.1:" + ambil_lingkungan("IDK_PORT")
+
+# Rantai dua lompatan, yang kedua memakai Location relatif.
+variabel r = http_ambil(ASAL + "/mulai")
+cetak("status      : " + ke_teks(r.status))
+cetak("badan       : " + r.badan)
+cetak("url akhir   : " + r.url)
+
+# 303 mengubah metode menjadi GET dan membuang badan.
+cetak("303         : " + http_ambil(ASAL + "/lihat", "POST", kosong, "data").badan)
+
+# 307 mempertahankan metode dan badan.
+cetak("307         : " + http_ambil(ASAL + "/tetap", "POST", kosong, "data").badan)
+
+# maks_pengalihan = 0 mengembalikan respons pengalihan apa adanya.
+cetak("tanpa ikut  : " + ke_teks(http_ambil(ASAL + "/mulai", "GET", kosong, "", 0).status))
+
+# Batas lompatan terlampaui.
+coba {
+    http_ambil(ASAL + "/mulai", "GET", kosong, "", 1)
+    cetak("batas       : TIDAK DITOLAK")
+} kecuali GalatJaringan {
+    cetak("batas       : ditolak")
+}
+
+# Pengalihan berputar terdeteksi tanpa menunggu batas habis.
+coba {
+    http_ambil(ASAL + "/putar")
+    cetak("loop        : TIDAK DITOLAK")
+} kecuali GalatJaringan {
+    cetak("loop        : ditolak")
+}
+
+# Pengalihan tanpa header Location dikembalikan apa adanya.
+cetak("tanpa Lokasi: " + ke_teks(http_ambil(ASAL + "/tanpa").status))

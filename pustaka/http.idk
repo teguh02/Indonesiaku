@@ -225,10 +225,9 @@ fungsi http_urai_url(url) {
     kembalikan [host, port, jalur]
 }
 
-# http_ambil(url, metode = "GET", kepala = kosong, badan = "") -> Respons.
-# Status 4xx/5xx BUKAN galat (pakai .periksa()); host tidak ditemukan atau
-# koneksi ditolak adalah GalatOS dari soket_sambung.
-fungsi http_ambil(url, metode = "GET", kepala = kosong, badan = "") {
+# _http_satu_permintaan(...) -> Respons untuk SATU permintaan, tanpa
+# mengikuti pengalihan. Dipakai http_ambil() di bawah.
+fungsi _http_satu_permintaan(url, metode = "GET", kepala = kosong, badan = "") {
     variabel bagian = http_urai_url(url)
     variabel host = bagian[0]
     variabel port = bagian[1]
@@ -286,3 +285,97 @@ fungsi http_ambil(url, metode = "GET", kepala = kosong, badan = "") {
     kembalikan Respons(url, ke_bulat(kode), alasan, hasil_kepala, data[pemisah + 4:])
 }
 
+# _http_gabung_url(dasar, lokasi) -> URL absolut.
+# Header Location boleh absolut ("http://lain.id/x"), berakar ("/x"), atau
+# relatif ("x"). Dua bentuk terakhir diselesaikan terhadap URL sebelumnya.
+fungsi _http_gabung_url(dasar, lokasi) {
+    jika lokasi == "" {
+        naikkan GalatJaringan(f"header Location kosong pada {dasar}")
+    }
+    # Absolut: biarkan http_urai_url() yang menilai skemanya.
+    jika "://" dalam lokasi {
+        kembalikan lokasi
+    }
+    variabel bagian = http_urai_url(dasar)
+    variabel host = bagian[0]
+    variabel port = bagian[1]
+    variabel awal = "http://" + host
+    jika port != 80 {
+        awal = awal + ":" + ke_teks(port)
+    }
+    jika teks_mulai_dengan(lokasi, "/") {
+        kembalikan awal + lokasi
+    }
+    # Relatif: ganti segmen terakhir jalur sebelumnya.
+    variabel jalur = bagian[2]
+    variabel tanya = teks_cari(jalur, "?")
+    jika tanya != 0 - 1 {
+        jalur = jalur[:tanya]
+    }
+    variabel potong = 0 - 1
+    variabel i = 0
+    untuk c dalam jalur {
+        jika c == "/" {
+            potong = i
+        }
+        i = i + 1
+    }
+    kembalikan awal + jalur[:potong + 1] + lokasi
+}
+
+# http_ambil(url, metode, kepala, badan, maks_pengalihan) -> Respons.
+# Status 4xx/5xx BUKAN galat (pakai .periksa()); host tidak ditemukan atau
+# koneksi ditolak adalah GalatOS dari soket_sambung.
+#
+# Pengalihan 301/302/303/307/308 diikuti sampai maks_pengalihan lompatan
+# (bawaan 5). Beri 0 untuk menerima respons pengalihan apa adanya.
+# .url pada hasil berisi URL TERAKHIR, bukan url yang diminta.
+fungsi http_ambil(url, metode = "GET", kepala = kosong, badan = "", maks_pengalihan = 5) {
+    jika jenis(maks_pengalihan) != "angka" atau maks_pengalihan < 0 atau maks_pengalihan != lantai(maks_pengalihan) {
+        naikkan GalatJaringan("maks_pengalihan harus bilangan bulat >= 0")
+    }
+    variabel kini = url
+    variabel m = metode
+    variabel b = badan
+    variabel dikunjungi = [url]
+    variabel lompatan = 0
+
+    selagi benar {
+        variabel r = _http_satu_permintaan(kini, m, kepala, b)
+        jika r.status < 300 atau r.status > 399 {
+            kembalikan r
+        }
+        variabel dialihkan = r.status == 301 atau r.status == 302 atau r.status == 303 atau r.status == 307 atau r.status == 308
+        jika tidak dialihkan {
+            kembalikan r      # 304 Not Modified dan kerabatnya: bukan pengalihan
+        }
+        jika tidak "location" dalam r.kepala {
+            kembalikan r      # server melanggar spesifikasi; tampilkan apa adanya
+        }
+        jika lompatan >= maks_pengalihan {
+            jika maks_pengalihan == 0 {
+                kembalikan r
+            }
+            naikkan GalatJaringan(
+                f"pengalihan melebihi {maks_pengalihan} lompatan: " +
+                teks_gabung(dikunjungi, " -> "))
+        }
+
+        variabel tujuan = _http_gabung_url(kini, teks_pangkas(r.kepala["location"]))
+        jika tujuan dalam dikunjungi {
+            naikkan GalatJaringan(
+                f"pengalihan berputar: " + teks_gabung(dikunjungi, " -> ") +
+                f" -> {tujuan}")
+        }
+        # 303 berarti "lihat di sini", selalu diambil dengan GET.
+        # 301/302 sengaja mempertahankan metode: peramban mengubahnya jadi GET,
+        # tetapi itu kekeliruan historis yang justru melahirkan 307/308.
+        jika r.status == 303 {
+            m = "GET"
+            b = ""
+        }
+        dikunjungi.tambah(tujuan)
+        kini = tujuan
+        lompatan = lompatan + 1
+    }
+}

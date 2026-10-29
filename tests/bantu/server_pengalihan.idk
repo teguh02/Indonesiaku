@@ -1,0 +1,69 @@
+# Server pengalihan untuk tests/http_pengalihan_server.sh.
+# Melayani rantai: /mulai -301-> /tengah -302(relatif)-> /akhir -200->
+# lalu /lihat (303), /tetap (307), dan /putar (loop).
+#
+# Dijalankan sebagai proses terpisah dari klien; berhenti sendiri setelah
+# IDK_SISA permintaan supaya tidak ada proses menggantung di CI.
+
+impor "pustaka/teks.idk"
+
+# Indonesiaku belum punya akses ke argumen CLI, jadi dipakai lingkungan.
+variabel PORT = ke_bulat(ambil_lingkungan("IDK_PORT"))
+variabel SISA = ke_bulat(ambil_lingkungan("IDK_SISA"))
+
+fungsi balasan_untuk(jalur) {
+    jika jalur == "/mulai" {
+        kembalikan "HTTP/1.0 301 Moved Permanently\r\nLocation: /tengah\r\nContent-Length: 0\r\n\r\n"
+    }
+    jika jalur == "/tengah" {
+        # Location relatif: harus diselesaikan terhadap URL sebelumnya.
+        kembalikan "HTTP/1.0 302 Found\r\nLocation: akhir\r\nContent-Length: 0\r\n\r\n"
+    }
+    jika jalur == "/lihat" {
+        kembalikan "HTTP/1.0 303 See Other\r\nLocation: /akhir\r\nContent-Length: 0\r\n\r\n"
+    }
+    jika jalur == "/tetap" {
+        kembalikan "HTTP/1.0 307 Temporary Redirect\r\nLocation: /akhir\r\nContent-Length: 0\r\n\r\n"
+    }
+    jika jalur == "/putar" {
+        kembalikan "HTTP/1.0 302 Found\r\nLocation: /putar2\r\nContent-Length: 0\r\n\r\n"
+    }
+    jika jalur == "/putar2" {
+        kembalikan "HTTP/1.0 302 Found\r\nLocation: /putar\r\nContent-Length: 0\r\n\r\n"
+    }
+    jika jalur == "/tanpa" {
+        kembalikan "HTTP/1.0 301 Moved Permanently\r\nContent-Length: 0\r\n\r\n"
+    }
+    kembalikan "HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n"
+}
+
+variabel server = soket_dengar(PORT)
+variabel sisa = SISA
+selagi sisa > 0 {
+    variabel klien = soket_terima(server)
+    coba {
+        variabel mentah = soket_baca(klien)
+        variabel jalur = "/"
+        variabel metode = "GET"
+        jika mentah != "" {
+            variabel bagian = teks_pisah(teks_pisah(mentah, "\r\n")[0], " ")
+            jika panjang(bagian) >= 2 {
+                metode = bagian[0]
+                jalur = bagian[1]
+            }
+        }
+        jika jalur == "/akhir" {
+            # Membalas metode yang sampai, supaya klien bisa membuktikan
+            # 303 berubah menjadi GET dan 307 mempertahankan POST.
+            variabel badan = "metode=" + metode
+            soket_tulis(klien, "HTTP/1.0 200 OK\r\nContent-Length: "
+                        + ke_teks(panjang(badan)) + "\r\n\r\n" + badan)
+        } selain {
+            soket_tulis(klien, balasan_untuk(jalur))
+        }
+    } akhirnya {
+        soket_tutup(klien)
+    }
+    sisa = sisa - 1
+}
+soket_tutup(server)
