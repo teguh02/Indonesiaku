@@ -374,6 +374,7 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 | 16 — WASM & performa | `v1.11.0-rc.1` | `v1.11.0` | Uji browser/WASM dan benchmark yang relevan lulus |
 | 17 — Transfer file & SSH/SFTP/FTP | `v1.12.0-rc.1` | `v1.12.0` | Protokol aman, uji transfer, host key dan TLS lulus |
 | 18 — Kriptografi & keamanan runtime | `v1.13.0-rc.1` | `v1.13.0` | Crypto KAT, fuzz/sanitizer, sandbox dan audit keamanan lulus |
+| 19 — Paritas kemampuan & referensi API | `v1.14.0-rc.1` | `v1.14.0` | Katalog terverifikasi, XML/validasi aman, dokumentasi dan tes kategori lulus |
 
 **Tahapan rilis di dalam tiap fase:**
 
@@ -575,6 +576,47 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 
 **Selesai jika:** tes kripto/keamanan terpenuhi, semua API baru aman secara default, jalur eksekusi tak tepercaya memiliki batas isolasi yang terdokumentasi dan diaudit, serta tidak ada temuan kritis terbuka yang diketahui. **Jangan menjanjikan keamanan absolut.**
 
+### Fase 19 — Kelengkapan pustaka dan dokumentasi berdasarkan kategori pengembangan web
+
+**Inspirasi taksonomi:** kelompok materi pada W3Schools PHP Tutorial (https://www.w3schools.com/php/default.asp), khususnya PHP Forms, PHP Advanced, PHP OOP, MySQL Database, PHP XML, PHP AJAX dan PHP Reference. **Tujuannya paritas KEMAMPUAN yang berguna, bukan meniru PHP atau menyalin sintaks/fungsi PHP satu per satu.** Indonesiaku tetap berbahasa Indonesia dan mempertahankan sifat Python-like. **Status:** ⬜ belum. **Kandidat:** \`v1.14.0-rc.1\`. **Rilis stabil rekomendasi:** \`v1.14.0\`, hanya setelah syarat penerimaan terpenuhi.
+
+**Ketergantungan:** Fase 10 (driver basis data), 11 (HTTP), 12 (SSR), 13 (form/session/keamanan), 17 (berkas/FTP/SSH), dan 18 (kriptografi) memberikan kemampuan inti. Fase 19 melengkapi kesenjangan modul dan dokumentasi, bukan mengulang implementasi fitur fase sebelumnya.
+
+#### Matriks kelompok materi → fitur Indonesiaku
+
+| Kelompok rujukan | Sudah ada / landasan | Yang perlu dilengkapi (tidak otomatis tersedia) | Fase pemilik |
+|---|---|---|---|
+| PHP Basics: variables, strings, numbers, conditions, loops, functions, arrays | ✅ bahasa inti, daftar/kamus, metode dan pustaka standar dasar | Audit kelengkapan fungsi string, angka, array/koleksi, format, iterasi dan konversi; prioritaskan pemakaian nyata, bukan kesamaan nama | 19 |
+| PHP Forms | ⚠️ HTTP parsing demo | Form GET/POST, URL-encoded, multipart upload, validasi terstruktur, sanitasi/escaping output, field wajib, error per-field, CSRF | 11, 13, 19 |
+| PHP Advanced | ✅ file I/O dasar, JSON, exception, callback, modul; ❌ sebagian server-oriented | Date/time lengkap dan timezone, upload aman, cookies/session, filter/validator, pengelolaan header, stream, iterator berkas besar, config/environment | 11, 13, 17, 19 |
+| PHP OOP | ✅ kelas/objek, konstruktor, inheritance, abstract, static/decorator, MRO, magic methods, iterable | Audit kecocokan kebutuhan nyata (visibility, interface/protocol, traits/mixins, destructor/finalizer) dan putuskan melalui desain Python-like; **jangan memaksa fitur PHP yang bertentangan dengan model objek saat ini** | 19 (opsional setelah evaluasi) |
+| MySQL Database | ✅ SQLite, prepared parameters dasar | MySQL/MariaDB/PostgreSQL, transaksi, query berparameter, migrasi, error terstruktur | 10 |
+| PHP XML | ❓ harus diaudit terlebih dahulu, jangan klaim tersedia | Parser XML aman, traversal DOM/SAX/streaming, pembuatan XML, namespace, encoding, pembatasan resource, **disable external entities/DTD by default** untuk mencegah XXE | 19 |
+| PHP AJAX | ✅ respons JSON dasar, REST server demo | Endpoint JSON produksi, query/form request, pagination/filter/search, CORS aman, status/headers, validation; browser memakai fetch JavaScript standar, tidak memerlukan sintaks AJAX khusus di bahasa | 11, 13, 19 |
+| PHP Filesystem/Directory | ✅ baca/tulis berkas dan jalur dasar | Copy/move/recursive, glob, metadata, permission, temporary file, streaming, upload/download, path safety | 17 |
+| PHP FTP | ❌ belum didukung | FTP/FTPS, SFTP/SSH dan validasi host key/TLS | 17 |
+| PHP Security / Filters / Hash | ✅ hash SHA/MD5 dan sebagian sandbox; belum AEAD/password hashing modern | CSPRNG, AEAD, Argon2id, HMAC, input validators, XSS/CSRF, TLS, sandbox dan runtime memory safety | 13, 18 |
+| PHP Reference | ✅ pustaka standar saat ini | Dokumentasi API terindeks per kategori, lengkap dengan parameter/tipe, return, exceptions, contoh runnable, batas platform dan peringatan keamanan | 19 |
+
+**Catatan mengenai status:** simbol ✅ merujuk landasan yang sudah tercatat di source/roadmap; ❓ berarti perlu audit kode dan tes sebelum menyatakan tersedia. Matriks bukan bukti kesetaraan API PHP.
+
+#### Langkah pengembangan Fase 19
+
+1. [ ] **Audit katalog API aktual**: dari \`src/native.c\`, \`src/sistem.c\`, \`src/db.c\`, \`pustaka/*.idk\`, \`docs/SPESIFIKASI.md\` dan \`tests/\`. Buat \`docs/ANALISIS/KATALOG_API_DAN_GAP_WEB.md\` yang memetakan **ada / sebagian / belum / sengaja tidak diadopsi**, dengan tautan source dan tes. Jangan berasumsi satu halaman W3Schools = satu fitur baru.
+2. [ ] **Daftarkan modul bernamespace** yang konsisten (misalnya \`formulir\`, \`validasi\`, \`tanggal_waktu\`, \`xml\`, \`koleksi\`, \`berkas\`, \`jaringan\`, \`keamanan\`); finalisasi nama setelah pemeriksaan konflik simbol dan keselarasan dokumentasi.
+3. [ ] **Lengkapi validasi input umum**: email, URL, angka/rentang, panjang teks, field wajib, skema data sederhana dan pengumpulan error per-field; validasi bukan substitusi encoding output, parameter SQL, atau autentikasi.
+4. [ ] **Lengkapi utilitas tanggal/waktu dan zona waktu**: parsing/format ISO 8601, UTC/lokal, timezone-aware datetime dan penanganan DST/offset berbasis data zona waktu yang terawat. Wajib lintas OS atau dokumentasikan batasnya.
+5. [ ] **Implementasikan XML aman**: parse dokumen, atribut dan elemen, XML namespace, serialisasi, opsi streaming; batasi ukuran/kedalaman, tolak DTD/external entity secara default, uji XXE dan entity expansion.
+6. [ ] **Audit & lengkapi utilitas standar**: koleksi (filter/map/reduce, grouping/sorting), teks Unicode, format dan konversi, jalur/glob, konfigurasi, environment dan error handling hanya jika belum ada; jangan membuat sinonim fungsi berlebihan.
+7. [ ] **Contoh aplikasi kategori**: formulir pendaftaran ber-validasi, upload file, login/session, REST API + pencarian AJAX, aplikasi SQLite/MySQL/PostgreSQL, XML import/export, otomasi berkas dan SFTP. Setiap contoh harus menggunakan fitur yang benar-benar telah selesai di fase dependensinya.
+8. [ ] **Bangun referensi API yang bisa dicari** di website/panduan: sidebar **Dasar Bahasa**, **Formulir Web**, **Fitur Lanjutan**, **Pemrograman Berorientasi Objek**, **Database**, **HTTP/REST API**, **Template SSR**, **XML/JSON**, **Transfer Berkas**, **Kriptografi & Keamanan**, **Referensi Fungsi**. Tiap halaman memuat ringkasan, kode .idk yang dapat dijalankan, versi pertama tersedia dan tautan tes. Fitur belum jadi wajib ditandai "direncanakan", bukan disajikan sebagai panduan aktif.
+9. [ ] Uji per kategori pada \`tests/\`: valid/invalid input, Unicode, data besar, XML entity attacks, error file/jaringan, konsistensi hasil dan contoh yang di-copy dari panduan. Gunakan CI tiga OS, sanitizer dan fuzz target sesuai modul.
+10. [ ] Perbarui \`docs/ROADMAP.md\`, \`CHANGELOG.md\`, spesifikasi bila semantik berubah, contoh, ekstensi VS Code bila ada API baru, dan matriks kompatibilitas. Jalankan semua release gates sebelum candidate/stable.
+
+**Kriteria rilis v1.14.0:** matriks gap telah diaudit, semua API yang diklaim selesai memiliki pengujian dan contoh yang dapat berjalan, XML/input handling lolos security tests, referensi web mencerminkan kemampuan sebenarnya, dan tidak ada breaking change diam-diam. Dokumentasi boleh diterbitkan lebih cepat sebagai pembaruan situs **tanpa** menaikkan versi compiler jika hanya menambah konten.
+
+**Prinsip:** kelompok kurikulum seperti W3Schools adalah **cara mengorganisasi fitur dan dokumentasi**, bukan keharusan menyalin keseluruhan fungsi PHP. Komponen HTML/SSR tetap di Fase 12, sedangkan API server, form, keamanan, database dan transfer ada pada fase pemiliknya.
+
 ### Checklist wajib untuk setiap fase (panduan untuk AI coding agent)
 
 1. **Audit sebelum coding:** baca AGENTS.md, docs/SPESIFIKASI.md, docs/ANALISIS/, README, contoh dan source terkait; verifikasi fitur existing supaya tidak menduplikasi fungsi atau merusak kompatibilitas sejak 1.0.
@@ -599,6 +641,7 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 | 16 | WASM playground dan optimasi lanjut | ⬜ belum |
 | 17 | cp/file, FTP/FTPS, SSH/SFTP dan download HTTP(S) | ⬜ belum |
 | 18 | Enkripsi/kriptografi dan keamanan interpreter/VM | ⬜ belum |
+| 19 | Kelengkapan pustaka, XML, validasi, dokumentasi ala kategori W3Schools | ⬜ belum |
 
 ## Cara memakai berkas ini
 
