@@ -445,6 +445,36 @@ Bagian **Tata Kelola Proyek, Nama, dan Disclaimer** di atas tetap berlaku untuk
 setiap perubahan pada `README.md`, `website/panduan/`, atau dokumen publik lain
 yang menyentuh identitas proyek, nama, afiliasi, atau pernyataan independensi.
 
+## Dokumentasi website, playground, dan deployment (aturan konsolidasi)
+
+Bagian ini menggantikan rencana historis `RENCANA_DOKUMENTASI.md` dan catatan `knowledge.md` yang dihapus agar tidak ada sumber instruksi ganda. Sebagian isi dokumen lama menggambarkan kondisi sebelum rilis terbaru; **periksa implementasi saat ini sebelum membuat keputusan**. Pekerjaan pengembangan baru tetap mengikuti `docs/ROADMAP.md` dan `docs/RENCANA_FITUR/`.
+
+### Batas tanggung jawab folder dan sumber kebenaran
+
+- `website/` adalah situs yang diakses pengguna: landing page, halaman dokumentasi, frontend playground dan aset statis. Panduan penggunaan berada di `website/panduan/*.md`; dokumentasi referensi pengguna jangan dipindahkan kembali ke `docs/`.
+- `docs/` adalah dokumentasi pengembangan internal: `docs/ROADMAP.md` sebagai **satu-satunya roadmap**, `docs/SPESIFIKASI.md` untuk kontrak semantik bahasa, `docs/ANALISIS/` dan `docs/RENCANA_FITUR/` untuk keputusan/rencana fitur. README dan CHANGELOG dapat *menautkan* roadmap, bukan menggandakan daftar status fase.
+- Jika menambah/memindah halaman panduan, periksa `website/docs.html`, daftar `DOCS`/navigasi, link relatif, embed contoh, konfigurasi bahasa ID/EN, dan file publik lain. Jangan mengasumsikan sidebar mengambil halaman baru secara otomatis.
+- `website/docs.html` memuat Markdown lewat `fetch()`; preview harus memakai HTTP server, **bukan** membuka `file://`. Jalankan server lokal, lalu uji sidebar, tiap tautan, anchor, respons 200 dan MIME untuk `.md`/`.idk`.
+- Penanda `{{embed:examples/nama.idk}}` digunakan untuk menampilkan contoh yang mengikuti isi repository; contoh harus ada dan ter-commit sebelum dirujuk pada situs. Uji hasil render, syntax highlighting, link dan tampilan mobile.
+- Perubahan website harus memeriksa aset/JS yang dimuat, tema gelap/terang, navigasi SPA dan penghindaran global script collision. Jangan mengubah state history browser dengan cara yang memutus navigasi; pastikan teks UI kedua bahasa diperbarui bersama.
+- Ketika mengubah struktur folder, update README, AGENTS, CONTRIBUTING, pengaturan installer/Docker, link CI dan referensi terkait **dalam PR yang sama**, agar tidak meninggalkan 404. Konten bersejarah di CHANGELOG tidak perlu diubah kecuali tidak akurat secara faktual.
+
+### Playground: keamanan sebelum publikasi
+
+- UI playground ada di `website/playground/`; implementasi server, runner, container dan endpoint harus diaudit di `docker/playground/` sebelum diubah. **Jangan memakai status progres lama dari rencana dokumentasi sebagai laporan terbaru.**
+- Kontrak yang harus diverifikasi: `POST /api/jalankan` dengan input sumber `.idk` dan keluaran terstruktur seperti `stdout`, `stderr`, `kode_keluar`, `ms`. Lihat kode aktual untuk batas ukuran, versi API dan nama field final.
+- Menjalankan kode pengguna dari web adalah **risiko eksekusi kode tidak tepercaya**. Pisahkan layanan eksekusi dari server situs; jalankan tanpa hak root, tidak ada host secrets, filesystem dan network dipersempit, batas CPU/RAM/PID/waktu/output dan rate limit. Konfigurasi contoh lama (3 detik, 64 KB sumber/output, 64 MB RAM, 0.5 CPU) adalah **baseline rancangan historis**, bukan bukti limit telah diterapkan atau cukup untuk semua deployment.
+- Prioritaskan isolasi OS/container, pengujian penyalahgunaan, dan pembatasan akses; `indk --sandbox` saja **tidak cukup** sebagai batas keamanan. Jangan memaparkan endpoint publik sebelum tes isolasi, timeout, resource limits dan bypass/escape lulus.
+- Bila merencanakan WebAssembly, dokumentasikan beda kemampuan native/browser dan lakukan tes kesetaraan; keputusan saat ini mengikuti roadmap, bukan opsi historis yang tidak lagi sesuai.
+
+### Aturan deployment dan verifikasi dokumentasi
+
+1. Periksa terlebih dahulu jalur deploy yang **benar-benar** digunakan pada branch saat ini; jangan mengasumsikan layanan hanya LAN/VPN atau selalu memakai satu image Docker. Deploy publik wajib mempertimbangkan TLS dan reverse proxy yang sesuai.
+2. Jangan taruh alamat host privat, kredensial server, kunci SSH, token atau informasi sensitif di instruksi otomatis, log, issue atau PR. Gunakan variable environment/secret store; autentikasi deploy menggunakan akun berizin minimum dan SSH key.
+3. Sebelum merge, lakukan build situs dan tes dokumentasi yang tersedia, link checker, pemeriksaan rute/404, navigasi, MIME, copy code, contoh interpreter, playground API dan error state. Tambahkan tes bila alur kritis belum terlindungi.
+4. Dokumentasikan target deploy, versi yang dipublikasikan, langkah rollback dan troubleshooting **tanpa** mengungkap secrets. Jika mengubah infrastruktur, uji kesehatan layanan secara terisolasi.
+5. Menjaga dokumentasi tetap mutakhir adalah syarat penyelesaian fitur: ketika API `.idk`, CLI, builtin, pustaka atau runtime berubah, sinkronkan `website/panduan/`, contoh, test, dan CHANGELOG pada PR terkait. Status belum implementasi harus diberi label *direncanakan*, tidak boleh dipresentasikan sebagai API tersedia.
+
 ## Branch dan Pull Request (wajib untuk manusia maupun AI agent)
 
 Sebelum memulai pekerjaan, ikuti [docs/ATURAN_BRANCH_DAN_PR.md](docs/ATURAN_BRANCH_DAN_PR.md): buat branch kategori pekerjaan (`fitur/`, `perbaikan/`, `docs/`, `keamanan/`, `refactor/`, `test/`, `ci/`, `build/`, `rilis/`, dan sebagainya), nama deskriptif kebab-case, PR menuju `main`, review dan CI sebelum merge. Jangan push langsung ke `main` untuk pekerjaan biasa; jangan menghapus pekerjaan lokal, force-push, atau mengungkap kerentanan rahasia. AI agent mengikuti aturan yang **sama persis** dan tetap wajib membuat rencana/tes sesuai workflow proyek.
