@@ -102,6 +102,50 @@ jobs:
       - name: HTTP client integration test
         run: bash tests/test_klien_http.sh
 
+  editor-lsp:
+    name: VS Code LSP (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y gcc make
+
+      - name: Install build tools (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          choco install mingw make -y
+          refreshenv
+
+      - name: Build interpreter (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: make clean && make
+
+      - name: Build interpreter (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          make clean
+          make
+
+      - name: Test LSP and formatter clients
+        working-directory: editors/vscode-indonesiaku
+        run: |
+          npm run test:lsp
+          npm run test:format
+
   sanitizers:
     name: ASan + UBSan (stress GC)
     runs-on: ubuntu-latest

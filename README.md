@@ -49,6 +49,7 @@ README ini sengaja dibuat ringkas.
 | [07_PUSTAKA_STANDAR](website/panduan/07_PUSTAKA_STANDAR.md) | Referensi fungsi bawaan & pustaka standar |
 
 - Situs dokumentasi & playground: **[idk-lang.web.id](https://idk-lang.web.id)**
+- Ekstensi VS Code: [highlighting, formatter, dan LSP](editors/vscode-indonesiaku/README.md)
 - Spesifikasi bahasa yang normatif: **[docs/SPESIFIKASI.md](docs/SPESIFIKASI.md)**
 - Rencana pengembangan (internal, bukan panduan pengguna): **[docs/](docs/README.md)**
 
@@ -141,9 +142,9 @@ Selebihnya ada di folder [`examples/`](examples/) — sekaligus dipakai sebagai
 
 ## 🗺️ Rencana Selanjutnya
 
-Fase 0–4 sudah selesai di v1.1.0. Berikutnya: iterator & generator (Fase 5),
-lalu pustaka standar yang lebih luas (Fase 6, sedang dikerjakan), dan perkakas
-& kinerja (Fase 7).
+Rilis terbaru adalah v1.3.2. Fase 0–8 telah dikerjakan dan implementasi Fase 9
+(LSP untuk ekstensi VS Code) tersedia di branch pengembangan. Fase selanjutnya
+dan status detail tiap fitur tercatat di roadmap resmi.
 
 Status per fitur ada di **[docs/ROADMAP.md](docs/ROADMAP.md)** — itulah
 satu-satunya sumber status yang resmi.

@@ -5,6 +5,18 @@ Semua perubahan penting pada proyek ini akan didokumentasikan dalam file ini.
 Format berdasarkan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Perkakas
+
+- Ekstensi VS Code menjalankan language server LSP untuk diagnostics sintaks
+  dan warning `indk periksa`, completion keyword/builtin/simbol dokumen, hover,
+  dan go-to-definition lokal.
+- LSP menganalisis dengan `indk --dis` / `indk periksa` (tanpa mengeksekusi
+  program), termasuk dokumen belum disimpan; hasil analisis usang dibatalkan.
+- Tes protokol JSON-RPC tersedia di `editors/vscode-indonesiaku/test-lsp.js`
+  dan dijalankan CI lintas Linux/macOS/Windows, bersama tes formatter ekstensi.
+
 ## [1.3.2] - 2026-10-28
 
 ### Diperbaiki

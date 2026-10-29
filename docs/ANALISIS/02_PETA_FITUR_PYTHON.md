@@ -281,8 +281,8 @@ Prioritas berdasarkan "apa yang dibutuhkan pemula dan aplikasi umum".
 | Linter (`pyflakes`) | `indk periksa` | ❌ | 7 |
 | Test runner | `indk uji` | ❌ | 7 |
 | Debugger (`pdb`) | `indk debug` / DAP | ❌ | 7 |
-| Language Server (LSP) + ekstensi VS Code | `indk-lsp` | ❌ | 7 |
-| Pewarnaan sintaks (VS Code, highlight.js) | | 🟡 situs saja | 7 |
+| Language Server (LSP) + ekstensi VS Code | `editors/vscode-indonesiaku/server.js` | 🟡 diagnostics/completion/hover/definisi lokal tersedia; definisi lintas modul belum | 9 |
+| Pewarnaan sintaks (VS Code, highlight.js) | | ✅ | 7 |
 | Dokumentasi otomatis (`pydoc`) | `indk dok` | ❌ | 7 |
 | Playground web | `website/playground` | 🟡 UI ada, backend belum | 7 |
 | Disassembler (`dis`) | `DEBUG_PRINT_CODE` | 🟡 flag kompilasi | 7: `indk --dis` |
