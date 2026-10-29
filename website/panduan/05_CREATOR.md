@@ -1,14 +1,14 @@
-# 5. Creator - Teguh Rijanandi
+# 5. Pembuat — Teguh Rijanandi
 
-Dokumentasi tentang creator dan motivasi di balik Bahasa Pemrograman Indonesiaku.
+Dokumentasi tentang pembuat dan motivasi di balik Bahasa Pemrograman Indonesiaku.
 
 ---
 
-## 👨‍💻 Profile
+## 👨‍💻 Profil
 
-**Nama:** Teguh Rijanandi  
-**Peran:** Creator & Lead Developer, Bahasa Pemrograman Indonesiaku  
-**Bidang:** Programming Languages, Compiler Design, Virtual Machine Architecture
+**Nama:** Teguh Rijanandi
+**Peran:** Pembuat sekaligus pengembang utama Bahasa Pemrograman Indonesiaku
+**Bidang:** Bahasa pemrograman, rancang bangun kompilator, arsitektur mesin virtual
 
 ---
 
@@ -16,383 +16,383 @@ Dokumentasi tentang creator dan motivasi di balik Bahasa Pemrograman Indonesiaku
 
 ### Mengapa Membuat Bahasa Pemrograman Baru?
 
-Sebagai seorang developer Indonesia, Teguh Rijanandi memiliki visi untuk membuat sesuatu yang meaningful dalam dunia programming languages. Pertanyaan yang muncul:
+Sebagai pengembang Indonesia, Teguh Rijanandi ingin membuat sesuatu yang berarti
+di ranah bahasa pemrograman. Pertanyaan yang muncul:
 
-> "Bisakah kita membuat bahasa pemrograman yang mudah dipelajari dan menggunakan syntax dalam bahasa Indonesia?"
+> "Bisakah kita membuat bahasa pemrograman yang mudah dipelajari dan memakai
+> sintaks dalam Bahasa Indonesia?"
 
-Dari pertanyaan tersebut lahir ide untuk membuat **Indonesiaku**.
+Dari pertanyaan itulah lahir **Indonesiaku**.
 
 ### Tujuan Proyek
 
-1. **Aksesibilitas** - Membuat programming lebih mudah diakses oleh pelajar Indonesia
-2. **Pembelajaran** - Memahami deep concepts dalam compiler design & virtual machines
-3. **Komunitas** - Membangun community sekitar bahasa pemrograman lokal
-4. **Inovasi** - Menunjukkan bahwa Indonesia bisa membuat teknologi berkualitas
+1. **Keterjangkauan** — membuat pemrograman lebih mudah diakses pelajar Indonesia
+2. **Pembelajaran** — memahami konsep mendalam rancang bangun kompilator dan mesin virtual
+3. **Komunitas** — membangun komunitas di sekitar bahasa pemrograman lokal
+4. **Inovasi** — menunjukkan bahwa Indonesia mampu membuat teknologi yang bermutu
 
 ### Filosofi Desain
 
 ```
-"Syntax yang jelas dan mudah dipahami adalah fondasi dari pembelajaran pemrograman yang efektif"
+"Sintaks yang jelas dan mudah dipahami adalah fondasi
+ pembelajaran pemrograman yang efektif"
 ```
 
 Desain Indonesiaku mengikuti prinsip-prinsip:
 
-- **Simple, but not simplistic** - Mudah untuk pemula, tapi powerful untuk advanced users
-- **Indonesian first** - Keyword dan documentation dalam Bahasa Indonesia
-- **Educational** - Dirancang untuk mengajar programming concepts
-- **Open source** - Semua orang bisa berkontribusi dan belajar
-- **Performance conscious** - Optimisasi untuk kecepatan eksekusi
-- **Extensible** - Mudah ditambah fitur baru
+- **Sederhana, bukan dangkal** — mudah bagi pemula, tetap bertenaga bagi pengguna mahir
+- **Mengutamakan Bahasa Indonesia** — kata kunci dan dokumentasi dalam Bahasa Indonesia
+- **Bernilai didaktis** — dirancang untuk mengajarkan konsep pemrograman
+- **Sumber terbuka** — siapa pun boleh berkontribusi dan belajar
+- **Sadar kinerja** — dioptimalkan untuk kecepatan eksekusi
+- **Mudah dikembangkan** — fitur baru gampang ditambahkan
 
 ---
 
-## 🔬 Background Teknis
+## 🔬 Latar Belakang Teknis
 
 ### Pengalaman Implementasi
 
 Teguh Rijanandi memiliki pengalaman dalam:
 
-- **Compiler Design** - Memahami lexing, parsing, code generation
-- **Virtual Machine** - Implementasi stack-based VM dengan bytecode
-- **Memory Management** - Handling garbage collection dan memory optimization
-- **Optimization** - Performance tuning dan profiling
-- **Open Source** - Kontribusi ke berbagai proyek open source
+- **Rancang bangun kompilator** — analisis leksikal, penguraian, pembangkitan kode
+- **Mesin virtual** — implementasi VM berbasis tumpukan dengan bytecode
+- **Manajemen memori** — penanganan pengumpul sampah dan optimasi memori
+- **Optimasi** — penyetelan kinerja dan pemrofilan
+- **Sumber terbuka** — kontribusi ke berbagai proyek sumber terbuka
 
 ### Pembelajaran dari Proyek Lain
 
-Desain Indonesiaku terinspirasi dari:
+Desain Indonesiaku terinspirasi oleh:
 
-- **Lua** - Simplicity dan elegance
-- **Python** - Readable syntax dan educational value
-- **Lisp** - Functional programming concepts
-- **Crafting Interpreters** - Comprehensive guide for language implementation
+- **Lua** — kesederhanaan dan keanggunan
+- **Python** — sintaks yang mudah dibaca dan bernilai didaktis
+- **Lisp** — konsep pemrograman fungsional
+- **Crafting Interpreters** — panduan menyeluruh untuk implementasi bahasa
 
-### Stack Teknis
+### Tumpukan Teknis
 
 ```
 ┌─────────────────────┐
-│   Indonesiaku Code  │
-│   (.idk files)      │
+│   Kode Indonesiaku  │
+│   (berkas .idk)     │
 └──────────┬──────────┘
            │
            ▼
 ┌─────────────────────┐
-│     Scanner         │ (Lexical Analysis)
-│   Tokenization      │
+│     Scanner         │ (analisis leksikal)
+│   Tokenisasi        │
 └──────────┬──────────┘
            │
            ▼
 ┌─────────────────────┐
-│     Compiler        │ (Syntax Analysis)
-│   Code Generation   │
+│     Compiler        │ (analisis sintaks)
+│   Pembangkitan kode │
 └──────────┬──────────┘
            │
            ▼
 ┌─────────────────────┐
-│   Bytecode Chunks   │ (Intermediate Representation)
+│   Chunk bytecode    │ (representasi antara)
 └──────────┬──────────┘
            │
            ▼
 ┌─────────────────────┐
-│   Virtual Machine   │ (Execution Engine)
-│   Stack-based VM    │
+│   Mesin Virtual     │ (mesin eksekusi)
+│   VM berbasis stack │
 └──────────┬──────────┘
            │
            ▼
 ┌─────────────────────┐
-│     Output          │
-│   Results & Data    │
+│     Keluaran        │
+│   Hasil & data      │
 └─────────────────────┘
 ```
 
 ---
 
-## 🚀 Project Journey
+## 🚀 Perjalanan Proyek
 
-### Phase 1: Conceiving the Idea (2024)
-
-```
-- Brainstorming bahasa pemrograman dengan syntax Indonesia
-- Research existing language implementations
-- Planning architecture dan design
-- Decision: C11 + Stack-based VM
-```
-
-### Phase 2: Core Implementation (Early 2025)
+### Tahap 1: Pematangan Gagasan (2024)
 
 ```
-✅ Scanner - Tokenize input
-✅ Compiler - Parse and generate bytecode
-✅ VM - Execute bytecode instructions
-✅ Basic types - Numbers, strings, booleans
-✅ Variables - Declaration and assignment
-✅ Functions - Definition and recursion
-✅ Memory management - Garbage collection basics
+- Curah gagasan bahasa pemrograman bersintaks Indonesia
+- Penelusuran implementasi bahasa yang sudah ada
+- Perencanaan arsitektur dan desain
+- Keputusan: C11 + VM berbasis tumpukan
 ```
 
-### Phase 3: Advanced Features (Mid 2025)
+### Tahap 2: Implementasi Inti (awal 2025)
 
 ```
-✅ Closures - Support for nested functions
-✅ Higher-order functions - Pass functions as arguments
-✅ Complex data structures - Working with multiple values
-✅ Performance optimization - Code generation improvements
+✅ Scanner — memecah masukan menjadi token
+✅ Compiler — mengurai dan membangkitkan bytecode
+✅ VM — menjalankan instruksi bytecode
+✅ Tipe dasar — bilangan, teks, boolean
+✅ Variabel — deklarasi dan penugasan
+✅ Fungsi — definisi dan rekursi
+✅ Manajemen memori — dasar pengumpulan sampah
 ```
 
-### Phase 4: Quality & Testing (Current)
+### Tahap 3: Fitur Lanjutan (pertengahan 2025)
 
 ```
-✅ Comprehensive test suite - 20+ test cases
-✅ Advanced examples - Complex algorithms
-✅ OOP pattern exploration - Functional OOP
-✅ Documentation - Complete guides in Indonesian
+✅ Closure — dukungan fungsi bersarang
+✅ Fungsi tingkat tinggi — fungsi sebagai argumen
+✅ Struktur data majemuk — pengolahan banyak nilai
+✅ Optimasi kinerja — perbaikan pembangkitan kode
 ```
 
-### Phase 5+: Future Roadmap (v0.2 onwards)
+### Tahap 4: Mutu & Pengujian
 
 ```
-📅 v0.2 - Classes & Inheritance
-📅 v0.3 - Module system
-📅 v0.4 - Standard library
-📅 v1.0 - Production ready
+✅ Rangkaian uji menyeluruh
+✅ Contoh lanjutan — algoritma yang lebih rumit
+✅ Pemrograman berorientasi objek
+✅ Dokumentasi — panduan lengkap berbahasa Indonesia
 ```
+
+### Tahap 5: Pematangan Bahasa (v1.x)
+
+```
+✅ Kelas dan pewarisan
+✅ Sistem modul
+✅ Pustaka standar
+✅ Anotasi tipe opsional
+```
+
+Status terbaru setiap fitur dicatat di `docs/ROADMAP.md` — berkas itulah
+satu-satunya sumber kebenaran untuk peta jalan, bukan halaman ini.
 
 ---
 
-## 💡 Key Achievements
+## 💡 Capaian Utama
 
-### Technical Achievements
+### Capaian Teknis
 
-| Achievement | Description |
-|------------|-------------|
-| **Stack-based VM** | Efficient bytecode execution engine |
-| **Garbage collection** | Automatic memory management |
-| **Closures** | Support for lexical scoping |
-| **Recursion** | Tail-call optimization ready |
-| **Error handling** | Clear error messages |
-| **20+ test cases** | Comprehensive test coverage |
+| Capaian | Keterangan |
+|---------|------------|
+| **VM berbasis tumpukan** | Mesin eksekusi bytecode yang ringkas |
+| **Pengumpul sampah** | Manajemen memori otomatis (mark-sweep) |
+| **Closure** | Dukungan lingkup leksikal |
+| **Berorientasi objek** | Kelas, pewarisan, dan metode magis |
+| **Sistem modul** | Setiap modul memiliki globalnya sendiri |
+| **Pustaka standar** | Modul bawaan siap pakai |
+| **Penanganan galat** | Pesan galat yang jelas berbahasa Indonesia |
+| **Rangkaian uji** | Uji golden, uji galat, dan uji panduan |
 
-### Community Impact
+### Dampak bagi Komunitas
 
-- Open source project yang dapat dicontoh
-- Educational resource untuk language design
-- Platform untuk berkontribusi bagi developer Indonesia
-- Showcase Indonesian capability dalam tech innovation
+- Proyek sumber terbuka yang bisa dijadikan rujukan
+- Bahan belajar untuk perancangan bahasa
+- Wadah berkontribusi bagi pengembang Indonesia
+- Bukti bahwa Indonesia mampu berinovasi di bidang teknologi
 
-### Learning Outcomes
+### Hasil Pembelajaran
 
-Melalui proyek ini, Teguh Rijanandi belajar:
+Melalui proyek ini, Teguh Rijanandi mempelajari:
 
-1. **Deep compiler knowledge** - Dari tokenization hingga execution
-2. **Systems programming** - Memory management dan optimization
-3. **Software engineering** - Project management, documentation
-4. **Community building** - Engaging contributors
-5. **Technical communication** - Writing clear documentation
+1. **Pengetahuan kompilator mendalam** — dari tokenisasi hingga eksekusi
+2. **Pemrograman sistem** — manajemen memori dan optimasi
+3. **Rekayasa perangkat lunak** — pengelolaan proyek dan dokumentasi
+4. **Pembinaan komunitas** — merangkul kontributor
+5. **Komunikasi teknis** — menulis dokumentasi yang jernih
 
 ---
 
-## 🎓 Educational Value
+## 🎓 Nilai Pendidikan
 
-### Untuk Students
+### Untuk Pelajar dan Mahasiswa
 
 Indonesiaku menyediakan:
 
-- **Real-world language implementation** - Lihat how languages work internally
-- **Compiler concepts** - Learn lexing, parsing, code generation
-- **VM architecture** - Understand bytecode and stack machines
-- **Algorithm practice** - Test dengan real programming language
-- **Community learning** - Contribute dan belajar dari orang lain
+- **Implementasi bahasa nyata** — melihat langsung cara kerja sebuah bahasa
+- **Konsep kompilator** — belajar analisis leksikal, penguraian, pembangkitan kode
+- **Arsitektur VM** — memahami bytecode dan mesin tumpukan
+- **Latihan algoritma** — berlatih dengan bahasa pemrograman sungguhan
+- **Belajar bersama** — berkontribusi sambil belajar dari orang lain
 
-### Untuk Educators
+### Untuk Pengajar
 
-Resources yang dapat digunakan:
+Sumber daya yang dapat dimanfaatkan:
 
-- **Source code** - Clean C code dengan comments
-- **Examples** - 15+ program dari simple to advanced
-- **Documentation** - Complete guides in Indonesian
-- **Test suite** - Automated testing examples
-- **OOP patterns** - Demonstrating OOP without native support
+- **Kode sumber** — kode C yang rapi dan berkomentar
+- **Contoh program** — dari yang sederhana hingga lanjutan
+- **Dokumentasi** — panduan lengkap berbahasa Indonesia
+- **Rangkaian uji** — contoh pengujian otomatis
+- **Pola berorientasi objek** — kelas, pewarisan, dan metode magis
 
 ---
 
-## 🤝 Philosophy on Contribution
+## 🤝 Filosofi Berkontribusi
 
 Teguh Rijanandi percaya pada:
 
-### Inclusivity
+### Keterbukaan
 
 ```
-"Tidak ada kontribusi yang terlalu kecil. 
-Setiap improvement membuat proyek lebih baik."
+"Tidak ada kontribusi yang terlalu kecil.
+ Setiap perbaikan membuat proyek lebih baik."
 ```
 
-- Welcome beginners dan contributors
-- Mentor untuk membantu belajar
-- Patient code review
+- Menyambut pemula dan kontributor baru
+- Mendampingi mereka yang sedang belajar
+- Telaah kode yang sabar
 
-### Quality
-
-```
-"Code quality adalah long-term investment.
-Ambil waktu untuk do it right."
-```
-
-- Comprehensive testing
-- Clear documentation
-- Thoughtful design decisions
-
-### Sustainability
+### Mutu
 
 ```
-"Open source bukan sprint, tapi marathon.
-Fokus pada sustainable practices."
+"Mutu kode adalah investasi jangka panjang.
+ Luangkan waktu untuk mengerjakannya dengan benar."
 ```
 
-- Clear roadmap
-- Realistic timelines
-- Regular maintenance
+- Pengujian yang menyeluruh
+- Dokumentasi yang jelas
+- Keputusan desain yang dipikirkan matang
+
+### Keberlanjutan
+
+```
+"Sumber terbuka bukan lari cepat, melainkan lari maraton.
+ Fokus pada praktik yang berkelanjutan."
+```
+
+- Peta jalan yang jelas
+- Target waktu yang realistis
+- Perawatan yang rutin
 
 ---
 
-## 📞 Contact & Social
+## 📞 Kontak
 
 Untuk menghubungi Teguh Rijanandi:
 
-### Email
+- **Surel:** teguhrijanandi02@gmail.com
+- **GitHub:** [@teguh02](https://github.com/teguh02)
 
-- **Primary:** teguhrijanandi02@gmail.com
-- **Work:** teguh@indonesiaku.dev
+### Proyek
 
-### Social Media
-
-- **GitHub:** [@teguhriyan](https://github.com/teguhriyan)
-- **Twitter:** [@teguhriyan](https://twitter.com/teguhriyan)
-- **LinkedIn:** [Teguh Rijanandi](https://linkedin.com/in/teguhriyan)
-
-### Project
-
-- **GitHub Repository:** https://github.com/teguh02/Indonesiaku
-- **Documentation:** `website/panduan/` folder
-- **Issues:** GitHub Issues for bug reports
+- **Repositori:** https://github.com/teguh02/Indonesiaku-Lang
+- **Dokumentasi:** folder `website/panduan/`
+- **Laporan masalah:** GitHub Issues pada repositori di atas
 
 ---
 
-## 🎁 Get Involved
+## 🎁 Ikut Terlibat
 
 Ingin berkontribusi atau mendukung proyek?
 
-### Ways to Contribute
+### Cara Berkontribusi
 
-1. **Code** - Submit pull requests dengan improvements
-2. **Testing** - Test dan report bugs
-3. **Documentation** - Improve guides dan examples
-4. **Feedback** - Share ideas dan suggestions
-5. **Spread the word** - Tell friends about Indonesiaku!
+1. **Kode** — kirim pull request berisi perbaikan
+2. **Pengujian** — uji coba dan laporkan kutu yang ditemukan
+3. **Dokumentasi** — perbaiki panduan dan contoh
+4. **Masukan** — bagikan gagasan dan saran
+5. **Sebarkan** — ceritakan Indonesiaku kepada teman!
 
-### How to Start
+### Cara Memulai
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/teguh02/Indonesiaku.git
+# 1. Klon repositori
+git clone https://github.com/teguh02/Indonesiaku-Lang.git
 
-# 2. Read contributing guide
+# 2. Baca panduan kontribusi
 cat website/panduan/04_KONTRIBUSI.md
 
-# 3. Pick an issue atau buat fitur baru
-# 4. Submit pull request
+# 3. Pilih sebuah isu atau rancang fitur baru
+# 4. Kirim pull request
 
-# 5. Join the community!
+# 5. Bergabunglah dengan komunitas!
 ```
 
 ---
 
-## 🏆 Recognition & Thanks
+## 🏆 Penghargaan & Terima Kasih
 
 Terima kasih kepada:
 
-### Open Source Community
+### Komunitas Sumber Terbuka
 
-- Contributors yang sudah submit improvements
-- Testers yang find dan report bugs
-- Educators yang menggunakan untuk teaching
-- Everyone yang provide feedback
+- Kontributor yang telah mengirim perbaikan
+- Penguji yang menemukan dan melaporkan kutu
+- Pengajar yang memakai Indonesiaku untuk mengajar
+- Semua yang telah memberi masukan
 
-### Inspirations
+### Sumber Inspirasi
 
-- Authors dari "Crafting Interpreters"
-- Creators dari Lua, Python, dan bahasa lain
-- Academic researchers dalam PL design
-- Indonesian tech community
+- Penulis buku "Crafting Interpreters"
+- Pencipta Lua, Python, dan bahasa lainnya
+- Para peneliti di bidang perancangan bahasa pemrograman
+- Komunitas teknologi Indonesia
 
-### Special Thanks
+### Ucapan Khusus
 
 Kepada semua yang percaya pada visi Indonesiaku dan mendukung perjalanan ini!
 
 ---
 
-## 🎯 Future Vision
+## 🎯 Visi ke Depan
 
 ### Jangka Pendek (1 tahun)
 
-- Rilis v1.0.0
-- Growing community
-- More examples dan tutorials
-- Indonesian language adoption
+- Memperluas pustaka standar
+- Menumbuhkan komunitas
+- Menambah contoh dan tutorial
+- Memperluas pemakaian di kalangan pengajar
 
-### Jangka Panjang (3-5 tahun)
+### Jangka Panjang (3–5 tahun)
 
-- Multiple backends (JavaScript, Python)
-- Web-based IDE
-- Package manager
-- Large standard library
-- Educational curriculum
-- Industry adoption
+- Beberapa target keluaran (JavaScript, Python)
+- Lingkungan pengembangan berbasis web
+- Pengelola paket
+- Pustaka standar yang lebih luas
+- Kurikulum pembelajaran
+- Pemakaian di dunia industri
 
 ---
 
-## 💭 Personal Reflection
+## 💭 Renungan Pribadi
 
-### Why This Matters
+### Mengapa Ini Penting
 
 ```
-"Bahasa pemrograman adalah salah satu dari karya seni terindah dalam teknologi.
+"Bahasa pemrograman adalah salah satu karya seni terindah dalam teknologi.
 Setiap bahasa membawa filosofi dan cara berpikir tertentu.
 
 Dengan membuat Indonesiaku, saya ingin menunjukkan bahwa Indonesia
 bisa tidak hanya menggunakan teknologi, tapi juga menciptakannya.
 
-Bahwa programming bisa lebih accessible dalam bahasa ibu kita.
-Bahwa belajar programming tidak perlu dimulai dengan English yang rumit.
+Bahwa pemrograman bisa lebih terjangkau dalam bahasa ibu kita.
+Bahwa belajar memrogram tidak harus dimulai dari bahasa Inggris yang rumit.
 
-Semoga Indonesiaku bisa menginspirasi generasi programmer Indonesia
-untuk not just use technology, tapi juga create technology."
+Semoga Indonesiaku bisa menginspirasi generasi pemrogram Indonesia
+untuk tidak sekadar memakai teknologi, tetapi juga menciptakannya."
 ```
 
 ---
 
-## 📚 Resources
+## 📚 Bahan Bacaan
 
-Untuk mempelajari lebih lanjut tentang language design:
+Untuk mendalami perancangan bahasa pemrograman:
 
-### Recommended Reading
+### Buku yang Disarankan
 
-1. **Crafting Interpreters** - Robert Nystrom
-   - Free book online: craftinginterpreters.com
-   - Comprehensive guide untuk language implementation
+1. **Crafting Interpreters** — Robert Nystrom
+   - Buku gratis daring: craftinginterpreters.com
+   - Panduan menyeluruh untuk implementasi bahasa
 
-2. **Language Implementation Patterns** - Terence Parr
-   - Practical patterns untuk parsing dan execution
+2. **Language Implementation Patterns** — Terence Parr
+   - Pola praktis untuk penguraian dan eksekusi
 
-3. **Programming Language Pragmatics** - Michael Scott
-   - Academic foundation untuk PL concepts
+3. **Programming Language Pragmatics** — Michael Scott
+   - Landasan akademis untuk konsep bahasa pemrograman
 
-### Online Courses
+### Kursus Daring
 
-- MIT OpenCourseWare - Compiler Design
-- Udacity - Programming Languages
-- Coursera - Compilers
+- MIT OpenCourseWare — Compiler Design
+- Udacity — Programming Languages
+- Coursera — Compilers
 
-### Communities
+### Komunitas
 
 - r/compilers
 - r/ProgrammingLanguages
@@ -401,21 +401,5 @@ Untuk mempelajari lebih lanjut tentang language design:
 
 ---
 
-## 📋 Quick Facts About Teguh
-
-| Aspek | Detail |
-|-------|--------|
-| **Profesi** | Software Developer & Language Designer |
-| **Passion** | Creating elegant, accessible technology |
-| **Favorite Lang** | Python, C, Lisp |
-| **Best Time to Code** | Late night |
-| **Coffee Addiction** | High ☕ |
-| **Dream Project** | Language yang dipakai jutaan orang |
-| **Message** | Keep learning, keep creating! |
-
----
-
-**Untuk pertanyaan lebih lanjut atau ingin collaborate, silakan hubungi melalui channel yang tersedia. Selamat datang di komunitas Indonesiaku!**
-
-Versi: 1.0  
-Terakhir diperbarui: 28 Oktober 2025
+**Untuk pertanyaan lebih lanjut atau ajakan berkolaborasi, silakan hubungi lewat
+kanal yang tersedia. Selamat datang di komunitas Indonesiaku!**

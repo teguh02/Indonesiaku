@@ -1,6 +1,6 @@
 # 3. Panduan Sintaks - Bahasa Pemrograman Indonesiaku
 
-Panduan lengkap untuk memahami dan menggunakan syntax Bahasa Pemrograman Indonesiaku dengan contoh-contoh praktis.
+Panduan lengkap untuk memahami dan menggunakan sintaks Bahasa Pemrograman Indonesiaku dengan contoh-contoh praktis.
 
 ---
 
@@ -2750,7 +2750,7 @@ cetak(benar)        # Boolean
 cetak(kosong)       # Null
 ```
 
-### jam() - Get Current Time
+### jam() — Waktu Saat Ini
 
 Mendapatkan waktu saat ini (dalam detik sejak epoch).
 
@@ -2974,8 +2974,7 @@ selagi angka <= 20 {
 
 ---
 
-## Tips & Tricks
-
+## Tips & Trik
 1. **Gunakan descriptive names** - Nama yang jelas mempermudah debugging
 2. **Test di REPL** - Coba command secara interaktif terlebih dahulu (blok multi-baris didukung)
 3. **Break kompleks logic** - Pisahkan menjadi fungsi-fungsi kecil

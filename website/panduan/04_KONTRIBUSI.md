@@ -12,9 +12,9 @@ Terima kasih telah berminat berkontribusi pada proyek Bahasa Pemrograman Indones
 4. [Jenis-jenis Kontribusi](#jenis-jenis-kontribusi)
 5. [Workflow Kontribusi](#workflow-kontribusi)
 6. [Code Guidelines](#code-guidelines)
-7. [Testing](#testing)
+7. [Pengujian](#pengujian)
 8. [Pull Request Process](#pull-request-process)
-9. [Reporting Issues](#reporting-issues)
+9. [Reporting Issues](#melaporkan-kendala)
 
 ---
 
@@ -242,7 +242,7 @@ git checkout -b docs/improvement
 git commit -m "Docs: [deskripsi improvement]"
 ```
 
-### 4. Tests & Examples
+### 4. Tests & Contoh
 
 **Test case baru:**
 
@@ -254,8 +254,7 @@ git checkout -b test/nama-test
 git commit -m "Test: Tambahkan test untuk [fitur]"
 ```
 
-### 5. Performance Optimization
-
+### 5. Optimasi Kinerja
 **Optimization:**
 
 ```bash
@@ -269,8 +268,7 @@ git commit -m "Perf: Optimize [bagian code]"
 
 ## Workflow Kontribusi
 
-### Standard Git Workflow
-
+### Alur Kerja Git Standar
 ```bash
 # 1. Fork repository (jika Anda bukan maintainer)
 # Buat copy pribadi di akun GitHub Anda
@@ -479,7 +477,7 @@ char* create_string(const char* source, int length) {
 
 ---
 
-## Testing
+## Pengujian
 
 ### Run Existing Tests
 
@@ -516,7 +514,7 @@ y = -5
 cetak(y)
 ```
 
-### Automated Testing
+### Pengujian Otomatis
 
 **Menambah test ke test_all.ps1:**
 
@@ -579,7 +577,7 @@ Saat membuat PR, gunakan template ini:
 - [ ] Performance improvement
 - [ ] Refactoring
 
-## Testing
+## Pengujian
 
 - [ ] Tested locally
 - [ ] Added/updated tests
@@ -600,8 +598,7 @@ Closes #[issue number]
 
 ---
 
-## Reporting Issues
-
+## Melaporkan Kendala
 ### Format Issue Report
 
 **Title:**
@@ -651,10 +648,9 @@ Seharusnya: ...
 - **Pull Requests**: Code review discussions
 - **Email**: teguhrijanandi02@gmail.com (untuk kontribusi besar)
 
-### Code Review
-
+### Telaah Kode
 Penulis PR akan:
-- Memberikan feedback jika ada changes needed
+- Memberikan masukan jika ada changes needed
 - Approve jika sudah bagus
 - Merge ke main branch
 
@@ -670,7 +666,7 @@ Reviewers akan melihat:
 
 ### Saat Menambah Fitur Baru
 
-1. **Update SYNTAX_REFERENCE.md** jika ada syntax baru
+1. **Update SYNTAX_REFERENCE.md** jika ada sintaks baru
 2. **Tambah contoh** ke examples/
 3. **Update CHANGELOG.md** dengan changes
 4. **Buat issue** untuk tracking
@@ -684,8 +680,7 @@ Reviewers akan melihat:
 
 ---
 
-## Tips untuk Kontributors
-
+## Tips untuk Kontributor
 1. **Mulai kecil** - Kontribusi documentation atau test dulu
 2. **Tanya dulu** - Buat issue sebelum besar-besaran development
 3. **Baca existing code** - Pelajari code style yang digunakan
@@ -704,7 +699,7 @@ A: Hindari jika bisa. Jika perlu, pastikan: (1) Alasan jelas, (2) Test lengkap, 
 A: Fork dulu jika bukan maintainer, push ke branch sendiri, buat PR
 
 **Q: Bagaimana jika PR saya ditolak?**  
-A: Normal! Tanya reviewer alasannya dan buat improvements
+A: Normal! Tanya reviewer alasannya dan buat perbaikan
 
 **Q: Berapa lama review PR?**  
 A: Tergantung kompleksitas, usually 2-7 hari
