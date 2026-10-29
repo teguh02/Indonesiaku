@@ -31,6 +31,30 @@ Indonesiaku meniru **semantik** Python, tetapi **tidak** sintaks bloknya.
 - Berkas sumber adalah **UTF-8**. Identifier terbatas ASCII (`A-Z`, `a-z`,
   `_`, dan digit setelah karakter pertama); teks boleh berisi karakter apa pun.
 
+## 1A. Kaidah arsitektur bahasa dan aturan unused (kebijakan desain)
+
+**Norma yang telah berlaku:** Indonesiaku menjadikan Python inspirasi perilaku, bukan menyalin sintaks Python 100%. Kata kunci yang ditetapkan bahasa memakai Bahasa Indonesia. Batas blok selalu `{` dan `}` seperti gaya PHP/C untuk deklarasi fungsi, kelas/metode dan struktur kontrol; indentasi dan titik dua `:` ala Python tidak menjadi penanda blok. Ketentuan ini harus dijaga oleh setiap kontributor manusia atau AI agent.
+
+**Arah desain tambahan — BELUM diklaim sebagai kontrak runtime v1.0/v1.x:** mengikuti disiplin pemakaian simbol yang terinspirasi Go. Deklarasi yang tidak digunakan harus mendapat diagnostik; lint/checker ditargetkan untuk memberi peringatan dengan lokasi dan saran menghapus/mengomentari deklarasi. Cakupan yang akan dirancang: variabel lokal, parameter, impor, fungsi dan kelas internal, serta simbol tingkat modul. Di Go, unused local variables/imports tertentu merupakan error, **bukan berarti Go melarang seluruh fungsi/kelas yang tidak dipanggil**.
+
+**Keamanan kompatibilitas:** Jangan memberlakukan error kompilasi default untuk fungsi/kelas/variabel global yang tampak unused sebelum memahami penggunaan lintas-modul, API ekspor, callback, reflection, override, entrypoint atau akses dinamis. Prioritaskan peringatan `indk periksa` dan strict mode opsional; jadikan error default hanya setelah desain lengkap dan kajian perubahan kompatibilitas. Jika hal tersebut memutus perilaku sah seri v1.x, rencanakan untuk v2.0 dengan mekanisme migrasi. Pengecualian dan aturan `unused` yang spesifik harus dijabarkan pada dokumen rencana fitur sebelum implementasi.
+
+**Contoh bentuk yang diwajibkan (ilustratif):**
+
+```indonesiaku
+fungsi hitung_total(a, b) {
+    kembalikan a + b
+}
+
+kelas Kalkulator {
+    fungsi tambah(a, b) {
+        kembalikan a + b
+    }
+}
+```
+
+Tidak boleh menjadikan `def hitung_total(a, b):`, `class Kalkulator:` atau blok yang bergantung indentasi sebagai sintaks alternatif.
+
 ## 2. Kata kunci
 
 Ke-35 kata berikut tidak dapat dipakai sebagai nama:
