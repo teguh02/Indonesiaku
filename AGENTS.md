@@ -196,6 +196,28 @@ Before committing:
   Name module files accordingly.
 - GC-safety rule: any C code that allocates while holding an unrooted object must keep it reachable (push it on the VM stack, or use `peek` instead of `pop`). See `makeConstant`, `concatenate`, `allocateString`, and the `kunci`/`OP_BUILD_LIST` handlers for the pattern.
 
+### Parentheses erase statement boundaries (K20)
+
+Inside `(`/`[` the scanner swallows newlines (`scanner.c`, `groupingDepth`),
+so a callback body passed as an argument loses its statement boundaries:
+
+```indonesiaku
+app.rute("GET", "/x", fungsi(req) {
+    variabel a = 1
+    jika a == 1 { ... }        # 'jika' begins a STATEMENT
+})
+```
+
+Without a guard the parser reads that `jika` as the infix of a conditional
+expression (`nilai jika kondisi selain lain`) and fails with the misleading
+"Harapkan 'selain' pada ekspresi kondisional".
+
+`expression()` therefore only treats `jika` as a ternary when it sits on the
+**same line** as the end of its left operand. Consequence: a conditional
+expression cannot be split so that `jika` starts a new line.
+
+Any new infix keyword usable at statement start needs the same guard.
+
 ### Magic methods run user code in deep C paths (K19)
 
 `isFalsey`, `hashValue`, and table lookups are called from inside C loops.

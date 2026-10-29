@@ -1,0 +1,33 @@
+# Regresi: 'jika' yang MEMULAI pernyataan di dalam fungsi anonim yang
+# dioper sebagai argumen tidak boleh dibaca sebagai ekspresi kondisional.
+# Di dalam tanda kurung scanner menelan baris baru, sehingga batas
+# pernyataan hilang dan 'jika' berikutnya tampak seperti ternary.
+
+fungsi pakai(f) { kembalikan f(1) }
+
+cetak(pakai(fungsi(r) {
+    variabel hasil = "awal"
+    jika r == 1 {
+        hasil = "cabang diambil"
+    }
+    kembalikan hasil
+}))
+
+# Ekspresi kondisional biasa tetap jalan.
+variabel x = [1, 2]
+cetak(x[0] jika panjang(x) > 0 selain "kosong")
+cetak("ya" jika salah selain "tidak")
+
+# Ternary di dalam pemanggilan fungsi juga tetap jalan.
+fungsi gema(a) { kembalikan a }
+cetak(gema("A" jika benar selain "B"))
+
+# Beberapa pernyataan setelah variabel di dalam callback.
+cetak(pakai(fungsi(r) {
+    variabel a = 10
+    variabel b = 20
+    jika a < b {
+        kembalikan "a lebih kecil"
+    }
+    kembalikan "b lebih kecil"
+}))
