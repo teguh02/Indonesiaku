@@ -1,0 +1,31 @@
+title: "[Diskusi] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Terima kasih telah bergabung dengan komunitas Indonesiaku (Idk-Lang).
+        Gunakan kategori ini untuk diskusi umum. Untuk pertanyaan teknis pilih Q&A; untuk usulan fitur pilih Ideas; dan untuk bug yang terverifikasi gunakan GitHub Issues.
+        Jangan bagikan kata sandi, token, private key, atau data pribadi.
+  - type: input
+    id: topik
+    attributes:
+      label: Topik diskusi
+      description: Apa yang ingin dibahas?
+      placeholder: Contoh - Pengalaman belajar bahasa Indonesiaku
+    validations:
+      required: true
+  - type: textarea
+    id: konteks
+    attributes:
+      label: Latar belakang
+      description: Berikan konteks yang cukup supaya komunitas bisa ikut berdiskusi.
+      placeholder: Jelaskan ide, pengalaman, atau pertanyaan terbuka Anda.
+    validations:
+      required: true
+  - type: textarea
+    id: harapan
+    attributes:
+      label: Tanggapan yang diharapkan
+      description: Opsional - bantuan atau perspektif seperti apa yang Anda cari?
+    validations:
+      required: false
