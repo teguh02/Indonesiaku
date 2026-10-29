@@ -617,6 +617,27 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 
 **Prinsip:** kelompok kurikulum seperti W3Schools adalah **cara mengorganisasi fitur dan dokumentasi**, bukan keharusan menyalin keseluruhan fungsi PHP. Komponen HTML/SSR tetap di Fase 12, sedangkan API server, form, keamanan, database dan transfer ada pada fase pemiliknya.
 
+#### Rencana implementasi portal dokumentasi resmi (bagian Fase 19)
+
+**Tujuan:** website resmi Indonesiaku menyediakan **Tutorial** dan **Referensi API** yang terpisah tetapi saling terhubung, menggunakan navigasi kategori seperti W3Schools. Ini adalah pekerjaan dokumentasi website, **bukan** permintaan menambahkan fungsi yang belum ada secara otomatis.
+
+**Tahapan untuk AI coding agent:**
+
+1. [ ] **Audit website dan API:** periksa struktur \`website/\`, sistem navigasi/panduan saat ini, \`src/native.c\`, \`pustaka/\`, \`docs/SPESIFIKASI.md\` serta contoh dan tes. Buat katalog sumber kebenaran yang memetakan nama API ke kode sumber, signature, kategori, versi pertama didukung, contoh dan tes. Jangan menebak signature.
+2. [ ] **Susun navigasi dua bagian:** (a) **Tutorial Indonesiaku** berdasarkan topik/proyek, dan (b) **Referensi Bahasa & Pustaka** untuk lookup API per kategori. Sidebar harus responsif di desktop/mobile, dapat dibuka/tutup, dan memperlihatkan lokasi halaman aktif.
+3. [ ] **Kategori awal sidebar:** Dasar Bahasa; Fungsi Bawaan (Teks, Bilangan/Matematika, Koleksi, Tanggal/Waktu); OOP; File & Direktori; HTTP/HTTPS; REST API Server; SSR & Template HTML; Formulir Web; Database (SQLite, MySQL/MariaDB, PostgreSQL); XML/JSON; FTP/FTPS, SSH/SFTP & Unduhan; Kriptografi & Keamanan; Modul & Package Manager; CLI/Developer Tools; serta Indeks A–Z fungsi/kelas/modul. Tampilkan hanya halaman yang isinya benar-benar tersedia; kategori perencanaan harus diberi status yang jelas.
+4. [ ] **Satu halaman referensi per fungsi/kelas/metode/modul yang relevan**, mengikuti template tetap: nama dan ringkasan, status (\`tersedia\`/\`eksperimental\`/\`direncanakan\`/\`deprecated\`), versi minimum, import yang diperlukan, signature sintaks aktual, parameter (nama/tipe/default/wajib), return type/nilai, exceptions, side effects, keamanan, kompatibilitas OS, contoh \`.idk\`, output yang diharapkan, related APIs, serta link ke source dan tes.
+5. [ ] **Penulisan contoh berkualitas:** minimal satu contoh sederhana dan satu contoh penggunaan realistis untuk API penting (file, database, web, keamanan, network). Hindari contoh placeholder yang tidak dapat dijalankan; jangan menampilkan API konsep seperti \`web.render\` atau \`ssh.sambung\` sebagai API aktif sebelum benar-benar diimplementasikan.
+6. [ ] **Pencarian dan indeks:** pencarian client-side berdasarkan nama fungsi, sinonim/topik, kategori dan deskripsi; indeks A–Z; tautan permanen/anchor; cross-link dari tutorial ke halaman API; breadcrumbs; daftar isi lokal untuk halaman panjang.
+7. [ ] **Pemeliharaan dokumentasi secara otomatis:** metadata terstruktur (misalnya JSON/YAML/Markdown frontmatter) boleh dipakai sebagai sumber laman; sediakan skrip validasi yang menolak duplikasi slug, tautan rusak, halaman tanpa status/versi, API tersedia tanpa source/test, dan kode contoh yang tidak lolos interpreter. Reuse \`tests/test_panduan.sh\` atau perluas jalur CI sejenis.
+8. [ ] **Kualitas UX dan aksesibilitas:** desain responsif, keyboard navigation, heading semantik, kontras warna, code highlighting \`.idk\`, tombol salin kode, dan "coba contoh" hanya jika playground mendukung fitur tersebut dan aman untuk dijalankan.
+9. [ ] **Versioning dokumentasi:** tandai \`Sejak vX.Y.Z\` untuk fungsi yang benar-benar tersedia; berikan catatan perubahan, deprecations dan perbedaan versi. Tidak perlu mengklaim versi yang belum dirilis sebagai tersedia. Pertahankan halaman rujukan historis bila masih dibutuhkan.
+10. [ ] **Publikasi dan audit:** verifikasi semua link, menu, layout pada mobile/desktop, search, rendering kode, SEO dasar dan kecepatan halaman; perbarui README/panduan situs/CHANGELOG sesuai relevansi. **Dokumentasi murni boleh dipublikasikan tanpa menaikkan versi interpreter**.
+
+**Kriteria penerimaan:** setiap builtin publik dan modul standar yang terinventarisasi memiliki entri referensi atau justifikasi pengecualian; contoh yang diklaim runnable diuji otomatis; navigasi/pencarian berfungsi; semua status/versi sesuai implementasi; tidak ada dokumentasi yang menyarankan praktik tidak aman sebagai default.
+
+**Contoh format satu entri referensi:** \`panjang(nilai)\` → kategori Fungsi Bawaan, deskripsi, argumen \`nilai\`, hasil bilangan, satu atau lebih contoh .idk, output aktual dari tes, versi mulai tersedia yang telah diverifikasi, dan link ke implementasi. Gunakan data repository untuk menulis fakta; jangan menebak.
+
 ### Checklist wajib untuk setiap fase (panduan untuk AI coding agent)
 
 1. **Audit sebelum coding:** baca AGENTS.md, docs/SPESIFIKASI.md, docs/ANALISIS/, README, contoh dan source terkait; verifikasi fitur existing supaya tidak menduplikasi fungsi atau merusak kompatibilitas sejak 1.0.
