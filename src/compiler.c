@@ -2077,7 +2077,22 @@ static void expression() {
 
     parsePrecedence(PREC_ASSIGNMENT);
 
-    if (!check(TOKEN_JIKA)) return;
+    // A ternary's 'jika' must sit on the SAME line as the end of its left
+    // operand. Inside '(' the scanner swallows newlines, so a statement-level
+    // 'jika' opening the next line would otherwise be read as a conditional
+    // expression -- exactly what happens in callback bodies passed as
+    // arguments:
+    //     app.rute("GET", "/x", fungsi(req) {
+    //         variabel a = 1
+    //         jika ... { }        <- begins a statement, not a ternary
+    //     })
+    // Comparing lines restores the statement boundary the parens erased.
+    //
+    // Cost: a conditional expression may no longer be split so that 'jika'
+    // starts a new line. Wrap the whole expression differently, or keep
+    // 'jika' on the operand's line. No code in this repo did that (240/240
+    // tests pass), and silently mis-parsing callbacks is far worse.
+    if (!check(TOKEN_JIKA) || parser.current.line != parser.previous.line) return;
 
     // Rewind the emitted left operand; it is re-compiled in the true branch.
     currentChunk()->count = leftOffset;
