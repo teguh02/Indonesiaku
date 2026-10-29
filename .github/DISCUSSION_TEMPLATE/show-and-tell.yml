@@ -1,0 +1,41 @@
+title: "[Karya] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tunjukkan proyek, eksperimen, pustaka, tutorial, atau demo yang dibuat dengan Indonesiaku!
+        Sertakan petunjuk menjalankan; jangan menyisipkan API yang belum tersedia tanpa penjelasan.
+        Jangan bagikan rahasia, file pribadi, atau konten tanpa hak.
+  - type: input
+    id: proyek
+    attributes:
+      label: Nama proyek
+      placeholder: Contoh - Todo REST API dengan Indonesiaku
+    validations:
+      required: true
+  - type: textarea
+    id: ringkasan
+    attributes:
+      label: Deskripsi dan fitur
+    validations:
+      required: true
+  - type: input
+    id: tautan
+    attributes:
+      label: Tautan proyek, demo, atau kode sumber
+      placeholder: https://github.com/...
+    validations:
+      required: false
+  - type: textarea
+    id: menjalankan
+    attributes:
+      label: Cara mencoba atau menjalankan
+      description: Sertakan versi Indonesiaku, dependensi dan langkah penggunaan.
+    validations:
+      required: true
+  - type: textarea
+    id: pelajaran
+    attributes:
+      label: Tantangan, pembelajaran, atau masukan yang diharapkan
+    validations:
+      required: false
