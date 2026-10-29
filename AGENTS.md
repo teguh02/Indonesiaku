@@ -132,7 +132,7 @@ incomplete, however good the C code is.
 | `examples/` + `tests/expected/` | one golden example exercising the feature (stdout only, stderr empty) |
 | `tests/galat/` | `.idk` + `.err` pair for anything that must fail |
 | `website/panduan/` | `03_PANDUAN_SINTAKS.md` for syntax, `07_PUSTAKA_STANDAR.md` for new builtins — these ARE the live site |
-| `editors/vscode-indonesiaku/` | new keywords → `extension.js` KEYWORDS + `syntaxes/indonesiaku.tmLanguage.json`; new builtins → BUILTINS; new syntax worth a snippet → `snippets/indonesiaku.code-snippets` |
+| `editors/vscode-indonesiaku/` | new keywords/builtins → `language-data.js` + `syntaxes/indonesiaku.tmLanguage.json`; new syntax worth a snippet → `snippets/indonesiaku.code-snippets`; keep LSP providers working |
 | `CHANGELOG.md` | entry, marked ⚠️ when it breaks compatibility |
 | `docs/ROADMAP.md`, `docs/ANALISIS/02_PETA_FITUR_PYTHON.md` | flip status to ✅ |
 | `README.md`, this `AGENTS.md` | user-visible syntax and new pitfalls |
@@ -398,9 +398,19 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
   member hashes, so insertion order does not matter), `valuesEqual` deliberately ignores
   `frozen` (`himpunan([1]) == himpunan_beku([1])` is benar, as in Python), and every write
   path goes through `rejectFrozenSet` — there are exactly two (`tambah`, `hapus`).
-- The editor's builtin highlight list is GENERATED from `defineNative()` in `src/vm.c`,
-  sorted longest-name-first so `himpunan_beku` wins the alternation against `himpunan`.
-  Do not hand-edit it: 35 builtins silently went unhighlighted for months that way.
+- **VS Code LSP:** `editors/vscode-indonesiaku/server.js` is a dependency-free
+  JSON-RPC stdio server, launched with the VS Code extension host's Node runtime.
+  It invokes `indk --dis` (syntax errors) and `indk periksa` (unused-local
+  warnings) on a temporary sibling file — compile/static analysis only; never
+  executes source. The sibling path preserves relative-import resolution.
+  Diagnostics map compiler UTF-8 byte columns to LSP UTF-16 positions, also for
+  `untitled:` documents; edits cancel/debounce stale analysis. Completion data
+  is shared via `language-data.js`; update it when keywords/builtins change.
+  Go-to-definition currently resolves declarations in the same document only.
+  `indonesiaku.jalurIndk` selects the interpreter. Run `npm run test:lsp` and
+  `npm run test:format` in `editors/vscode-indonesiaku/`.
+- `tests/test.yml` job `editor-lsp` runs these Node integration tests and formatter
+  tests on Linux/macOS/Windows.
 - `allowTupleRHS` in `compiler.c` gates the bare-comma tupel (`x = 1, 2`). It is enabled by
   exactly four callers — `expressionStatement`, `varDeclaration`, `returnStatement` (both
   branches), and the `OP_INDEX_SET` path — and `maybeTupleTail` additionally requires
@@ -435,7 +445,7 @@ allocates and can trigger a GC. Two rules follow, both learned from real bugs:
 
 ## CI
 
-- `.github/workflows/test.yml` jobs: `test-linux`/`test-macos`/`test-windows` (build + golden tests, gating), **`todo-crud`** (CLI CRUD integration via `tests/test_todo_cli.sh`), **`todo-http`** (REST server integration via `tests/test_todo_server.sh`, driven by `curl`), **`sanitizers`** (ASan+UBSan with `-DDEBUG_STRESS_GC`), **`valgrind`**, **`coverage`** (lcov artifact), **`fuzz`** (short libFuzzer run on `tests/fuzz_compile.c` — compiles the front end only, does NOT execute, so infinite-loop programs can't cause timeouts). `continue-on-error` was removed from build/test steps — CI red now means a real failure.
+- `.github/workflows/test.yml` jobs: `test-linux`/`test-macos`/`test-windows` (build + golden tests, gating), **`todo-crud`** (CLI CRUD integration via `tests/test_todo_cli.sh`), **`todo-http`** (REST server integration via `tests/test_todo_server.sh`, driven by `curl`), **`editor-lsp`** (Node LSP + formatter integration tests on Linux/macOS/Windows), **`sanitizers`** (ASan+UBSan with `-DDEBUG_STRESS_GC`), **`valgrind`**, **`coverage`** (lcov artifact), **`fuzz`** (short libFuzzer run on `tests/fuzz_compile.c` — compiles the front end only, does NOT execute, so infinite-loop programs can't cause timeouts). `continue-on-error` was removed from build/test steps — CI red now means a real failure.
 - Non-Linux `sanitizers`/`valgrind`/`fuzz` jobs build via raw gcc/clang (no `-lws2_32`; on Linux sockets are in libc). The gating Windows job builds via `make` and DOES link `-lws2_32`.
 - `.github/workflows/release.yml`: on `v*.*.*` tags; runs the test suite before publishing artifacts.
 

@@ -1,8 +1,8 @@
 {
   "name": "indonesiaku",
   "displayName": "Indonesiaku",
-  "description": "Language support for Indonesiaku (.idk): syntax highlighting, snippets, and completions.",
-  "version": "0.1.0",
+  "description": "Language support for Indonesiaku (.idk): syntax highlighting, LSP diagnostics, completion, hover, go-to-definition, snippets, and formatting.",
+  "version": "0.2.0",
   "publisher": "teguh02",
   "license": "MIT",
   "engines": {
@@ -19,11 +19,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/teguh02/Indonesiaku-Lang.git"
+    "url": "https://github.com/teguh02/Indonesiaku.git"
   },
   "main": "./extension.js",
   "files": [
     "extension.js",
+    "server.js",
+    "language-data.js",
     "language-configuration.json",
     "syntaxes",
     "snippets",
@@ -73,6 +75,8 @@
     }
   },
   "scripts": {
+    "test:lsp": "node test-lsp.js",
+    "test:format": "node test-format.js",
     "package": "npx @vscode/vsce package"
   }
 }

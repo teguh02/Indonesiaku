@@ -314,9 +314,8 @@ ada, jadi tidak ada sintaks tes baru.
 ([`editors/vscode-indonesiaku/`](../editors/vscode-indonesiaku/)). Mendelegasikan
 ke interpreter, bukan mengimplementasi ulang aturan format di JavaScript.
 
-Belum: LSP + diagnostics editor, debugger,
-playground via **WebAssembly**, cache `.idkc`, computed goto, superinstruksi,
-inline cache, NaN-boxing, GC generasional, utas/asinkron.
+Belum: debugger, playground via **WebAssembly**, cache `.idkc`, computed goto,
+superinstruksi, inline cache, NaN-boxing, GC generasional, utas/asinkron.
 Ref: 04 §1, §8–10, §12.
 
 > **Catatan computed goto.** Diukur dulu, belum dikerjakan. `run()` punya 85
@@ -411,22 +410,22 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 
 ### Fase 9 — Language Server Protocol (LSP) dan pengalaman editor
 
-**Tujuan:** file .idk mendapatkan diagnostics, autocomplete, hover, dan go-to-definition di VS Code tanpa menjalankan program pengguna. **Status:** ⬜ belum. **Pemetaan:** P1 (bagian Fase 7 yang masih tertunda).
+**Tujuan:** file .idk mendapatkan diagnostics, autocomplete, hover, dan go-to-definition di VS Code tanpa menjalankan program pengguna. **Status:** ✅ selesai. **Pemetaan:** P1 (bagian Fase 7).
 
 **Rekomendasi rilis fase: `v1.4.0` (minor), kandidat `v1.4.0-rc.1`; patch `v1.4.1` dan seterusnya jika hanya perbaikan kompatibel.** Ini target perencanaan, bukan janji jadwal atau tag yang sudah dibuat.\n\n**Gerbang rilis:** LSP diagnostics dan editor minimum sudah bekerja serta diuji terhadap dokumen tidak lengkap; completion/hover/definition memenuhi checklist fase.\n\n
 **Langkah pengembangan:**
 
-1. [ ] Buat dokumen desain di docs/RENCANA_FITUR/lsp.md. Catat batas parser single-pass, kebutuhan analisis file tidak lengkap, dan keputusan apakah menggunakan scanner/compiler dalam mode analisis terpisah atau komponen parser toleran error.
-2. [ ] Spesifikasikan proses language server mandiri (misalnya executable indk-lsp) dengan JSON-RPC 2.0 lewat stdio, initialize/shutdown, sinkronisasi dokumen, dan pembatasan input.
-3. [ ] Implementasikan diagnostics untuk kesalahan sintaks dan simbol yang benar-benar bisa dipastikan salah; **jangan mengeksekusi kode** untuk memeriksa file.
-4. [ ] Implementasikan completion kata kunci, builtin dan simbol scope; hover dokumentasi sederhana; go-to-definition untuk variabel/fungsi lokal, lalu impor lintas file.
-5. [ ] Hubungkan language server ke editors/vscode-indonesiaku tanpa merusak fitur syntax highlight dan formatter yang sudah ada.
-6. [ ] Tambahkan fixtures LSP, uji request/response JSON-RPC, posisi UTF-16 editor vs offset UTF-8 scanner, dokumen belum lengkap, Unicode, multiple files, pembatalan, dan pemulihan setelah input salah.
-7. [ ] Perbarui panduan VS Code, contoh penggunaan, proses build/release LSP lintas platform, serta dokumen keputusan desain.
+1. [x] Rencana desain: `docs/RENCANA_FITUR/selesai/lsp.md`; LSP compile-only memakai `indk --dis`, tanpa mengeksekusi source.
+2. [x] Server JSON-RPC 2.0 stdio, initialize/shutdown, sinkronisasi dokumen, batas ukuran/timeout, dan pembatalan hasil compile usang saat dokumen berubah.
+3. [x] Diagnostics sintaks dari compiler serta warning lokal tidak terpakai dari `indk periksa`, termasuk dokumen belum disimpan dan konversi kolom UTF-8 compiler ke posisi UTF-16 VS Code.
+4. [x] Completion keyword/builtin/magic method/simbol dokumen, hover ringkas, dan go-to-definition lokal satu dokumen. Resolusi lintas modul ditunda.
+5. [x] Integrasi ke `editors/vscode-indonesiaku`, mempertahankan syntax highlight, snippets, dan formatter yang ada.
+6. [x] Tes JSON-RPC/LSP untuk diagnostics, Unicode, dokumen `untitled`, completion, hover, definition, perubahan dokumen, dan memastikan source tidak dieksekusi.
+7. [x] Panduan ekstensi dan CI lintas Linux/Windows/macOS (`editor-lsp`).
 
-**Target API/CLI (usulan):** indk-lsp --stdio; integrasi otomatis saat membuka berkas .idk.
+**Integrasi aktual:** ekstensi menjalankan `node server.js` melalui `process.execPath`; server memakai `indk --dis` dan `indk periksa`. Tidak ada executable compiler baru.
 
-**Selesai jika:** diagnostics, completion, hover dan definisi diuji; kode tidak dieksekusi; editor tetap stabil saat sumber belum valid; CI Linux/Windows/macOS lulus.
+**Selesai:** `npm run test:lsp` dan `npm run test:format` lulus; job CI `editor-lsp` menguji Linux/Windows/macOS. Cakupan go-to-definition saat ini lokal satu dokumen; impor lintas file tetap pekerjaan lanjutan.
 
 ### Fase 10 — Driver dan fondasi database
 

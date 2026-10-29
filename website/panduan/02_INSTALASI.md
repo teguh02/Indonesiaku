@@ -15,6 +15,7 @@ Panduan lengkap instalasi Bahasa Pemrograman Indonesiaku di berbagai sistem oper
 7. [Troubleshooting](#pemecahan-masalah)
 8. [Build dari Source](#bangun-dari-kode-sumber)
 9. [Perbandingan Instalasi Methods](#perbandingan-metode-instalasi)
+10. [Ekstensi VS Code & LSP](#ekstensi-vs-code--lsp)
 
 ---
 
@@ -77,6 +78,35 @@ Pastikan komputer Anda terhubung ke internet untuk:
 - Download repository dari GitHub
 - Download dependencies (jika diperlukan)
 - Mengakses dokumentasi online
+
+---
+
+## Ekstensi VS Code & LSP
+
+Ekstensi di [`editors/vscode-indonesiaku`](https://github.com/teguh02/Indonesiaku/tree/main/editors/vscode-indonesiaku)
+menyediakan syntax highlighting, snippets, formatter, serta language server
+untuk diagnostics, completion, hover, dan go-to-definition lokal.
+
+### Instalasi lokal
+
+```bash
+cd editors/vscode-indonesiaku
+npm run package
+code --install-extension indonesiaku-0.2.0.vsix
+```
+
+Pastikan interpreter `indk` tersedia di `PATH`. Jika tidak, atur path executable
+di pengaturan VS Code:
+
+```json
+{ "indonesiaku.jalurIndk": "C:/jalur/ke/indk.exe" }
+```
+
+Language server menggunakan `indk --dis` untuk menganalisis dokumen tanpa
+menjalankan program. Fitur diagnostics tetap bekerja pada dokumen belum
+tersimpan; hasil analisis usang dibatalkan saat dokumen berubah.
+
+Detail extension dan tes lokal: [README ekstensi](https://github.com/teguh02/Indonesiaku/blob/main/editors/vscode-indonesiaku/README.md).
 
 ---
 

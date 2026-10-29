@@ -33,11 +33,17 @@ function uji(nama, fn) {
   console.log(`  ok   ${nama}`);
 }
 
+// Windows CRT translates stdout `\n` to CRLF; compare logical text with
+// universal newlines so the same formatter test passes on every OS.
+function normalizeNewlines(text) {
+  return text.replace(/\r\n/g, "\n");
+}
+
 // 1. Kode berantakan dirapikan sesuai aturan formatter.
 uji("merapikan spasi operator dan pemanggilan", () => {
   const f = path.join(tmp, "berantakan.idk");
   fs.writeFileSync(f, "variabel a=1\ncetak( a )\n");
-  assert.strictEqual(rapikanLewatIndk(require("child_process").spawnSync, BIN, f),
+  assert.strictEqual(normalizeNewlines(rapikanLewatIndk(require("child_process").spawnSync, BIN, f)),
     "variabel a = 1\ncetak(a)\n");
 });
 
@@ -56,7 +62,7 @@ uji("kode rapi tidak berubah", () => {
   const f = path.join(tmp, "rapi.idk");
   const rapi = "variabel c = 3\ncetak(c)\n";
   fs.writeFileSync(f, rapi);
-  assert.strictEqual(rapikanLewatIndk(require("child_process").spawnSync, BIN, f), rapi);
+  assert.strictEqual(normalizeNewlines(rapikanLewatIndk(require("child_process").spawnSync, BIN, f)), rapi);
 });
 
 // 4. Komentar bertahan — inti dari TOKEN_KOMENTAR.
