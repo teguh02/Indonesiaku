@@ -9,6 +9,22 @@ Python's behavior — truthiness, operator rules, scoping, error model, string
 and collection semantics — but blocks are delimited by `{ }` like PHP/C, never
 by indentation.
 
+## Prinsip desain lintas-bahasa: Python + Indonesia + PHP + disiplin Go (WAJIB)
+
+**Indonesiaku bukan klon Python 100%.** Semua AI coding agent dan kontributor manusia **WAJIB** mematuhi keputusan desain berikut, bahkan bila implementasi yang paling mudah adalah menyalin Python:
+
+1. **Python hanya referensi semantik dan ergonomi** (truthiness, objek, fungsi, koleksi, exception bila relevan), **bukan sumber sintaks yang harus disalin tanpa seleksi**. Setiap perbedaan dengan Python yang disengaja oleh proyek adalah keputusan desain yang lebih tinggi prioritasnya.
+2. **Kata kunci dan API publik bahasa menggunakan Bahasa Indonesia** sesuai aturan naming saat ini (contoh `fungsi`, `kelas`, `jika`, `kembalikan`). Jangan memperkenalkan sinonim keyword Inggris hanya agar kompatibel 1:1 dengan Python.
+3. **Blok program menggunakan kurung kurawal `{ ... }` seperti PHP/C**, termasuk isi fungsi, metode, kelas, kondisi dan perulangan. Indentasi hanyalah gaya pemformatan, bukan pembatas blok. Jangan menambahkan blok berbasis indentasi atau `:` ala Python.
+4. **Disiplin penggunaan simbol terinspirasi Go:** nama variabel, parameter, fungsi, kelas, atau impor yang dideklarasikan tetapi tidak pernah digunakan harus dideteksi dan mendapat **diagnostik** agar developer dapat menghapus atau mengomentari deklarasi yang tidak diperlukan. **Rincian dan tingkat keparahan masih harus dirancang**: Go secara khusus menolak unused local variables/imports, tetapi tidak secara umum menolak semua fungsi/kelas yang tidak digunakan. Untuk Indonesiaku, pemeriksaan function/class/global dan lintas-modul memerlukan analisis reachability/entrypoint. Jangan menganggap fitur ini sudah ada atau langsung membuat error kompilasi yang mematahkan kode sah versi 1.x.
+5. **Kebijakan bertahap:** mulai dengan peringatan pada `indk periksa`/lint, lengkap dengan file, baris, nama simbol dan saran perbaikan; pertimbangkan opsi strict/error bagi scope yang dapat diverifikasi secara aman (misalnya lokal dan impor) setelah uji kompatibilitas. Semua perubahan menjadi error default harus melewati evaluasi SemVer, deprecation/migration guide dan, jika breaking, direncanakan ke v2.0.
+6. **Pengecualian untuk menghindari false positive:** API publik yang sengaja diekspor untuk konsumen lain, metode override, hook/reflection, callback, dynamic import, symbol yang dipakai dari modul lain, entrypoint, kode contoh, serta variabel yang sengaja diabaikan harus mempunyai aturan eksplisit. Hindari menghapus fungsi/kelas hanya karena pemanggil tidak terlihat di satu file.
+7. **Tes wajib desain:** contoh positif/negatif untuk unused lokal, impor, parameter, fungsi internal, kelas internal, export publik, hook, closure, reflection dan variasi lintas-file; periksa perubahan code generation, debugger dan laporan error untuk mencegah false positive.
+
+**Urutan otoritas ketika ada konflik:** keputusan eksplisit pemilik proyek ini dan kebijakan stabilitas API → `docs/SPESIFIKASI.md` (normatif untuk perilaku yang *sudah* dijamin pada rilis terkait) → `docs/ROADMAP.md` (rencana fitur) → dokumen analisis/rencana fitur dan tes aktual → perilaku Python sebagai referensi sekunder. Bila rencana baru berbeda dari spesifikasi stabil, jangan diam-diam mengubah spesifikasi ataupun runtime: buat proposal dan jalur migrasi.
+
+**Checklist review AI wajib:** Sebelum menerima implementasi, jawab: apakah keyword/API tetap berbahasa Indonesia? Semua blok `{ }`? Perbedaan Python disengaja dihormati? Diagnostik unused akurat tanpa menghancurkan API publik atau kompatibilitas? Dokumentasi status *sudah tersedia* vs *direncanakan* jelas?
+
 ## Tata Kelola Proyek, Nama, dan Disclaimer (NON-NEGOTIABLE untuk dokumentasi publik)
 
 Repo ini sudah memiliki identitas kebijakan, nama proyek ("Indonesiaku"), dan
