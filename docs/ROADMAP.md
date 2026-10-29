@@ -868,6 +868,10 @@ kalkulator-indonesiaku/
 | 25 | CLI framework, HTTP test client, MQTT/RabbitMQ opsional | ⬜ belum |
 | Lintas fase | Validasi 3 aplikasi nyata (SSR, REST API, otomasi server) | ⬜ belum |
 
+## Standar branch dan kontribusi
+
+Semua pekerjaan roadmap, baik oleh manusia maupun AI coding agent, mengikuti [Aturan Branch, Commit, dan Pull Request](ATURAN_BRANCH_DAN_PR.md). Pilih nama branch berdasarkan jenis pekerjaan (`fitur/`, `perbaikan/`, `docs/`, `keamanan/`, `test/`, `rilis/` dan lain-lain), bukan berdasarkan siapa yang mengerjakannya. Fase/target rilis tidak otomatis mengubah branch menjadi `rilis/`; gunakan `rilis/` hanya untuk persiapan publikasi versi. Merge membutuhkan review, pengujian dan pemenuhan kriteria fase.
+
 ## Cara memakai berkas ini
 
 1. Untuk mengusulkan fitur: salin `RENCANA_FITUR/TEMPLATE.md`, isi, lalu
