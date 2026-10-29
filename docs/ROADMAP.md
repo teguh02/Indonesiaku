@@ -9,6 +9,22 @@ semantik selaras dengan Python 3 sehingga apa yang dipelajari di
 Indonesiaku langsung berlaku di Python, dan sebaliknya. Dasar analisis dan
 alasan setiap fase ada di [`ANALISIS/`](ANALISIS/README.md).
 
+## Prinsip desain wajib untuk seluruh fase
+
+**Indonesiaku bukan replika identik Python.** Python adalah **referensi semantik**, bukan aturan yang harus ditiru 100%. Semua implementasi oleh manusia maupun AI agent **harus** memakai keyword dan API bahasa yang berbahasa Indonesia, serta struktur blok `{ ... }` (termasuk fungsi/kelas/metode) seperti pendekatan PHP/C. Tidak boleh mengganti atau menambah alternatif sintaks blok `:` dan indentasi Python. Lihat [spesifikasi bahasa](SPESIFIKASI.md#1a-kaidah-arsitektur-bahasa-dan-aturan-unused-kebijakan-desain) dan `AGENTS.md`.
+
+**Arah desain khusus: pemeriksaan kode tidak digunakan (unused diagnostics), terinspirasi Go.** Tujuannya agar deklarasi variabel, impor, fungsi, dan kelas yang tidak dipakai mendapat peringatan dan dapat dihapus/dikomentari. Go sendiri tidak melarang semua fungsi atau kelas yang tidak digunakan. Pemeriksaan simbol internal dan publik harus menghormati export, pemanggilan lintas modul, callback, reflection, dan entrypoint. **Status: direncanakan; jangan mengklaim sudah tersedia atau langsung mematahkan kompatibilitas v1.x.**
+
+**Backlog desain wajib, integrasi dengan perkakas `indk periksa`/fase developer tooling:**
+
+1. [ ] Audit kemampuan linter yang sudah ada dan definisikan perbedaan unused variabel lokal, parameter, impor, fungsi internal, kelas internal, dan simbol global/API publik. Buat `docs/RENCANA_FITUR/pemeriksaan_simbol_tidak_dipakai.md`.
+2. [ ] Implementasikan analisis scope, def-use dan, untuk fungsi/kelas, reachability yang tidak salah menandai simbol lintas modul, exported, reflection, callback atau plugin hooks.
+3. [ ] Mulai dengan **warning** yang actionable (lokasi, simbol, alasan, saran hapus/komentar), aturan suppression/ignore eksplisit untuk kode yang memang sengaja tidak dipakai, serta opsi ketat bila desain dan kompatibilitas telah disepakati.
+4. [ ] Uji positif/negatif, multi-file, import dinamis, API publik, class inheritance/override, closure, entrypoint dan benchmark waktu lint; cegah false positive yang mengganggu developer.
+5. [ ] Dokumentasikan aturan unused dan cara memperbaikinya pada panduan penggunaan dan API linter. **Error default yang breaking baru boleh dipertimbangkan sebagai perubahan major v2.0**, bukan diam-diam disisipkan dalam patch/minor v1.x.
+
+**Pertimbangan versi:** peringatan linter yang kompatibel dan berfitur baru dapat masuk rilis **minor v1.x** yang sesuai; perbaikan false positive dapat masuk **patch**; strict mode opsional dan teruji dapat datang melalui minor. Kewajiban error kompilasi default pada deklarasi yang sebelumnya sah perlu deprecation, migration guide, pengujian kompatibilitas dan **target major v2.0.0 bila breaking**. Prioritas implementasi boleh dinaikkan bila cocok dengan Fase 9/14/19 atau fase tooling lain tanpa menambah fase baru.
+
 ## Sudah selesai
 
 | Versi | Isi | Bukti di repo |
