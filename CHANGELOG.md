@@ -9,6 +9,17 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Ditambahkan
 
+- **Parsing badan request** di `pustaka/web.idk` — `application/json`,
+  `application/x-www-form-urlencoded`, dan `multipart/form-data` (termasuk
+  unggahan berkas) terisi otomatis ke `req["json"]`, `req["form"]`, dan
+  `req["berkas"]`. Batas ukuran badan (bawaan **1 MB**) dijawab **413**
+  berdasarkan `Content-Length`, sebelum data dikumpulkan di memori.
+  `Transfer-Encoding: chunked` ditolak **411**; JSON rusak dijawab **400**,
+  bukan 500. Melengkapi langkah 4 Fase 11. (Fase 11)
+- **`web.baca_permintaan(klien, maks_badan)`** — membaca permintaan HTTP
+  sampai `Content-Length` terpenuhi. `soket_baca()` hanya mengembalikan apa
+  yang sudah tiba (maks ~64 KB per panggilan), sehingga gelung soket yang
+  memanggilnya sekali **memotong badan besar diam-diam**. (Fase 11)
 - **Modul server HTTP `pustaka/web.idk`** — routing metode/path, parameter
   URL (`/siswa/:id`), query string yang diurai beserta dekode persen,
   middleware berantai, dan penangan galat. Path cocok tetapi metode tidak
@@ -33,6 +44,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   batas lompatan habis. (Fase 11)
 
 ### Berubah
+
+- **Perbaikan bug:** `examples/todo_server.idk` memanggil `soket_baca()`
+  sekali, jadi permintaan dengan badan lebih besar dari ~64 KB terpotong
+  diam-diam. Kini memakai `web.baca_permintaan()`.
+- `_http_frasa()` mengenal 401, 403, 411, 413, dan 415, serta memakai frasa
+  generik per kelas untuk kode lain. Sebelumnya setiap kode tak dikenal
+  menghasilkan baris status menyesatkan seperti `HTTP/1.1 413 OK`.
 
 - **Perbaikan bug:** `http_urai_request()` kini menyeragamkan nama header
   menjadi huruf kecil. Nama header HTTP bersifat case-insensitive (RFC 9110

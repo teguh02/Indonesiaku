@@ -1,0 +1,47 @@
+# Server yang mengurai badan request, memakai pustaka/web.idk.
+# Dipakai tests/web_badan_server.sh untuk membuktikan parsing badan bekerja
+# terhadap klien HTTP sungguhan (curl), bukan hanya terhadap teks.
+#
+# Batas badan sengaja kecil (300 KB) supaya uji 413 cepat, tapi tetap jauh
+# di atas 64 KB agar uji "upload besar" membuktikan gelung baca.
+
+impor web
+
+variabel PORT = ke_bulat(ambil_lingkungan("IDK_PORT"))
+variabel SISA = ke_bulat(ambil_lingkungan("IDK_SISA"))
+
+variabel app = web.Aplikasi(307200)
+
+app.rute("POST", "/form", fungsi(req) {
+    kembalikan web.teks(200, "nama=" + req["form"]["nama"])
+})
+
+app.rute("POST", "/api", fungsi(req) {
+    kembalikan web.teks(200, "judul=" + req["json"]["judul"])
+})
+
+app.rute("POST", "/unggah", fungsi(req) {
+    variabel b = req["berkas"]["berkas"]
+    kembalikan web.teks(200, b["nama_berkas"] + " " + ke_teks(panjang(b["isi"])))
+})
+
+app.rute("POST", "/besar", fungsi(req) {
+    # Membuktikan badan terbaca UTUH: satu soket_baca() memotong di ~64KB.
+    kembalikan web.teks(200, "bita=" + ke_teks(panjang(req["badan"])))
+})
+
+variabel server = soket_dengar(PORT)
+variabel sisa = SISA
+selagi sisa > 0 {
+    variabel klien = soket_terima(server)
+    coba {
+        variabel mentah = web.baca_permintaan(klien, 307200)
+        jika mentah != "" {
+            soket_tulis(klien, app.tangani(mentah))
+        }
+    } akhirnya {
+        soket_tutup(klien)
+    }
+    sisa = sisa - 1
+}
+soket_tutup(server)

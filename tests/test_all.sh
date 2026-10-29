@@ -123,6 +123,17 @@ if [ -f tests/test_baca_sumber.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Parsing badan (WEB-02): upload >64KB membuktikan gelung baca, bukan satu recv.
+if [ -f tests/web_badan_server.sh ]; then
+    echo ""
+    if bash tests/web_badan_server.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES web-badan"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Modul web harus terbukti melayani HTTP sungguhan, bukan hanya lulus uji teks.
 if [ -f tests/web_router_server.sh ]; then
     echo ""

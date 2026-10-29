@@ -17,6 +17,7 @@
 impor "pustaka/json.idk"
 impor "pustaka/http.idk"
 impor "pustaka/teks.idk"
+impor web
 
 DB_PATH = "data_todo_server.json"
 
@@ -165,7 +166,9 @@ fungsi jalankan_server(port) {
     selagi berjalan {
         variabel klien = soket_terima(server)
         coba {
-            variabel mentah = soket_baca(klien)
+            # Satu soket_baca() memotong badan >64KB diam-diam;
+            # web.baca_permintaan() menggelung sampai Content-Length penuh.
+            variabel mentah = web.baca_permintaan(klien)
             variabel req = http_urai_request(mentah)
             variabel resp = tangani(req)
             soket_tulis(klien, resp)

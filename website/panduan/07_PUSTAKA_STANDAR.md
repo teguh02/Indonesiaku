@@ -901,7 +901,8 @@ app.gunakan(fungsi(req, teruskan) {
 ```
 
 Penangan menerima `req` berisi `metode`, `path`, `versi`, `header`,
-`badan`, `params`, dan `query`.
+`badan`, `params`, `query`, dan — setelah badan diurai — `form`, `berkas`,
+dan `json`.
 
 - Rute dicocokkan **berurutan**; yang pertama cocok dipakai.
 - Path cocok tetapi metode tidak → **405** dengan header `Allow`, bukan 404.
@@ -914,6 +915,50 @@ Penangan menerima `req` berisi `metode`, `path`, `versi`, `header`,
 menyeragamkan nama header menjadi huruf kecil, sesuai sifat
 case-insensitive pada RFC 9110 §5.1 dan menyamai klien. Pakai
 `req["header"]["host"]`, bukan `["Host"]`.
+
+#### Membaca badan request
+
+`Content-Type` menentukan parser yang dipakai. Ketiga kunci **selalu ada**,
+jadi penangan tidak perlu memeriksa keberadaannya lebih dulu.
+
+| Content-Type | Mengisi |
+|---|---|
+| `application/x-www-form-urlencoded` | `req["form"]` |
+| `application/json` | `req["json"]` |
+| `multipart/form-data` | `req["form"]` dan `req["berkas"]` |
+| lainnya | tidak satu pun; `req["badan"]` tetap mentah |
+
+```indonesiaku-takjalan
+app.rute("POST", "/simpan", fungsi(req) {
+    kembalikan web.teks(201, req["form"]["nama"])
+})
+
+app.rute("POST", "/unggah", fungsi(req) {
+    variabel b = req["berkas"]["foto"]
+    kembalikan web.teks(200, b["nama_berkas"] + " " + ke_teks(panjang(b["isi"])))
+})
+```
+
+Tiap entri `req["berkas"]` adalah kamus berisi `nama_berkas` dan `isi`.
+
+**Batas ukuran.** `web.Aplikasi(maks_badan)` membatasi badan request; bawaan
+**1 MB**. Badan yang melebihi batas dijawab **413** berdasarkan
+`Content-Length`, yaitu **sebelum** datanya dikumpulkan di memori.
+
+**Gunakan `web.baca_permintaan(klien)`, bukan `soket_baca()` langsung.**
+`soket_baca()` mengembalikan apa pun yang sudah tiba — maksimal sekitar 64 KB
+per panggilan — sehingga memanggilnya sekali **memotong badan besar secara
+diam-diam**. `web.baca_permintaan()` menggelung sampai `Content-Length`
+terpenuhi:
+
+```indonesiaku-takjalan
+variabel mentah = web.baca_permintaan(klien)
+soket_tulis(klien, app.tangani(mentah))
+```
+
+**Yang ditolak terang-terangan:** `Transfer-Encoding: chunked` dijawab
+**411**, JSON rusak dan `Content-Length` tidak sah dijawab **400** (salah
+klien, bukan 500). Berkas unggahan ditahan di memori, bukan ditulis ke disk.
 
 
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP

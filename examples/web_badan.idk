@@ -1,0 +1,124 @@
+# Parsing badan request: form, JSON, multipart, dan batas ukuran.
+#
+# app.tangani() bekerja pada TEKS, jadi seluruh contoh ini berjalan tanpa
+# jaringan sama sekali.
+
+impor web
+impor "pustaka/teks.idk"
+
+variabel app = web.Aplikasi()
+
+app.rute("POST", "/form", fungsi(req) {
+    kembalikan web.teks(200, "nama=" + req["form"]["nama"] + " kota=" + req["form"]["kota"])
+})
+
+app.rute("POST", "/api", fungsi(req) {
+    kembalikan web.teks(200, "judul=" + req["json"]["judul"])
+})
+
+app.rute("POST", "/unggah", fungsi(req) {
+    variabel keluar = "form:"
+    untuk k dalam terurut(kunci(req["form"])) {
+        keluar = keluar + " " + k + "=" + req["form"][k]
+    }
+    keluar = keluar + " berkas:"
+    untuk k dalam terurut(kunci(req["berkas"])) {
+        variabel b = req["berkas"][k]
+        keluar = keluar + " " + k + "/" + b["nama_berkas"] + "/" + ke_teks(panjang(b["isi"]))
+    }
+    kembalikan web.teks(200, keluar)
+})
+
+app.rute("POST", "/mentah", fungsi(req) {
+    kembalikan web.teks(200, "mentah=" + req["badan"])
+})
+
+# --- pembantu ---------------------------------------------------------------
+
+fungsi minta(path, ct, badan) {
+    variabel h = "POST " + path + " HTTP/1.1\r\nHost: contoh\r\n"
+    jika ct != "" {
+        h = h + "Content-Type: " + ct + "\r\n"
+    }
+    h = h + "Content-Length: " + ke_teks(panjang(badan)) + "\r\n\r\n" + badan
+    kembalikan app.tangani(h)
+}
+
+fungsi baris_status(r) {
+    kembalikan teks_pisah(r, "\r\n")[0]
+}
+
+fungsi isi(r) {
+    variabel i = teks_cari(r, "\r\n\r\n")
+    kembalikan potong(r, i + 4, panjang(r) - i - 4)
+}
+
+# --- form urlencoded --------------------------------------------------------
+
+cetak(isi(minta("/form", "application/x-www-form-urlencoded", "nama=Budi&kota=Purwokerto")))
+
+# %20 dan + sama-sama spasi, seperti pada query string.
+cetak(isi(minta("/form", "application/x-www-form-urlencoded", "nama=Budi%20Santoso&kota=a+b")))
+
+# --- JSON -------------------------------------------------------------------
+
+cetak(isi(minta("/api", "application/json", "{\"judul\": \"Buku Saya\"}")))
+
+# Parameter charset tidak mengganggu pemilihan parser.
+cetak(isi(minta("/api", "application/json; charset=utf-8", "{\"judul\": \"Dua\"}")))
+
+# JSON rusak adalah salah KLIEN -> 400, bukan 500.
+cetak(baris_status(minta("/api", "application/json", "{rusak")))
+
+# --- multipart --------------------------------------------------------------
+
+variabel B = "----batasContoh"
+variabel m = "--" + B + "\r\nContent-Disposition: form-data; name=\"judul\"\r\n\r\nLaporan\r\n"
+m = m + "--" + B + "\r\nContent-Disposition: form-data; name=\"foto\"; filename=\"a.png\"\r\nContent-Type: image/png\r\n\r\nPNGDATA\r\n"
+m = m + "--" + B + "--\r\n"
+
+cetak(isi(minta("/unggah", "multipart/form-data; boundary=" + B, m)))
+
+# boundary boleh dikutip (RFC 2046).
+cetak(isi(minta("/unggah", "multipart/form-data; boundary=\"" + B + "\"", m)))
+
+# multipart tanpa boundary tidak bisa diurai -> 400.
+cetak(baris_status(minta("/unggah", "multipart/form-data", m)))
+
+# --- tipe tak dikenal -------------------------------------------------------
+
+# Tidak diurai; badan mentah tetap tersedia.
+cetak(isi(minta("/mentah", "text/plain", "apa adanya")))
+
+# --- batas ukuran -----------------------------------------------------------
+
+variabel kecil = web.Aplikasi(100)
+kecil.rute("POST", "/u", fungsi(req) {
+    kembalikan web.teks(200, "lolos")
+})
+
+variabel besar = "a=" + teks_ulang("x", 200)
+variabel hb = "POST /u HTTP/1.1\r\nHost: contoh\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: " + ke_teks(panjang(besar)) + "\r\n\r\n" + besar
+cetak(baris_status(kecil.tangani(hb)))
+
+# Di bawah batas tetap lolos.
+variabel ok = "a=xx"
+variabel ho = "POST /u HTTP/1.1\r\nHost: contoh\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: " + ke_teks(panjang(ok)) + "\r\n\r\n" + ok
+cetak(isi(kecil.tangani(ho)))
+
+# --- yang ditolak terang-terangan -------------------------------------------
+
+# chunked tidak didukung; menolak lebih jujur daripada salah mengurai.
+variabel hc = "POST /mentah HTTP/1.1\r\nHost: contoh\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhalo\r\n0\r\n\r\n"
+cetak(baris_status(app.tangani(hc)))
+
+# Content-Length bukan angka.
+variabel hx = "POST /mentah HTTP/1.1\r\nHost: contoh\r\nContent-Length: abc\r\n\r\nxx"
+cetak(baris_status(app.tangani(hx)))
+
+# Batas tidak sah ditolak saat pembuatan aplikasi.
+coba {
+    web.Aplikasi(0)
+} kecuali e {
+    cetak("maks_badan 0 ditolak")
+}

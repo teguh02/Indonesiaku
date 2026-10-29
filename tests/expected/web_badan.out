@@ -1,0 +1,14 @@
+nama=Budi kota=Purwokerto
+nama=Budi Santoso kota=a b
+judul=Buku Saya
+judul=Dua
+HTTP/1.1 400 Bad Request
+form: judul=Laporan berkas: foto/a.png/7
+form: judul=Laporan berkas: foto/a.png/7
+HTTP/1.1 400 Bad Request
+mentah=apa adanya
+HTTP/1.1 413 Content Too Large
+lolos
+HTTP/1.1 411 Length Required
+HTTP/1.1 400 Bad Request
+maks_badan 0 ditolak
