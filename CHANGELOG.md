@@ -14,6 +14,19 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   artinya penulisan langsung gagal begitu ada kunci; kini pemanggil bisa
   memilih menunggu. Milidetik di luar jangkauan `int` C ditolak alih-alih
   dipersempit diam-diam menjadi batas yang keliru. (Fase 10)
+- `http_ambil()` kini mengikuti pengalihan HTTP (301/302/303/307/308) sampai
+  lima lompatan. Parameter baru `maks_pengalihan` mengatur batasnya; `0`
+  mengembalikan perilaku lama. `303` dilanjutkan dengan `GET`, `307`/`308`
+  mempertahankan metode dan badan. Rantai berputar terdeteksi tanpa menunggu
+  batas lompatan habis. (Fase 11)
+
+### Berubah
+
+- **Perubahan perilaku:** program yang memeriksa `r.status == 301` dari
+  `http_ambil()` kini akan melihat `200` karena pengalihan diikuti. Beri
+  `maks_pengalihan = 0` untuk mendapatkan respons pengalihan apa adanya.
+- `.url` pada `Respons` berisi URL terakhir setelah pengalihan, bukan URL
+  yang diminta.
 
 ## [1.3.2] - 2026-10-28
 

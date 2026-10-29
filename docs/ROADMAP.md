@@ -442,6 +442,7 @@ Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, SSR
 
 1. [ ] Buat docs/RENCANA_FITUR/http_web_server.md dan https_tls.md. Tentukan kontrak Request/Response, router, middleware, batas request, model konkurensi dan pemakaian reverse proxy.
 2. [ ] Perluas klien pustaka/http.idk sehingga http_ambil dapat menerima https:// (**P2**). Pilih TLS library yang terawat; aktifkan verifikasi CA dan hostname secara default; timeout dan redirect dibatasi; insecure-by-default dilarang.
+   - Sebagian: mengikuti pengalihan 301/302/303/307/308 sudah ada (1.4.0). **HTTPS/TLS masih terblokir** — biner rilis saat ini hanya menaut libc/libm (`LDFLAGS = -lm`), jadi menaut OpenSSL mengakhiri sifat mandiri itu. Keputusan arsitektur, bukan detail implementasi.
 3. [ ] Rancang modul server HTTP dengan routing metode/path, parameter URL, query string, header, status, error handler dan middleware (**WEB-01**). Hindari ekspose detail socket mentah pada API yang digunakan pemula.
 4. [ ] Tambahkan parsing application/json, application/x-www-form-urlencoded, multipart/form-data, file upload streaming dan batas ukuran/bentuk input (**WEB-02**).
 5. [ ] Implementasikan static file handler untuk CSS, JavaScript, gambar dan aset lain, MIME yang benar, cache header, penolakan traversal serta symlink berbahaya (**WEB-03**). Ini **bukan** template HTML.

@@ -847,7 +847,7 @@ impor "pustaka/http.idk"
 | `http_urai_request(teks)` | Parse request HTTP mentah → kamus `{metode, path, versi, header, badan}` |
 | `http_response(kode, tipe_konten, badan)` | Bangun string response HTTP |
 | `http_response_json(kode, badan)` | Pintasan response JSON |
-| `http_ambil(url, metode="GET", kepala=kosong, badan="")` | **Klien**: kirim permintaan → objek `Respons` |
+| `http_ambil(url, metode="GET", kepala=kosong, badan="", maks_pengalihan=5)` | **Klien**: kirim permintaan → objek `Respons`. Pengalihan 301/302/303/307/308 diikuti sampai `maks_pengalihan` lompatan; beri `0` untuk menerima respons pengalihan apa adanya |
 | `http_urai_url(url)` | `[host, port, jalur]` dari url `http://` |
 
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
@@ -893,6 +893,28 @@ waktu** (server yang diam membuat program menunggu); url dengan nama pengguna
 (`user@host`) atau alamat IPv6 berkurung (`[::1]`) belum didukung. CR/LF di
 url, metode, atau header ditolak dengan `GalatJaringan` supaya tidak bisa
 menyisipkan header. Di playground (`--sandbox`) koneksi keluar ditolak.
+
+**Pengalihan.** `http_ambil()` mengikuti `301`, `302`, `303`, `307`, dan `308`
+sampai lima lompatan. `303` selalu dilanjutkan dengan `GET` tanpa badan;
+`307`/`308` mempertahankan metode dan badan. `301`/`302` juga mempertahankan
+metode — peramban mengubahnya menjadi `GET`, tetapi itu kekeliruan historis
+yang justru melahirkan `307`/`308`.
+
+`.url` pada hasil berisi URL **terakhir**, bukan yang diminta:
+
+```indonesiaku-takjalan
+variabel r = http_ambil("http://contoh.id/lama")
+cetak(r.status)   # 200, bukan 301
+cetak(r.url)      # alamat setelah pengalihan
+
+# Jangan ikuti, lihat respons aslinya:
+cetak(http_ambil("http://contoh.id/lama", "GET", kosong, "", 0).status)   # 301
+```
+
+Rantai yang berputar atau melewati batas lompatan menimbulkan
+`GalatJaringan` yang menyebutkan rantai URL-nya. Pengalihan tanpa header
+`Location` dikembalikan apa adanya — itu server yang melanggar spesifikasi,
+dan Anda berhak melihatnya.
 
 ### 2.7 `pustaka/koleksi.idk` — wadah data
 

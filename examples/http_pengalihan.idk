@@ -1,0 +1,64 @@
+# Mengikuti pengalihan (redirect) HTTP.
+#
+# Contoh ini menguji logika yang tidak memerlukan jaringan: penyelesaian
+# header Location menjadi URL absolut, dan validasi argumen. Perilaku
+# mengikuti pengalihan terhadap server sungguhan diuji oleh
+# tests/http_pengalihan_server.sh, yang menjalankan server dan klien
+# sebagai dua proses terpisah.
+
+impor "pustaka/http.idk"
+
+# --- Location absolut dipakai apa adanya ---
+cetak(_http_gabung_url("http://a.id/x/y", "http://b.id/q"))
+
+# --- Location berakar ("/...") mengganti seluruh jalur ---
+cetak(_http_gabung_url("http://a.id/x/y", "/z"))
+
+# --- Location relatif mengganti segmen terakhir ---
+cetak(_http_gabung_url("http://a.id/x/y", "z"))
+
+# --- Port bukan 80 dipertahankan ---
+cetak(_http_gabung_url("http://a.id:8080/x/y", "z"))
+
+# --- Query pada URL dasar tidak ikut terbawa ---
+cetak(_http_gabung_url("http://a.id/x/y?a=1", "z"))
+
+# --- URL dasar tanpa jalur ---
+cetak(_http_gabung_url("http://a.id", "z"))
+
+# --- Location kosong adalah galat ---
+coba {
+    _http_gabung_url("http://a.id/", "")
+} kecuali GalatJaringan {
+    cetak("Location kosong ditolak")
+}
+
+# --- Location absolut dikembalikan apa adanya; skema dinilai saat
+#     permintaan berikutnya dikirim, bukan di sini ---
+cetak(_http_gabung_url("http://a.id/", "https://a.id/aman"))
+
+# --- https ditolak ketika benar-benar diminta (TLS belum ada) ---
+coba {
+    http_ambil("https://a.id/aman")
+} kecuali GalatJaringan {
+    cetak("https ditolak: butuh TLS")
+}
+
+# --- maks_pengalihan harus bilangan bulat tak negatif ---
+coba {
+    http_ambil("http://127.0.0.1:1/", "GET", kosong, "", 0 - 1)
+} kecuali GalatJaringan {
+    cetak("maks_pengalihan negatif ditolak")
+}
+
+coba {
+    http_ambil("http://127.0.0.1:1/", "GET", kosong, "", 1.5)
+} kecuali GalatJaringan {
+    cetak("maks_pengalihan pecahan ditolak")
+}
+
+coba {
+    http_ambil("http://127.0.0.1:1/", "GET", kosong, "", "banyak")
+} kecuali GalatJaringan {
+    cetak("maks_pengalihan teks ditolak")
+}
