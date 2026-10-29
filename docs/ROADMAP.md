@@ -352,116 +352,170 @@ AOT/bundel executable, ~~anotasi tipe opsional~~ ✅ ([rencana](RENCANA_FITUR/se
 sekolah.
 Ref: 04 §11–13, 05.
 
-## Prioritas pengembangan berikutnya (setelah v1.3.2)
+## Roadmap implementasi per fase — setelah v1.3.2
 
-Bagian ini mengurutkan pekerjaan yang **belum selesai**, bukan mengubah status fase yang telah dituntaskan. Prioritas didasarkan pada manfaat langsung untuk pemakai dan pengembang; sebelum implementasi, setiap fitur wajib memiliki berkas rencana di `docs/RENCANA_FITUR/` dan mengikuti checklist pengujian/dokumentasi/editor pada bagian **Definisi "selesai"**.
+Bagian ini menyatukan rencana P1–P7, WDB-01–05, WEB-01–07, DX-01–02, dan SSR-01–10 yang sebelumnya tersebar dalam beberapa tabel. **Fase 0–6 sudah selesai, Fase 7 baru sebagian, dan Fase 8 baru sebagian (anotasi tipe opsional).** Fase 9 dan seterusnya adalah urutan kerja yang **diusulkan**, bukan penanda implementasi saat ini. Nomor ID lama tetap dipakai sebagai jejak rencana.
 
-| Urutan | Fitur | Target hasil yang dapat diverifikasi | Ketergantungan/catatan | Status |
-|---|---|---|---|---|
-| P1 | **Language Server Protocol (LSP)** | Diagnostics saat mengetik, completion keyword/builtin, hover informasi, go-to-definition pada simbol lokal dan workspace; integrasi VS Code | Pisahkan analisis kode tanpa eksekusi dari VM; jangan mengganti semantik compiler | ⬜ belum |
-| P2 | **TLS/HTTPS untuk klien HTTP** | `http_ambil("https://...")` dengan validasi sertifikat dan nama host aktif secara default, timeout serta penanganan galat TLS yang dapat ditangkap | Pilih pustaka TLS dan strategi distribusi lintas Windows/Linux/macOS; uji sertifikat salah dan redirect dengan aman | ⬜ belum |
-| P3 | **Manajer paket + registri** | Pasang/hapus/daftar paket, manifest proyek, resolusi versi, lockfile reproducible, verifikasi integritas unduhan, instalasi pada lokasi non-root | Tetapkan format paket, kebijakan namespace dan sumber registry; jangan mengeksekusi skrip paket tak tepercaya secara diam-diam | ⬜ belum |
-| P4 | Debugger | Breakpoint, step, inspect frame/variabel, traceback yang terhubung ke baris-kolom sumber | Memerlukan desain hook debug dan metadata bytecode yang stabil | ⬜ belum |
-| P5 | API embedding C + FFI | Host C dapat membuat VM, menjalankan kode, mendaftarkan fungsi dan menangani galat; FFI melalui API yang didefinisikan | Dokumentasikan kepemilikan memori dan GC root; audit batas kepercayaan | ⬜ belum |
-| P6 | Konektor PostgreSQL/MySQL | Koneksi, query berparameter, transaksi, hasil query, error dan timeout yang dapat ditangkap | Rencanakan dependensi klien dan kredensial tanpa tertulis di log | ⬜ belum |
-| P7 | Playground WebAssembly | Menjalankan program .idk di browser tanpa service eksekusi backend untuk mode lokal | Emscripten belum tersedia pada audit roadmap; sandbox Docker saat ini tetap dipertahankan | ⬜ belum |
+**Cara membaca:** setiap fase memiliki tujuan, kebutuhan awal, langkah implementasi berurutan, contoh API target, pengujian wajib, serta definisi selesai. Tanda [ ] berarti belum. Implementasi dapat dibuat dalam pull request kecil; jangan memaksa seluruh fase dalam satu PR. Semua perubahan tetap tunduk pada "Definisi selesai" dan "Feature workflow" di AGENTS.md, termasuk rencana detail sebelum kode, golden test, negative test, dokumentasi dan editor.
 
-### Kriteria penerimaan prioritas utama
+### Fase 9 — Language Server Protocol (LSP) dan pengalaman editor
 
-**LSP (P1).** Tentukan protokol dan proses server terpisah, uji dokumen yang belum lengkap atau salah sintaks tanpa crash, serta pastikan diagnostics tidak mengeksekusi kode pengguna. Tambahkan uji protokol dan integrasi editor. Untuk tahap awal, fokus pada diagnostics, completion, hover, dan definisi; fitur lanjutan seperti rename/refactor dapat menjadi tahap berikutnya.
+**Tujuan:** file .idk mendapatkan diagnostics, autocomplete, hover, dan go-to-definition di VS Code tanpa menjalankan program pengguna. **Status:** ⬜ belum. **Pemetaan:** P1 (bagian Fase 7 yang masih tertunda).
 
-**HTTPS/TLS (P2).** Pertahankan dukungan `http://`, tambahkan `https://` dengan verifikasi sertifikat dan hostname secara default, uji kegagalan handshake, sertifikat kedaluwarsa, ketidakcocokan hostname, timeout, serta perilaku lintas platform. Tidak boleh ada mode `insecure` sebagai pengaturan bawaan. Jelaskan implikasi ukuran binari dan dependensi native pada paket rilis.
+**Langkah pengembangan:**
 
-**Manajer paket (P3).** Putuskan lebih dulu spesifikasi manifest/lockfile dan desain registry; sediakan alur instal, update, hapus, dan inspeksi dependensi yang dapat diuji dari direktori proyek bersih. Perhatikan integritas artefak, version pinning, konflik dependensi, dan dokumentasi untuk pembuat paket. Registri publik tidak dianggap siap sebelum tersedia kebijakan publikasi dan mitigasi penyalahgunaan.
+1. [ ] Buat dokumen desain di docs/RENCANA_FITUR/lsp.md. Catat batas parser single-pass, kebutuhan analisis file tidak lengkap, dan keputusan apakah menggunakan scanner/compiler dalam mode analisis terpisah atau komponen parser toleran error.
+2. [ ] Spesifikasikan proses language server mandiri (misalnya executable indk-lsp) dengan JSON-RPC 2.0 lewat stdio, initialize/shutdown, sinkronisasi dokumen, dan pembatasan input.
+3. [ ] Implementasikan diagnostics untuk kesalahan sintaks dan simbol yang benar-benar bisa dipastikan salah; **jangan mengeksekusi kode** untuk memeriksa file.
+4. [ ] Implementasikan completion kata kunci, builtin dan simbol scope; hover dokumentasi sederhana; go-to-definition untuk variabel/fungsi lokal, lalu impor lintas file.
+5. [ ] Hubungkan language server ke editors/vscode-indonesiaku tanpa merusak fitur syntax highlight dan formatter yang sudah ada.
+6. [ ] Tambahkan fixtures LSP, uji request/response JSON-RPC, posisi UTF-16 editor vs offset UTF-8 scanner, dokumen belum lengkap, Unicode, multiple files, pembatalan, dan pemulihan setelah input salah.
+7. [ ] Perbarui panduan VS Code, contoh penggunaan, proses build/release LSP lintas platform, serta dokumen keputusan desain.
 
-### Optimasi dan fitur lanjutan (tidak masuk P1–P3)
+**Target API/CLI (usulan):** indk-lsp --stdio; integrasi otomatis saat membuka berkas .idk.
 
-- Cache `.idkc`, computed goto, superinstruksi, inline cache, NaN-boxing, GC generasional: **ditunda hingga ada benchmark/profil yang membuktikan kebutuhan**, sesuai keputusan Fase 7.
-- Threading/asynchronous runtime, GUI, dan AOT/bundel executable: **belum dijadwalkan**; masing-masing memerlukan rencana arsitektur tersendiri.
-- Penguatan sandbox untuk menjalankan kode tak tepercaya tetap harus dievaluasi terpisah; `indk --sandbox` bukan pengganti isolasi proses/container.
+**Selesai jika:** diagnostics, completion, hover dan definisi diuji; kode tidak dieksekusi; editor tetap stabil saat sumber belum valid; CI Linux/Windows/macOS lulus.
 
-## Jalur pengembangan aplikasi web & database (tanpa HTML)
+### Fase 10 — Driver dan fondasi database
 
-**Tujuan:** memungkinkan Indonesiaku membangun backend aplikasi web, layanan API, dan aplikasi bisnis berbasis database secara aman dan portabel. Jalur ini melengkapi P2 (HTTPS/TLS), P3 (manajer paket), dan P6 (konektor database) di tabel prioritas di atas, **bukan** klaim fitur telah tersedia.
+**Tujuan:** SQLite dipertahankan, lalu MySQL/MariaDB dan PostgreSQL dapat dipakai dengan query aman. **Status:** ⬜ belum. **Pemetaan:** WDB-01–05, P6.
 
-**Di luar lingkup bagian ini:** render HTML, template engine, sintaks templating, dan desain tampilan. Hal-hal tersebut akan direncanakan secara terpisah.
+**Langkah pengembangan:**
 
-### Kondisi awal yang sudah tersedia
+1. [ ] Buat docs/RENCANA_FITUR/database_multi_driver.md; tetapkan API, semantik transaksi, tipe nilai/NULL/BLOB, error, koneksi dan lifecycle GC. Jangan mengubah builtin db_* tanpa kebijakan kompatibilitas.
+2. [ ] Audit src/db.c, src/object.c/h, src/native.c/h, dan examples/db_sqlite.idk. Lengkapi SQLite: dukungan data biner/BLOB masuk-keluar, busy timeout, pengujian transaksi dan penutupan handle idempoten (**WDB-01**).
+3. [ ] Buat driver MySQL/MariaDB (**WDB-02**) menggunakan client library teruji dan prepared statements; dukung host/port, opsi TLS dengan verifikasi, timeout, penanganan koneksi terputus, query satu/banyak baris, perubahan baris dan ID terakhir sesuai dialek.
+4. [ ] Buat driver PostgreSQL (**WDB-03**) memakai libpq atau pustaka kompatibel yang terawat; pastikan parameter binding, hasil data bertipe, transaksi, timeout dan validasi TLS/hostname.
+5. [ ] Rancang API abstraksi bersama (**WDB-04**), misalnya db.koneksi(konfigurasi), koneksi.eksekusi(sql, parameter), koneksi.ambil_satu, koneksi.ambil_semua, koneksi.mulai/komit/batal/tutup. Nama final diputuskan lewat dokumen rencana; API SQLite lama tetap berjalan.
+6. [ ] Tambahkan lapisan migrasi skema dan query builder parameterized ringan (**WDB-05**); simpan versi migrasi dan catat aturan rollback. ORM penuh tidak wajib.
+7. [ ] Siapkan database uji MySQL, MariaDB, PostgreSQL dalam container CI yang terisolasi; jalankan suite bersama untuk koneksi, CRUD, transaksi, rollback, NULL, Unicode, BLOB, kegagalan TLS, kredensial salah, timeout, SQL injection dan cleanup.
+8. [ ] Perbarui docs/SPESIFIKASI.md bila kontrak bahasa berubah, website/panduan/07_PUSTAKA_STANDAR.md, examples/, CHANGELOG.md dan instalasi dependensi per OS.
 
-- ✅ **SQLite tertanam** melalui `src/db.c`: `db_buka`, `db_tutup`, `db_eksekusi`, `db_ambil_satu`, `db_ambil_semua`, transaksi (`db_mulai`, `db_komit`, `db_batal`), metadata hasil operasi. Query memiliki placeholder parameter `?`; contoh nyata `examples/db_sqlite.idk`.
-- ✅ **HTTP dasar**: `pustaka/http.idk` menyediakan penguraian permintaan dan respons; `examples/todo_server.idk` menunjukkan server REST dengan soket TCP. Ini server demo **single-threaded, blocking**, bukan server produksi.
-- ✅ **JSON, soket dan sistem berkas** sebagai fondasi backend.
-- ⚠️ **Batas SQLite saat ini**: pembacaan kolom BLOB belum didukung di `src/db.c`. Koneksi MySQL/MariaDB dan PostgreSQL belum tersedia. Klien `http_ambil` belum mendukung HTTPS.
+**Contoh API target (belum tersedia):** koneksi = basisdata.buka({"driver":"postgresql","host":"localhost","nama":"sekolah"}); koneksi.ambil_semua("SELECT * FROM siswa WHERE id = ?", [1]). Placeholder disesuaikan internal oleh driver, bukan dirangkai ke SQL secara manual.
 
-### Backlog bertahap
+**Selesai jika:** tiga keluarga database (SQLite, MySQL/MariaDB, PostgreSQL) berhasil CRUD/transaksi dengan parameter, error dapat ditangkap, tidak ada password masuk log, dependensi dan cara build terdokumentasi. TLS driver boleh berbagi komponen dari Fase 11 dan harus lulus sebelum driver koneksi luar dianggap siap.
 
-| ID | Pekerjaan | Target hasil | Status |
-|---|---|---|---|
-| WDB-01 | Sempurnakan driver SQLite | BLOB/binary yang aman, pengaturan timeout/busy, penanganan galat bertipe, verifikasi transaksi dan pelepasan resource; pertahankan API lama | ⬜ belum |
-| WDB-02 | Driver MySQL dan MariaDB | Koneksi dengan host/port/user/database, prepared statements dan parameter, query/ambil baris, transaksi, timeout, TLS, penanganan galat, reconnect eksplisit | ⬜ belum |
-| WDB-03 | Driver PostgreSQL | Koneksi aman, parameterized query, transaksi, hasil bertipe, timeout, TLS dan error yang dapat ditangkap | ⬜ belum |
-| WDB-04 | Abstraksi database bersama | Antarmuka API konsisten untuk SQLite/MySQL/MariaDB/PostgreSQL tanpa mengubah perilaku fungsi SQLite yang telah ada; kesetaraan fitur dan batas driver terdokumentasi | ⬜ belum |
-| WDB-05 | Migrasi skema dan query builder ringan | Migrasi berurutan dengan pencatatan versi, rollback bila memungkinkan, query berparameter dan dukungan dialek; ORM penuh opsional | ⬜ belum |
-| WEB-01 | Pustaka HTTP server modular | Router metode/path, parameter rute, request/response terstruktur, kode status, header, middleware dan penanganan error | ⬜ belum |
-| WEB-02 | Parsing request dan upload | Batas ukuran/body, JSON, urlencoded, multipart/form-data, upload berkas yang aman, timeout dan penolakan request rusak | ⬜ belum |
-| WEB-03 | Berkas statis | Penyajian CSS/JS/gambar dan aset lain dengan MIME, cache header, pencegahan path traversal; bukan rendering/template HTML | ⬜ belum |
-| WEB-04 | Cookie dan session | Cookie HttpOnly/Secure/SameSite, session expiry, rotasi ID, penyimpanan session terpisah serta proteksi session fixation | ⬜ belum |
-| WEB-05 | Keamanan aplikasi | Escaping output sesuai konteks, validasi input, CSRF untuk form berbasis cookie, pengamanan CORS, trusted proxy, header keamanan, batas request dan rate limiting | ⬜ belum |
-| WEB-06 | Authentication dan authorization | Password hashing adaptif ber-salt (Argon2id atau alternatif teruji), login/logout, pengelolaan kredensial dan peran/izin tanpa menyimpan rahasia di source/log | ⬜ belum |
-| WEB-07 | Ketahanan server | Model concurrency terukur, batas koneksi, graceful shutdown, timeout, backpressure, logging terstruktur; produksi dipasang di belakang reverse proxy/TLS | ⬜ belum |
-| DX-01 | Perkakas pengembangan backend | CLI inisialisasi proyek, tata letak modul, konfigurasi berdasarkan environment, runner tes integrasi dan contoh CRUD API/database | ⬜ belum |
-| DX-02 | Pengelolaan dependensi | Integrasikan modul backend dengan manajer paket/lockfile saat P3 tersedia, tanpa mewajibkan paket eksternal untuk contoh inti | ⬜ belum |
+### Fase 11 — HTTP, HTTPS/TLS dan server backend modular
 
-### Urutan pelaksanaan yang disarankan
+**Tujuan:** aplikasi Indonesiaku dapat melayani REST API secara terstruktur; contoh todo_server.idk yang single-thread/blocking bukan lagi satu-satunya pola. **Status:** ⬜ belum. **Pemetaan:** P2, WEB-01, WEB-02, WEB-03, WEB-07.
 
-1. **Fondasi database:** WDB-01 → WDB-02/WDB-03 (dapat paralel) → WDB-04 → WDB-05.
-2. **Fondasi backend HTTP:** WEB-01 → WEB-02 dan WEB-03 → WEB-04/WEB-05 → WEB-06 → WEB-07.
-3. **Pengalaman pengembang:** DX-01 dan DX-02, mengikuti kesiapan P3. **P2 TLS/HTTPS** menjadi ketergantungan keamanan untuk koneksi eksternal dan harus diuji pada masing-masing driver.
-4. **Validasi end-to-end:** minimal satu contoh REST CRUD dengan SQLite serta tes integrasi untuk MySQL/MariaDB dan PostgreSQL pada layanan terisolasi (misalnya container CI). Contoh API harus berjalan tanpa komponen HTML.
+**Langkah pengembangan:**
 
-### Standar penerimaan dan keamanan
+1. [ ] Buat docs/RENCANA_FITUR/http_web_server.md dan https_tls.md. Tentukan kontrak Request/Response, router, middleware, batas request, model konkurensi dan pemakaian reverse proxy.
+2. [ ] Perluas klien pustaka/http.idk sehingga http_ambil dapat menerima https:// (**P2**). Pilih TLS library yang terawat; aktifkan verifikasi CA dan hostname secara default; timeout dan redirect dibatasi; insecure-by-default dilarang.
+3. [ ] Rancang modul server HTTP dengan routing metode/path, parameter URL, query string, header, status, error handler dan middleware (**WEB-01**). Hindari ekspose detail socket mentah pada API yang digunakan pemula.
+4. [ ] Tambahkan parsing application/json, application/x-www-form-urlencoded, multipart/form-data, file upload streaming dan batas ukuran/bentuk input (**WEB-02**).
+5. [ ] Implementasikan static file handler untuk CSS, JavaScript, gambar dan aset lain, MIME yang benar, cache header, penolakan traversal serta symlink berbahaya (**WEB-03**). Ini **bukan** template HTML.
+6. [ ] Rancang concurrency yang terukur, batas koneksi/thread/worker, timeout, backpressure, shutdown aman dan log terstruktur (**WEB-07**). Mulai dengan model sederhana yang dapat diuji dan ditingkatkan; jangan langsung mengklaim setara server produksi.
+7. [ ] Buat contoh CRUD API memakai database Fase 10, uji dengan curl, serta CI untuk slow client, request berukuran besar, malformed HTTP, upload, redirect, sertifikat kedaluwarsa/tidak cocok, race/resource leak dan graceful shutdown.
+8. [ ] Dokumentasikan deployment dengan Docker/reverse proxy TLS, isolasi proses, pembatasan resource dan risiko membuka port secara publik.
 
-- Setiap pekerjaan mengikuti alur rencana fitur di `docs/RENCANA_FITUR/`, tes positif/negatif, panduan pengguna, changelog, dan integrasi editor jika terkait.
-- Semua query menerima parameter terikat; **jangan** merangkai nilai input pengguna menjadi SQL. Uji injeksi SQL, NULL, Unicode, data biner, rollback, koneksi terputus, timeout, dan resource cleanup.
-- TLS memverifikasi sertifikat/hostname secara default. Kredensial berasal dari konfigurasi atau variabel lingkungan, tidak ditulis ke log. Konfigurasi dan koneksi tidak boleh memungkinkan kebocoran rahasia melalui pesan galat.
-- Server demo yang ada tetap berfungsi; penguatan server baru tidak boleh dianggap jaminan aman untuk internet publik tanpa audit, pengujian beban, dan deployment dengan isolasi yang sesuai.
-- Tidak boleh mengubah status menjadi ✅ sebelum bukti implementasi, pengujian lintas platform yang relevan, dan dokumentasi tersedia.
+**Target API (usulan):** app = web.Aplikasi(); app.rute("GET", "/api/siswa", fungsi_handler); app.jalankan(port=8080). Sintaks final harus sesuai kemampuan compiler, bukan diasumsikan hanya karena mirip Python.
 
-## Jalur Server-Side Rendering (SSR) dan Template HTML
+**Selesai jika:** server API bisa dipakai tanpa HTML, klien HTTPS memvalidasi sertifikat, parsing request aman dan tes integrasi lintas platform lulus.
 
-**Tujuan:** memungkinkan aplikasi web Indonesiaku menghasilkan halaman HTML dinamis di sisi server, dengan berkas `.idk` untuk logika aplikasi dan berkas `.html` untuk tampilan. HTML/CSS/JavaScript mengikuti standar browser. **Tidak mencakup frontend SPA, virtual DOM, atau framework seperti React.** Ini pengembangan yang direncanakan, belum fitur yang dapat digunakan pada rilis saat ini.
+### Fase 12 — HTML template engine dan Server-Side Rendering (SSR)
 
-**Batas arsitektur:** `pustaka/templat.idk` (atau modul template yang setara berdasarkan evaluasi implementasi) harus dapat digunakan secara independen dari HTTP server. Integrasi dengan routing/response mengikuti backlog WEB-01 dalam bagian **Jalur pengembangan aplikasi web & database** di atas. `http_response(..., "text/html; charset=utf-8", ...)` sudah dapat mengirim HTML mentah; hal itu **bukan** template engine.
+**Tujuan:** file .idk menjalankan logika backend, file .html berisi tampilan standar; server merender HTML dinamis tanpa SPA/React. Template engine dibuat independen dari server agar dapat diuji sendiri. **Status:** ⬜ belum. **Pemetaan:** SSR-01–10.
 
-### Backlog SSR
+**Langkah pengembangan:**
 
-| ID | Fitur | Hasil yang ditargetkan | Status |
-|---|---|---|---|
-| SSR-01 | Desain sintaks dan API template | Spesifikasi `render(nama, data)`, `render_teks(sumber, data)`, direktori pencarian, format galat, dan ekstensi `.html`; dokumentasikan perbedaan nilai `kosong`, daftar, kamus, dan objek | ⬜ belum |
-| SSR-02 | Pemuat dan parser template | Membaca template, mengenali teks literal, `{{ ekspresi }}`, dan tag `{% ... %}` dengan lokasi baris/kolom; batas ukuran dan kedalaman parsing | ⬜ belum |
-| SSR-03 | Interpolasi variabel | `{{ nama }}`, akses properti/kunci secara terkontrol, nilai hilang menghasilkan galat yang jelas; tanpa evaluasi kode Indonesiaku arbitrer | ⬜ belum |
-| SSR-04 | Percabangan dan perulangan | `{% jika kondisi %}...{% selain %}...{% akhirjika %}` serta `{% untuk item dalam daftar %}...{% akhiruntuk %}`, lengkap dengan scoping dan nested block | ⬜ belum |
-| SSR-05 | Include dan inheritance | `include` parsial, layout dasar, block/override, serta deteksi siklus include dan path traversal | ⬜ belum |
-| SSR-06 | HTML auto-escaping | Escape otomatis `& < > " '` pada konteks teks/atribut yang didukung; kebijakan nilai HTML tepercaya eksplisit dan aman, tanpa bypass default | ⬜ belum |
-| SSR-07 | Integrasi HTTP SSR | Router/controller menghasilkan respons `text/html; charset=utf-8` menggunakan engine; status, header, dan error page terstruktur; tidak mewajibkan web framework besar | ⬜ belum |
-| SSR-08 | Cache template | Cache hasil parsing berdasarkan identitas sumber dan kebijakan invalidasi (mode pengembangan vs produksi), batas memori, serta tes kesetaraan output | ⬜ belum |
-| SSR-09 | Diagnostics dan pengujian | Galat template dengan path/baris/kolom; golden tests untuk nested control flow, Unicode, escaping, include, cache, galat sintaks, dan input berbahaya | ⬜ belum |
-| SSR-10 | Dokumentasi dan contoh aplikasi | Contoh halaman dinamis SSR menggunakan data lokal/SQLite, petunjuk deployment dengan reverse proxy, dan panduan pemisahan controller dari tampilan | ⬜ belum |
+1. [ ] Rancang docs/RENCANA_FITUR/ssr_template_engine.md. Definisikan modul terpisah (mis. pustaka/templat.idk atau engine native C jika hasil profil membutuhkannya), template root, render(nama,data), render_teks(sumber,data), error dan scope (**SSR-01**).
+2. [ ] Bangun loader dan parser yang memisahkan literal HTML, interpolasi {{ nama }} dan tag {% ... %}, dengan penanda path/baris/kolom, batas ukuran dan kedalaman (**SSR-02**).
+3. [ ] Implementasikan interpolasi variabel, akses kamus dan atribut yang dibolehkan, serta error untuk nilai yang tidak tersedia; **jangan evaluasi string menjadi kode .idk arbitrer** (**SSR-03**).
+4. [ ] Tambahkan kondisi dan loop bertingkat dengan sintaks yang konsisten, misalnya {% jika ... %} / {% selain %} / {% akhirjika %}, {% untuk ... %} / {% akhiruntuk %}, dan uji scoping (**SSR-04**).
+5. [ ] Tambahkan HTML auto-escaping **sejak awal interpolasi** (**SSR-06**); tangani &, <, >, kutip, dan aturan khusus atribut/URL; hindari menyatakan aman untuk ekspresi di JS/CSS inline. Konten HTML tepercaya hanya melalui API eksplisit yang diaudit.
+6. [ ] Tambahkan include komponen, template inheritance dan block override; batasi path dalam root template dan cegah siklus (**SSR-05**).
+7. [ ] Integrasikan render ke response web Fase 11 dengan Content-Type text/html; charset=utf-8, status/headers yang tepat dan halaman error yang tidak membocorkan rahasia (**SSR-07**).
+8. [ ] Tambahkan cache parsing, invalidasi dalam mode development, pembatasan memori dan kesetaraan hasil dengan mode tanpa cache (**SSR-08**).
+9. [ ] Buat tes diagnosis path/baris/kolom, input XSS, Unicode, nesting, template tidak ada, include cyclic, traversal, beban input besar dan sanitizer/GC (**SSR-09**).
+10. [ ] Tulis contoh website dinamis menggunakan SQLite (listing dan detail mahasiswa), dokumentasi template di website/panduan/, serta panduan deployment dan troubleshooting (**SSR-10**).
 
-### Urutan dan keputusan implementasi
+**Contoh target (usulan):** kembalikan templat.render("mahasiswa.html", {"nama":"Budi"}); isi template: <h1>{{ nama }}</h1>. Sintaks ini belum implementasi.
 
-1. **Tahap inti:** SSR-01 → SSR-02 → SSR-03 → SSR-04 → SSR-06. Prioritaskan keamanan escaping sejak awal; jangan merilis interpolasi variabel tanpa escaping bawaan.
-2. **Tahap komposisi:** SSR-05, termasuk aturan root direktori template dan pembatasan akses jalur berkas.
-3. **Tahap integrasi:** SSR-07 bergantung pada WEB-01 (router dan request/response); SSR tetap dapat dipakai untuk merender teks secara mandiri.
-4. **Tahap pematangan:** SSR-08 → SSR-09 → SSR-10, dilengkapi stress/negative tests dan dokumentasi pengguna.
+**Selesai jika:** halaman server-side menampilkan data dinamis dari database, auto-escaping aktif, include/layout bekerja, diagnostics jelas dan seluruh tes aman lulus.
 
-### Kriteria penerimaan
+### Fase 13 — Keamanan dan fitur aplikasi web
 
-- Template tidak mengeksekusi kode sumber `.idk` atau memanggil fungsi native secara bebas; ekspresi dan tag harus dibatasi secara eksplisit dalam spesifikasi.
-- Default aman terhadap XSS untuk nilai dari pengguna pada konteks yang didukung. Konteks seperti JavaScript inline, CSS inline, dan URL dinamis membutuhkan aturan escaping/validasi tersendiri; dokumentasikan atau tolak bila belum aman.
-- Include/inheritance hanya mencari berkas di root yang diizinkan, mencegah traversal maupun pembacaan berkas di luar root. Uji template salah format, nilai hilang, siklus include, serta ukuran/kedalaman ekstrem.
-- Pastikan pemuatan/rendering tidak membocorkan handle atau objek GC. Uji multi-platform dan jalankan sanitizer saat menyentuh lapisan runtime.
-- Sintaks dan API pada tabel merupakan **usulan**, bukan janji kompatibilitas; finalisasi lewat `docs/RENCANA_FITUR/` sebelum implementasi. Setelah selesai, perbarui `examples/`, `tests/`, `website/panduan/`, `CHANGELOG.md`, dan ekstensi VS Code sesuai checklist roadmap.
+**Tujuan:** membangun fondasi aplikasi bisnis yang membutuhkan input pengguna, login, session dan otorisasi. **Status:** ⬜ belum. **Pemetaan:** WEB-04, WEB-05, WEB-06.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat rencana docs/RENCANA_FITUR/web_security_auth.md, threat model (browser, cookie, CSRF, upload, input, session, proxy) dan matriks fitur minimum.
+2. [ ] Implementasikan cookie HttpOnly, Secure, SameSite, expiry dan session storage yang dapat dikonfigurasi; rotasi ID saat login dan invalidasi logout (**WEB-04**).
+3. [ ] Sediakan validasi input, output escaping sesuai konteks, proteksi CSRF pada endpoint state-changing dengan session-cookie, CORS yang dibatasi dan trusted-proxy yang eksplisit (**WEB-05**).
+4. [ ] Implementasikan autentikasi, password hashing adaptif yang teruji (utamakan Argon2id jika dependensi tersedia), login/logout, role/permission, dan perlindungan brute force/rate limit (**WEB-06**).
+5. [ ] Siapkan contoh aplikasi CRUD dengan login dan role (admin/pengguna), memanfaatkan database Fase 10, HTTP Fase 11, SSR Fase 12.
+6. [ ] Tambahkan tes terhadap session fixation, CSRF, cookie flags, file upload berbahaya, validasi izin lintas pengguna, timing/lockout, secret leakage serta regresi keamanan.
+
+**Selesai jika:** jalur login-logout, kontrol akses, session, CSRF dan validasi input diuji otomatis; tidak ada default credential atau penyimpanan password plaintext.
+
+### Fase 14 — Package manager, perkakas proyek dan integrasi library
+
+**Tujuan:** developer dapat memulai dan membagikan proyek backend tanpa menyalin modul secara manual. **Status:** ⬜ belum. **Pemetaan:** P3, DX-01, DX-02.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat rencana docs/RENCANA_FITUR/manajer_paket.md: manifest, nama paket/namespace, versi semantik, lockfile, cache, URL registri, checksum/signature dan lokasi instalasi non-root.
+2. [ ] Implementasikan perintah CLI inisialisasi proyek, tambah, hapus, daftar, perbarui dan pemulihan lockfile; pisahkan dependency resolution dari unduhan.
+3. [ ] Rancang format paket yang dapat dipublikasikan dan registry/API dengan otorisasi, integritas artefak, kebijakan takedown dan mitigasi package-name squatting. **Registri publik belum perlu diluncurkan sebelum desain keamanan selesai.**
+4. [ ] Tambahkan scaffolding aplikasi backend (**DX-01**): direktori modul, file konfigurasi, contoh HTTP dan database, tes awal, penggunaan environment serta perintah menjalankan/menguji.
+5. [ ] Integrasikan paket backend dan SSR dengan manajer paket serta lockfile (**DX-02**) tanpa menghilangkan opsi memakai standard library bawaan.
+6. [ ] Tambahkan tes konflik dependensi, paket berbahaya, checksum tidak cocok, install offline/cache, downgrade, path traversal arsip, reproducible install, serta Windows/Linux/macOS.
+7. [ ] Dokumentasikan cara membuat, mempublikasikan, menginstal dan mengaudit dependensi paket serta lisensi pihak ketiga.
+
+**Selesai jika:** proyek bersih dapat dibuat dan dependensi dipasang secara reproducible dengan lockfile, validasi integritas aktif dan tutorial telah diuji.
+
+### Fase 15 — Debugger, embedding API dan FFI
+
+**Tujuan:** memperluas ekosistem tooling dan integrasi native secara aman. **Status:** ⬜ belum. **Pemetaan:** P4, P5.
+
+**Langkah pengembangan:**
+
+1. [ ] Rancang debugger dalam docs/RENCANA_FITUR/debugger.md: metadata baris/kolom, breakpoint, pause/step, inspeksi frame/variabel, protokol komunikasi editor dan overhead saat debug nonaktif.
+2. [ ] Implementasikan eksekusi debugger terkontrol dan tes step in/over/out, exception, closure, generator, nested call, serta terminasi program.
+3. [ ] Buat docs/RENCANA_FITUR/embedding_ffi.md: ABI C publik, lifecycle VM, registrasi fungsi native, konversi Value, error, multi-instance dan rooting GC.
+4. [ ] Implementasikan API embedding terlebih dahulu; FFI umum menyusul hanya setelah batas keamanan, ownership memori dan sandbox disepakati.
+5. [ ] Sediakan header publik, contoh host C, dokumentasi API, tes sanitizer, kompatibilitas compiler serta prosedur pemeliharaan ABI.
+
+**Selesai jika:** debugging teruji tanpa merusak mode biasa, aplikasi C dapat memanggil Indonesiaku melalui API stabil yang terdokumentasi dan interaksi GC aman.
+
+### Fase 16 — WebAssembly, performa dan perluasan ekosistem
+
+**Tujuan:** memperkuat jangkauan platform dan kinerja **berdasarkan pengukuran**, bukan menambah kompleksitas sebelum perlu. **Status:** ⬜ belum. **Pemetaan:** P7 serta sisa Fase 7–8.
+
+**Langkah pengembangan:**
+
+1. [ ] Buat rencana docs/RENCANA_FITUR/playground_wasm.md; siapkan Emscripten, bangun interpreter ke WebAssembly dan tentukan pembatasan fitur OS, file, network dan resource.
+2. [ ] Jalankan playground .idk langsung dalam browser untuk kode lokal tanpa bergantung pada eksekusi server (**P7**); pertahankan Docker playground yang sudah ada sebagai alternatif.
+3. [ ] Tambahkan tes kesetaraan hasil interpreter native vs WASM, timeout/memory guard, penanganan error dan perbedaan runtime browser.
+4. [ ] Profilkan program nyata lebih dulu sebelum menilai cache .idkc, computed goto, superinstruksi, inline cache, NaN-boxing dan GC generasional. Tuliskan benchmark sebelum/sesudah dan rollback plan; optimasi yang tidak terbukti bermanfaat tetap ditunda.
+5. [ ] Rencanakan threading/asinkron, GUI, AOT/bundel executable dan penguatan sandbox sebagai subproyek terpisah; jangan klaim selesai tanpa spesifikasi, tes isolasi dan deployment yang aman.
+
+**Selesai jika:** playground WASM bekerja pada contoh yang didukung, perbedaan fitur terdokumentasi, serta optimasi hanya digabung setelah benchmark dan regresi membuktikan manfaat.
+
+### Checklist wajib untuk setiap fase (panduan untuk AI coding agent)
+
+1. **Audit sebelum coding:** baca AGENTS.md, docs/SPESIFIKASI.md, docs/ANALISIS/, README, contoh dan source terkait; verifikasi fitur existing supaya tidak menduplikasi fungsi atau merusak kompatibilitas sejak 1.0.
+2. **Rencanakan dahulu:** buat satu atau beberapa dokumen docs/RENCANA_FITUR/<fitur>.md memakai TEMPLATE.md; tuliskan kebutuhan, batas scope, alternatif desain, API, semantik error, keamanan, dampak VM/GC, daftar berkas, tes dan kriteria selesai.
+3. **Kerjakan bertahap:** gunakan branch fitur/PR kecil; mulai dari API dan tes perilaku, lanjut implementasi, lalu integrasi. Jangan mencampur fitur antar-fase tanpa dependensi yang jelas.
+4. **Perbarui konsumen:** contoh .idk, pasangan tests/expected atau tests/galat, tes integrasi, panduan website, editor VS Code, spesifikasi jika relevan, CHANGELOG, dan file rencana.
+5. **Uji wajib:** jalankan semua golden/negative tests, sanitizer/DEBUG_STRESS_GC jika memodifikasi memori/objek/stack, Valgrind bila relevan, pengujian lintas OS, dan tes keamanan fitur network/database/template.
+6. **Tinjau dan rilis:** ukur performa bila klaim optimasi, pastikan CI hijau, review kode dan keamanan, cantumkan perubahan API/breaking changes. Sejak v1.0, jangan melakukan breaking change sebelum kebijakan versi mayor memperbolehkan.
+7. **Tandai status secara jujur:** [ ] belum; [x] selesai hanya setelah implementasi + pengujian + dokumentasi. Pindahkan dokumen rencana ke docs/RENCANA_FITUR/selesai/ sesuai AGENTS.md dan perbarui tabel status fase.
+
+### Ringkasan status fase baru
+
+| Fase | Fokus | Status |
+|---|---|---|
+| 9 | LSP dan dukungan editor | ⬜ belum |
+| 10 | SQLite, MySQL/MariaDB, PostgreSQL | ⬜ belum |
+| 11 | HTTP/HTTPS dan backend server | ⬜ belum |
+| 12 | Server-Side Rendering / HTML template | ⬜ belum |
+| 13 | Session, keamanan, login dan otorisasi | ⬜ belum |
+| 14 | Package manager dan developer tooling | ⬜ belum |
+| 15 | Debugger, embedding C, FFI | ⬜ belum |
+| 16 | WASM playground dan optimasi lanjut | ⬜ belum |
 
 ## Cara memakai berkas ini
 
