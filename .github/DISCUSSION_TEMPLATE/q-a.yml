@@ -1,0 +1,50 @@
+title: "[Tanya] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ajukan pertanyaan penggunaan Indonesiaku. Tulis versi interpreter, OS, kode reproduksi minimal, dan hasil yang muncul.
+        Gunakan blok kode berbahasa `text` atau `python` untuk kode .idk bila highlighting khusus belum tersedia. Sensor kredensial, token, dan data pribadi.
+        Setelah mendapat jawaban yang menyelesaikan masalah, tandai jawaban tersebut sebagai accepted answer.
+  - type: input
+    id: pertanyaan
+    attributes:
+      label: Pertanyaan utama
+      placeholder: Contoh - Bagaimana menjalankan REST API di Windows?
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: Penjelasan dan tujuan
+      description: Apa yang sedang Anda coba lakukan?
+    validations:
+      required: true
+  - type: textarea
+    id: kode
+    attributes:
+      label: Contoh kode minimal
+      description: Tempel kode .idk relevan tanpa kredensial.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: lingkungan
+    attributes:
+      label: Versi Indonesiaku dan sistem operasi
+      placeholder: Contoh - indk v1.3.2, Windows 11 x64
+    validations:
+      required: true
+  - type: textarea
+    id: hasil
+    attributes:
+      label: Hasil aktual, pesan galat, dan hasil yang diharapkan
+      description: Sertakan langkah reproduksi jika ada.
+    validations:
+      required: true
+  - type: textarea
+    id: dicoba
+    attributes:
+      label: Yang sudah dicoba
+    validations:
+      required: false
