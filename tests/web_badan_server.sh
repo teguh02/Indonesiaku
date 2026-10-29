@@ -59,12 +59,26 @@ periksa "badan 150KB terbaca utuh" "bita=153600" \
     "$(curl -s --max-time 30 -H 'Content-Type: text/plain' \
          --data-binary "@$TMP/besar.bin" "http://127.0.0.1:$PORT/besar")"
 
-# Melebihi batas server (300 KB) -> 413, bukan hang atau crash.
+# Melebihi batas server (300 KB) -> ditolak, bukan hang atau crash.
+#
+# Server menolak dari Content-Length lalu menutup koneksi -- sengaja, supaya
+# badan raksasa tidak pernah masuk memori. Akibatnya curl bisa kehilangan
+# soket di tengah pengiriman dan melaporkan '000' alih-alih '413'; keduanya
+# benar, dan mana yang terjadi bergantung waktu (macOS kerap '000').
+# Yang HARUS dijamin: bukan 2xx, dan server tetap melayani sesudahnya.
 head -c 409600 /dev/zero | tr '\0' 'y' > "$TMP/kelewat.bin"
-periksa "melebihi batas -> 413" "413" \
-    "$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+KODE_BESAR="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
          -H 'Content-Type: text/plain' \
          --data-binary "@$TMP/kelewat.bin" "http://127.0.0.1:$PORT/besar")"
+case "$KODE_BESAR" in
+    413|000) echo "  ok   melebihi batas ditolak ($KODE_BESAR)" ;;
+    *) echo "  GAGAL melebihi batas: harap 413 atau 000, dapat '$KODE_BESAR'"; GAGAL=1 ;;
+esac
+
+# Server harus selamat dari penolakan itu, bukan mati diam-diam.
+periksa "server hidup setelah 413" "judul=sesudah" \
+    "$(curl -s --max-time 20 -H 'Content-Type: application/json' \
+         --data-binary '{"judul":"sesudah"}' "http://127.0.0.1:$PORT/api")"
 
 # Badan ber-UTF-8: Content-Length menghitung BYTE, panjang() menghitung
 # KARAKTER. Saat keduanya tertukar, server menunggu byte yang tak pernah
