@@ -8,7 +8,7 @@ g = http_urai_request(req_get)
 cetak("metode:", g["metode"])
 cetak("path:", g["path"])
 cetak("versi:", g["versi"])
-cetak("host:", g["header"]["Host"])
+cetak("host:", g["header"]["host"])
 cetak("badan kosong:", panjang(g["badan"]) == 0)
 
 cetak("=== urai request POST dengan badan ===")
@@ -16,7 +16,7 @@ req_post = "POST /todos HTTP/1.1\r\nContent-Type: application/json\r\n\r\n{\"tek
 p = http_urai_request(req_post)
 cetak("metode:", p["metode"])
 cetak("path:", p["path"])
-cetak("content-type:", p["header"]["Content-Type"])
+cetak("content-type:", p["header"]["content-type"])
 cetak("badan:", p["badan"])
 
 cetak("=== urai path dengan id ===")

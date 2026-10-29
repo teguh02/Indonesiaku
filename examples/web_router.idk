@@ -1,0 +1,145 @@
+# Modul server HTTP: routing, parameter URL, query string, middleware.
+#
+# app.tangani() bekerja pada TEKS request dan mengembalikan TEKS respons,
+# jadi seluruh contoh ini berjalan tanpa jaringan sama sekali.
+
+impor web
+dari web impor GalatWeb
+
+# --- Pembantu untuk menampilkan hasil ---
+fungsi baris_status(resp) {
+    kembalikan teks_pisah(resp, "\r\n")[0]
+}
+
+fungsi badan(resp) {
+    variabel i = teks_cari(resp, "\r\n\r\n")
+    kembalikan potong(resp, i + 4, panjang(resp) - i - 4)
+}
+
+variabel app = web.Aplikasi()
+
+app.rute("GET", "/todos", fungsi(req) {
+    kembalikan web.teks(200, "semua todo")
+})
+
+app.rute("POST", "/todos", fungsi(req) {
+    kembalikan web.teks(201, "dibuat")
+})
+
+# Parameter URL: segmen diawali titik dua.
+app.rute("GET", "/todos/:id", fungsi(req) {
+    kembalikan web.teks(200, "todo nomor " + req["params"]["id"])
+})
+
+app.rute("GET", "/arsip/:tahun/bulan/:bulan", fungsi(req) {
+    kembalikan web.teks(200, req["params"]["tahun"] + "-" + req["params"]["bulan"])
+})
+
+# Query string tersedia di req["query"].
+app.rute("GET", "/cari", fungsi(req) {
+    jika "q" dalam req["query"] {
+        kembalikan web.teks(200, "mencari: " + req["query"]["q"])
+    }
+    kembalikan web.teks(400, "parameter q wajib")
+})
+
+fungsi minta(metode, path) {
+    kembalikan app.tangani(metode + " " + path + " HTTP/1.1\r\nHost: contoh.id\r\n\r\n")
+}
+
+# --- Pencocokan dasar ---
+cetak(badan(minta("GET", "/todos")))
+cetak(badan(minta("POST", "/todos")))
+
+# --- Parameter URL ---
+cetak(badan(minta("GET", "/todos/42")))
+cetak(badan(minta("GET", "/arsip/2026/bulan/10")))
+
+# --- Jumlah segmen harus sama persis ---
+cetak(baris_status(minta("GET", "/todos/1/2")))
+
+# --- Tidak ada rute yang cocok ---
+cetak(baris_status(minta("GET", "/tidak/ada")))
+
+# --- Path cocok tetapi metode tidak: 405, bukan 404 ---
+cetak(baris_status(minta("DELETE", "/todos")))
+cetak(teks_pisah(minta("DELETE", "/todos"), "\r\n")[1])
+
+# --- Query string ---
+cetak(badan(minta("GET", "/cari?q=buku")))
+cetak(badan(minta("GET", "/cari?q=dua%20kata")))
+cetak(badan(minta("GET", "/cari?q=a+b")))
+cetak(badan(minta("GET", "/cari")))
+
+# Urutan persen yang tidak sah dibiarkan apa adanya, tidak menggagalkan
+# seluruh permintaan.
+cetak(badan(minta("GET", "/cari?q=50%zz")))
+
+# Kunci berulang: yang terakhir menang.
+cetak(badan(minta("GET", "/cari?q=satu&q=dua")))
+
+# --- Middleware ---
+variabel jejak = []
+variabel app2 = web.Aplikasi()
+
+app2.gunakan(fungsi(req, teruskan) {
+    tambah(jejak, "luar-masuk")
+    variabel resp = teruskan(req)
+    tambah(jejak, "luar-keluar")
+    kembalikan resp
+})
+
+app2.gunakan(fungsi(req, teruskan) {
+    tambah(jejak, "dalam")
+    kembalikan teruskan(req)
+})
+
+app2.rute("GET", "/x", fungsi(req) {
+    tambah(jejak, "penangan")
+    kembalikan web.teks(200, "ok")
+})
+
+app2.tangani("GET /x HTTP/1.1\r\n\r\n")
+cetak(jejak)
+
+# Middleware boleh menghentikan rantai tanpa memanggil teruskan().
+variabel app3 = web.Aplikasi()
+app3.gunakan(fungsi(req, teruskan) {
+    jika tidak "authorization" dalam req["header"] {
+        kembalikan web.teks(401, "perlu token")
+    }
+    kembalikan teruskan(req)
+})
+app3.rute("GET", "/rahasia", fungsi(req) {
+    kembalikan web.teks(200, "data rahasia")
+})
+
+cetak(badan(app3.tangani("GET /rahasia HTTP/1.1\r\n\r\n")))
+# Nama header tidak peka huruf besar-kecil (RFC 9110 §5.1).
+cetak(badan(app3.tangani("GET /rahasia HTTP/1.1\r\nAUTHORIZATION: Bearer x\r\n\r\n")))
+
+# --- Penangan galat kustom ---
+variabel app4 = web.Aplikasi()
+app4.galat(fungsi(req, e) {
+    kembalikan web.teks(503, "sedang sibuk")
+})
+app4.rute("GET", "/gagal", fungsi(req) {
+    naikkan GalatNilai()
+})
+cetak(badan(app4.tangani("GET /gagal HTTP/1.1\r\n\r\n")))
+
+# --- Permintaan tidak sah ---
+cetak(baris_status(app.tangani("bukan http sama sekali")))
+
+# --- Pola rute yang salah ditolak saat didaftarkan ---
+coba {
+    app.rute("GET", "todos", fungsi(req) { kembalikan web.teks(200, "x") })
+} kecuali GalatWeb {
+    cetak("pola tanpa / ditolak")
+}
+
+coba {
+    app.rute("GET", "/x", "bukan fungsi")
+} kecuali GalatWeb {
+    cetak("penangan bukan fungsi ditolak")
+}

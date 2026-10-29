@@ -123,6 +123,17 @@ if [ -f tests/test_baca_sumber.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Modul web harus terbukti melayani HTTP sungguhan, bukan hanya lulus uji teks.
+if [ -f tests/web_router_server.sh ]; then
+    echo ""
+    if bash tests/web_router_server.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES web-router"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Mengikuti pengalihan HTTP perlu server sungguhan: klien memblokir saat
 # menunggu balasan, jadi tidak bisa diuji dalam satu proses.
 if [ -f tests/http_pengalihan_server.sh ]; then

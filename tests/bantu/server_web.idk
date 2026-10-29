@@ -1,0 +1,54 @@
+# Server sungguhan memakai pustaka/web.idk di atas gelung soket.
+# Membuktikan modul web bukan hanya lulus uji teks, tetapi benar-benar
+# dapat melayani permintaan HTTP dari klien luar (curl).
+#
+# Berhenti sendiri setelah IDK_SISA permintaan supaya tidak menggantung.
+
+impor web
+impor "pustaka/teks.idk"
+
+variabel PORT = ke_bulat(ambil_lingkungan("IDK_PORT"))
+variabel SISA = ke_bulat(ambil_lingkungan("IDK_SISA"))
+
+variabel app = web.Aplikasi()
+
+# Middleware: catat ke stderr, tidak mengganggu respons.
+app.gunakan(fungsi(req, teruskan) {
+    tulis_galat("-> " + req["metode"] + " " + req["path"])
+    kembalikan teruskan(req)
+})
+
+app.rute("GET", "/halo", fungsi(req) {
+    kembalikan web.teks(200, "halo dunia")
+})
+
+app.rute("GET", "/siswa/:id", fungsi(req) {
+    kembalikan web.json(200, "{\"id\":\"" + req["params"]["id"] + "\"}")
+})
+
+app.rute("GET", "/cari", fungsi(req) {
+    jika "q" dalam req["query"] {
+        kembalikan web.teks(200, "q=" + req["query"]["q"])
+    }
+    kembalikan web.teks(400, "q wajib")
+})
+
+app.rute("POST", "/kirim", fungsi(req) {
+    kembalikan web.teks(201, "diterima " + ke_teks(panjang(req["badan"])) + " bita")
+})
+
+variabel server = soket_dengar(PORT)
+variabel sisa = SISA
+selagi sisa > 0 {
+    variabel klien = soket_terima(server)
+    coba {
+        variabel mentah = soket_baca(klien)
+        jika mentah != "" {
+            soket_tulis(klien, app.tangani(mentah))
+        }
+    } akhirnya {
+        soket_tutup(klien)
+    }
+    sisa = sisa - 1
+}
+soket_tutup(server)

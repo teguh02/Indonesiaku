@@ -9,6 +9,13 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Ditambahkan
 
+- **Modul server HTTP `pustaka/web.idk`** — routing metode/path, parameter
+  URL (`/siswa/:id`), query string yang diurai beserta dekode persen,
+  middleware berantai, dan penangan galat. Path cocok tetapi metode tidak
+  menghasilkan **405 dengan header `Allow`**, bukan 404. Galat penangan
+  menjadi 500 **tanpa membocorkan detail** ke klien. Melengkapi langkah 3
+  Fase 11. (Fase 11)
+
 - **BLOB (data biner) SQLite** kini didukung masuk-keluar, memakai konvensi
   `pustaka/bita.idk`: daftar bulat 0..255. Daftar kosong `[]` menjadi BLOB
   berukuran nol, berbeda dari `kosong` yang menjadi `NULL`. Elemen tidak sah
@@ -26,6 +33,12 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   batas lompatan habis. (Fase 11)
 
 ### Berubah
+
+- **Perbaikan bug:** `http_urai_request()` kini menyeragamkan nama header
+  menjadi huruf kecil. Nama header HTTP bersifat case-insensitive (RFC 9110
+  §5.1), dan klien di berkas yang sama sudah melakukannya — sisi server
+  tidak, sehingga klien yang mengirim `host:` tidak terbaca oleh kode yang
+  mencari `"Host"`. Pakai `req["header"]["host"]`.
 
 - **Perubahan perilaku:** program yang memeriksa `r.status == 301` dari
   `http_ambil()` kini akan melihat `200` karena pengalihan diikuti. Beri

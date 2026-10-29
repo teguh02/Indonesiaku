@@ -867,6 +867,55 @@ impor "pustaka/http.idk"
 | `http_ambil(url, metode="GET", kepala=kosong, badan="", maks_pengalihan=5)` | **Klien**: kirim permintaan → objek `Respons`. Pengalihan 301/302/303/307/308 diikuti sampai `maks_pengalihan` lompatan; beri `0` untuk menerima respons pengalihan apa adanya |
 | `http_urai_url(url)` | `[host, port, jalur]` dari url `http://` |
 
+### Modul `web` — server HTTP
+
+`pustaka/web.idk` menggantikan rantai `jika metode == ... dan path == ...`
+dengan routing. `app.tangani()` bekerja pada **teks** request dan
+mengembalikan **teks** respons, jadi server dapat diuji tanpa jaringan dan
+gelung soket yang sudah ada tetap dipakai.
+
+| Fungsi | Keterangan |
+|---|---|
+| `web.Aplikasi()` | Buat aplikasi |
+| `app.rute(metode, pola, penangan)` | Daftarkan rute; `:nama` menjadi parameter URL |
+| `app.gunakan(mw)` | Middleware `mw(req, teruskan)` |
+| `app.galat(penangan)` | Timpa respons 500 bawaan dengan `penangan(req, e)` |
+| `app.tangani(mentah)` | Teks request → teks respons |
+| `web.teks(kode, isi)`, `web.json(kode, isi)`, `web.html(kode, isi)` | Pembantu respons |
+
+```indonesiaku-takjalan
+impor web
+
+variabel app = web.Aplikasi()
+
+app.rute("GET", "/siswa/:id", fungsi(req) {
+    kembalikan web.json(200, "{\"id\":\"" + req["params"]["id"] + "\"}")
+})
+
+app.gunakan(fungsi(req, teruskan) {
+    jika tidak "authorization" dalam req["header"] {
+        kembalikan web.teks(401, "perlu token")
+    }
+    kembalikan teruskan(req)
+})
+```
+
+Penangan menerima `req` berisi `metode`, `path`, `versi`, `header`,
+`badan`, `params`, dan `query`.
+
+- Rute dicocokkan **berurutan**; yang pertama cocok dipakai.
+- Path cocok tetapi metode tidak → **405** dengan header `Allow`, bukan 404.
+- Query string diurai ke `req["query"]`; `%20` dan `+` didekode. Kunci
+  berulang: yang terakhir menang.
+- Galat dari penangan → **500**, dan detailnya **tidak bocor ke klien**;
+  pesan aslinya ditulis ke `tulis_galat()` untuk operator.
+
+**Nama header huruf kecil.** Sejak 1.4.0 `http_urai_request()`
+menyeragamkan nama header menjadi huruf kecil, sesuai sifat
+case-insensitive pada RFC 9110 §5.1 dan menyamai klien. Pakai
+`req["header"]["host"]`, bukan `["Host"]`.
+
+
 Digunakan oleh `examples/todo_server.idk` — REST API Todo-list berbasis HTTP
 di atas soket TCP.
 
