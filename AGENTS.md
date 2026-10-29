@@ -445,6 +445,10 @@ Bagian **Tata Kelola Proyek, Nama, dan Disclaimer** di atas tetap berlaku untuk
 setiap perubahan pada `README.md`, `website/panduan/`, atau dokumen publik lain
 yang menyentuh identitas proyek, nama, afiliasi, atau pernyataan independensi.
 
+## Branch dan Pull Request (wajib untuk manusia maupun AI agent)
+
+Sebelum memulai pekerjaan, ikuti [docs/ATURAN_BRANCH_DAN_PR.md](docs/ATURAN_BRANCH_DAN_PR.md): buat branch kategori pekerjaan (`fitur/`, `perbaikan/`, `docs/`, `keamanan/`, `refactor/`, `test/`, `ci/`, `build/`, `rilis/`, dan sebagainya), nama deskriptif kebab-case, PR menuju `main`, review dan CI sebelum merge. Jangan push langsung ke `main` untuk pekerjaan biasa; jangan menghapus pekerjaan lokal, force-push, atau mengungkap kerentanan rahasia. AI agent mengikuti aturan yang **sama persis** dan tetap wajib membuat rencana/tes sesuai workflow proyek.
+
 ## Conventions
 
 - C style: 4-space indent, types PascalCase, constants UPPER_CASE, variables snake_case, braces same-line. `.editorconfig` enforces LF + 4-space (tabs for Makefile).
