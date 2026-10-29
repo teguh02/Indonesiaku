@@ -134,6 +134,18 @@ if [ -f tests/web_badan_server.sh ]; then
     TOTAL=$((TOTAL+1))
 fi
 
+# Tag versi (image playground, LABEL rilis, cache-buster website) harus
+# mengikuti INDK_VERSION; yang tertinggal tidak pernah gagal sendiri.
+if [ -f tests/versi_konsisten.sh ]; then
+    echo ""
+    if bash tests/versi_konsisten.sh; then
+        PASSED=$((PASSED+1))
+    else
+        FAILED=$((FAILED+1)); FAILURES="$FAILURES versi-konsisten"
+    fi
+    TOTAL=$((TOTAL+1))
+fi
+
 # Klien HTTP melawan server HTTP sendiri. Ada di CI tetapi dulu tidak di
 # sini, sehingga regresi UTF-8 (server menggantung) lolos dari suite lokal.
 #
